@@ -1,3 +1,0 @@
-cd "C:\Users\Lautaro Carron\Desktop\lautaro\juegoPhyton"
-
-C:\sim\Scripts\python.exe -m streamlit run simuladorafa.py
