@@ -12,19 +12,20 @@ PRIMERA DIVISIÓN (30 equipos)
   * Destinos: 1-5 Libertadores · 6-8 Sudamericana · 11 Fase previa Libertadores
     · 12-13 Sudamericana · 28-30 descienden · 27° juega la PROMOCIÓN.
 
-PRIMERA NACIONAL (32 equipos)
-  * Fase 1: 2 zonas de 16 (A y B), una sola rueda (15 fechas) + 8 fechas
+PRIMERA NACIONAL (36 equipos)
+  * Fase 1: 2 zonas de 18 (A y B), una sola rueda (17 fechas) + 8 fechas
     interzonales cruzadas entre ambas zonas antes de pasar a la fase 2 (localía
     fija: cada equipo es local en 4 de esas 8 fechas).
-  * Se reparten en 3 zonas y TODOS los puntos vuelven a 0:
-      Campeonato (10): 1°-5° de cada zona · Intermedia (10): 6°-10° de cada zona
-      Descenso (12): 11°-16° de cada zona.  Una sola rueda en cada una.
-  * Campeonato: 1° campeón + ascenso · 2° ascenso · 3°-6° a cuartos del reducido
-    · 7°-10° a octavos.   Intermedia: 1°-4° a octavos.
+  * Se reparten en 3 zonas de 12 y TODOS los puntos vuelven a 0:
+      Campeonato: 1°-6° de cada zona · Intermedia: 7°-12° de cada zona
+      Descenso: 13°-18° de cada zona.  Una sola rueda en cada una.
+  * Campeonato: 1° campeón + ascenso · 2° ascenso · 3°-4° a cuartos del reducido
+    · 5°-12° a octavos.   Intermedia: 1°-4° a octavos.
     Descenso: los 6 últimos descienden.
-  * Reducido (12 equipos): octavos -> cuartos -> semifinal -> final. Todo a partido
-    único, sin alargue: si empatan, penales. Localía: Campeonato siempre local
-    frente a Intermedia; entre equipos de la misma zona, el que tenga más puntos.
+  * Reducido (14 equipos): octavos (12) -> cuartos (8: los 6 ganadores + 3°-4° de
+    Campeonato) -> semifinal -> final. Todo a partido único, sin alargue: si
+    empatan, penales. Localía: Campeonato siempre local frente a Intermedia; entre
+    equipos de la misma zona, el que tenga más puntos.
   * Campeón del reducido asciende. El perdedor de la final juega la PROMOCIÓN
     (un partido) contra el 27° de Primera, el mejor descendido.
 
@@ -49,32 +50,38 @@ st.set_page_config(page_title="Simulador Fútbol Argentino", page_icon="⚽", la
 # ----------------------------------------------------------------------------
 # DATOS: equipos reales de la temporada 2026 (medias orientativas, escala ~40-95).
 # Primera: 30 equipos (ESPN, Liga Profesional 2026) · Primera Nacional: 32 (ESPN,
-# Primera Nacional 2026) · Federal A: los 37 participantes del Torneo Federal A 2026.
+# Primera Nacional 2026) · debajo de la Primera Nacional el fútbol argentino se divide
+# geográficamente: Federal A (clubes del interior) y Primera B (clubes metropolitanos,
+# CABA/Gran Buenos Aires). Ninguna de las dos se simula todavía (no tienen fixture ni
+# tabla propia): son solo el lugar de donde salen y a donde van los movimientos de la
+# Primera Nacional, cada uno según si el club es del interior o metropolitano.
 # ----------------------------------------------------------------------------
 EQUIPOS = {
-    "River Plate": 84, "Boca Juniors": 82, "Estudiantes (LP)": 81,
-    "Racing": 80, "Vélez": 80, "Rosario Central": 79,
-    "Talleres": 77, "Lanús": 77, "Huracán": 76,
-    "Independiente": 76, "Belgrano": 76, "San Lorenzo": 75,
+    "River Plate": 80, "Boca Juniors": 80, "Estudiantes (LP)": 79,
+    "Racing": 77, "Vélez": 79, "Rosario Central": 77,
+    "Talleres": 76, "Lanús": 77, "Huracán": 74,
+    "Independiente": 76, "Belgrano": 76, "San Lorenzo": 74,
     "Argentinos Juniors": 75, "Independiente Rivadavia": 74, "Defensa y Justicia": 73,
     "Gimnasia (LP)": 72, "Unión": 72, "Newell's": 71,
-    "Platense": 71, "Instituto": 70, "Tigre": 70,
+    "Platense": 70, "Instituto": 71, "Tigre": 70,
     "Banfield": 70, "Central Córdoba (SdE)": 70, "Barracas Central": 68,
-    "Atlético Tucumán": 68, "Sarmiento (Junín)": 66, "Deportivo Riestra": 65,
-    "Gimnasia (Mendoza)": 64, "Estudiantes (Río Cuarto)": 63, "Aldosivi": 63,
+    "Atlético Tucumán": 68, "Sarmiento (Junín)": 68, "Deportivo Riestra": 64,
+    "Gimnasia (Mendoza)": 69, "Estudiantes (Río Cuarto)": 63, "Aldosivi": 67,
 }
 EQUIPOS_B = {
-    "Godoy Cruz": 68, "Colón": 68, "Almagro": 66,
-    "Quilmes": 66, "Patronato": 65, "San Martín (San Juan)": 64,
-    "Ferro": 64, "Chacarita": 63, "Atlanta": 63,
-    "Nueva Chicago": 62, "All Boys": 62, "San Martín (Tucumán)": 62,
-    "Deportivo Madryn": 61, "Temperley": 60, "Deportivo Morón": 60,
-    "Almirante Brown": 60, "Racing (Córdoba)": 60, "Gimnasia (Jujuy)": 60,
+    "Godoy Cruz": 68, "Colón": 68, "Almagro": 62,
+    "Quilmes": 64, "Patronato": 64, "San Martín (San Juan)": 64,
+    "Ferro": 64, "Chacarita": 62, "Atlanta": 63,
+    "Nueva Chicago": 60, "All Boys": 60, "San Martín (Tucumán)": 62,
+    "Deportivo Madryn": 61, "Temperley": 62, "Deportivo Morón": 64,
+    "Almirante Brown": 60, "Racing (Córdoba)": 60, "Gimnasia (Jujuy)": 64,
     "Deportivo Maipú": 60, "Güemes": 60, "Agropecuario": 60,
     "Chaco For Ever": 59, "Defensores de Belgrano": 59, "Mitre (SdE)": 58,
     "Central Norte": 58, "Atlético de Rafaela": 58, "Ciudad de Bolívar": 57,
     "Tristán Suárez": 57, "Los Andes": 57, "Estudiantes (BA)": 57,
     "San Miguel": 56, "Colegiales": 55,
+    "Midland": 56, "San Telmo": 58,
+    "Gimnasia y Tiro": 61, "Acassuso": 57,
 }
 # Categoría inferior: de acá salen los 6 equipos que reemplazan a los descendidos de la B
 # y hacia acá bajan los 6 que descienden de la B (no se simula esa liga).
@@ -82,16 +89,29 @@ EQUIPOS_FEDERAL = {
     "9 de Julio (Rafaela)": 51, "Atlético Escobar": 45, "Defensores de Belgrano (VR)": 49,
     "Douglas Haig": 53, "El Linqueño": 47, "Gimnasia (Chivilcoy)": 50,
     "Gimnasia (CdU)": 51, "Independiente (Chivilcoy)": 50, "Sportivo Las Parejas": 49,
-    "Sportivo Belgrano": 52, "Bartolomé Mitre (Posadas)": 48, "Boca Unidos": 51,
-    "Defensores de Vilelas": 44, "Juventud Antoniana": 50, "San Martín (Formosa)": 47,
+    "Sportivo Belgrano": 51, "Bartolomé Mitre (Posadas)": 48, "Boca Unidos": 51,
+    "Defensores de Vilelas": 44, "Juventud Antoniana": 50, "San Martín (Formosa)": 50,
     "Sarmiento (La Banda)": 50, "Sarmiento (Resistencia)": 47, "Sol de América (Formosa)": 48,
-    "Tucumán Central": 45, "Argentino (Monte Maíz)": 49, "Atenas (Río Cuarto)": 49,
-    "Cipolletti": 51, "Costa Brava": 49, "Deportivo Rincón": 46,
-    "FADEP": 46, "Huracán Las Heras": 50, "Juventud Unida Universitario": 48,
-    "San Martín (Mendoza)": 49, "Alvarado": 55, "Círculo Deportivo": 47,
+    "Tucumán Central": 44, "Argentino (Monte Maíz)": 51, "Atenas (Río Cuarto)": 50,
+    "Cipolletti": 51, "Costa Brava": 49, "Deportivo Rincón": 44,
+    "FADEP": 44, "Huracán Las Heras": 50, "Juventud Unida Universitario": 48,
+    "San Martín (Mendoza)": 49, "Alvarado": 53, "Círculo Deportivo": 47,
     "Germinal": 48, "Guillermo Brown": 53, "Kimberley": 49,
-    "Olimpo": 52, "Ramón Santamarina": 51, "Sol de Mayo": 48,
+    "Olimpo": 52, "Ramón Santamarina": 49, "Sol de Mayo": 47,
     "Villa Mitre": 50,
+}
+# Primera B (Metropolitana): clubes de CABA / Gran Buenos Aires. Cumple el mismo rol
+# que el Federal A pero para el lado metropolitano (tampoco se simula esta liga).
+EQUIPOS_PRIMERA_B = {
+    "Deportivo Español": 44, "Excursionistas": 50, "Comunicaciones": 50,
+    "Sacachispas": 39, "UAI Urquiza": 40, "Cañuelas": 44,
+    "Berazategui": 43, "Liniers": 44, "Argentino de Merlo": 44,
+    "Yupanqui": 46, "Victoriano Arenas": 47, "Talleres (RE)": 49,
+    "Justo José de Urquiza": 40, "Atlas": 39, "Cambaceres": 46,
+    "Dock Sud": 40, "Fénix": 40, "Central Ballester": 40,
+    "Deportivo Laferrere": 45, "El Porvenir": 44, "Ituzaingó": 44,
+    "Puerto Nuevo": 38, "Muñiz": 38, "Villa San Carlos": 47,"Villa Dálmine": 45,
+    "Deportivo Merlo": 40, "Brown de Adrogué": 44, "Arsenal" :50,
 }
 
 # Escudos oficiales: ESPN (Primera y Primera Nacional), Wikimedia Commons / Wikipedia y
@@ -197,16 +217,80 @@ ESCUDOS = {
     "Ramón Santamarina": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Escudo_del_Club_Santa_Marina_de_Tandil.svg/120px-Escudo_del_Club_Santa_Marina_de_Tandil.svg.png",
     "Sol de Mayo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Club_Sol_de_Mayo.png/120px-Club_Sol_de_Mayo.png",
     "Villa Mitre": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Escudo_Club_Villa_Mitre.png/120px-Escudo_Club_Villa_Mitre.png",
+    "Acassuso": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj5jU0bnkbnc6e6EqZE87i09WXizE0DrsLWNtjw6S47G9NP6l6WEZQs0xPYW8E1kOp5_bhXYmKzMAt79cc1lzRfjmMsVbkQTHdhnjUlHcWYrjfYRdoIHxUMnHTzg3yD_KI4Yc1MG5GTmR5Ai7GonAp_vGT41WuCCbYbKYinvRHxE_W06KhmFFu0RRXd/s512/Acassuso.png",
+    "Gimnasia y Tiro": "https://2.bp.blogspot.com/-c1rp4nLOdHs/W-zUDjpZZKI/AAAAAAABSzQ/X2nSsoNmU0oFB_3fVLLngcBBLUvSsaYQQCLcBGAs/s1600/Club%2Bde%2BGimnasia%2By%2BTiro.png",
+    "Midland": "https://www.estadiosdeargentina.com.ar/wp-content/uploads/2015/01/Midland_escudo.png",
+    "San Telmo": "https://clubsantelmo.com.ar/wp-content/uploads/2021/03/ESCUDO-ACTUAL.png",
+    "Argentino de Merlo": "https://images.seeklogo.com/logo-png/64/2/club-atletico-argentino-de-merlo-buenos-aires-logo-png_seeklogo-644084.png",
+    "Arsenal": "https://logos-world.net/wp-content/uploads/2020/04/Arsenal-Logo.png",
+    
+
 }
+
+# Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
+# Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
+# Primera B) el día que descienda del todo. Los del Federal A ya son todos del
+# interior y los de Primera B ya son todos metropolitanos, así que acá sólo hace
+# falta etiquetar a mano los de Primera y Primera Nacional.
+ORIGEN = {
+    # Primera
+    "River Plate": "Metropolitana", "Boca Juniors": "Metropolitana",
+    "Estudiantes (LP)": "Metropolitana", "Racing": "Metropolitana",
+    "Vélez": "Metropolitana", "Rosario Central": "Interior",
+    "Talleres": "Interior", "Lanús": "Metropolitana",
+    "Huracán": "Metropolitana", "Independiente": "Metropolitana",
+    "Belgrano": "Interior", "San Lorenzo": "Metropolitana",
+    "Argentinos Juniors": "Metropolitana", "Independiente Rivadavia": "Interior",
+    "Defensa y Justicia": "Metropolitana", "Gimnasia (LP)": "Metropolitana",
+    "Unión": "Interior", "Newell's": "Interior",
+    "Platense": "Metropolitana", "Instituto": "Interior",
+    "Tigre": "Metropolitana", "Banfield": "Metropolitana",
+    "Central Córdoba (SdE)": "Interior", "Barracas Central": "Metropolitana",
+    "Atlético Tucumán": "Interior", "Sarmiento (Junín)": "Interior",
+    "Deportivo Riestra": "Metropolitana", "Gimnasia (Mendoza)": "Interior",
+    "Estudiantes (Río Cuarto)": "Interior", "Aldosivi": "Interior",
+    # Primera Nacional
+    "Godoy Cruz": "Interior", "Colón": "Interior", "Almagro": "Metropolitana",
+    "Quilmes": "Metropolitana", "Patronato": "Interior",
+    "San Martín (San Juan)": "Interior", "Ferro": "Metropolitana",
+    "Chacarita": "Metropolitana", "Atlanta": "Metropolitana",
+    "Nueva Chicago": "Metropolitana", "All Boys": "Metropolitana",
+    "San Martín (Tucumán)": "Interior", "Deportivo Madryn": "Interior",
+    "Temperley": "Metropolitana", "Deportivo Morón": "Metropolitana",
+    "Almirante Brown": "Metropolitana", "Racing (Córdoba)": "Interior",
+    "Gimnasia (Jujuy)": "Interior", "Deportivo Maipú": "Interior",
+    "Güemes": "Interior", "Agropecuario": "Interior",
+    "Chaco For Ever": "Interior", "Defensores de Belgrano": "Metropolitana",
+    "Mitre (SdE)": "Interior", "Central Norte": "Interior",
+    "Atlético de Rafaela": "Interior", "Ciudad de Bolívar": "Interior",
+    "Tristán Suárez": "Metropolitana", "Los Andes": "Metropolitana",
+    "Estudiantes (BA)": "Metropolitana", "San Miguel": "Metropolitana",
+    "Colegiales": "Metropolitana",
+    "Midland": "Metropolitana", "San Telmo": "Metropolitana",
+    "Gimnasia y Tiro": "Interior", "Acassuso": "Metropolitana",
+}
+
+
+def origen(nombre):
+    """"Interior" o "Metropolitana": a qué categoría baja este club si algún día
+    desciende del todo (Federal A o Primera B, respectivamente)."""
+    if nombre in EQUIPOS_FEDERAL:
+        return "Interior"
+    if nombre in EQUIPOS_PRIMERA_B:
+        return "Metropolitana"
+    return ORIGEN.get(nombre, "Interior")
+
 
 N = len(EQUIPOS)            # Primera
 NB = len(EQUIPOS_B)         # Primera Nacional
 NF = len(EQUIPOS_FEDERAL)   # Federal A
+NPB = len(EQUIPOS_PRIMERA_B)  # Primera B
 
-_todos = list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL)
-if N != 30 or NB != 32 or NF < 6 or len(set(_todos)) != len(_todos):
-    st.error("Primera debe tener 30 equipos, la Primera Nacional 32, el Federal A al menos 6, "
-             f"y no puede haber nombres repetidos. Ahora hay {N}, {NB} y {NF}.")
+_todos = list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
+if N != 30 or NB != 36 or NF < 6 or NPB < 6 or len(set(_todos)) != len(_todos):
+    st.error("Primera debe tener 30 equipos, la Primera Nacional 36, el Federal A y la "
+             "Primera B al menos 6 cada uno, y no puede haber nombres repetidos. Ahora hay "
+             f"{N}, {NB}, {NF} y {NPB}.")
     st.stop()
 
 ESCALA = 20.0        # cuánto pesa la diferencia de medias en los goles esperados
@@ -232,12 +316,12 @@ ZONAS = ["Campeonato", "Intermedia", "Descenso"]
 STATS = ("pj", "g", "e", "p", "gf", "gc")
 
 # Primera Nacional
-B_ZONA_TAM = NB // 2              # 16 equipos por zona en la fase 1
-B_TAM2 = [10, 10, 12]             # Campeonato, Intermedia, Descenso
-B_F1_ZONAL = B_ZONA_TAM - 1        # 15 fechas de zona (una rueda de 16)
+B_ZONA_TAM = NB // 2              # 18 equipos por zona en la fase 1
+B_TAM2 = [12, 12, 12]             # Campeonato, Intermedia, Descenso
+B_F1_ZONAL = B_ZONA_TAM - 1        # 17 fechas de zona (una rueda de 18)
 B_F1_INTER = 8                     # 8 fechas interzonales antes de pasar a la fase 2
-B_F1 = B_F1_ZONAL + B_F1_INTER     # 23 fechas en total en la fase 1 de la B
-B_F2 = B_TAM2[2] - 1              # 11 fechas (la zona de 12 es la más larga)
+B_F1 = B_F1_ZONAL + B_F1_INTER     # 25 fechas en total en la fase 1 de la B
+B_F2 = B_TAM2[2] - 1              # 11 fechas (las tres zonas son de 12)
 B_RED = 4                         # octavos, cuartos, semifinales, final
 B_TOTAL = B_F1 + B_F2 + B_RED + 1 # + promoción = 31
 B_ETAPAS = ["Octavos del reducido", "Cuartos del reducido", "Semifinales del reducido",
@@ -284,9 +368,9 @@ def destino(pos):
 
 def destino_b1(pos):
     """Fase 1 de la B: a qué zona de la fase 2 pasa según la posición en la zona A/B."""
-    if pos <= 5:
+    if pos <= 6:
         return "→ Zona Campeonato"
-    if pos <= 10:
+    if pos <= 12:
         return "→ Zona Intermedia"
     return "→ Zona Descenso"
 
@@ -298,7 +382,7 @@ def destino_b2(z, pos):
             return "Campeón · Ascenso"
         if pos == 2:
             return "Ascenso directo"
-        return "Cuartos del reducido" if pos <= 6 else "Octavos del reducido"
+        return "Cuartos del reducido" if pos <= 4 else "Octavos del reducido"
     if z == 1:
         return "Octavos del reducido" if pos <= 4 else "Eliminado"
     return "Permanece" if pos <= 6 else "Desciende"
@@ -755,7 +839,7 @@ def iniciar_fase2_b(SB, rng):
     SB["tablas_f1"] = [tabla_b_f1(SB, z) for z in range(2)]
     ordA = SB["tablas_f1"][0]["id"].to_numpy()
     ordB = SB["tablas_f1"][1]["id"].to_numpy()
-    cortes = ((0, 5), (5, 10), (10, 16))       # 5+5 / 5+5 / 6+6 = 10 / 10 / 12
+    cortes = ((0, 6), (6, 12), (12, 18))       # 6+6 / 6+6 / 6+6 = 12 / 12 / 12
     zonas2 = []
     for a, b in cortes:
         ids = np.concatenate([ordA[a:b], ordB[a:b]])
@@ -798,17 +882,17 @@ def iniciar_reducido(SB):
         return {"id": idx, "zona": np.full(idx.shape, zona), "pts": pts[idx],
                 "seed": np.arange(seed0, seed0 + idx.shape[1])[None, :]}
 
-    directos = bloque(ids[0][2:6], 1, 0)                                     # 3°-6° Campeonato
-    octavos = unir(bloque(ids[0][6:10], 5, 0), bloque(ids[1][:4], 9, 1))     # 7°-10° C + 1°-4° I
+    directos = bloque(ids[0][2:4], 1, 0)                                     # 3°-4° Campeonato
+    octavos = unir(bloque(ids[0][4:12], 3, 0), bloque(ids[1][:4], 11, 1))    # 5°-12° C + 1°-4° I
     SB["red"] = {"directos": directos, "octavos": octavos, "ganadores": None}
 
     filas = []
-    for i in range(4):
+    for i in range(2):
         filas.append((i + 1, SB["nombres"][ids[0][2 + i]], f"{3 + i}° Campeonato", "Cuartos"))
+    for i in range(8):
+        filas.append((3 + i, SB["nombres"][ids[0][4 + i]], f"{5 + i}° Campeonato", "Octavos"))
     for i in range(4):
-        filas.append((5 + i, SB["nombres"][ids[0][6 + i]], f"{7 + i}° Campeonato", "Octavos"))
-    for i in range(4):
-        filas.append((9 + i, SB["nombres"][ids[1][i]], f"{1 + i}° Intermedia", "Octavos"))
+        filas.append((11 + i, SB["nombres"][ids[1][i]], f"{1 + i}° Intermedia", "Octavos"))
     SB["entrantes"] = pd.DataFrame(filas, columns=["Mérito", "Equipo", "Origen", "Entra en"])
 
 
@@ -868,7 +952,7 @@ def simular_fecha_b(S, P):
         if etapa == 0:
             T = red["octavos"]
         elif etapa == 1:
-            T = unir(red["directos"], red["ganadores"])   # 3°-6° de Campeonato + 4 ganadores
+            T = unir(red["directos"], red["ganadores"])   # 3°-4° de Campeonato + 6 ganadores
         else:
             T = red["ganadores"]
         A, B = cruces_mejor_peor(T)
@@ -919,7 +1003,7 @@ def simular_fecha_b(S, P):
 # ----------------------------------------------------------------------------
 # ESTADO GLOBAL Y CAMBIO DE TEMPORADA
 # ----------------------------------------------------------------------------
-VERSION_ESTADO = 4       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 6       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():
@@ -929,10 +1013,12 @@ def crear_estado():
         "rng": rng, "temp": 1, "campeones": [], "movimientos": None,
         "rating": {**{k: float(v) for k, v in EQUIPOS.items()},
                    **{k: float(v) for k, v in EQUIPOS_B.items()},
-                   **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()}},
+                   **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()},
+                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()}},
         "nombres": list(EQUIPOS),
         "r": np.array(list(EQUIPOS.values()), dtype=float),
         "federal": list(EQUIPOS_FEDERAL),
+        "primera_b": list(EQUIPOS_PRIMERA_B),
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
     nueva_estructura(S)
@@ -963,21 +1049,29 @@ def nueva_temporada(S, volatilidad):
         suben.append(SB["nombres"][promo["b_id"]])
         bajan_p.append(p27)
     bajan_b = [SB["nombres"][i] for i in SB["desc_b"]]              # 7° al 12° de Zona Descenso
+    bajan_b_fed = [n for n in bajan_b if origen(n) == "Interior"]
+    bajan_b_pb = [n for n in bajan_b if origen(n) == "Metropolitana"]
 
     S["nombres"] = [n for n in S["nombres"] if n not in bajan_p] + suben
     base_b = [n for n in SB["nombres"] if n not in suben and n not in bajan_b] + bajan_p
-    # Ingresan del Federal A tantos equipos como falten para completar los 32
+    # Ingresan del Federal A y de la Primera B tantos equipos como falten para
+    # completar los 32, en conjunto y con más chances los de mejor media.
     faltan = NB - len(base_b)
-    pool = S["federal"]
+    pool = S["federal"] + S["primera_b"]
     w = np.exp((np.array([S["rating"][n] for n in pool]) - 50.0) / 6.0)
-    elegidos = rng.choice(len(pool), size=faltan, replace=False, p=w / w.sum())
+    elegidos = set(rng.choice(len(pool), size=faltan, replace=False, p=w / w.sum()).tolist())
     entran = [pool[i] for i in elegidos]
-    S["federal"] = [n for i, n in enumerate(pool) if i not in set(elegidos)] + bajan_b
+    resto = [n for i, n in enumerate(pool) if i not in elegidos]
+    S["federal"] = [n for n in resto if origen(n) == "Interior"] + bajan_b_fed
+    S["primera_b"] = [n for n in resto if origen(n) == "Metropolitana"] + bajan_b_pb
     SB["nombres"] = base_b + entran
 
+    entran_fed = [n for n in entran if origen(n) == "Interior"]
+    entran_pb = [n for n in entran if origen(n) == "Metropolitana"]
     S["movimientos"] = {
         "directos": directos, "reducido": reducido,
-        "bajan_p": bajan_p, "bajan_b": bajan_b, "entran": entran,
+        "bajan_p": bajan_p, "bajan_b_fed": bajan_b_fed, "bajan_b_pb": bajan_b_pb,
+        "entran_fed": entran_fed, "entran_pb": entran_pb,
         "promo_texto": (
             f"La promoción la ganó {'el equipo de la B' if promo['gana_b'] else p27}"
             + (f": asciende {suben[-1]} y baja {p27}." if promo["gana_b"]
@@ -986,7 +1080,7 @@ def nueva_temporada(S, volatilidad):
 
     # 3) las medias vuelven un poco hacia el promedio de la liga en la que juegan
     #    (los ascendidos suben un poco, los descendidos bajan) más un ruido aleatorio
-    for nombres in (S["nombres"], SB["nombres"], S["federal"]):
+    for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"]):
         arr = np.array([S["rating"][n] for n in nombres])
         arr = arr + REVERSION * (arr.mean() - arr) + rng.normal(0, volatilidad, len(arr))
         arr = np.clip(arr, MIN_R, MAX_R)
@@ -1148,6 +1242,7 @@ COLOR_COMP = [
     ("Zona A", "#4f46e5"), ("Zona B", "#0891b2"), ("Octavos", "#2563eb"),
     ("Cuartos", "#1d4ed8"), ("Semifinal", "#7c3aed"), ("Final", "#b7860b"),
     ("Promoción", "#9333ea"), ("Fase 1", "#475569"), ("Federal A", "#b45309"),
+    ("Primera B", "#0369a1"),
     ("Primera División", "#1e5aa8"), ("Primera Nacional", "#0f766e"),
 ]
 esc = html.escape
@@ -1235,6 +1330,8 @@ def categoria_de(nombre):
         return "Primera Nacional"
     if nombre in S["federal"]:
         return "Federal A"
+    if nombre in S["primera_b"]:
+        return "Primera B"
     return ""
 
 
@@ -1387,9 +1484,10 @@ def render_ficha(nombre, clave):
         f'<div style="margin-top:6px">{chip(cat) if cat else ""} '
         f'<span style="font-size:.8rem;opacity:.65">Temporada {S["temp"]}</span></div></div></div>',
         unsafe_allow_html=True)
-    if cat == "Federal A":
-        aviso("El Federal A no se simula partido a partido. Si este club asciende a la Primera "
-              "Nacional, acá vas a ver todos sus partidos.")
+    if cat in ("Federal A", "Primera B"):
+        articulo = "El" if cat == "Federal A" else "La"
+        aviso(f"{articulo} {cat} no se simula partido a partido. Si este club asciende a la "
+              "Primera Nacional, acá vas a ver todos sus partidos.")
         return
     st.markdown(
         f'<div class="rec"><div><b>{len(partidos)}</b><span>PJ</span></div>'
@@ -1935,7 +2033,7 @@ with tab_b:
         fase_txt = "Terminada"
 
     c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip("Primera Nacional · 32 equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
+    c1.markdown(chip("Primera Nacional · 36 equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
                 unsafe_allow_html=True)
     if c2.button("▶️ Próxima fecha", key="b_next", width="stretch", type="primary",
                  disabled=terminada_b or b_espera_primera):
@@ -1963,7 +2061,7 @@ with tab_b:
                   "🏁 Definiciones"])
     with sb[0]:
         if fb < B_F1:
-            seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 16 equipos por zona", "#4f46e5")
+            seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 18 equipos por zona", "#4f46e5")
             tabs_b = st.tabs(["Zona A", "Zona B"])
             for z, tab in enumerate(tabs_b):
                 with tab:
@@ -1988,10 +2086,10 @@ with tab_b:
                 "Fase 1: dos zonas de 16, una rueda, más 8 fechas interzonales (localía fija "
                 "4 y 4) cruzando ambas zonas. "
                 "Después los puntos vuelven a 0 y se arman "
-                "Campeonato (10), Intermedia (10) y Descenso (12), una rueda cada una "
+                "Campeonato, Intermedia y Descenso (12 cada una), una rueda cada una "
                 "(si dos equipos ya se cruzaron en la fase 1, la revancha es con la localía "
-                "invertida). Campeonato: 1° campeón y ascenso, 2° ascenso, 3°-6° a cuartos, "
-                "7°-10° a octavos. Intermedia: 1°-4° a octavos. Descenso: bajan los 6 últimos. "
+                "invertida). Campeonato: 1° campeón y ascenso, 2° ascenso, 3°-4° a cuartos, "
+                "5°-12° a octavos. Intermedia: 1°-4° a octavos. Descenso: bajan los 6 últimos. "
                 "Reducido a partido único con penales directos; el campeón asciende y el perdedor "
                 "de la final juega la promoción contra el 27° de Primera.")
         if fb == 0:
@@ -2009,8 +2107,8 @@ with tab_b:
                 "Octavos → Cuartos → Semifinal → Final · partido único, penales si empatan · "
                 "L = local, V = visitante, N = neutral", "#2563eb")
         if fb < B_F1 + B_F2:
-            aviso("El cuadro se completa al terminar la fase 2. Entran 3°-6° de Zona Campeonato "
-                  "(directo a cuartos), 7°-10° de Campeonato y 1°-4° de Intermedia (octavos).")
+            aviso("El cuadro se completa al terminar la fase 2. Entran 3°-4° de Zona Campeonato "
+                  "(directo a cuartos), 5°-12° de Campeonato y 1°-4° de Intermedia (octavos).")
         st.markdown(bracket_html(SB), unsafe_allow_html=True)
         if SB["entrantes"] is not None:
             with st.expander("Clasificados al reducido (orden de mérito)"):
@@ -2058,21 +2156,25 @@ with tab_b:
                         st.caption("La juega el perdedor de la final del reducido contra el 27° "
                                    "de Primera.")
                 with st.expander("⬇️ Descensos", expanded=False):
-                    st.markdown('<div class="mlab">Descienden al Federal A (7° al 12° de Zona '
-                                'Descenso)</div>'
-                                + lista_equipos_html([(nom_b[i], "") for i in SB["desc_b"]]),
-                                unsafe_allow_html=True)
+                    st.markdown(
+                        '<div class="mlab">Descienden (7° al 12° de Zona Descenso): al Federal '
+                        'A los del interior, a la Primera B los metropolitanos</div>'
+                        + lista_equipos_html([
+                            (nom_b[i], "Federal A" if origen(nom_b[i]) == "Interior" else "Primera B")
+                            for i in SB["desc_b"]
+                        ]), unsafe_allow_html=True)
 
 # ============================================================================
 # CLUBES
 # ============================================================================
 with tab_c:
     seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
-    cat = st.segmented_control("Categoría", ["Primera División", "Primera Nacional", "Federal A"],
+    cat = st.segmented_control("Categoría",
+                               ["Primera División", "Primera Nacional", "Federal A", "Primera B"],
                                default="Primera División", key="cat_clubes")
     cat = cat or "Primera División"
     lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
-                    "Federal A": S["federal"]}[cat], key=norm)
+                    "Federal A": S["federal"], "Primera B": S["primera_b"]}[cat], key=norm)
     elegido = st.selectbox("Club", lista, index=None, placeholder="Elegí un club…",
                            key=f"club_sel_{cat}")
     if elegido:
@@ -2098,9 +2200,13 @@ with tab_h:
                 f'<div><div class="mlab down">⬇️ Descendieron a la Primera Nacional</div>'
                 f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
                 f'<div><div class="mlab down">⬇️ Descendieron al Federal A</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["bajan_b"]])}</div>'
+                f'{lista_equipos_html([(n, "") for n in mv["bajan_b_fed"]])}</div>'
+                f'<div><div class="mlab down">⬇️ Descendieron a la Primera B</div>'
+                f'{lista_equipos_html([(n, "") for n in mv["bajan_b_pb"]])}</div>'
                 f'<div><div class="mlab up">⬆️ Ingresaron desde el Federal A</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["entran"]])}</div>'
+                f'{lista_equipos_html([(n, "") for n in mv["entran_fed"]])}</div>'
+                f'<div><div class="mlab up">⬆️ Ingresaron desde la Primera B</div>'
+                f'{lista_equipos_html([(n, "") for n in mv["entran_pb"]])}</div>'
                 f'</div><div style="margin-top:6px;font-size:.88rem">🔁 {esc(mv["promo_texto"])}</div>',
                 unsafe_allow_html=True)
     if S["campeones"]:
