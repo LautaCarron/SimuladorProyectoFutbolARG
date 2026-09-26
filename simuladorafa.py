@@ -82,17 +82,17 @@ EQUIPOS = {
 EQUIPOS_B = {
     "Godoy Cruz": 68, "Colón": 68, "Almagro": 62,
     "Quilmes": 64, "Patronato": 64, "San Martín (San Juan)": 64,
-    "Ferro": 64, "Chacarita": 62, "Atlanta": 63,
-    "Nueva Chicago": 60, "All Boys": 60, "San Martín (Tucumán)": 62,
-    "Deportivo Madryn": 61, "Temperley": 62, "Deportivo Morón": 64,
-    "Almirante Brown": 60, "Racing (Córdoba)": 60, "Gimnasia (Jujuy)": 64,
-    "Deportivo Maipú": 60, "Güemes": 60, "Agropecuario": 60,
-    "Chaco For Ever": 59, "Defensores de Belgrano": 59, "Mitre (SdE)": 58,
+    "Ferro": 64, "Chacarita": 61, "Atlanta": 62,
+    "Nueva Chicago": 59, "All Boys": 60, "San Martín (Tucumán)": 63,
+    "Deportivo Madryn": 62, "Temperley": 63, "Deportivo Morón": 64,
+    "Almirante Brown": 59, "Racing (Córdoba)": 60, "Gimnasia (Jujuy)": 64,
+    "Deportivo Maipú": 60, "Güemes": 50, "Agropecuario": 60,
+    "Chaco For Ever": 58, "Defensores de Belgrano": 58, "Mitre (SdE)": 58,
     "Central Norte": 58, "Atlético de Rafaela": 58, "Ciudad de Bolívar": 57,
     "Tristán Suárez": 57, "Los Andes": 57, "Estudiantes (BA)": 57,
-    "San Miguel": 56, "Colegiales": 55,
-    "Midland": 56, "San Telmo": 58,
-    "Gimnasia y Tiro": 61, "Acassuso": 57,
+    "San Miguel": 55, "Colegiales": 55,
+    "Midland": 53, "San Telmo": 54,
+    "Gimnasia y Tiro": 61, "Acassuso": 53,
 }
 # Categoría inferior: de acá salen los 6 equipos que reemplazan a los descendidos de la B
 # y hacia acá bajan los 6 que descienden de la B (no se simula esa liga).
@@ -108,24 +108,28 @@ EQUIPOS_FEDERAL = {
     "FADEP": 44, "Huracán Las Heras": 50, "Juventud Unida Universitario": 48,
     "San Martín (Mendoza)": 49, "Alvarado": 53, "Círculo Deportivo": 47,
     "Germinal": 48, "Guillermo Brown": 53, "Kimberley": 49,
-    "Olimpo": 52, "Ramón Santamarina": 49, "Sol de Mayo": 47,
+    "Olimpo": 53, "Ramón Santamarina": 49, "Sol de Mayo": 47,
     "Villa Mitre": 50,
 }
 # Primera B (Metropolitana): clubes de CABA / Gran Buenos Aires. Cumple el mismo rol
 # que el Federal A pero para el lado metropolitano (tampoco se simula esta liga).
 EQUIPOS_PRIMERA_B = {
-    "Deportivo Español": 44, "Excursionistas": 50, "Comunicaciones": 50,
-    "Sacachispas": 39, "UAI Urquiza": 40, "Cañuelas": 44,
-    "Berazategui": 43, "Liniers": 44, "Argentino de Merlo": 44,
-    "Yupanqui": 46, "Victoriano Arenas": 47, "Talleres (RE)": 49,
-    "Argentino (Q)": 40, "Atlas": 39, "Cambaceres": 46,
-    "Dock Sud": 40, "Fénix": 40, "Central Ballester": 40,
-    "Deportivo Laferrere": 45, "El Porvenir": 44, "Ituzaingó": 44,
-    "Puerto Nuevo": 38, "Villa San Carlos": 47,"Villa Dálmine": 45,
-    "Deportivo Merlo": 40, "Brown de Adrogué": 44, "Arsenal" :50,
-    "Camioneros": 43, "Defensores Unidos": 42, "Real Pilar": 41,
-    "Sportivo Italiano": 44, "Flandria": 43,
+    "Excursionistas": 50, "Comunicaciones": 50,
+    "UAI Urquiza": 40, "Cañuelas": 44, "Liniers": 44,
+    "Argentino de Merlo": 40, "Talleres (RE)": 50, "Argentino (Q)": 40,
+    "Dock Sud": 40, "Fénix": 40, "Deportivo Laferrere": 45,
+    "Villa San Carlos": 47, "Villa Dálmine": 45, "Deportivo Merlo": 40,
+    "Brown de Adrogué": 47, "Arsenal": 50, "Camioneros": 47,
+    "Defensores Unidos": 42, "Sportivo Italiano": 44, "Flandria": 43,
 }
+# Primera C (Metropolitana)
+EQUIPOS_PRIMERA_C = {
+    "Deportivo Español": 40, "Berazategui": 33, "Yupanqui": 30,
+    "Victoriano Arenas": 37, "Atlas": 36, "Cambaceres": 33,
+    "Central Ballester": 32, "El Porvenir": 35, "Ituzaingó": 38,
+    "Puerto Nuevo": 31, "Real Pilar": 41, "Sacachispas": 38,
+}
+
 
 # Escudos oficiales: ESPN (Primera y Primera Nacional), Wikimedia Commons / Wikipedia y
 # TheSportsDB (Federal A). Van ligados al nombre: si un club cambia de categoría,
@@ -315,11 +319,9 @@ ORIGEN = {
 
 
 def origen(nombre):
-    """"Interior" o "Metropolitana": a qué categoría baja este club si algún día
-    desciende del todo (Federal A o Primera B, respectivamente)."""
     if nombre in EQUIPOS_FEDERAL:
         return "Interior"
-    if nombre in EQUIPOS_PRIMERA_B:
+    if nombre in EQUIPOS_PRIMERA_B or nombre in EQUIPOS_PRIMERA_C:
         return "Metropolitana"
     return ORIGEN.get(nombre, "Interior")
 
@@ -370,12 +372,11 @@ N = len(EQUIPOS)            # Primera
 NB = len(EQUIPOS_B)         # Primera Nacional
 NF = len(EQUIPOS_FEDERAL)   # Federal A
 NPB = len(EQUIPOS_PRIMERA_B)  # Primera B
+NPC = len(EQUIPOS_PRIMERA_C)  # Primera C
 
-_todos = list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
-if N != 30 or NB != 36 or NF < 6 or NPB < 6 or len(set(_todos)) != len(_todos):
-    st.error("Primera debe tener 30 equipos, la Primera Nacional 36, el Federal A y la "
-             "Primera B al menos 6 cada uno, y no puede haber nombres repetidos. Ahora hay "
-             f"{N}, {NB}, {NF} y {NPB}.")
+_todos = list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B) + list(EQUIPOS_PRIMERA_C)
+if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or len(set(_todos)) != len(_todos):
+    st.error("Hay un error en la cantidad de equipos o nombres repetidos.")
     st.stop()
 
 ESCALA = 20.0        # cuánto pesa la diferencia de medias en los goles esperados
@@ -1351,81 +1352,86 @@ VERSION_ESTADO = 6       # cambia si se modifica la estructura del estado guarda
 
 
 # ----------------------------------------------------------------------------
-# MOTOR PRIMERA B
+# MOTOR PRIMERA B Y PRIMERA C
 # ----------------------------------------------------------------------------
-def destino_pb(pos):
+def destino_pb(pos, total):
+    if pos <= 2: return "Ascenso directo"
+    if pos >= total - 1: return "Desciende"
+    return ""
+
+def destino_pc(pos):
     return "Ascenso directo" if pos <= 2 else ""
 
-def nueva_estructura_pb(SPB, rng):
-    n = len(SPB["nombres"])
+def nueva_estructura_liga(S_LIGA, rng):
+    n = len(S_LIGA["nombres"])
     base = generar_fixture(n)
-    
-    # Crear ida y vuelta invirtiendo localías
-    fechas = []
-    for pares in base:
-        fechas.append([(int(a), int(b)) for a, b in pares])
-    fechas += [[(v, l) for l, v in fecha] for fecha in fechas]
-    
-    SPB["fechas"] = fechas
-    SPB["total"] = len(fechas)
-    SPB["fecha"] = 0
+    fechas = [[(int(a), int(b)) for a, b in pares] for pares in base]
+    fechas += [[(v, l) for l, v in fecha] for fecha in fechas] # Vuelta
+    S_LIGA["fechas"] = fechas
+    S_LIGA["total"] = len(fechas)
+    S_LIGA["fecha"] = 0
     for k in STATS:
-        SPB[k] = np.zeros(n, dtype=int)
-    SPB["historial"] = []
-    SPB["log"] = []
-    SPB["pos_hist"] = []
-    SPB["campeon"] = None
-    SPB["asc_directo"] = []
+        S_LIGA[k] = np.zeros(n, dtype=int)
+    S_LIGA["historial"] = []
+    S_LIGA["log"] = []
+    S_LIGA["pos_hist"] = []
+    S_LIGA["campeon"] = None
+    S_LIGA["asc_directo"] = []
+    S_LIGA["desc_directo"] = []
 
 def tabla_pb(SPB):
     df = df_stats(SPB["nombres"], SPB["r"], SPB, np.arange(len(SPB["nombres"])))
     df.insert(0, "Pos", df.index + 1)
-    df["Destino"] = [destino_pb(p) for p in df["Pos"]]
+    df["Destino"] = [destino_pb(p, len(SPB["nombres"])) for p in df["Pos"]]
     return df
 
-def simular_fecha_pb(SPB, P, rng):
-    f = SPB["fecha"]
-    if f >= SPB["total"]:
-        return
-    r, nom = SPB["r"], SPB["nombres"]
-    
-    pares = SPB["fechas"][f]
+def tabla_pc(SPC):
+    df = df_stats(SPC["nombres"], SPC["r"], SPC, np.arange(len(SPC["nombres"])))
+    df.insert(0, "Pos", df.index + 1)
+    df["Destino"] = [destino_pc(p) for p in df["Pos"]]
+    return df
+
+def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
+    f = S_LIGA["fecha"]
+    if f >= S_LIGA["total"]: return
+    r, nom = S_LIGA["r"], S_LIGA["nombres"]
+    pares = S_LIGA["fechas"][f]
     h = np.array([x[0] for x in pares])
     a = np.array([x[1] for x in pares])
     gh, ga = jugar(rng, r[h], r[a], **P)
-    sumar_partidos(SPB, h, a, gh, ga)
+    sumar_partidos(S_LIGA, h, a, gh, ga)
     
-    SPB["historial"].append(_fila_historial(SPB, ["Primera B"] * len(h), h, a, gh, ga, ""))
-    
+    S_LIGA["historial"].append(_fila_historial(S_LIGA, [nombre_liga] * len(h), h, a, gh, ga, ""))
     for x, y, g1, g2 in zip(h, a, gh, ga):
-        SPB["log"].append(nuevo_partido("Primera B", f + 1, f"Fecha {f + 1}", "Liga",
-                                        nom[x], nom[y], g1, g2))
-    
-    df = tabla_pb(SPB)
+        S_LIGA["log"].append(nuevo_partido(nombre_liga, f + 1, f"Fecha {f + 1}", "Liga", nom[x], nom[y], g1, g2))
+        
+    df = fn_tabla(S_LIGA)
     pos = np.zeros(len(nom), dtype=int)
     pos[df["id"].to_numpy()] = df["Pos"].to_numpy()
-    SPB["pos_hist"].append((1, pos))
-    SPB["fecha"] += 1
+    S_LIGA["pos_hist"].append((1, pos))
+    S_LIGA["fecha"] += 1
     
-    if SPB["fecha"] == SPB["total"]:
+    if S_LIGA["fecha"] == S_LIGA["total"]:
         ids = df["id"].to_numpy()
-        SPB["campeon"] = int(ids[0])
-        SPB["asc_directo"] = [int(ids[0]), int(ids[1])]
+        S_LIGA["campeon"] = int(ids[0])
+        S_LIGA["asc_directo"] = [int(ids[0]), int(ids[1])]
+        S_LIGA["desc_directo"] = [int(ids[-1]), int(ids[-2])] # Relevante para Primera B
 
 
 def crear_estado():
-    # Semilla tomada del reloj: cada ejecución/reinicio da resultados distintos
     rng = np.random.default_rng(time.time_ns() % (2**32))
     S = {
         "rng": rng, "temp": 1, "campeones": [], "movimientos": None,
         "rating": {**{k: float(v) for k, v in EQUIPOS.items()},
                    **{k: float(v) for k, v in EQUIPOS_B.items()},
                    **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()},
-                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()}},
+                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()},
+                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_C.items()}},
         "nombres": list(EQUIPOS),
         "r": np.array(list(EQUIPOS.values()), dtype=float),
         "federal": list(EQUIPOS_FEDERAL),
         "primera_b": list(EQUIPOS_PRIMERA_B),
+        "primera_c": list(EQUIPOS_PRIMERA_C),
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
     nueva_estructura(S)
@@ -1436,107 +1442,103 @@ def crear_estado():
     nueva_estructura_f(SF, rng)
     S["f"] = SF
     SPB = {"nombres": list(EQUIPOS_PRIMERA_B), "r": np.array(list(EQUIPOS_PRIMERA_B.values()), dtype=float)}
-    nueva_estructura_pb(SPB, rng)
+    nueva_estructura_liga(SPB, rng)
     S["pb"] = SPB
+    SPC = {"nombres": list(EQUIPOS_PRIMERA_C), "r": np.array(list(EQUIPOS_PRIMERA_C.values()), dtype=float)}
+    nueva_estructura_liga(SPC, rng)
+    S["pc"] = SPC
     return S
 
 
 def nueva_temporada(S, volatilidad):
-    """Ascensos, descensos y promoción + evolución de las medias + nuevos fixtures."""
-    SB, SF, rng = S["b"], S["f"], S["rng"]
-    # 1) guardar las medias actuales (incluye ediciones manuales)
-    for nom, x in zip(S["nombres"], S["r"]):
-        S["rating"][nom] = float(x)
-    for nom, x in zip(SB["nombres"], SB["r"]):
-        S["rating"][nom] = float(x)
-    for nom, x in zip(SF["nombres"], SF["r"]):
-        S["rating"][nom] = float(x)
-    for nom, x in zip(S["pb"]["nombres"], S["pb"]["r"]):
-        S["rating"][nom] = float(x)
+    SB, SF, SPB, SPC, rng = S["b"], S["f"], S["pb"], S["pc"], S["rng"]
+    for lig in (S, SB, SF, SPB, SPC):
+        for nom, x in zip(lig["nombres"], lig["r"]):
+            S["rating"][nom] = float(x)
 
-    # 2) ascensos y descensos
     final = tabla_final(S)
     promo = SB["promo"]
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]
     reducido = SB["nombres"][SB["asc_reducido"]]
     suben = directos + [reducido]
-    bajan_p = list(final[final["Pos"] >= N - 2]["Equipo"])          # 28° al 30°
-    if promo["gana_b"]:                                              # gana la promoción el de la B
+    bajan_p = list(final[final["Pos"] >= N - 2]["Equipo"])
+    if promo["gana_b"]:
         suben.append(SB["nombres"][promo["b_id"]])
         bajan_p.append(p27)
-    bajan_b = [SB["nombres"][i] for i in SB["desc_b"]]              # 7° al 12° de Zona Descenso
+        
+    bajan_b = [SB["nombres"][i] for i in SB["desc_b"]]
     bajan_b_fed = [n for n in bajan_b if origen(n) == "Interior"]
     bajan_b_pb = [n for n in bajan_b if origen(n) == "Metropolitana"]
 
     S["nombres"] = [n for n in S["nombres"] if n not in bajan_p] + suben
     base_b = [n for n in SB["nombres"] if n not in suben and n not in bajan_b] + bajan_p
-    # Del Federal A ascienden SIEMPRE los 3 (1°, 2° y el campeón del reducido), sin
-    # importar cuántos hayan bajado ese año a esa categoría. El resto de los lugares
-    # que falten para completar los 36 se sortea entre el Federal A y la Primera B,
-    # con más chances los de mejor media.
+
+    # Ascensos y descensos internos
     ascendidos_f = [SF["nombres"][i] for i in SF["ascendidos"]]
-    ascendidos_pb = [S["pb"]["nombres"][i] for i in S["pb"]["asc_directo"]]
+    ascendidos_pb = [SPB["nombres"][i] for i in SPB["asc_directo"]]
+    descendidos_pb = [SPB["nombres"][i] for i in SPB["desc_directo"]]
+    ascendidos_pc = [SPC["nombres"][i] for i in SPC["asc_directo"]]
     garantizados = list(ascendidos_f) + list(ascendidos_pb)
     
-    sobran = len(base_b) + len(garantizados) - NB
-    if sobran > 0:
-        peores = sorted(base_b, key=lambda n: S["rating"][n])[:sobran]
-        for n in peores:
-            base_b.remove(n)
-            bajan_b.append(n)
-            (bajan_b_fed if origen(n) == "Interior" else bajan_b_pb).append(n)
-
     faltan = max(0, NB - len(base_b) - len(garantizados))
-    pool = [n for n in (S["federal"] + S["primera_b"]) if n not in garantizados]
+    pool_fed = [n for n in S["federal"] if n not in garantizados]
+    pool_pb = [n for n in SPB["nombres"] if n not in garantizados and n not in descendidos_pb]
+    pool = pool_fed + pool_pb
+    
     if faltan > 0:
         w = np.exp((np.array([S["rating"][n] for n in pool]) - 50.0) / 6.0)
         elegidos = set(rng.choice(len(pool), size=faltan, replace=False, p=w / w.sum()).tolist())
     else:
         elegidos = set()
+        
     entran = garantizados + [pool[i] for i in elegidos]
-    resto = [n for i, n in enumerate(pool) if i not in elegidos]
-    S["federal"] = [n for n in resto if origen(n) == "Interior"] + bajan_b_fed
-    S["primera_b"] = [n for n in resto if origen(n) == "Metropolitana"] + bajan_b_pb
+    
+    # Reasignación a las ligas inferiores
+    S["federal"] = [n for i, n in enumerate(pool) if i not in elegidos and origen(n) == "Interior"] + bajan_b_fed
+    S["primera_b"] = [n for i, n in enumerate(pool) if i not in elegidos and origen(n) == "Metropolitana"] + bajan_b_pb + ascendidos_pc
+    S["primera_c"] = [n for n in SPC["nombres"] if n not in ascendidos_pc] + descendidos_pb
+    
     SB["nombres"] = base_b + entran
 
-    entran_fed = [n for n in entran if origen(n) == "Interior"]
-    entran_pb = [n for n in entran if origen(n) == "Metropolitana"]
     S["movimientos"] = {
         "directos": directos, "reducido": reducido,
-        "bajan_p": bajan_p, "bajan_b_fed": bajan_b_fed, "bajan_b_pb": bajan_b_pb,
-        "entran_fed": entran_fed, "entran_pb": entran_pb,
+        "bajan_p": bajan_p, 
+        "bajan_b_fed": bajan_b_fed, 
+        "bajan_b_pb": bajan_b_pb,
+        "suben_f_b": ascendidos_f,
+        "suben_pb_b": ascendidos_pb,
+        "suben_pc_pb": ascendidos_pc, 
+        "bajan_pb_pc": descendidos_pb,
+        "entran_fed": [n for n in entran if origen(n) == "Interior" and n not in ascendidos_f],
+        "entran_pb": [n for n in entran if origen(n) == "Metropolitana" and n not in ascendidos_pb],
         "campeon_federal": SF["nombres"][SF["campeon"]] if SF["campeon"] is not None else None,
-        "ascendidos_federal": ascendidos_f,
-        "promo_texto": (
-            f"La promoción la ganó {'el equipo de la B' if promo['gana_b'] else p27}"
-            + (f": asciende {suben[-1]} y baja {p27}." if promo["gana_b"]
-               else f", que se mantiene en Primera.")),
+        "promo_texto": (f"La promoción la ganó {'el equipo de la B' if promo['gana_b'] else p27}"
+                        + (f": asciende {suben[-1]} y baja {p27}." if promo["gana_b"] else f", que se mantiene en Primera.")),
     }
 
-    # 3) las medias vuelven un poco hacia el promedio de la liga en la que juegan
-    #    (los ascendidos suben un poco, los descendidos bajan) más un ruido aleatorio
-    for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"]):
+    for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"], S["primera_c"]):
         arr = np.array([S["rating"][n] for n in nombres])
         arr = arr + REVERSION * (arr.mean() - arr) + rng.normal(0, volatilidad, len(arr))
         arr = np.clip(arr, MIN_R, MAX_R)
-        for n, x in zip(nombres, arr):
-            S["rating"][n] = float(x)
+        for n, x in zip(nombres, arr): S["rating"][n] = float(x)
+            
     S["r"] = np.array([S["rating"][n] for n in S["nombres"]])
     SB["r"] = np.array([S["rating"][n] for n in SB["nombres"]])
-    SF["nombres"] = list(S["federal"])
-    SF["r"] = np.array([S["rating"][n] for n in SF["nombres"]])
-
+    
     S["temp"] += 1
     S["cerrada_ambas"] = False
     nueva_estructura(S)
     nueva_estructura_b(SB, rng)
     nueva_estructura_f(SF, rng)
     
-    # Reinicio de la Primera B
     S["pb"]["nombres"] = list(S["primera_b"])
     S["pb"]["r"] = np.array([S["rating"][n] for n in S["pb"]["nombres"]])
-    nueva_estructura_pb(S["pb"], rng)
+    nueva_estructura_liga(S["pb"], rng)
+    
+    S["pc"]["nombres"] = list(S["primera_c"])
+    S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
+    nueva_estructura_liga(S["pc"], rng)
 
 
 # ----------------------------------------------------------------------------
@@ -1764,7 +1766,7 @@ def coincide(consulta, texto, fecha, marcadores):
 
 
 def todos_los_partidos():
-    return S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"]
+    return S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"]
 
 
 def categoria_de(nombre):
@@ -1776,6 +1778,8 @@ def categoria_de(nombre):
         return "Federal A"
     if nombre in S["primera_b"]:
         return "Primera B"
+    if nombre in S["primera_c"]:
+        return "Primera C"
     return ""
 
 
@@ -1900,6 +1904,14 @@ def partidos_fecha_pb(n):
             for x, y in SPB["fechas"][n - 1]]
 
 
+def fechas_conocidas_pc(): return SPC["total"]
+
+def partidos_fecha_pc(n):
+    if n <= SPC["fecha"]: return [p for p in SPC["log"] if p["fecha"] == n]
+    nom = SPC["nombres"]
+    return [pendiente("Primera C", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SPC["fechas"][n - 1]]
+
+
 def proximo_partido(nombre):
     if nombre in S["nombres"]:
         for n in range(S["fecha"] + 1, fechas_conocidas_p() + 1):
@@ -1921,6 +1933,10 @@ def proximo_partido(nombre):
             for p in partidos_fecha_pb(n):
                 if nombre in (p["local"], p["visita"]):
                     return p
+    elif nombre in SPC["nombres"]:
+        for n in range(SPC["fecha"] + 1, fechas_conocidas_pc() + 1):
+            for p in partidos_fecha_pc(n):
+                if nombre in (p["local"], p["visita"]): return p
     return None
 
 
@@ -1964,10 +1980,6 @@ def render_ficha(nombre, clave):
         f'<div style="margin-top:6px">{chip(cat) if cat else ""} '
         f'<span style="font-size:.8rem;opacity:.65">Temporada {S["temp"]}</span></div></div></div>',
         unsafe_allow_html=True)
-    if cat == "Primera B":
-        aviso("La Primera B no se simula partido a partido. Si este club asciende a la "
-              "Primera Nacional, acá vas a ver todos sus partidos.")
-        return
     st.markdown(
         f'<div class="rec"><div><b>{len(partidos)}</b><span>PJ</span></div>'
         f'<div><b>{g}</b><span>G</span></div><div><b>{e}</b><span>E</span></div>'
@@ -2066,6 +2078,10 @@ def vista_fixture(liga):
         total, jugadas = fechas_conocidas_pb(), SPB["fecha"]
         obtener, rotulo = partidos_fecha_pb, lambda n: f"Fecha {n}"
         extra = ""
+    elif liga == "pc":
+        total, jugadas = fechas_conocidas_pc(), SPC["fecha"]
+        obtener, rotulo = partidos_fecha_pc, lambda n: f"Fecha {n}"
+        extra = ""
     else:
         total, jugadas = fechas_conocidas_f(), SF["fecha"]
         obtener, rotulo = partidos_fecha_f, lambda n: rotulo_f(SF, n)
@@ -2163,6 +2179,11 @@ def colorear_f(fila):
 
 
 def colorear_pb(fila):
+    c = COLORES_B["Ascenso directo"] if fila["Destino"] == "Ascenso directo" else (COLORES_B["Desciende"] if fila["Destino"] == "Desciende" else "")
+    return [f"background-color: {c}" if c else ""] * len(fila)
+
+
+def colorear_pc(fila):
     c = COLORES_B["Ascenso directo"] if fila["Destino"] == "Ascenso directo" else ""
     return [f"background-color: {c}" if c else ""] * len(fila)
 
@@ -2402,36 +2423,31 @@ with st.sidebar:
 
 P = dict(sorpresa=sorpresa)
 
+
 if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_ESTADO:
     st.session_state.S = crear_estado()
 S = st.session_state.S
-SB = S["b"]
-SF = S["f"]
-SPB = S["pb"]
+SB, SF, SPB, SPC = S["b"], S["f"], S["pb"], S["pc"]
 
 terminada = S["fecha"] >= TOTAL_FECHAS
 terminada_b = SB["fecha"] >= B_TOTAL
 terminada_f = SF["fecha"] >= SF["total"]
 terminada_pb = SPB["fecha"] >= SPB["total"]
-ambas = terminada and terminada_b and terminada_f and terminada_pb
+terminada_pc = SPC["fecha"] >= SPC["total"]
+ambas = terminada and terminada_b and terminada_f and terminada_pb and terminada_pc
 b_espera_primera = SB["fecha"] == B_TOTAL - 1 and not terminada
 
-# ---- Historial de campeones (se registra cuando terminan las dos ligas)
-if ambas and not S["cerrada_ambas"]:
-    S["campeones"].append((S["temp"], tabla_final(S).iloc[0]["Equipo"],
-                           SB["nombres"][SB["campeon"]]))
-    S["cerrada_ambas"] = True
-
-# ---- Cabecera (sin resultados finales: no spoilea la temporada)
 pct_p = 100 * S["fecha"] / TOTAL_FECHAS
 pct_b = 100 * SB["fecha"] / B_TOTAL
 pct_f = 100 * SF["fecha"] / SF["total"]
 pct_pb = 100 * SPB["fecha"] / SPB["total"] if SPB["total"] else 0
+pct_pc = 100 * SPC["fecha"] / SPC["total"] if SPC["total"] else 0
+
 st.markdown(
     f'<div class="hero"><span class="sol">☀</span><div class="hero-top"><div>'
     f'<div class="hero-k">Temporada {S["temp"]} · Fútbol argentino</div>'
     f'<h1>Simulador de la Liga Argentina</h1>'
-    f'<p>Primera División · Primera Nacional · Federal A · Primera B · Promoción</p></div>'
+    f'<p>Primera División · Primera Nacional · Federal A · Primera B · Primera C</p></div>'
     f'<div class="hero-stats">'
     f'<div class="hs"><span>Primera División</span><b>Fecha {S["fecha"]}/{TOTAL_FECHAS}</b>'
     f'<div class="bar"><i style="width:{pct_p:.1f}%"></i></div></div>'
@@ -2441,35 +2457,32 @@ st.markdown(
     f'<div class="bar"><i style="width:{pct_f:.1f}%"></i></div></div>'
     f'<div class="hs"><span>Primera B</span><b>Fecha {SPB["fecha"]}/{SPB["total"]}</b>'
     f'<div class="bar"><i style="width:{pct_pb:.1f}%"></i></div></div>'
+    f'<div class="hs"><span>Primera C</span><b>Fecha {SPC["fecha"]}/{SPC["total"]}</b>'
+    f'<div class="bar"><i style="width:{pct_pc:.1f}%"></i></div></div>'
     f'<div class="hs"><span>Partidos jugados</span>'
-    f'<b>{len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"])}</b></div>'
+    f'<b>{len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])}</b></div>'
     f'</div></div></div>', unsafe_allow_html=True)
 
 g0, g1, g2, g3 = st.columns([3, 1.4, 1.4, 1.2], vertical_alignment="center")
 g0.caption("Simulá fecha por fecha desde cada categoría, o todo junto con los botones de la derecha.")
-if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary",
-             help="Simula lo que falta de las categorías."):
-    while S["fecha"] < TOTAL_FECHAS:
-        simular_fecha(S, P, acumular)
-    while SB["fecha"] < B_TOTAL:
-        simular_fecha_b(S, P)
-    while SF["fecha"] < SF["total"]:
-        simular_fecha_f(SF, P, S["rng"])
-    while SPB["fecha"] < SPB["total"]:
-        simular_fecha_pb(SPB, P, S["rng"])
+if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary"):
+    while S["fecha"] < TOTAL_FECHAS: simular_fecha(S, P, acumular)
+    while SB["fecha"] < B_TOTAL: simular_fecha_b(S, P)
+    while SF["fecha"] < SF["total"]: simular_fecha_f(SF, P, S["rng"])
+    while SPB["fecha"] < SPB["total"]: simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
+    while SPC["fecha"] < SPC["total"]: simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
     st.rerun()
-if g2.button("📅 Nueva temporada", disabled=not ambas, width="stretch",
-             help="Se habilita cuando terminan la Primera, la Primera Nacional (incluida la "
-                  "promoción) y el Federal A. Se aplican ascensos y descensos y cambian las medias."):
+if g2.button("📅 Nueva temporada", disabled=not ambas, width="stretch"):
     nueva_temporada(S, volatilidad)
     st.rerun()
-if g3.button("🔄 Reiniciar", width="stretch", help="Vuelve a la temporada 1."):
+if g3.button("🔄 Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
-tab_p, tab_b, tab_f, tab_pb, tab_c, tab_h = st.tabs([
-    "🏆 Primera División", "🥈 Primera Nacional", "🌎 Federal A", "🚍 Primera B", "🛡️ Clubes", "📜 Historial"
+tab_p, tab_b, tab_f, tab_pb, tab_pc, tab_c, tab_h = st.tabs([
+    "🏆 Primera", "🥈 B Nacional", "🌎 Federal A", "🚍 Primera B", "🚂 Primera C", "🛡️ Clubes", "📜 Historial"
 ])
+
 
 # ============================================================================
 # PRIMERA DIVISIÓN
@@ -2836,55 +2849,90 @@ with tab_f:
 # PRIMERA B
 # ============================================================================
 with tab_pb:
-    fpb = SPB["fecha"]
-    nom_pb = SPB["nombres"]
-    
     c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip(f"Primera B · {len(nom_pb)} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
+    c1.markdown(chip(f"Primera B · {len(SPB['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
     if c2.button("▶️ Próxima fecha", key="pb_next", width="stretch", type="primary", disabled=terminada_pb):
-        simular_fecha_pb(SPB, P, S["rng"])
+        simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
     if c3.button("⏩ Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
-        while SPB["fecha"] < SPB["total"]:
-            simular_fecha_pb(SPB, P, S["rng"])
+        while SPB["fecha"] < SPB["total"]: simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
         
-    barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{fpb} / {SPB['total']}"), ("Partidos jugados", len(SPB["log"]))], pct_pb)
-    
+    barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPB['fecha']} / {SPB['total']}"), ("Partidos jugados", len(SPB["log"]))], pct_pb)
     spb_tabs = st.tabs(["📊 Posiciones", "📅 Fixture y resultados", "🔄 Movimientos", "🏁 Definiciones"])
     
     with spb_tabs[0]:
-        seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros", "#4f46e5")
+        seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros, bajan los 2 últimos", "#4f46e5")
         mostrar_tabla(tabla_pb(SPB), colorear_pb, SPB["pos_hist"])
-        leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"])])
-        
-        if fpb == 0:
-            with st.expander("✏️ Editar medias internas de esta temporada"):
-                ed_pb = st.data_editor(pd.DataFrame({"Equipo": nom_pb, "Media": SPB["r"]}), disabled=["Equipo"], hide_index=True, width="stretch", key=f"editor_pb_{S['temp']}")
-                SPB["r"] = np.clip(ed_pb["Media"].to_numpy(float), MIN_R, MAX_R)
+        leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]), ("Últimos 2 Descenso a Primera C", COLORES_B["Desciende"])])
                 
-    with spb_tabs[1]:
-        vista_fixture("pb")
-        
-    with spb_tabs[2]:
-        render_movimientos(SPB["log"], SPB["pos_hist"], nom_pb, "#0f766e")
+    with spb_tabs[1]: vista_fixture("pb")
+    with spb_tabs[2]: render_movimientos(SPB["log"], SPB["pos_hist"], SPB["nombres"], "#0f766e")
         
     with spb_tabs[3]:
-        seccion("Definiciones de la temporada", "Campeón y ascensos a la Primera Nacional", "#b7860b")
-        if SPB["campeon"] is None:
-            aviso("Las definiciones aparecen acá cuando termina la liga.")
+        seccion("Definiciones de la temporada", "Campeón, ascensos y descensos", "#b7860b")
+        if SPB["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
         else:
             with st.expander("🏆 Campeón de la Primera B", expanded=False):
-                cpb = nom_pb[SPB["campeon"]]
-                st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}</div>'
-                            f'<div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div>'
-                            f'<div class="s">Asciende a la Primera Nacional</div></div>', unsafe_allow_html=True)
-            with st.expander("⬆️ Clasificados · Ascensos", expanded=False):
-                asc_pb = [(nom_pb[SPB["asc_directo"][0]], "campeón"), (nom_pb[SPB["asc_directo"][1]], "2°")]
-                st.markdown(lista_equipos_html(asc_pb), unsafe_allow_html=True)
+                cpb = SPB["nombres"][SPB["campeon"]]
+                st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div></div>', unsafe_allow_html=True)
 
+# ============================================================================
+# PRIMERA C
+# ============================================================================
+with tab_pc:
+    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+    c1.markdown(chip(f"Primera C · {len(SPC['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
+    if c2.button("▶️ Próxima fecha", key="pc_next", width="stretch", type="primary", disabled=terminada_pc):
+        simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
+        st.rerun()
+    if c3.button("⏩ Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
+        while SPC["fecha"] < SPC["total"]: simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
+        st.rerun()
+        
+    barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPC['fecha']} / {SPC['total']}"), ("Partidos jugados", len(SPC["log"]))], pct_pc)
+    spc_tabs = st.tabs(["📊 Posiciones", "📅 Fixture y resultados", "🔄 Movimientos", "🏁 Definiciones"])
+    
+    with spc_tabs[0]:
+        seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros", "#4f46e5")
+        mostrar_tabla(tabla_pc(SPC), colorear_pc, SPC["pos_hist"])
+        leyenda([("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"])])
+                
+    with spc_tabs[1]: vista_fixture("pc")
+    with spc_tabs[2]: render_movimientos(SPC["log"], SPC["pos_hist"], SPC["nombres"], "#0f766e")
+        
+    with spc_tabs[3]:
+        seccion("Definiciones de la temporada", "Campeón y ascensos", "#b7860b")
+        if SPC["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
+        else:
+            with st.expander("🏆 Campeón de la Primera C", expanded=False):
+                cpc = SPC["nombres"][SPC["campeon"]]
+                st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpc, 64)}</div><div class="nm">{esc(cpc)}</div></div>', unsafe_allow_html=True)
+
+
+# ============================================================================
+# CLUBES
+# ============================================================================
+with tab_c:
+    seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
+    cat = st.segmented_control("Categoría",
+                               ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C"],
+                               default="Primera División", key="cat_clubes")
+    cat = cat or "Primera División"
+    lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
+                    "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat], key=norm)
+    elegido = st.selectbox("Club", lista, index=None, placeholder="Elegí un club…", key=f"club_sel_{cat}")
+    if elegido:
+        with st.container(border=True):
+            render_ficha(elegido, "clubes")
+    st.markdown('<div class="mlab" style="margin-top:14px">'
+                f'{esc(cat)} · {len(lista)} clubes</div><div class="cgrid">'
+                + "".join(f'<div class="ct">{crest(n, 52)}<span>{esc(n)}</span></div>' for n in lista)
+                + "</div>", unsafe_allow_html=True)
+
+
 # ============================================================================
 # HISTORIAL
 # ============================================================================
@@ -2896,49 +2944,25 @@ with tab_h:
             st.markdown(
                 '<div class="catgrid">'
                 f'<div><div class="mlab up">⬆️ Ascendieron a Primera</div>'
-                f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + [(mv["reducido"], "reducido")])}</div>'
-                f'<div><div class="mlab down">⬇️ Descendieron a la Primera Nacional</div>'
+                f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + ([(mv["reducido"], "reducido")] if mv["reducido"] else []))}</div>'
+                f'<div><div class="mlab down">⬇️ Descendieron a B Nacional</div>'
                 f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
+                
+                f'<div><div class="mlab up">⬆️ Ascendieron a B Nacional</div>'
+                f'{lista_equipos_html([(n, "del Federal A") for n in mv.get("suben_f_b", [])] + [(n, "de la B Metro") for n in mv.get("suben_pb_b", [])])}</div>'
                 f'<div><div class="mlab down">⬇️ Descendieron al Federal A</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["bajan_b_fed"]])}</div>'
-                f'<div><div class="mlab down">⬇️ Descendieron a la Primera B</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["bajan_b_pb"]])}</div>'
-                f'<div><div class="mlab up">⬆️ Ingresaron desde el Federal A</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["entran_fed"]])}</div>'
-                f'<div><div class="mlab up">⬆️ Ingresaron desde la Primera B</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["entran_pb"]])}</div>'
-                f'</div><div style="margin-top:6px;font-size:.88rem">🔁 {esc(mv["promo_texto"])}</div>',
+                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_fed", [])])}</div>'
+                
+                f'<div><div class="mlab down">⬇️ Descendieron a la B Metro</div>'
+                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_pb", [])])}</div>'
+                f'<div><div class="mlab up">⬆️ Ascendieron a la B Metro</div>'
+                f'{lista_equipos_html([(n, "de la C") for n in mv.get("suben_pc_pb", [])])}</div>'
+                
+                f'<div><div class="mlab down">⬇️ Descendieron a Primera C</div>'
+                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
+                f'</div><div style="margin-top:6px;font-size:.88rem">🔁 {esc(mv.get("promo_texto", ""))}</div>',
                 unsafe_allow_html=True)
     if S["campeones"]:
         with st.expander("🏆 Campeones por temporada", expanded=False):
-            df_c = pd.DataFrame(S["campeones"],
-                                columns=["Temporada", "Primera División", "Primera Nacional"])
-            df_c.insert(1, "Escudo P", [ESCUDOS.get(n) for n in df_c["Primera División"]])
-            df_c.insert(3, "Escudo B", [ESCUDOS.get(n) for n in df_c["Primera Nacional"]])
-            st.dataframe(df_c, hide_index=True, width="stretch", column_config={
-                "Escudo P": st.column_config.ImageColumn(" ", width=40),
-                "Escudo B": st.column_config.ImageColumn(" ", width=40)})
-    if not S["movimientos"] and not S["campeones"]:
-        st.info("Cuando termine la primera temporada vas a ver acá los campeones y los "
-                "cambios de categoría.")
-
-# ============================================================================
-# CLUBES
-# ============================================================================
-with tab_c:
-    seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
-    cat = st.segmented_control("Categoría",
-                               ["Primera División", "Primera Nacional", "Federal A", "Primera B"],
-                               default="Primera División", key="cat_clubes")
-    cat = cat or "Primera División"
-    lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
-                    "Federal A": S["federal"], "Primera B": S["primera_b"]}[cat], key=norm)
-    elegido = st.selectbox("Club", lista, index=None, placeholder="Elegí un club…",
-                           key=f"club_sel_{cat}")
-    if elegido:
-        with st.container(border=True):
-            render_ficha(elegido, "clubes")
-    st.markdown('<div class="mlab" style="margin-top:14px">'
-                f'{esc(cat)} · {len(lista)} clubes</div><div class="cgrid">'
-                + "".join(f'<div class="ct">{crest(n, 52)}<span>{esc(n)}</span></div>' for n in lista)
-                + "</div>", unsafe_allow_html=True)
+            df_c = pd.DataFrame(S["campeones"], columns=["Temporada", "Primera División", "Primera Nacional"])
+            st.dataframe(df_c, hide_index=True, width="stretch")
