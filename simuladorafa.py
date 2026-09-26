@@ -1,5 +1,5 @@
 """
-Simulador del fútbol argentino: Primera División + Primera Nacional (B Nacional)
+Simulador del fútbol argentino: Primera División + Categorías de Ascenso
 -------------------------------------------------------------------------------
 Ejecutar con:
     python -m pip install streamlit numpy pandas
@@ -14,20 +14,31 @@ PRIMERA DIVISIÓN (30 equipos)
 
 PRIMERA NACIONAL (36 equipos)
   * Fase 1: 2 zonas de 18 (A y B), una sola rueda (17 fechas) + 8 fechas
-    interzonales cruzadas entre ambas zonas antes de pasar a la fase 2 (localía
-    fija: cada equipo es local en 4 de esas 8 fechas).
-  * Se reparten en 3 zonas de 12 y TODOS los puntos vuelven a 0:
+    interzonales cruzadas entre ambas zonas antes de pasar a la fase 2.
+  * Se reparten en 3 zonas de 12 y CONSERVAN los puntos acumulados:
       Campeonato: 1°-6° de cada zona · Intermedia: 7°-12° de cada zona
       Descenso: 13°-18° de cada zona.  Una sola rueda en cada una.
   * Campeonato: 1° campeón + ascenso · 2° ascenso · 3°-4° a cuartos del reducido
     · 5°-12° a octavos.   Intermedia: 1°-4° a octavos.
-    Descenso: los 6 últimos descienden.
-  * Reducido (14 equipos): octavos (12) -> cuartos (8: los 6 ganadores + 3°-4° de
-    Campeonato) -> semifinal -> final. Todo a partido único, sin alargue: si
-    empatan, penales. Localía: Campeonato siempre local frente a Intermedia; entre
-    equipos de la misma zona, el que tenga más puntos.
-  * Campeón del reducido asciende. El perdedor de la final juega la PROMOCIÓN
-    (un partido) contra el 27° de Primera, el mejor descendido.
+    Descenso: los 6 últimos descienden (al Federal A o Primera B según afiliación).
+  * Reducido (14 equipos): a partido único. Localía y ventaja para el mejor
+    ubicado. Final en cancha neutral con penales.
+  * El campeón del reducido asciende. El perdedor de la final juega la PROMOCIÓN
+    contra el 27° de Primera.
+
+FEDERAL A (Equipos indirectamente afiliados)
+  * Fase 1: 5 grupos por cercanía geográfica (Norte, Centro, Buenos Aires,
+    Patagonia y Cuyo), ida y vuelta.
+  * Fase 2: Pasan los 4 primeros de cada grupo a la Zona Campeonato (20 equipos).
+    El resto a Zona Descenso. Puntos de vuelta a 0, una sola rueda.
+  * Ascensos: 1°, 2° y 3° de la Zona Campeonato ascienden directo.
+  * Reducido: Del 4° al 8° juegan eliminatorias a partido único por el cuarto
+    ascenso a la Primera Nacional.
+
+PRIMERA B (Equipos directamente afiliados)
+  * Formato de liga tradicional: Todos contra todos, ida y vuelta.
+  * Ascensos: Campeón y subcampeón (1° y 2°) ascienden de forma directa a la 
+    Primera Nacional.
 
 Cada equipo tiene una "media interna" (fuerza) que cambia cada temporada.
 Los partidos se simulan con goles Poisson y cada equipo tiene una "forma del
