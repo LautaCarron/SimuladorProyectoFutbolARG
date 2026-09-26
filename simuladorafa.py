@@ -2931,4 +2931,3 @@ with tab_c:
                 f'{esc(cat)} · {len(lista)} clubes</div><div class="cgrid">'
                 + "".join(f'<div class="ct">{crest(n, 52)}<span>{esc(n)}</span></div>' for n in lista)
                 + "</div>", unsafe_allow_html=True)
-    
