@@ -732,33 +732,16 @@ def tabla_pb(SPB):
     df.insert(0, "Pos", df.index + 1)
     df["Destino"] = [destino_pb(p, len(SPB["nombres"])) for p in df["Pos"]]
     
-    if SPB.get("ids_desempate"):
-        motivos = SPB.get("motivos_desempate", [])
-        idx_ids = 0
-        for m in motivos:
-            if m == "Top 4":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+4]), "Destino"] = "Desempate Campeonato"
-                idx_ids += 4
-            elif m == "Top 3":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+3]), "Destino"] = "Desempate Campeonato"
-                idx_ids += 3
-            elif m == "Ascenso 4":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+4]), "Destino"] = "Desempate Ascenso"
-                idx_ids += 4
-            elif m == "Ascenso 3":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+3]), "Destino"] = "Desempate Ascenso"
-                idx_ids += 3
-            elif m == "Permanencia 4":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+4]), "Destino"] = "Desempate Permanencia"
-                idx_ids += 4
-            elif m == "Permanencia 3":
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+3]), "Destino"] = "Desempate Permanencia"
-                idx_ids += 3
-            else:
-                df.loc[df["id"].isin(SPB["ids_desempate"][idx_ids:idx_ids+2]), "Destino"] = f"Desempate {m}"
-                idx_ids += 2
+    if SPB.get("motivos_desempate"):
+        ids_actuales = df["id"].to_numpy()
+        for motivo in SPB["motivos_desempate"]:
+            partes = motivo.split()
+            nombre_frontera = partes[1]
+            inicio, fin = map(int, partes[2].split("-"))
+            ids_bloque = ids_actuales[inicio:fin]
+            df.loc[df["id"].isin(ids_bloque), "Destino"] = f"Desempate {nombre_frontera}"
+            
     return df
-
 
 def tabla_pc(SPC):
     df = df_stats(SPC["nombres"], SPC["r"], SPC, np.arange(len(SPC["nombres"])))
@@ -768,25 +751,15 @@ def tabla_pc(SPC):
     df.insert(0, "Pos", df.index + 1)
     df["Destino"] = [destino_pc(p) for p in df["Pos"]]
     
-    if SPC.get("ids_desempate"):
-        motivos = SPC.get("motivos_desempate", [])
-        idx_ids = 0
-        for m in motivos:
-            if m == "Top 4":
-                df.loc[df["id"].isin(SPC["ids_desempate"][idx_ids:idx_ids+4]), "Destino"] = "Desempate Campeonato"
-                idx_ids += 4
-            elif m == "Top 3":
-                df.loc[df["id"].isin(SPC["ids_desempate"][idx_ids:idx_ids+3]), "Destino"] = "Desempate Campeonato"
-                idx_ids += 3
-            elif m == "Ascenso 4":
-                df.loc[df["id"].isin(SPC["ids_desempate"][idx_ids:idx_ids+4]), "Destino"] = "Desempate Ascenso"
-                idx_ids += 4
-            elif m == "Ascenso 3":
-                df.loc[df["id"].isin(SPC["ids_desempate"][idx_ids:idx_ids+3]), "Destino"] = "Desempate Ascenso"
-                idx_ids += 3
-            else:
-                df.loc[df["id"].isin(SPC["ids_desempate"][idx_ids:idx_ids+2]), "Destino"] = f"Desempate {m}"
-                idx_ids += 2
+    if SPC.get("motivos_desempate"):
+        ids_actuales = df["id"].to_numpy()
+        for motivo in SPC["motivos_desempate"]:
+            partes = motivo.split()
+            nombre_frontera = partes[1]
+            inicio, fin = map(int, partes[2].split("-"))
+            ids_bloque = ids_actuales[inicio:fin]
+            df.loc[df["id"].isin(ids_bloque), "Destino"] = f"Desempate {nombre_frontera}"
+            
     return df
 
 
@@ -811,60 +784,43 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         ids_finales = df_prev["id"].to_numpy().copy()
         motivos = S_LIGA.get("motivos_desempate", [])
         
-        def jugar_y_ordenar(id_mejor, id_peor, pos_m, pos_p, motivo_txt):
-            gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[id_mejor]]), np.array([r[id_peor]]), P["sorpresa"], localia=0.0)
-            tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
-            gana_id = id_mejor if gana_l[0] else id_peor
-            pierde_id = id_peor if gana_l[0] else id_mejor
-            
-            partido = nuevo_partido(nombre_liga, f + 1, "Desempate", motivo_txt, nom[id_mejor], nom[id_peor], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
-            S_LIGA["log"].append(partido)
-            
-            if gana_id == id_peor:
-                ids_finales[pos_m], ids_finales[pos_p] = ids_finales[pos_p], ids_finales[pos_m]
-            return gana_id
-
         # ---------------- EJECUCIÓN DE LOS DESEMPATES ----------------
-        if "Top 4" in motivos:
-            g1 = jugar_y_ordenar(ids_finales[0], ids_finales[3], 0, 3, "Ascenso")
-            g2 = jugar_y_ordenar(ids_finales[1], ids_finales[2], 1, 2, "Ascenso")
-            idx_g1, idx_g2 = np.where(ids_finales == g1)[0][0], np.where(ids_finales == g2)[0][0]
-            mejor, peor = (g1, g2) if idx_g1 < idx_g2 else (g2, g1)
-            pos_mejor, pos_peor = (idx_g1, idx_g2) if idx_g1 < idx_g2 else (idx_g2, idx_g1)
-            jugar_y_ordenar(mejor, peor, pos_mejor, pos_peor, "Campeonato")
-        elif "Top 3" in motivos:
-            g1 = jugar_y_ordenar(ids_finales[1], ids_finales[2], 1, 2, "Ascenso")
-            idx_g1 = np.where(ids_finales == g1)[0][0]
-            jugar_y_ordenar(ids_finales[0], g1, 0, idx_g1, "Campeonato")
-        else:
-            if "Campeonato" in motivos:
-                jugar_y_ordenar(ids_finales[0], ids_finales[1], 0, 1, "Campeonato")
-                
-            if "Ascenso 4" in motivos:
-                g1 = jugar_y_ordenar(ids_finales[1], ids_finales[4], 1, 4, "Ascenso")
-                g2 = jugar_y_ordenar(ids_finales[2], ids_finales[3], 2, 3, "Ascenso")
-                idx_g1, idx_g2 = np.where(ids_finales == g1)[0][0], np.where(ids_finales == g2)[0][0]
-                mejor, peor = (g1, g2) if idx_g1 < idx_g2 else (g2, g1)
-                pos_mejor, pos_peor = (idx_g1, idx_g2) if idx_g1 < idx_g2 else (idx_g2, idx_g1)
-                jugar_y_ordenar(mejor, peor, pos_mejor, pos_peor, "Ascenso")
-            elif "Ascenso 3" in motivos:
-                g1 = jugar_y_ordenar(ids_finales[2], ids_finales[3], 2, 3, "Ascenso")
-                idx_g1 = np.where(ids_finales == g1)[0][0]
-                jugar_y_ordenar(ids_finales[1], g1, 1, idx_g1, "Ascenso")
-            elif "Ascenso" in motivos:
-                jugar_y_ordenar(ids_finales[1], ids_finales[2], 1, 2, "Ascenso")
-
-        # MAGIA DEL DESCENSO: Los perdedores se hunden automáticamente hasta el puesto 18°
-        if "Permanencia 4" in motivos:
-            jugar_y_ordenar(ids_finales[14], ids_finales[17], 14, 17, "Permanencia")
-            jugar_y_ordenar(ids_finales[15], ids_finales[16], 15, 16, "Permanencia")
-            jugar_y_ordenar(ids_finales[16], ids_finales[17], 16, 17, "Permanencia")
-        elif "Permanencia 3" in motivos:
-            jugar_y_ordenar(ids_finales[15], ids_finales[16], 15, 16, "Permanencia")
-            jugar_y_ordenar(ids_finales[16], ids_finales[17], 16, 17, "Permanencia")
-        elif "Permanencia" in motivos:
-            jugar_y_ordenar(ids_finales[16], ids_finales[17], 16, 17, "Permanencia")
+        for motivo in motivos:
+            partes = motivo.split()
+            tipo = partes[0] # "Duelo" o "Liguilla"
+            nombre_frontera = partes[1]
+            inicio, fin = map(int, partes[2].split("-"))
             
+            bloque = ids_finales[inicio:fin]
+            
+            if tipo == "Duelo":
+                id_1, id_2 = bloque[0], bloque[1]
+                gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[id_1]]), np.array([r[id_2]]), P["sorpresa"], localia=0.0)
+                tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+                gana_id = id_1 if gana_l[0] else id_2
+                
+                partido = nuevo_partido(nombre_liga, f + 1, "Desempate", nombre_frontera, nom[id_1], nom[id_2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                S_LIGA["log"].append(partido)
+                
+                if gana_id == id_2: # Si el peor gana, invertimos los índices
+                    ids_finales[inicio], ids_finales[inicio+1] = ids_finales[inicio+1], ids_finales[inicio]
+                    
+            elif tipo == "Liguilla":
+                puntos = {eq: 0 for eq in bloque}
+                for i in range(len(bloque)):
+                    for j in range(i+1, len(bloque)):
+                        eq1, eq2 = bloque[i], bloque[j]
+                        gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[eq1]]), np.array([r[eq2]]), P["sorpresa"], localia=0.0)
+                        tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+                        gana_id = eq1 if gana_l[0] else eq2
+                        puntos[gana_id] += 3
+                        
+                        partido = nuevo_partido(nombre_liga, f + 1, "Desempate", f"Liguilla {nombre_frontera}", nom[eq1], nom[eq2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                        S_LIGA["log"].append(partido)
+                        
+                bloque_ordenado = sorted(bloque, key=lambda x: puntos[x], reverse=True)
+                ids_finales[inicio:fin] = bloque_ordenado
+                
         S_LIGA["orden_final"] = ids_finales
         S_LIGA["desempate_pendiente"] = False 
 
@@ -875,11 +831,10 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     S_LIGA["pos_hist"].append((1, pos))
     S_LIGA["fecha"] += 1
     
-    # ---------------- DETECCIÓN DE EMPATES ----------------
+    # ---------------- DETECCIÓN DE EMPATES GENÉRICA ----------------
     ya_se_jugo = S_LIGA.get("orden_final") is not None
-    
 
-     # === MODO TEST: FORZAR RESULTADOS A DEDO ===
+         # === MODO TEST: FORZAR RESULTADOS A DEDO ===
     if S_LIGA["fecha"] == S_LIGA["total"] and not ya_se_jugo:
         
         # TEST 1: Cuadrangular por el campeonato (Descomentá estas 3 líneas)
@@ -944,65 +899,52 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         ids = df["id"].to_numpy()
     # ===========================================
 
-
     if S_LIGA["fecha"] == S_LIGA["total"] and not ya_se_jugo:
         pts = df["Pts"].to_numpy()
         partidos_desempate = []
         ids_involucrados = []
         motivos = []
         
-        # Empates arriba de todo
-        if len(ids) >= 4 and pts[0] == pts[3]:
-            motivos.append("Top 4")
-            ids_involucrados.extend(ids[:4])
-            partidos_desempate.append((int(ids[0]), int(ids[0])))
-        elif len(ids) >= 3 and pts[0] == pts[2]:
-            motivos.append("Top 3")
-            ids_involucrados.extend(ids[:3])
-            partidos_desempate.append((int(ids[0]), int(ids[0]))) 
-        else:
-            if len(ids) >= 2 and pts[0] == pts[1]:
-                motivos.append("Campeonato")
-                ids_involucrados.extend([int(ids[0]), int(ids[1])])
-                partidos_desempate.append((int(ids[0]), int(ids[1])))
-                
-            # Empate por el segundo ascenso
-            if pts[0] != pts[1]:
-                if len(ids) >= 5 and pts[1] == pts[4] and pts[0] != pts[1]:
-                    motivos.append("Ascenso 4")
-                    ids_involucrados.extend(ids[1:5])
-                    if not partidos_desempate: partidos_desempate.append((int(ids[1]), int(ids[1])))
-                elif len(ids) >= 4 and pts[1] == pts[3] and pts[0] != pts[1]:
-                    motivos.append("Ascenso 3")
-                    ids_involucrados.extend(ids[1:4])
-                    if not partidos_desempate: partidos_desempate.append((int(ids[1]), int(ids[1])))
-                elif len(ids) >= 3 and pts[1] == pts[2] and pts[0] != pts[1]:
-                    motivos.append("Ascenso")
-                    ids_involucrados.extend([int(ids[1]), int(ids[2])])
-                    if not partidos_desempate: partidos_desempate.append((int(ids[1]), int(ids[2])))
-                    
-        # Empate por el descenso (Solo Primera B)
+        # Define qué límites importan para cortar la tabla
+        fronteras = [(0, "Campeonato"), (1, "Ascenso")]
         if nombre_liga == "Primera B" and len(ids) >= 18:
-            if pts[14] == pts[17] and pts[13] != pts[14]:
-                motivos.append("Permanencia 4")
-                ids_involucrados.extend(ids[14:18])
-                if not partidos_desempate: partidos_desempate.append((int(ids[14]), int(ids[14])))
-            elif pts[15] == pts[17] and pts[14] != pts[15]:
-                motivos.append("Permanencia 3")
-                ids_involucrados.extend(ids[15:18])
-                if not partidos_desempate: partidos_desempate.append((int(ids[15]), int(ids[15])))
-            elif pts[16] == pts[17] and pts[15] != pts[16]:
-                motivos.append("Permanencia")
-                ids_involucrados.extend([int(ids[16]), int(ids[17])])
-                if not partidos_desempate: partidos_desempate.append((int(ids[16]), int(ids[17])))
+            fronteras.append((16, "Permanencia"))
+            
+        bloques_procesados = set()
+        
+        for idx_frontera, nombre_frontera in fronteras:
+            if pts[idx_frontera] == pts[idx_frontera + 1]:
+                puntos_empate = pts[idx_frontera]
+                
+                # Busca dónde empieza y dónde termina el bloque de empatados
+                inicio = idx_frontera
+                while inicio > 0 and pts[inicio - 1] == puntos_empate:
+                    inicio -= 1
                     
+                fin = idx_frontera + 1
+                while fin < len(pts) and pts[fin] == puntos_empate:
+                    fin += 1
+                    
+                if inicio not in bloques_procesados:
+                    bloques_procesados.add(inicio)
+                    
+                    ids_bloque = [int(i) for i in ids[inicio:fin]]
+                    ids_involucrados.extend(ids_bloque)
+                    
+                    if len(ids_bloque) == 2:
+                        motivos.append(f"Duelo {nombre_frontera} {inicio}-{fin}")
+                        partidos_desempate.append((ids_bloque[0], ids_bloque[1]))
+                    else:
+                        motivos.append(f"Liguilla {nombre_frontera} {inicio}-{fin}")
+                        partidos_desempate.append((ids_bloque[0], ids_bloque[0]))
+                        
         if partidos_desempate:
             S_LIGA["desempate_pendiente"] = True
             S_LIGA["ids_desempate"] = ids_involucrados
             S_LIGA["motivos_desempate"] = motivos
             S_LIGA["total"] += 1 
             S_LIGA["fechas"].append(partidos_desempate)
-            return
+            return 
     
     # ---------------- CIERRE DE LA TEMPORADA ----------------
     if S_LIGA["fecha"] == S_LIGA["total"]:
