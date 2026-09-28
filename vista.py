@@ -726,12 +726,19 @@ def colorear_f(fila):
 
 
 def colorear_pb(fila):
-    c = COLORES_B["Ascenso directo"] if fila["Destino"] == "Ascenso directo" else (COLORES_B["Desciende"] if fila["Destino"] == "Desciende" else "")
+    d = fila["Destino"]
+    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
+        COLORES_B["Desciende"] if d == "Desciende" else (
+        "rgba(147, 51, 234, 0.3)" if d == "Desempate Permanencia" else (
+        "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
+        )))
     return [f"background-color: {c}" if c else ""] * len(fila)
 
-
 def colorear_pc(fila):
-    c = COLORES_B["Ascenso directo"] if fila["Destino"] == "Ascenso directo" else ""
+    d = fila["Destino"]
+    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
+        "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
+    )
     return [f"background-color: {c}" if c else ""] * len(fila)
 
 

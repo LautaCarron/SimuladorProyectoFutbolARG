@@ -207,9 +207,9 @@ if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary"
     # 3. Resto de las categorías
     while SF["fecha"] < SF["total"]: 
         simular_fecha_f(SF, P, S["rng"])
-    while SPB["fecha"] < SPB["total"]: 
+    while SPB["fecha"] < SPB["total"] and not SPB.get("desempate_pendiente"): 
         simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
-    while SPC["fecha"] < SPC["total"]: 
+    while SPC["fecha"] < SPC["total"] and not SPC.get("desempate_pendiente"): 
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
     st.rerun()
 if g2.button("📅 Nueva temporada", disabled=not ambas, width="stretch"):
@@ -596,35 +596,47 @@ with tab_pb:
         simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
     if c3.button("⏩ Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
-        while SPB["fecha"] < SPB["total"]: simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
+        while SPB["fecha"] < SPB["total"] and not SPB.get("desempate_pendiente"): 
+            simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
         
     barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPB['fecha']} / {SPB['total']}"), ("Partidos jugados", len(SPB["log"]))], pct_pb)
     
     # Armamos la lista de pestañas dinámicamente
-    titulos_tabs = ["📊 Posiciones", "📅 Fixture y resultados"]
-    if SPB.get("desempate"): titulos_tabs.append("⚔️ Desempate")
-    titulos_tabs.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    # EL ARREGLO ESTÁ ACÁ: Buscamos por rotulo y no por comp
+    desempates = [p for p in SPB["log"] if p["rotulo"] == "Desempate"]
+    mostrar_desempate = SPB.get("desempate_pendiente") or len(desempates) > 0
     
-    spb_tabs = st.tabs(titulos_tabs)
+    titulos = ["📊 Posiciones", "📅 Fixture y resultados"]
+    if mostrar_desempate: titulos.append("⚔️ Desempate")
+    titulos.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    
+    spb_tabs = st.tabs(titulos)
     idx = 0
     
     with spb_tabs[idx]:
         seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros, del 18° para abajo descienden", "#4f46e5")
         mostrar_tabla(tabla_pb(SPB), colorear_pb, SPB["pos_hist"])
-        leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]), ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])])
+        leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]), 
+                 ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)"),
+                 ("Desempate Permanencia", "rgba(147, 51, 234, 0.3)"),
+                 ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])])
     idx += 1
             
     with spb_tabs[idx]: vista_fixture("pb")
     idx += 1
     
-    if SPB.get("desempate"):
+    if mostrar_desempate:
         with spb_tabs[idx]:
-            seccion("Desempate por el Descenso", "Minitorneo para definir quién mantiene la categoría", "#dc2626")
-            st.info("Los puntos obtenidos en estos partidos se suman directamente a la tabla general para desempatar.")
-            df_des = tabla_pb(SPB)
-            df_des = df_des[df_des["id"].isin(SPB["desempate"]["equipos"])]
-            mostrar_tabla(df_des, colorear_pb)
+            if SPB.get("desempate_pendiente"):
+                seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
+                df_des = tabla_pb(SPB)
+                df_des = df_des[df_des["id"].isin(SPB["ids_desempate"])]
+                mostrar_tabla(df_des, colorear_pb)
+            else:
+                seccion("⚔️ Resultados de los Desempates", "Partidos únicos definitorios", "#dc2626")
+                for p in desempates:
+                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
         idx += 1
             
     with spb_tabs[idx]: render_movimientos(SPB["log"], SPB["pos_hist"], SPB["nombres"], "#0f766e")
@@ -637,7 +649,7 @@ with tab_pb:
             with st.expander("🏆 Campeón de la Primera B", expanded=False):
                 cpb = SPB["nombres"][SPB["campeon"]]
                 st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div></div>', unsafe_allow_html=True)
-
+                
 
 # ============================================================================
 # PRIMERA C
@@ -650,21 +662,49 @@ with tab_pc:
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
         st.rerun()
     if c3.button("⏩ Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
-        while SPC["fecha"] < SPC["total"]: simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
+        while SPC["fecha"] < SPC["total"] and not SPC.get("desempate_pendiente"): 
+            simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
         st.rerun()
         
     barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPC['fecha']} / {SPC['total']}"), ("Partidos jugados", len(SPC["log"]))], pct_pc)
-    spc_tabs = st.tabs(["📊 Posiciones", "📅 Fixture y resultados", "🔄 Movimientos", "🏁 Definiciones"])
     
-    with spc_tabs[0]:
+    desempates_c = [p for p in SPC["log"] if p["rotulo"] == "Desempate"]
+    mostrar_desempate_c = SPC.get("desempate_pendiente") or len(desempates_c) > 0
+    
+    titulos_c = ["📊 Posiciones", "📅 Fixture y resultados"]
+    if mostrar_desempate_c: titulos_c.append("⚔️ Desempate")
+    titulos_c.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    
+    spc_tabs = st.tabs(titulos_c)
+    idx_c = 0
+    
+    with spc_tabs[idx_c]:
         seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros", "#4f46e5")
         mostrar_tabla(tabla_pc(SPC), colorear_pc, SPC["pos_hist"])
-        leyenda([("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"])])
-                
-    with spc_tabs[1]: vista_fixture("pc")
-    with spc_tabs[2]: render_movimientos(SPC["log"], SPC["pos_hist"], SPC["nombres"], "#0f766e")
+        leyenda([("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"]), 
+                 ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)")])
+    idx_c += 1
+            
+    with spc_tabs[idx_c]: vista_fixture("pc")
+    idx_c += 1
+    
+    if mostrar_desempate_c:
+        with spc_tabs[idx_c]:
+            if SPC.get("desempate_pendiente"):
+                seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
+                df_des = tabla_pc(SPC)
+                df_des = df_des[df_des["id"].isin(SPC["ids_desempate"])]
+                mostrar_tabla(df_des, colorear_pc)
+            else:
+                seccion("⚔️ Resultados de los Desempates", "Partidos únicos para definir Campeonato o Ascenso", "#dc2626")
+                for p in desempates_c:
+                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+        idx_c += 1
+            
+    with spc_tabs[idx_c]: render_movimientos(SPC["log"], SPC["pos_hist"], SPC["nombres"], "#0f766e")
+    idx_c += 1
         
-    with spc_tabs[3]:
+    with spc_tabs[idx_c]:
         seccion("Definiciones de la temporada", "Campeón y ascensos", "#b7860b")
         if SPC["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
         else:
