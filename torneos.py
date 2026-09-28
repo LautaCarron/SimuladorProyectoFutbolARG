@@ -421,8 +421,12 @@ def simular_fecha_b(S, P):
         if etapa == 0:
             T = red["octavos"]
         elif etapa == 1:
+            if red.get("ganadores") is None:
+                return  # Si por alguna razón no se jugaron los octavos, frena de forma segura
             T = unir(red["directos"], red["ganadores"])   # 3°-4° de Campeonato + 6 ganadores
         else:
+            if red.get("ganadores") is None:
+                return
             T = red["ganadores"]
         A, B = cruces_mejor_peor(T)
         loc, vis, gl, gv, gan, per, pen = ko_jugar(rng, r, A, B, P["sorpresa"])
@@ -691,7 +695,7 @@ VERSION_ESTADO = 6       # cambia si se modifica la estructura del estado guarda
 # ----------------------------------------------------------------------------
 def destino_pb(pos, total):
     if pos <= 2: return "Ascenso directo"
-    if pos >= total - 1: return "Desciende"
+    if total >= 18 and pos >= 18: return "Desciende"
     return ""
 
 def destino_pc(pos):
@@ -713,6 +717,7 @@ def nueva_estructura_liga(S_LIGA, rng):
     S_LIGA["campeon"] = None
     S_LIGA["asc_directo"] = []
     S_LIGA["desc_directo"] = []
+    S_LIGA["desempate"] = None
 
 def tabla_pb(SPB):
     df = df_stats(SPB["nombres"], SPB["r"], SPB, np.arange(len(SPB["nombres"])))
@@ -733,6 +738,8 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     pares = S_LIGA["fechas"][f]
     h = np.array([x[0] for x in pares])
     a = np.array([x[1] for x in pares])
+    
+    # Se juegan los partidos regulares y se suman a la tabla
     gh, ga = jugar(rng, r[h], r[a], **P)
     sumar_partidos(S_LIGA, h, a, gh, ga)
     
@@ -741,16 +748,40 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         S_LIGA["log"].append(nuevo_partido(nombre_liga, f + 1, f"Fecha {f + 1}", "Liga", nom[x], nom[y], g1, g2))
         
     df = fn_tabla(S_LIGA)
+    ids = df["id"].to_numpy().copy()  # <-- Agregá .copy() al final
     pos = np.zeros(len(nom), dtype=int)
-    pos[df["id"].to_numpy()] = df["Pos"].to_numpy()
+    pos[ids] = np.arange(1, len(ids) + 1)
     S_LIGA["pos_hist"].append((1, pos))
     S_LIGA["fecha"] += 1
     
+    # --- FIN DE TEMPORADA Y DESEMPATE DIRECTO (Sin alterar la tabla) ---
     if S_LIGA["fecha"] == S_LIGA["total"]:
-        ids = df["id"].to_numpy()
+        if nombre_liga == "Primera B" and len(ids) >= 18:
+            pts_17 = df.iloc[16]["Pts"] # 17° (Se salva)
+            pts_18 = df.iloc[17]["Pts"] # 18° (Desciende)
+            
+            if pts_17 == pts_18:
+                # Duelo a partido único neutral con posibles penales
+                id_1, id_2 = int(ids[16]), int(ids[17])
+                gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[id_1]]), np.array([r[id_2]]), P["sorpresa"], localia=0.0)
+                tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+                gana_id = id_1 if gana_l[0] else id_2
+                pierde_id = id_2 if gana_l[0] else id_1
+                
+                partido = nuevo_partido(nombre_liga, f + 2, "Desempate Permanencia", "Desempate", 
+                                        nom[id_1], nom[id_2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                S_LIGA["log"].append(partido)
+                
+                # Si el 18° gana el desempate, invertimos las posiciones oficiales en segundo plano
+                if pierde_id == id_1:
+                    ids[16], ids[17] = ids[17], ids[16]
+                    pos[id_1], pos[id_2] = pos[id_2], pos[id_1]
+                    S_LIGA["pos_hist"][-1] = (1, pos)
+
+        # Asignaciones finales de destinos
         S_LIGA["campeon"] = int(ids[0])
         S_LIGA["asc_directo"] = [int(ids[0]), int(ids[1])]
-        S_LIGA["desc_directo"] = [int(ids[-1]), int(ids[-2])] # Relevante para Primera B
+        S_LIGA["desc_directo"] = [int(i) for i in ids[17:]] if len(ids) >= 18 else []
 
 
 def crear_estado():
@@ -863,6 +894,12 @@ def nueva_temporada(S, volatilidad):
     
     S["temp"] += 1
     S["cerrada_ambas"] = False
+
+    # --- AGREGAR ESTAS DOS LÍNEAS PARA BORRAR FANTASMAS ---
+    SF["nombres"] = list(S["federal"])
+    SF["r"] = np.array([S["rating"][n] for n in SF["nombres"]])
+    # ------------------------------------------------------
+
     nueva_estructura(S)
     nueva_estructura_b(SB, rng)
     nueva_estructura_f(SF, rng)

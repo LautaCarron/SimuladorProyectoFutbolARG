@@ -434,7 +434,14 @@ def partidos_fecha_pb(n):
     if n <= SPB["fecha"]:
         return [p for p in SPB["log"] if p["fecha"] == n]
     nom = SPB["nombres"]
-    return [pendiente("Primera B", n, f"Fecha {n}", "Liga", nom[x], nom[y])
+    
+    rotulo = f"Fecha {n}"
+    comp = "Liga"
+    if SPB.get("desempate") and n > SPB["desempate"]["inicio"]:
+        rotulo = f"Desempate (F. {n - SPB['desempate']['inicio']})"
+        comp = "Desempate"
+        
+    return [pendiente("Primera B", n, rotulo, comp, nom[x], nom[y])
             for x, y in SPB["fechas"][n - 1]]
 
 
