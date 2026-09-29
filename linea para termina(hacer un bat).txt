@@ -1,3 +1,0 @@
-cd "C:\Users\Lautaro Carron\Desktop\lautaro\SimuladorProyectoFutbolARG"
-
-C:\sim\Scripts\python.exe -m streamlit run simuladorafa.py

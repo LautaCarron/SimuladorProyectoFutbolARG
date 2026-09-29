@@ -129,13 +129,17 @@ def rotulo_p(n):
     return f"Fecha {n}" + (" · Fase 2" if n > FECHAS_F1 else "")
 
 
-def rotulo_b(n):
+def rotulo_b(SB, n):
+    extra = SB.get("extra_f2", 0)
     if n <= B_F1:
         return f"Fecha {n} · Fase 1"
-    if n <= B_F1 + B_F2:
-        return f"Fecha {n} · Fase 2 (fecha {n - B_F1})"
-    if n <= B_F1 + B_F2 + B_RED:
-        return f"Fecha {n} · {B_ETAPAS[n - B_F1 - B_F2 - 1]}"
+    if n <= B_F1 + B_F2 + extra:
+        if n <= B_F1 + B_F2:
+            return f"Fecha {n} · Fase 2 (fecha {n - B_F1})"
+        else:
+            return f"Fecha {n} · Desempate Permanencia"
+    if n <= B_F1 + B_F2 + extra + B_RED:
+        return f"Fecha {n} · {B_ETAPAS[n - B_F1 - B_F2 - extra - 1]}"
     return f"Fecha {n} · Promoción"
 
 
@@ -310,8 +314,23 @@ def tabla_b_f1(SB, z):
 def tabla_b_f2(SB, z):
     """Tabla de la zona de la fase 2 (0 Campeonato, 1 Intermedia, 2 Descenso)."""
     df = df_stats(SB["nombres"], SB["r"], SB, SB["zonas2"][z])
+    
+    # Inyectar el desempate SÓLO en la zona de descenso
+    if z == 2 and SB.get("orden_final_descenso") is not None:
+        df = df.set_index("id").loc[SB["orden_final_descenso"]].reset_index()
+        
     df.insert(0, "Pos", df.index + 1)
     df["Destino"] = [destino_b2(z, p) for p in df["Pos"]]
+    
+    if z == 2 and SB.get("motivos_desempate"):
+        ids_actuales = df["id"].to_numpy()
+        for motivo in SB["motivos_desempate"]:
+            partes = motivo.split()
+            nombre_frontera = partes[1]
+            inicio, fin = map(int, partes[2].split("-"))
+            ids_bloque = ids_actuales[inicio:fin]
+            df.loc[df["id"].isin(ids_bloque), "Destino"] = f"Desempate {nombre_frontera}"
+            
     return df
 
 
@@ -378,29 +397,79 @@ def simular_fecha_b(S, P):
     """Simula la próxima fecha de la B. La promoción espera a que termine la Primera."""
     SB, rng = S["b"], S["rng"]
     f = SB["fecha"]
-    if f >= B_TOTAL or (f == B_TOTAL - 1 and S["fecha"] < TOTAL_FECHAS):
+    extra = SB.get("extra_f2", 0)
+    B_TOTAL_DYN = B_TOTAL + extra  # Alarga el campeonato dinámicamente si hay desempate
+    
+    if f >= B_TOTAL_DYN or (f == B_TOTAL_DYN - 1 and S["fecha"] < TOTAL_FECHAS):
         return
     r, nom = SB["r"], SB["nombres"]
 
-    if f < B_F1 + B_F2:                                   # ---- zonas (fase 1 y fase 2)
-        if f < B_F1:
-            pares = SB["fechas"][f]
-            if f < B_F1_ZONAL:
-                etiqueta = lambda i: f"Zona {'AB'[SB['zona_de'][i]]}"
+    if f < B_F1 + B_F2 + extra:                                   # ---- zonas (fase 1 y fase 2)
+        es_desempate = SB.get("desempate_pendiente") and f == B_F1 + B_F2 + extra - 1
+        
+        if not es_desempate:
+            if f < B_F1:
+                pares = SB["fechas"][f]
+                if f < B_F1_ZONAL:
+                    etiqueta = lambda i: f"Zona {'AB'[SB['zona_de'][i]]}"
+                else:
+                    etiqueta = lambda i: "Interzonal"
             else:
-                etiqueta = lambda i: "Interzonal"
+                pares = SB["fechas2"][f - B_F1]
+                etiqueta = lambda i: f"Zona {B_ZONAS2[SB['zona2_de'][i]]}"
+            h = np.array([x[0] for x in pares])
+            a = np.array([x[1] for x in pares])
+            gh, ga = jugar(rng, r[h], r[a], **P)
+            sumar_partidos(SB, h, a, gh, ga)
+            SB["historial"].append(_fila_historial(
+                SB, [etiqueta(i) for i in h], h, a, gh, ga, ""))
+            for x, y, g1, g2 in zip(h, a, gh, ga):
+                SB["log"].append(nuevo_partido("Primera Nacional", f + 1, rotulo_b(SB, f + 1),
+                                               etiqueta(x), nom[x], nom[y], g1, g2))
         else:
-            pares = SB["fechas2"][f - B_F1]
-            etiqueta = lambda i: f"Zona {B_ZONAS2[SB['zona2_de'][i]]}"
-        h = np.array([x[0] for x in pares])
-        a = np.array([x[1] for x in pares])
-        gh, ga = jugar(rng, r[h], r[a], **P)
-        sumar_partidos(SB, h, a, gh, ga)
-        SB["historial"].append(_fila_historial(
-            SB, [etiqueta(i) for i in h], h, a, gh, ga, ""))
-        for x, y, g1, g2 in zip(h, a, gh, ga):
-            SB["log"].append(nuevo_partido("Primera Nacional", f + 1, rotulo_b(f + 1),
-                                           etiqueta(x), nom[x], nom[y], g1, g2))
+            # ---------------- EJECUCIÓN DEL DESEMPATE DE LA MUERTE ----------------
+            df_prev = tabla_b_f2(SB, 2)
+            ids_finales = df_prev["id"].to_numpy().copy()
+            motivos = SB.get("motivos_desempate", [])
+            
+            for motivo in motivos:
+                partes = motivo.split()
+                tipo = partes[0]
+                nombre_frontera = partes[1]
+                inicio, fin = map(int, partes[2].split("-"))
+                bloque = ids_finales[inicio:fin]
+                
+                if tipo == "Duelo":
+                    id_1, id_2 = bloque[0], bloque[1]
+                    gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[id_1]]), np.array([r[id_2]]), P["sorpresa"], localia=0.0)
+                    tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+                    gana_id = id_1 if gana_l[0] else id_2
+                    
+                    partido = nuevo_partido("Primera Nacional", f + 1, "Desempate", nombre_frontera, nom[id_1], nom[id_2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                    SB["log"].append(partido)
+                    
+                    if gana_id == id_2:
+                        ids_finales[inicio], ids_finales[inicio+1] = ids_finales[inicio+1], ids_finales[inicio]
+                        
+                elif tipo == "Liguilla":
+                    puntos = {eq: 0 for eq in bloque}
+                    for i in range(len(bloque)):
+                        for j in range(i+1, len(bloque)):
+                            eq1, eq2 = bloque[i], bloque[j]
+                            gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[eq1]]), np.array([r[eq2]]), P["sorpresa"], localia=0.0)
+                            tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+                            gana_id = eq1 if gana_l[0] else eq2
+                            puntos[gana_id] += 3
+                            
+                            partido = nuevo_partido("Primera Nacional", f + 1, "Desempate", f"Liguilla {nombre_frontera}", nom[eq1], nom[eq2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                            SB["log"].append(partido)
+                            
+                    bloque_ordenado = sorted(bloque, key=lambda x: puntos[x], reverse=True)
+                    ids_finales[inicio:fin] = bloque_ordenado
+                    
+            SB["orden_final_descenso"] = ids_finales
+            SB["desempate_pendiente"] = False
+
         if f < B_F1:
             dfs, tag = [tabla_b_f1(SB, z) for z in range(2)], 1
         else:
@@ -410,20 +479,65 @@ def simular_fecha_b(S, P):
             pos[dfz["id"].to_numpy()] = dfz["Pos"].to_numpy()
         SB["pos_hist"].append((tag, pos))
         SB["fecha"] += 1
+        
         if SB["fecha"] == B_F1:
             iniciar_fase2_b(SB, rng)
-        elif SB["fecha"] == B_F1 + B_F2:
+            
+        # ---------------- DETECCIÓN DE EMPATES (SÓLO ZONA DESCENSO) ----------------
+        ya_se_jugo = SB.get("orden_final_descenso") is not None
+        if SB["fecha"] == B_F1 + B_F2 + extra and not ya_se_jugo:
+            df_descenso = tabla_b_f2(SB, 2)
+            pts = df_descenso["Pts"].to_numpy()
+            ids_desc = df_descenso["id"].to_numpy()
+            
+            partidos_desempate = []
+            ids_involucrados = []
+            motivos = []
+            
+            # Los que bajan son los últimos 6 (índices 6 a 11). La frontera es entre el 6° (índice 5) y el 7° (índice 6)
+            idx_frontera = 5
+            nombre_frontera = "Permanencia"
+            
+            if pts[idx_frontera] == pts[idx_frontera + 1]:
+                puntos_empate = pts[idx_frontera]
+                inicio = idx_frontera
+                while inicio > 0 and pts[inicio - 1] == puntos_empate:
+                    inicio -= 1
+                fin = idx_frontera + 1
+                while fin < len(pts) and pts[fin] == puntos_empate:
+                    fin += 1
+                    
+                ids_bloque = [int(i) for i in ids_desc[inicio:fin]]
+                ids_involucrados.extend(ids_bloque)
+                
+                if len(ids_bloque) == 2:
+                    motivos.append(f"Duelo {nombre_frontera} {inicio}-{fin}")
+                    partidos_desempate.append((ids_bloque[0], ids_bloque[1]))
+                else:
+                    motivos.append(f"Liguilla {nombre_frontera} {inicio}-{fin}")
+                    partidos_desempate.append((ids_bloque[0], ids_bloque[0]))
+                    
+            if partidos_desempate:
+                SB["desempate_pendiente"] = True
+                SB["ids_desempate"] = ids_involucrados
+                SB["motivos_desempate"] = motivos
+                SB["extra_f2"] = extra + 1
+                SB["fechas2"].append(partidos_desempate)
+                return
+                
+        # Una vez sorteado el desempate, arranca la sangría del Reducido
+        if SB["fecha"] == B_F1 + B_F2 + SB.get("extra_f2", 0):
             iniciar_reducido(SB)
 
-    elif f < B_F1 + B_F2 + B_RED:                         # ---- reducido
-        etapa = f - B_F1 - B_F2
+    elif f < B_F1 + B_F2 + extra + B_RED:                         # ---- reducido
+        etapa = f - B_F1 - B_F2 - extra
         red = SB["red"]
         if etapa == 0:
             T = red["octavos"]
         elif etapa == 1:
             if red.get("ganadores") is None:
-                return  # Si por alguna razón no se jugaron los octavos, frena de forma segura
-            T = unir(red["directos"], red["ganadores"])   # 3°-4° de Campeonato + 6 ganadores
+                return
+            T = unir(red["directos"], red["ganadores"])
         else:
             if red.get("ganadores") is None:
                 return
@@ -432,18 +546,15 @@ def simular_fecha_b(S, P):
         loc, vis, gl, gv, gan, per, pen = ko_jugar(rng, r, A, B, P["sorpresa"])
         red["ganadores"] = gan
         ronda = []
-        for li, vi, g1, g2, wi, p in zip(loc["id"][0], vis["id"][0], gl[0], gv[0],
-                                          gan["id"][0], pen[0]):
+        for li, vi, g1, g2, wi, p in zip(loc["id"][0], vis["id"][0], gl[0], gv[0], gan["id"][0], pen[0]):
             tanda = tanda_penales(rng, wi == li) if p else None
-            partido = nuevo_partido("Primera Nacional", f + 1, rotulo_b(f + 1), B_ETAPAS[etapa],
+            partido = nuevo_partido("Primera Nacional", f + 1, rotulo_b(SB, f + 1), B_ETAPAS[etapa],
                                     nom[li], nom[vi], g1, g2, tanda=tanda, gana=nom[wi])
             ronda.append(partido)
             SB["log"].append(partido)
         SB["bracket"].append(ronda)
-        definicion = [f"Penales {m['pen'][0]}-{m['pen'][1]}: {m['gana']}" if m["pen"] else ""
-                      for m in ronda]
-        SB["historial"].append(_fila_historial(
-            SB, B_ETAPAS[etapa], loc["id"][0], vis["id"][0], gl[0], gv[0], definicion))
+        definicion = [f"Penales {m['pen'][0]}-{m['pen'][1]}: {m['gana']}" if m["pen"] else "" for m in ronda]
+        SB["historial"].append(_fila_historial(SB, B_ETAPAS[etapa], loc["id"][0], vis["id"][0], gl[0], gv[0], definicion))
         if etapa == B_RED - 1:
             SB["asc_reducido"] = int(gan["id"][0, 0])
             SB["perdedor_final"] = int(per["id"][0, 0])
@@ -451,11 +562,11 @@ def simular_fecha_b(S, P):
 
     else:                                                 # ---- promoción
         final_p = tabla_final(S)
-        fila = final_p[final_p["Pos"] == N - 3].iloc[0]   # mejor descendido: 27°
+        fila = final_p[final_p["Pos"] == N - 3].iloc[0]
         p_id, p_nom = int(fila["id"]), fila["Equipo"]
         b_id = SB["perdedor_final"]
         gl, gv, gana_b, pen = jugar_ko(rng, np.array([r[b_id]]), np.array([S["r"][p_id]]),
-                                       P["sorpresa"], localia=0.0)    # cancha neutral
+                                       P["sorpresa"], localia=0.0)
         tanda = tanda_penales(rng, gana_b[0]) if pen[0] else None
         partido = nuevo_partido("Promoción", f + 1, "Promoción", "Promoción", nom[b_id], p_nom,
                                 gl[0], gv[0], tanda=tanda,
@@ -834,8 +945,8 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     # ---------------- DETECCIÓN DE EMPATES GENÉRICA ----------------
     ya_se_jugo = S_LIGA.get("orden_final") is not None
 
-         # === MODO TEST: FORZAR RESULTADOS A DEDO ===
-    if S_LIGA["fecha"] == S_LIGA["total"] and not ya_se_jugo:
+    # === MODO TEST: FORZAR RESULTADOS A DEDO ===
+    # if S_LIGA["fecha"] == S_LIGA["total"] and not ya_se_jugo:
         
         # TEST 1: Cuadrangular por el campeonato (Descomentá estas 3 líneas)
         # for i in [0, 1, 2, 3]:
@@ -887,16 +998,16 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
 
 
         # TEST 7: Empate masivo en el descenso (del 16to al último)
-        if nombre_liga == "Primera B" and len(ids) >= 18:
+        # if nombre_liga == "Primera B" and len(ids) >= 18:
             # Le copiamos las estadísticas del 16° (índice 15) a todos los de abajo
-            for i in range(16, len(ids)):
-                S_LIGA["g"][ids[i]] = S_LIGA["g"][ids[15]]
-                S_LIGA["e"][ids[i]] = S_LIGA["e"][ids[15]]
+            # for i in range(16, len(ids)):
+            #     S_LIGA["g"][ids[i]] = S_LIGA["g"][ids[15]]
+            #     S_LIGA["e"][ids[i]] = S_LIGA["e"][ids[15]]
 
         # Refresca la tabla y los puntos en memoria para que el sistema se coma el amague
-        df = fn_tabla(S_LIGA)
-        pts = df["Pts"].to_numpy()
-        ids = df["id"].to_numpy()
+        # df = fn_tabla(S_LIGA)
+        # pts = df["Pts"].to_numpy()
+        # ids = df["id"].to_numpy()
     # ===========================================
 
     if S_LIGA["fecha"] == S_LIGA["total"] and not ya_se_jugo:
@@ -1082,3 +1193,11 @@ def nueva_temporada(S, volatilidad):
     S["pc"]["nombres"] = list(S["primera_c"])
     S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
     nueva_estructura_liga(S["pc"], rng)
+
+
+    # Limpiar la memoria de desempates de la temporada anterior
+    for liga in [S["pb"], S["pc"]]:
+        liga["desempate_pendiente"] = False
+        liga["ids_desempate"] = []
+        liga["motivos_desempate"] = []
+        liga["orden_final"] = None

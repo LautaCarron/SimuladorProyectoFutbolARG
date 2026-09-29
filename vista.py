@@ -392,7 +392,7 @@ def partidos_fecha_p(n):
 
 def fechas_conocidas_b():
     S, SB, SF, SPB, SPC = _estado()
-    return max(SB["fecha"], B_F1 if SB["fechas2"] is None else B_F1 + B_F2)
+    return max(SB["fecha"], B_F1 if SB["fechas2"] is None else B_F1 + len(SB["fechas2"]))
 
 
 def partidos_fecha_b(n):
@@ -401,10 +401,10 @@ def partidos_fecha_b(n):
         return [p for p in SB["log"] if p["fecha"] == n]
     nom = SB["nombres"]
     if n <= B_F1:
-        return [pendiente("Primera Nacional", n, rotulo_b(n), f"Zona {'AB'[SB['zona_de'][x]]}",
+        return [pendiente("Primera Nacional", n, rotulo_b(SB, n), f"Zona {'AB'[SB['zona_de'][x]]}",
                           nom[x], nom[y]) for x, y in SB["fechas"][n - 1]]
-    return [pendiente("Primera Nacional", n, rotulo_b(n),
-                      f"Zona {B_ZONAS2[SB['zona2_de'][x]]}", nom[x], nom[y])
+    return [pendiente("Primera Nacional", n, rotulo_b(SB, n),
+                      f"Zona {B_ZONAS2[SB['zona2_de'][x]]}" if n <= B_F1 + B_F2 else "Desempate Permanencia", nom[x], nom[y])
             for x, y in SB["fechas2"][n - 1 - B_F1]]
 
 
@@ -618,7 +618,8 @@ def vista_fixture(liga):
         total, jugadas, obtener, rotulo = fechas_conocidas_p(), S["fecha"], partidos_fecha_p, rotulo_p
         extra = "" if S["fase"] == 2 else " · las 9 fechas de la fase 2 se arman al terminar la fase 1"
     elif liga == "b":
-        total, jugadas, obtener, rotulo = fechas_conocidas_b(), SB["fecha"], partidos_fecha_b, rotulo_b
+        total, jugadas, obtener = fechas_conocidas_b(), SB["fecha"], partidos_fecha_b
+        rotulo = lambda n: rotulo_b(SB, n)
         extra = ("" if SB["fechas2"] is not None else
                  " · la fase 2 se arma al terminar la fase 1")
     elif liga == "pb":
@@ -716,7 +717,10 @@ def colorear_destino(fila):
 
 
 def colorear_b(fila):
-    c = COLORES_B.get(fila["Destino"], "")
+    d = fila["Destino"]
+    c = COLORES_B.get(d, "")
+    if "Desempate" in d:
+        c = "rgba(147, 51, 234, 0.3)"
     return [f"background-color: {c}" if c else ""] * len(fila)
 
 
