@@ -6,10 +6,12 @@ _estado(), así que funcionan bien aunque haya varios usuarios a la vez.
 
 import hashlib
 import html
+import json
 import numpy as np
 import pandas as pd
 import re
 import unicodedata
+
 import streamlit as st
 
 from datos import (
@@ -84,6 +86,8 @@ CSS = """<style>
 .stApp{background:var(--tiza);}
 .block-container{padding-top:1.1rem;padding-bottom:4rem;max-width:1320px;}
 [data-testid="stHeader"]{background:transparent;pointer-events:none;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+.st-key-puente{position:absolute !important;width:0 !important;height:0 !important;overflow:hidden !important;opacity:0;pointer-events:none;}
 [data-testid="stHeader"] button{pointer-events:auto;}
 /* botón de parámetros (»): chip propio para que al hacer scroll no se mezcle con el contenido */
 body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con la ficha abierta no se superpone */
@@ -302,25 +306,36 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:.88rem;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--tinta);}
 .tabla th{background:var(--tiza);font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-2);padding:10px 8px 8px;text-align:center;border-bottom:1px solid var(--line-2);white-space:nowrap;cursor:default;}
 .tabla-wrap.alto th{position:sticky;top:0;z-index:2;}
-.tabla td{padding:6px 8px;height:38px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;background:linear-gradient(var(--hv,transparent),var(--hv,transparent)),linear-gradient(var(--rc,transparent),var(--rc,transparent)),var(--papel);}
+.tabla td{padding:6px 8px;height:40px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;background:linear-gradient(var(--hv,transparent),var(--hv,transparent)),linear-gradient(var(--rc,transparent),var(--rc,transparent)),var(--papel);}
 .tabla tbody tr:hover td{--hv:var(--soft2);}
 .tabla tbody tr:last-child td{border-bottom:0;}
 .tabla .tb-club,.tabla .tb-txt{text-align:left;}
 .tabla td.tb-txt{font-size:.82rem;}
-.tabla .tb-cl{display:inline-flex;align-items:center;gap:9px;font-weight:600;}
-.tabla .tb-cl img,.tabla .tb-cl .crest{flex:none;}
-.tabla .tb-pos{width:34px;min-width:34px;max-width:34px;box-sizing:border-box;padding-left:2px;padding-right:2px;color:var(--tinta-2);font-weight:700;}
-.tabla .tb-mov{width:38px;min-width:38px;max-width:38px;box-sizing:border-box;padding-left:2px;padding-right:2px;font-size:.78rem;}
 .tabla td.tb-pts{font-weight:800;}
-.tabla .tb-fija{position:sticky;z-index:1;}
+/* club (escudo + nombre): nunca sale de su celda; hasta 2 líneas y, si una palabra no entra, se corta */
+.tabla .tb-cl{display:inline-flex;align-items:center;gap:9px;font-weight:600;max-width:100%;min-width:0;vertical-align:middle;}
+.tabla .tb-cl img,.tabla .tb-cl .crest{flex:none;}
+.tabla .tb-nm{min-width:0;overflow:hidden;text-overflow:ellipsis;}
+[data-club]{cursor:pointer;border-radius:3px;}
+[data-club]:hover .tb-nm{color:var(--cel2);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;}
+[data-club]:hover img{transform:scale(1.08);}
+[data-club] img{transition:transform .25s var(--ease);}
+[data-club]:focus-visible{outline:2px solid var(--cel2);outline-offset:2px;}
+/* bloque fijo (#, ±, club): una sola celda, así al deslizar no queda ninguna rendija */
+.tabla .tb-fija{position:sticky;left:0;z-index:1;text-align:left;padding-left:0;}
 .tabla th.tb-fija{z-index:3;}
+.tb-f{display:flex;align-items:center;min-width:0;}
+.tb-f .tb-pos{flex:0 0 34px;text-align:center;color:var(--tinta-2);font-weight:700;}
+.tb-f .tb-mov{flex:0 0 38px;text-align:center;font-size:.78rem;}
+.tb-f .tb-fc{flex:1 1 auto;min-width:0;padding-left:4px;}
+th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:inherit;}
 .liguilla-wrap{overflow-x:auto;margin:2px 0 14px;border-top:1.5px solid var(--tinta);background:var(--papel);}
 .liguilla{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;color:var(--tinta);}
 .liguilla th{font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-2);padding:10px 8px;text-align:center;border-bottom:1px solid var(--line-2);white-space:nowrap;}
 .liguilla td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);color:var(--tinta);}
 .liguilla tr:last-child td{border-bottom:0;}
 .liguilla .club{text-align:left;}
-.liguilla td.club span{display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap;}
+.liguilla td.club .tb-cl{display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap;}
 .liguilla .pos{color:var(--tinta-2);font-weight:700;}
 .liguilla .pts{font-weight:800;}
 .liguilla tr:first-child+tr td{background:color-mix(in srgb,var(--cel) 10%,transparent);}
@@ -410,14 +425,17 @@ details.tanda{font-size:.76rem;}
 .score{font-size:1rem;gap:3px;}
 .tabla{font-size:.8rem;}
 .tabla th{padding:9px 6px 7px;font-size:.6rem;letter-spacing:.1em;}
-.tabla td{padding:5px 6px;height:40px;}
-.tabla .tb-pos,.tabla .tb-mov{padding-left:1px;padding-right:1px;}
-.tabla td.tb-club{white-space:normal;min-width:118px;max-width:150px;}
+.tabla td{padding:4px 6px;height:46px;}
+.tabla td.tb-txt{font-size:.74rem;white-space:normal;min-width:84px;line-height:1.2;}
 .tabla .tb-cl{gap:7px;line-height:1.15;}
 .tabla .tb-cl img{width:20px;height:20px;}
-.tabla td.tb-txt{font-size:.74rem;}
-.tabla .tb-borde{box-shadow:inset -1px 0 0 var(--line-2);}
-.tabla td.tb-txt{white-space:normal;min-width:84px;line-height:1.2;}
+/* la columna fija tiene ancho propio: los números nunca quedan debajo del nombre */
+.tabla .tb-fija{width:min(212px,56vw);min-width:min(212px,56vw);max-width:min(212px,56vw);box-shadow:inset -1px 0 0 var(--line-2);}
+.tb-f .tb-pos{flex-basis:28px;}
+.tb-f .tb-mov{flex-basis:32px;}
+.tabla td.tb-fija .tb-nm{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word;}
+.tabla td.tb-club{white-space:normal;min-width:144px;}
+.tabla td.tb-club .tb-nm{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow-wrap:break-word;}
 .tabla-wrap.alto{max-height:none;overflow-y:visible;}
 /* ficha del club: los 7 números en una fila y la forma debajo */
 .rec{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));}
@@ -430,7 +448,7 @@ details.tanda{font-size:.76rem;}
 .liguilla{font-size:.8rem;}
 .liguilla th,.liguilla td{padding:8px 4px;}
 .liguilla th{font-size:.58rem;letter-spacing:.08em;}
-.liguilla td.club span{white-space:normal;line-height:1.15;gap:7px;}
+.liguilla td.club .tb-cl{white-space:normal;line-height:1.15;gap:7px;}
 .liguilla td.club img{width:20px;height:20px;flex:none;}
 .cards{grid-template-columns:1fr 1fr;gap:0 16px;}
 .mline{gap:8px;}
@@ -449,7 +467,9 @@ details.tanda{font-size:.76rem;}
 .mh-c:not(.temp):not(:last-child) span{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;line-height:1.15;min-height:2.3em;overflow:visible;letter-spacing:.04em;font-size:.56rem;}
 .mh-c b{font-size:.92rem;}
 .st-key-acciones button p{font-size:.72rem;}
-.tabla td.tb-club{min-width:104px;max-width:128px;}
+.tabla .tb-fija{width:60vw;min-width:60vw;max-width:60vw;}
+.tb-f .tb-pos{flex-basis:24px;}
+.tb-f .tb-mov{flex-basis:28px;}
 .chip{font-size:.6rem;padding:3px 6px 2px;}
 [class*="st-key-fx"] button p{font-size:.76rem;}
 }
@@ -962,7 +982,6 @@ _TITULOS = {"Pos": "#", "Equipo": "Club"}
 _AYUDAS = {"±": "Puestos ganados o perdidos en la última fecha", "Media": "Fuerza interna del equipo",
            "Pts": "Puntos", "PJ": "Partidos jugados", "G": "Ganados", "E": "Empatados",
            "P": "Perdidos", "GF": "Goles a favor", "GC": "Goles en contra", "DG": "Diferencia de gol"}
-_ANCHO_FIJO = {"Pos": 34, "±": 38}
 
 
 def _valor(v, formato):
@@ -971,57 +990,140 @@ def _valor(v, formato):
     return formato.format(v) if formato else esc(str(v))
 
 
-def tabla_html(df, estilo=None, clubes=("Equipo",), formatos=None, fija=None):
-    """Dibuja un DataFrame como tabla HTML con el estilo del sitio. `estilo(fila)` devuelve una
-    lista de CSS por celda (como pandas Styler); las columnas de `clubes` llevan escudo; `fija`
-    es la columna que queda quieta (junto con las anteriores) al deslizar en pantallas chicas."""
+def club_link(nombre, size=22):
+    """Escudo + nombre de un club que al tocarlo abre su ficha (la misma de la sección Clubes).
+    El click lo recibe el puente de `puente_clubes()`."""
+    n = esc(nombre)
+    return (f'<span class="tb-cl" role="button" tabindex="0" data-club="{n}" '
+            f'title="Ver la ficha de {n}">{crest(nombre, size)}<span class="tb-nm">{n}</span></span>')
+
+
+def _th(c, clase=""):
+    ayuda = f' title="{esc(_AYUDAS[c])}"' if c in _AYUDAS else ""
+    return f'<th class="{clase}"{ayuda}>{esc(_TITULOS.get(c, c))}</th>'
+
+
+def tabla_html(df, estilo=None, clubes=("Equipo",), formatos=None, fija=None, clic=True):
+    """Dibuja un DataFrame como tabla HTML con el estilo del sitio.
+    - `estilo(fila)` devuelve una lista de CSS por celda (como pandas Styler).
+    - Las columnas de `clubes` llevan escudo y (con `clic`) abren la ficha del club.
+    - `fija`: esa columna y las anteriores (#, ±, Club) forman un solo bloque que queda quieto
+      al deslizar la tabla en pantallas chicas."""
     formatos = formatos or {}
     cols = list(df.columns)
     n_fijas = cols.index(fija) + 1 if fija in cols else 0
-    clases, lefts, x = [], [], 0
-    for i, c in enumerate(cols):
-        k = []
-        if c == "Pos":
-            k.append("tb-pos")
-        elif c == "±":
-            k.append("tb-mov")
-        elif c in clubes:
-            k.append("tb-club")
-        elif c in _COL_NUM:
-            k.append("tb-num")
-        else:
-            k.append("tb-txt")
-        if c == "Pts":
-            k.append("tb-pts")
-        if i < n_fijas:
-            k.append("tb-fija")
-            lefts.append(f' style="left:{x}px"')
-            x += _ANCHO_FIJO.get(c, 0)
-        else:
-            lefts.append("")
-        if i == n_fijas - 1:
-            k.append("tb-borde")
-        clases.append(" ".join(k))
-    th = "".join(
-        f'<th class="{k}"{lf}{(" title=" + chr(34) + esc(_AYUDAS[c]) + chr(34)) if c in _AYUDAS else ""}>'
-        f'{esc(_TITULOS.get(c, c))}</th>' for c, k, lf in zip(cols, clases, lefts))
+    fijas, resto = cols[:n_fijas], cols[n_fijas:]
+
+    def clase(c):
+        if c in clubes:
+            return "tb-club"
+        k = "tb-num" if c in _COL_NUM else "tb-txt"
+        return k + (" tb-pts" if c == "Pts" else "")
+
+    def contenido(c, v):
+        if c in clubes and isinstance(v, str):
+            return club_link(v) if clic else (f'<span class="tb-cl">{crest(v, 22)}'
+                                              f'<span class="tb-nm">{esc(v)}</span></span>')
+        return _valor(v, formatos.get(c))
+
+    def parte_fija(c, v, e=""):
+        cls = {"Pos": "tb-pos", "±": "tb-mov"}.get(c)
+        if cls is None:                       # la columna del club ocupa el resto del bloque
+            return f'<span class="tb-fc">{contenido(c, v)}</span>'
+        e = ";".join(x for x in (e or "").split(";") if x.strip() and "background" not in x)
+        return f'<span class="{cls}"' + (f' style="{e}"' if e else "") + f'>{_valor(v, None)}</span>'
+
+    th = ""
+    if fijas:
+        th += ('<th class="tb-fija"><div class="tb-f">'
+               + "".join(f'<span class="{ {"Pos": "tb-pos", "±": "tb-mov"}.get(c, "tb-fc") }"'
+                         + (f' title="{esc(_AYUDAS[c])}"' if c in _AYUDAS else "")
+                         + f'>{esc(_TITULOS.get(c, c))}</span>' for c in fijas)
+               + '</div></th>')
+    th += "".join(_th(c, clase(c)) for c in resto)
+
     filas = []
     for _, fila in df.iterrows():
-        css = estilo(fila) if estilo else [""] * len(cols)
-        tds = []
-        for c, k, lf, e in zip(cols, clases, lefts, css):
-            v = fila[c]
-            if c in clubes and isinstance(v, str):
-                txt = f'<span class="tb-cl">{crest(v, 22)}<span>{esc(v)}</span></span>'
-            else:
-                txt = _valor(v, formatos.get(c))
-            e = (e or "").replace("background-color", "--rc").strip()
-            if lf:
-                e = (e + ";" if e else "") + lf[8:-1]
-            tds.append(f'<td class="{k}"' + (f' style="{e}"' if e else "") + f'>{txt}</td>')
-        filas.append("<tr>" + "".join(tds) + "</tr>")
-    return (f'<div class="tabla-wrap"><table class="tabla"><thead><tr>{th}</tr></thead>'
-            f'<tbody>{"".join(filas)}</tbody></table></div>')
+        css = list(estilo(fila)) if estilo else [""] * len(cols)
+        css = [(e or "").replace("background-color", "--rc").strip() for e in css]
+        tds = ""
+        if fijas:
+            fondo = css[n_fijas - 1]                     # color de la fila (el de la celda del club)
+            fondo = ";".join(x for x in fondo.split(";") if "--rc" in x)
+            tds += (f'<td class="tb-fija"' + (f' style="{fondo}"' if fondo else "") + '><div class="tb-f">'
+                    + "".join(parte_fija(c, fila[c], css[i]) for i, c in enumerate(fijas))
+                    + '</div></td>')
+        for i, c in enumerate(resto, start=n_fijas):
+            e = css[i]
+            tds += (f'<td class="{clase(c)}"' + (f' style="{e}"' if e else "")
+                    + f'>{contenido(c, fila[c])}</td>')
+        filas.append("<tr>" + tds + "</tr>")
+    return (f'<div class="tabla-wrap"><table class="tabla{" con-fija" if fijas else ""}">'
+            f'<thead><tr>{th}</tr></thead><tbody>{"".join(filas)}</tbody></table></div>')
+
+
+# ---- Puente: tocar un club en cualquier tabla abre su ficha -----------------
+# Las tablas son HTML (no widgets), así que un script chico escucha los toques sobre
+# [data-club] y le pasa el nombre a un campo oculto de Streamlit; ese campo abre la misma
+# ficha (ver_equipo) que usa la sección Clubes.
+_PUENTE_JS = """
+<script>
+(function () {
+  if (window.__afaPuenteClubes) return;
+  window.__afaPuenteClubes = true;
+  function abrir(nombre) {
+    const inp = document.querySelector('.st-key-puente_club input');
+    if (!inp) return;
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    set.call(inp, nombre);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+  }
+  document.addEventListener('click', function (e) {
+    const t = e.target.closest && e.target.closest('[data-club]');
+    if (!t) return;
+    e.preventDefault();
+    abrir(t.dataset.club);
+  });
+  document.addEventListener('keydown', function (e) {
+    const t = e.target;
+    if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('[data-club]')) {
+      e.preventDefault();
+      abrir(t.dataset.club);
+    }
+  });
+})();
+</script>
+"""
+
+
+def _instalar_puente_js():
+    """Corre el script en la página. st.html(unsafe_allow_javascript) es lo actual; en versiones
+    de Streamlit que no lo tienen se usa un iframe que lo inyecta en la página de arriba."""
+    try:
+        st.html(_PUENTE_JS, unsafe_allow_javascript=True)
+    except TypeError:
+        import streamlit.components.v1 as components
+        js = _PUENTE_JS.replace("<script>", "").replace("</script>", "")
+        components.html("<script>const s = window.parent.document.createElement('script');"
+                        f"s.textContent = {json.dumps(js)};"
+                        "window.parent.document.head.appendChild(s);</script>", height=0)
+
+
+def _club_elegido():
+    st.session_state["_club_a_abrir"] = st.session_state.get("puente_club", "")
+    st.session_state["puente_club"] = ""
+
+
+def puente_clubes():
+    """Campo oculto + script que conectan los clubes de las tablas con su ficha."""
+    with st.container(key="puente"):
+        st.text_input("club", key="puente_club", on_change=_club_elegido,
+                      label_visibility="collapsed")
+        _instalar_puente_js()
+    nombre = st.session_state.pop("_club_a_abrir", "")
+    if nombre:
+        ver_equipo(nombre)
 
 
 def mostrar_tabla(df, fn_color, hist=None):

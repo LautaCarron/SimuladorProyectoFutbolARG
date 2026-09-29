@@ -131,6 +131,8 @@ from vista import (
     lista_equipos_html,
     mostrar_tabla,
     tabla_html,
+    club_link,
+    puente_clubes,
     norm,
     render_ficha,
     render_movimientos,
@@ -160,6 +162,7 @@ def editar_medias(nombres, r, clave):
 # INTERFAZ
 # ----------------------------------------------------------------------------
 st.markdown(CSS, unsafe_allow_html=True)
+puente_clubes()     # tocar un club en cualquier tabla abre su ficha
 
 with st.sidebar:
     st.header("Parámetros de simulación")
@@ -310,7 +313,7 @@ def html_tabla_liguilla(partidos):
     for i, row in enumerate(lista):
         html += '<tr>'
         html += f'<td class="pos">{i+1}</td>'
-        html += f'<td class="club"><span>{crest(row["Club"], 24)} {esc(row["Club"])}</span></td>'
+        html += f'<td class="club">{club_link(row["Club"], 24)}</td>'
         html += f'<td class="pts">{row["Pts"]}</td>'
         html += f'<td>{row["PJ"]}</td><td>{row["G"]}</td><td>{row["P"]}</td>'
         html += f'<td>{row["GF"]}</td><td>{row["GC"]}</td><td>{row["DG"]:+d}</td>'
