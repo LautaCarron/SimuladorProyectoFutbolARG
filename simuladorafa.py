@@ -102,8 +102,12 @@ from torneos import (
     tabla_zona,
     total_b,
     total_primera,
-    tabla_reg,
+    REG_RONDAS,
+    orden_region,
+    simular_fecha_reg,
+    tabla_reg_zona,
 )
+from regional import FINALES_REG, REGIONES_REG
 from vista import (
     COLORES_B,
     COLORES_F,
@@ -124,6 +128,9 @@ from vista import (
     colorear_fase1,
     colorear_pb,
     colorear_pc,
+    colorear_reg,
+    finales_reg_html,
+    llave_region_html,
     crest,
     esc,
     fila_partido_html,
@@ -185,14 +192,15 @@ P = dict(sorpresa=sorpresa)
 if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_ESTADO:
     st.session_state.S = crear_estado()
 S = st.session_state.S
-SB, SF, SPB, SPC = S["b"], S["f"], S["pb"], S["pc"]
+SB, SF, SPB, SPC, SR = S["b"], S["f"], S["pb"], S["pc"], S["reg"]
 
 terminada = primera_terminada(S)            # incluye las fechas de desempate
 terminada_b = SB["fecha"] >= total_b(SB)
 terminada_f = SF["fecha"] >= SF["total"]
 terminada_pb = SPB["fecha"] >= SPB["total"]
 terminada_pc = SPC["fecha"] >= SPC["total"]
-ambas = terminada and terminada_b and terminada_f and terminada_pb and terminada_pc
+terminada_reg = SR["fecha"] >= SR["total"]
+ambas = terminada and terminada_b and terminada_f and terminada_pb and terminada_pc and terminada_reg
 b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
 pct_p = 100 * S["fecha"] / total_primera(S)
@@ -200,6 +208,7 @@ pct_b = 100 * SB["fecha"] / total_b(SB)
 pct_f = 100 * SF["fecha"] / SF["total"]
 pct_pb = 100 * SPB["fecha"] / SPB["total"] if SPB["total"] else 0
 pct_pc = 100 * SPC["fecha"] / SPC["total"] if SPC["total"] else 0
+pct_reg = 100 * SR["fecha"] / SR["total"] if SR["total"] else 0
 
 # ---- Cabecera (masthead) · Proyecto AFA
 # Sol de Mayo geométrico: 16 rayos alternando largo (mismo dibujo que la intro)
@@ -229,7 +238,8 @@ _BOTON_TEMA = (
 _web = sys.platform == "emscripten"
 _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
               if _web else 'div class="mh-marca"')
-_jugados = len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
+_jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
+            + len(SR["log"]))
 st.markdown(
     f'<header class="masthead"><{_marca_tag}>{SOL_SVG}<div><b>Proyecto AFA</b>'
     f'<span>Simulador Fútbol Argentino</span></div></{"a" if _web else "div"}>'
@@ -240,6 +250,7 @@ st.markdown(
     + _celda("Federal A", SF["fecha"], SF["total"], pct_f)
     + _celda("Primera B", SPB["fecha"], SPB["total"], pct_pb)
     + _celda("Primera C", SPC["fecha"], SPC["total"], pct_pc)
+    + _celda("Regional", SR["fecha"], SR["total"], pct_reg)
     + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div></div>'
     + (_BOTON_TEMA if _web else "")
     + '</div></header>', unsafe_allow_html=True)
@@ -263,6 +274,8 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
         simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
     while SPC["fecha"] < SPC["total"]: 
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
+    while SR["fecha"] < SR["total"]:
+        simular_fecha_reg(SR, P, S["rng"])
     st.rerun()
 if g2.button(":material/event_repeat: Nueva temporada", disabled=not ambas, width="stretch"):
     nueva_temporada(S, volatilidad)
@@ -271,8 +284,8 @@ if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
-tab_p, tab_b, tab_f, tab_pb, tab_pc, tab_c, tab_h = st.tabs([
-    "Primera", "B Nacional", "Federal A", "Primera B", "Primera C", "Clubes", "Historial"
+tab_p, tab_b, tab_f, tab_pb, tab_pc, tab_reg, tab_c, tab_h = st.tabs([
+    "Primera", "B Nacional", "Federal A", "Primera B", "Primera C", "Regional", "Clubes", "Historial"
 ])
 
 # (Esto va debajo de los imports y la configuración inicial de streamlit)
@@ -959,25 +972,151 @@ with tab_pc:
 
 
 # ============================================================================
+# TORNEO REGIONAL AMATEUR
+# ============================================================================
+with tab_reg:
+    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+    c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
+                + chip("12 regiones · 6 ascensos al Federal A", "#475569"), unsafe_allow_html=True)
+    if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
+                 disabled=terminada_reg):
+        simular_fecha_reg(SR, P, S["rng"])
+        st.rerun()
+    if c3.button(":material/fast_forward: Hasta el final", key="reg_all", width="stretch",
+                 disabled=terminada_reg):
+        while SR["fecha"] < SR["total"]:
+            simular_fecha_reg(SR, P, S["rng"])
+        st.rerun()
+
+    en_zonas = SR["fecha"] < SR["f_zonas"]
+    fase_reg = ("Fase de zonas" if en_zonas else
+                "Fase regional" if SR["fecha"] < SR["f_zonas"] + 2 * len(REG_RONDAS) else
+                "Terminado" if terminada_reg else "Final por el ascenso")
+    barra_estado([("Fase", fase_reg), ("Fecha", f"{SR['fecha']} / {SR['total']}"),
+                  ("Partidos jugados", len(SR["log"]))], pct_reg)
+
+    titulos_r = ["Regiones", "Fixture y resultados", "Final por el ascenso", "Movimientos", "Definiciones"]
+    tab_r = dict(zip(titulos_r, st.tabs(titulos_r)))
+
+    with tab_r["Regiones"]:
+        seccion("Regiones", "Cada región juega su fase de zonas y su eliminatoria hasta tener un campeón",
+                "#0e7490")
+        region = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="reg_region",
+                          label_visibility="collapsed") or REGIONES_REG[0]
+        ids_region = [i for i, r in enumerate(SR["region_de"]) if r == region]
+        zonas_region = [zi for zi, z in enumerate(SR["zonas"])
+                        if any(SR["region_de"][i] == region for i in z["ids"])]
+        n_final, rival = next((k + 1, b if a == region else a) for k, (a, b) in enumerate(FINALES_REG)
+                              if region in (a, b))
+        st.markdown(chip(f"{len(ids_region)} clubes", "#0e7490") + " "
+                    + chip(f"{len(zonas_region)} zonas", "#475569") + " "
+                    + chip(f"Final {n_final} por el ascenso vs. {rival}", "#b7860b"),
+                    unsafe_allow_html=True)
+        tabs_region = st.tabs(["Zonas", "Clasificación", "Fase regional"])
+        with tabs_region[0]:
+            seccion("Fase de zonas", "Todos contra todos, ida y vuelta · clasifican los 1° de zona y "
+                    "los mejores del resto hasta completar 8", "#16a34a")
+            for zi in zonas_region:
+                z = SR["zonas"][zi]
+                otra = sorted({SR["region_de"][i] for i in z["ids"]} - {region})
+                st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(z["nombre"])}'
+                            + (f' · compartida con {esc(", ".join(otra))}' if otra else "")
+                            + '</div>', unsafe_allow_html=True)
+                mostrar_tabla(tabla_reg_zona(SR, zi), colorear_reg)
+            leyenda([("Clasifica · 1° de zona", COLORES_B["Ascenso directo"]),
+                     ("Clasifica · mejores del resto", COLORES_F["Reducido"])])
+        with tabs_region[1]:
+            oficial = SR["clasif"].get(region)
+            seccion("Clasificación a la fase regional",
+                    "Orden de mérito definitivo" if oficial is not None else
+                    "Si la fase de zonas terminara hoy · primero los 1° de zona, después puntos por "
+                    "partido, diferencia de gol por partido y goles por partido", "#0e7490")
+            orden = orden_region(SR, region)
+            cupo = len(oficial) if oficial is not None else (8 if len(orden) >= 8 else 4 if len(orden) >= 4
+                                                              else 2 if len(orden) >= 2 else len(orden))
+            ganadores = {int(tabla_reg_zona(SR, zi)["id"].iloc[0]) for zi in zonas_region}
+            filas = []
+            for k, i in enumerate(orden):
+                pj = int(SR["pj"][i])
+                pts = 3 * int(SR["g"][i]) + int(SR["e"][i])
+                filas.append({"Pos": k + 1, "Equipo": SR["nombres"][i],
+                              "Zona": SR["zonas"][SR["zona_de"][i]]["nombre"],
+                              "Pts": pts, "PJ": pj, "Pts/PJ": pts / pj if pj else 0.0,
+                              "DG": int(SR["gf"][i]) - int(SR["gc"][i]),
+                              "Destino": ("" if pj == 0 and oficial is None else
+                                          ("Clasifica · 1° de zona" if i in ganadores else
+                                           "Clasifica · mejores del resto") if k < cupo else "Eliminado")})
+            df_cl = pd.DataFrame(filas)
+            st.markdown(tabla_html(df_cl, colorear_reg, formatos={"Pts/PJ": "{:.2f}"}, fija="Equipo"),
+                        unsafe_allow_html=True)
+        with tabs_region[2]:
+            seccion("Fase regional", "Cuartos, semifinal y final a ida y vuelta · cierra de local el "
+                    "mejor ubicado · si el global empata, penales", "#2563eb")
+            if en_zonas:
+                aviso("El cuadro se arma cuando termina la fase de zonas.")
+            st.markdown(llave_region_html(SR, region), unsafe_allow_html=True)
+
+    with tab_r["Fixture y resultados"]:
+        region_fx = st.selectbox(":material/map: Región", REGIONES_REG, key="reg_fx_region")
+        vista_fixture("reg", region_fx)
+
+    with tab_r["Final por el ascenso"]:
+        seccion("Final por el ascenso", "Los 12 campeones regionales se cruzan de a pares, a ida y "
+                "vuelta · los 6 ganadores ascienden al Federal A", "#b7860b")
+        campeones_ya = [(SR["nombres"][c], reg) for reg, c in SR["campeones"].items() if c is not None]
+        if not campeones_ya:
+            aviso("Los cruces se completan con los campeones de cada región.")
+        st.markdown(finales_reg_html(SR), unsafe_allow_html=True)
+        if SR["ascendidos"]:
+            st.markdown('<div class="mlab up">▲ Ascienden al Federal A</div>'
+                        + lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
+                                              for i in SR["ascendidos"]]), unsafe_allow_html=True)
+
+    with tab_r["Movimientos"]:
+        render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
+
+    with tab_r["Definiciones"]:
+        seccion("Definiciones de la temporada", "Campeones regionales y ascensos al Federal A", "#b7860b")
+        if not any(c is not None for c in SR["campeones"].values()):
+            aviso("Las definiciones aparecen acá cuando terminan las finales de cada región.")
+        else:
+            with st.expander(":material/emoji_events: Campeones regionales", expanded=False):
+                st.markdown(lista_equipos_html([(SR["nombres"][c], reg) for reg, c in
+                                                SR["campeones"].items() if c is not None]),
+                            unsafe_allow_html=True)
+            if SR["ascendidos"]:
+                with st.expander(":material/arrow_upward: Ascensos al Federal A", expanded=False):
+                    st.markdown(lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
+                                                    for i in SR["ascendidos"]]), unsafe_allow_html=True)
+
+
+# ============================================================================
 # CLUBES
 # ============================================================================
 with tab_c:
     seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
     cat = st.segmented_control("Categoría",
-                               ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C"],
+                               ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
+                                "Regional Amateur"],
                                default="Primera División", key="cat_clubes")
     cat = cat or "Primera División"
-    lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
-                    "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat], key=norm)
+    if cat == "Regional Amateur":            # 245 clubes: se elige la región
+        region_c = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="club_reg_region",
+                            label_visibility="collapsed") or REGIONES_REG[0]
+        lista = sorted([n for n, r in zip(SR["nombres"], SR["region_de"]) if r == region_c], key=norm)
+    else:
+        lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
+                        "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat],
+                       key=norm)
     elegido = st.selectbox(":material/search: Buscar club", lista, index=None,
                            placeholder="Escribí o elegí un club…", key=f"club_sel_{cat}")
     if elegido:
         with st.container(border=True):
             render_ficha(elegido, "clubes")
-    st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat)} · {len(lista)} clubes · '
+    st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat if cat != "Regional Amateur" else f"Regional · {region_c}")} · {len(lista)} clubes · '
                 f'tocá uno para ver su ficha</div>', unsafe_allow_html=True)
     # Grilla de clubes: cada casilla es un botón (invisible, ocupa toda la casilla) que abre la ficha
-    slug = norm(cat).replace(" ", "_")
+    slug = norm(cat if cat != "Regional Amateur" else f"reg {region_c}").replace(" ", "_")
     with st.container(key=f"cgrid_{slug}"):
         for i, n in enumerate(lista):
             with st.container(key=f"ctile_{slug}_{i}"):
@@ -1014,6 +1153,8 @@ with tab_h:
                 
                 f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
+                f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
+                f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])])}</div>'
                 f'</div><div style="margin-top:6px;font-size:.88rem">{esc(mv.get("promo_texto", ""))}</div>',
                 unsafe_allow_html=True)
     if S["campeones"]:

@@ -6,6 +6,8 @@ escudos. No tiene lógica de simulación.
 
 import streamlit as st
 
+from regional import GRUPO_FEDERAL_REG, REGIONAL
+
 # ----------------------------------------------------------------------------
 # DATOS: equipos reales de la temporada 2026 (medias orientativas, escala ~40-95).
 # Primera: 30 equipos (ESPN, Liga Profesional 2026) · Primera Nacional: 36 (ESPN,
@@ -77,19 +79,9 @@ EQUIPOS_PRIMERA_C = {
     "Central Ballester": 32, "El Porvenir": 35, "Ituzaingó": 38,
     "Puerto Nuevo": 31, "Real Pilar": 41, "Sacachispas": 38,
 }
-# Torneo Regional Amateur
-EQUIPOS_REGIONAL = {
-    "Deportivo Mandiyú": 35, "Altos Hornos Zapla": 36, "Desamparados (SJ)": 36,
-    "Guaraní Antonio Franco": 35, "Ben Hur (Rafaela)": 37, "Loma Negra": 25,
-    "Crucero del Norte": 30, "Juventud Unida (G)": 34, "General Paz Juniors": 22,
-    "Liniers (BB)": 36, "Atlético Paraná": 32, "Huracán (Ing. White)": 30,
-    "Boxing Club": 25, "CAI": 33, "Deportivo Roca": 32, "Jorge Newbery": 23,
-    "Alianza de Cutral Có": 30, "Independiente de Neuquén": 31, "Racing de Olavarría": 30,
-    "Atlético Mar del Plata": 29, "Ferro (Gral. Pico)": 38, "Juventud Alianza": 20,
-    "DEPRO": 34, "Resistencia Central": 20, "Talleres de Perico": 21,
-    "Bella Vista (Tucumán)": 30, "San Lorenzo de Alem": 30, "Unión Santiago": 20,
-    "Deportivo Norte (MdP)": 30, "Independiente de Tandil": 23,
-}
+# Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en regional.py,
+# generado del JSON oficial del torneo). Acá sólo nombre -> media inicial.
+EQUIPOS_REGIONAL = {x["nombre"]: x["media"] for x in REGIONAL}
 
 
 # Escudos oficiales: ESPN (Primera y Primera Nacional), Wikimedia Commons / Wikipedia y
@@ -234,6 +226,8 @@ ESCUDOS = {
 
 
 }
+# Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
+ESCUDOS.update({x["nombre"]: x["escudo"] for x in REGIONAL})
 
 # Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
 # Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
@@ -325,6 +319,10 @@ REGION = {
 }
 
 
+# Clubes del Regional Amateur: si ascienden, van al grupo del Federal A de su región
+REGION.update({x["nombre"]: GRUPO_FEDERAL_REG[x["region"]] for x in REGIONAL})
+
+
 def region_de(nombre):
     return REGION.get(nombre, "Centro")
 
@@ -335,7 +333,8 @@ NF = len(EQUIPOS_FEDERAL)   # Federal A
 NPB = len(EQUIPOS_PRIMERA_B)  # Primera B
 NPC = len(EQUIPOS_PRIMERA_C)  # Primera C
 
-_todos = list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B) + list(EQUIPOS_PRIMERA_C)
+_todos = (list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
+          + list(EQUIPOS_PRIMERA_C) + [x["nombre"] for x in REGIONAL])
 if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or len(set(_todos)) != len(_todos):
     st.error("Hay un error en la cantidad de equipos o nombres repetidos.")
     st.stop()

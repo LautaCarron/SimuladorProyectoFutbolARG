@@ -29,7 +29,9 @@ from torneos import (
     rotulo_b,
     rotulo_f,
     rotulo_p,
+    rotulo_reg,
 )
+from regional import FINALES_REG
 
 
 def _estado():
@@ -339,6 +341,11 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .liguilla .pos{color:var(--tinta-2);font-weight:700;}
 .liguilla .pts{font-weight:800;}
 .liguilla tr:first-child+tr td{background:color-mix(in srgb,var(--cel) 10%,transparent);}
+/* Regional Amateur: las 6 finales por el ascenso */
+.reg-finales{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin:4px 0 14px;}
+.reg-final .round-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;margin-bottom:8px;}
+.reg-vs{font-size:.78rem;color:var(--tinta-2);font-weight:600;}
+.bt .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
 .stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}
@@ -347,7 +354,7 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 @media (min-width:641px) and (max-width:1180px){
 .masthead{flex-direction:column;align-items:stretch;gap:14px;margin-top:34px;}
 .mh-der{align-items:stretch;}
-.mh-tabla{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
+.mh-tabla{flex:1;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
 .mh-c,.mh-c:first-child{min-width:0;padding:9px 12px 0;}
 .mh-c.temp{padding-left:0;}
 .mh-tema{position:absolute;top:0;right:0;}
@@ -387,13 +394,13 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .mh-marca b{font-size:1.05rem;}
 .mh-der{flex-direction:column-reverse;align-items:stretch;gap:10px;}
 .mh-tema{position:absolute;top:0;right:0;}
-/* cabecera en celular: Temporada y Partidos arriba, las 5 categorías en una fila pareja */
-.mh-tabla{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
+/* cabecera en celular: Temporada y Partidos arriba, las 6 categorías en dos filas de 3 */
+.mh-tabla{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
 .mh-c,.mh-c:first-child{grid-column:span 2;min-width:0;padding:8px 6px 7px 8px;border-top:1px solid var(--line);}
-.mh-c.temp,.mh-c:last-child{grid-column:span 5;border-top:0;padding-left:10px;}
+.mh-c.temp,.mh-c:last-child{grid-column:span 3;border-top:0;padding-left:10px;}
 .mh-c.temp{order:-2;border-left:0;padding-left:0;}
 .mh-c:last-child{order:-1;}
-.mh-c:nth-child(2){border-left:0;padding-left:0;}
+.mh-c:nth-child(2),.mh-c:nth-child(5){border-left:0;padding-left:0;}
 .mh-c span{font-size:.58rem;letter-spacing:.08em;overflow:hidden;text-overflow:ellipsis;}
 .mh-c b{font-size:.98rem;}
 .mh-c .bar{margin-top:5px;}
@@ -463,7 +470,7 @@ details.tanda{font-size:.76rem;}
 /* celulares muy angostos (iPhone SE, Android chicos) */
 @media (max-width:400px){
 .mh-c:not(.temp):not(:last-child){padding-left:5px;padding-right:3px;}
-.mh-c:nth-child(2){padding-left:0;}
+.mh-c:nth-child(2),.mh-c:nth-child(5){padding-left:0;}
 .mh-c:not(.temp):not(:last-child) span{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;line-height:1.15;min-height:2.3em;overflow:visible;letter-spacing:.04em;font-size:.56rem;}
 .mh-c b{font-size:.92rem;}
 .st-key-acciones button p{font-size:.72rem;}
@@ -486,6 +493,7 @@ COLOR_COMP = [
     ("Promoción", "#9333ea"), ("Fase 1", "#475569"), ("Federal A", "#b45309"),
     ("Primera B", "#0369a1"),
     ("Primera División", "#1e5aa8"), ("Primera Nacional", "#0f766e"),
+    ("Regional Amateur", "#0e7490"), ("Región", "#0e7490"),
 ]
 esc = html.escape
 
@@ -741,11 +749,27 @@ def partidos_fecha_pc(n):
 def fechas_conocidas_reg():
     return st.session_state.S["reg"]["total"]
 
-def partidos_fecha_reg(n):
-    SREG = st.session_state.S["reg"]
-    if n <= SREG["fecha"]: return [p for p in SREG["log"] if p["fecha"] == n]
-    nom = SREG["nombres"]
-    return [pendiente("Regional Amateur", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SREG["fechas"][n - 1]]
+
+def partidos_fecha_reg(n, region=None):
+    """Partidos de la fecha n del Regional (jugados o por jugar). Con `region`, sólo los de
+    esa región (en zonas compartidas, los partidos donde juega algún club de la región)."""
+    SR = st.session_state.S["reg"]
+    nom = SR["nombres"]
+    if n <= SR["fecha"]:
+        lista = [p for p in SR["log"] if p["fecha"] == n]
+    elif n <= SR["f_zonas"]:
+        lista = []
+        for x, y in SR["fechas"][n - 1]:
+            p = pendiente("Regional Amateur", n, rotulo_reg(SR, n),
+                          SR["zonas"][SR["zona_de"][x]]["nombre"], nom[x], nom[y])
+            p["region"] = {SR["region_de"][x], SR["region_de"][y]}
+            lista.append(p)
+    else:
+        lista = []                                   # los cruces se arman al terminar cada ronda
+    if region is None:
+        return lista
+    return [p for p in lista if region in (p["region"] if isinstance(p["region"], set) else
+                                           {p["region"]} | set(p["region"].split(" / ")))]
 
 
 def proximo_partido(nombre):
@@ -775,7 +799,7 @@ def proximo_partido(nombre):
             for p in partidos_fecha_pc(n):
                 if nombre in (p["local"], p["visita"]): return p
     elif nombre in st.session_state.S["reg"]["nombres"]:
-        for n in range(st.session_state.S["reg"]["fecha"] + 1, fechas_conocidas_reg() + 1):
+        for n in range(st.session_state.S["reg"]["fecha"] + 1, st.session_state.S["reg"]["f_zonas"] + 1):
             for p in partidos_fecha_reg(n):
                 if nombre in (p["local"], p["visita"]): return p
     return None
@@ -907,7 +931,7 @@ def _mover_fecha(key, delta, maximo):
     st.session_state[key] = min(max(1, st.session_state.get(key, 1) + delta), maximo)
 
 
-def vista_fixture(liga):
+def vista_fixture(liga, region=None):
     S, SB, SF, SPB, SPC = _estado()
     
     if liga == "p":
@@ -931,8 +955,8 @@ def vista_fixture(liga):
     elif liga == "reg":
         SREG = st.session_state.S["reg"]
         total, jugadas = fechas_conocidas_reg(), SREG["fecha"]
-        obtener, rotulo = partidos_fecha_reg, lambda n: f"Fecha {n}"
-        extra = " · Formato de liga provisional"
+        obtener, rotulo = (lambda n: partidos_fecha_reg(n, region)), (lambda n: rotulo_reg(SREG, n))
+        extra = (f" · {region}" if region else "") + " · los cruces se arman al terminar cada ronda"
     else:
         total, jugadas = fechas_conocidas_f(), SF["fecha"]
         obtener, rotulo = partidos_fecha_f, lambda n: rotulo_f(SF, n)
@@ -942,7 +966,7 @@ def vista_fixture(liga):
     if total == 0:
         st.info("Todavía no hay fechas programadas.")
         return
-    key = f"fx_sel_{liga}_{S['temp']}_{jugadas}"
+    key = f"fx_sel_{liga}_{S['temp']}_{jugadas}" + (f"_{norm(region)}" if region else "")
     if key not in st.session_state:
         st.session_state[key] = max(1, min(jugadas, total))
     c1, c2, c3 = st.columns([1, 6, 1], vertical_alignment="bottom")
@@ -957,7 +981,12 @@ def vista_fixture(liga):
         chip("Próxima fecha", "#2f7fd0") if elegida == jugadas + 1 else chip("Por jugar", "#64748b"))
     st.markdown(f'<div class="fx-head"><b style="font-size:1.05rem">{esc(rotulo(elegida))}</b>'
                 f'{estado}</div>', unsafe_allow_html=True)
-    render_fecha(obtener(elegida), f"{liga}{S['temp']}_{elegida}")
+    partidos = obtener(elegida)
+    if not partidos:
+        st.info("No hay partidos de esta región en esta fecha." if region else
+                "Los cruces de esta fecha se conocen cuando termina la ronda anterior.")
+        return
+    render_fecha(partidos, f"{liga}{S['temp']}_{elegida}" + (f"_{norm(region)}" if region else ""))
 
 
 # ---- Tablas -----------------------------------------------------------------
@@ -1136,7 +1165,7 @@ def mostrar_tabla(df, fn_color, hist=None):
         else:
             df.insert(1, "±", ["–"] * len(df))
     df = df.drop(columns="id")
-    orden = [c for c in ["Pos", "±", "Equipo", "Pts", "PJ", "G", "E", "P", "GF", "GC",
+    orden = [c for c in ["Pos", "±", "Equipo", "Región", "Pts", "PJ", "G", "E", "P", "GF", "GC",
                          "DG", "Destino", "Media"] if c in df.columns]
     df = df[orden]
     cols = list(df.columns)
@@ -1194,6 +1223,13 @@ def colorear_pb(fila):
         "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
         )))
     return [f"background-color: {c}" if c else ""] * len(fila)
+
+def colorear_reg(fila):
+    d = fila["Destino"]
+    c = (COLORES_B["Ascenso directo"] if d == "Clasifica · 1° de zona" else
+         COLORES_F["Reducido"] if d == "Clasifica · mejores del resto" else "")
+    return [f"background-color: {c}" if c else ""] * len(fila)
+
 
 def colorear_pc(fila):
     d = fila["Destino"]
@@ -1406,6 +1442,98 @@ def bracket_html_f(SF):
     cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
              f'<div class="round-b" style="justify-content:center">{champ}</div></div>')
     return f'<div class="bracket">{cols}</div>'
+
+
+# ---- Regional Amateur: series a ida y vuelta, cuadro de cada región y finales ----
+def _nm_club(nombre):
+    n = esc(nombre)
+    return (f'<span class="nm" role="button" tabindex="0" data-club="{n}" '
+            f'title="Ver la ficha de {n}">{n}</span>')
+
+
+def serie_html(SR, x, final=False):
+    """Serie a ida y vuelta: arriba el mejor ubicado (cierra de local), goles del global y
+    abajo el detalle de cada partido."""
+    if x is None:
+        return bracket_card(None)
+    nom = SR["nombres"]
+    if x["b"] is None:                               # la otra región no tiene campeón
+        return (f'<div class="bm"><div class="bt win">{crest(nom[x["a"]], 24)}{_nm_club(nom[x["a"]])}</div>'
+                f'<div class="bfoot">Sin rival · asciende <b>{esc(nom[x["a"]])}</b></div></div>')
+    jugada = x["ida"] is not None
+    filas = ""
+    for k, (i, g) in enumerate(((x["a"], x["ga"]), (x["b"], x["gb"]))):
+        cls = "" if x["gana"] is None else ("win" if x["gana"] == i else "lose")
+        pk = f'<span class="p">({x["pen"][k]})</span>' if x["pen"] else ""
+        filas += (f'<div class="bt {cls}">{crest(nom[i], 24)}{_nm_club(nom[i])}{pk}'
+                  f'<span class="g">{g if jugada else ""}</span></div>')
+    if not jugada:
+        pie = "Ida y vuelta · cierra de local el de arriba"
+    else:
+        ida = x["ida"]
+        partes = [f"Ida {ida['gv']}-{ida['gl']}"]
+        if x["vuelta"] is not None:
+            partes.append(f"Vuelta {x['vuelta']['gl']}-{x['vuelta']['gv']}")
+        if x["pen"]:
+            partes.append(f"Penales {x['pen'][0]}-{x['pen'][1]}")
+        if x["gana"] is not None:
+            partes.append(f"{'Asciende' if final else 'Avanza'}: <b>{esc(nom[x['gana']])}</b>")
+        pie = " · ".join(partes)
+    tanda = tanda_html(x["vuelta"]) if x["vuelta"] is not None else ""
+    return f'<div class="bm">{filas}<div class="bfoot">{pie}</div>{tanda}</div>'
+
+
+def llave_region_html(SR, reg):
+    """Cuadro de la fase regional de una región, de su primera ronda al campeón."""
+    from torneos import REG_RONDAS
+    cl = SR["clasif"].get(reg)
+    n_cl = len(cl) if cl else min(8, sum(r == reg for r in SR["region_de"]))
+    ini = {8: 0, 4: 1, 2: 2}.get(8 if n_cl >= 8 else 4 if n_cl >= 4 else 2 if n_cl >= 2 else n_cl)
+    cols, n_cols = "", 0
+    if ini is not None:
+        for k in range(ini, len(REG_RONDAS)):
+            series = SR["llaves"][reg][k] or [None] * (2 ** (len(REG_RONDAS) - 1 - k))
+            cards = "".join(serie_html(SR, x, final=False) for x in series)
+            cols += (f'<div class="round"><div class="round-h">{chip(REG_RONDAS[k], "#0e7490")}</div>'
+                     f'<div class="round-b">{cards}</div></div>')
+            n_cols += 1
+    c = SR["campeones"].get(reg)
+    rival = next(b if a == reg else a for a, b in FINALES_REG if reg in (a, b))
+    if c is not None:
+        champ = (f'<div class="champ"><div class="t">Campeón · Región {esc(reg)}</div>'
+                 f'<div style="margin-top:10px">{crest(SR["nombres"][c], 56)}</div>'
+                 f'<div class="nm">{esc(SR["nombres"][c])}</div>'
+                 f'<div class="s">Final por el ascenso vs. el campeón de {esc(rival)}</div></div>')
+    else:
+        champ = (f'<div class="champ" style="opacity:.55"><div class="t">Campeón · Región {esc(reg)}</div>'
+                 f'<div class="nm">Por definir</div><div class="s">Final por el ascenso vs. el campeón '
+                 f'de {esc(rival)}</div></div>')
+    cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
+             f'<div class="round-b" style="justify-content:center">{champ}</div></div>')
+    n_cols += 1
+    return (f'<div class="bracket" style="grid-template-columns:repeat({n_cols},minmax(205px,1fr))">'
+            f'{cols}</div>')
+
+
+def finales_reg_html(SR):
+    """Las 6 finales por el ascenso (de a pares de regiones, según el JSON)."""
+    from torneos import REG_FINAL
+    tarjetas = ""
+    for k, (ra, rb) in enumerate(FINALES_REG):
+        x = SR["finales"][k] if k < len(SR["finales"]) else None
+        if x is None:
+            filas = ""
+            for reg in (ra, rb):
+                c = SR["campeones"].get(reg)
+                filas += (f'<div class="bt">{crest(SR["nombres"][c], 24)}{_nm_club(SR["nombres"][c])}</div>'
+                          if c is not None else
+                          f'<div class="bt tbd"><span class="nm">Campeón de {esc(reg)}</span></div>')
+            card = f'<div class="bm">{filas}<div class="bfoot">Ida y vuelta</div></div>'
+        else:
+            card = serie_html(SR, x, final=True)
+        tarjetas += (f'<div class="reg-final"><div class="round-h">{chip(f"Final {k + 1}", "#b7860b")}'
+                     f'<span class="reg-vs">{esc(ra)} vs. {esc(rb)}</span></div>{card}</div>')
+    return f'<div class="reg-finales">{tarjetas}</div>'
 
 
 def barra_estado(items, progreso):
