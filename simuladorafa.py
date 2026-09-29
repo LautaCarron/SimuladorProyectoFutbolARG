@@ -85,6 +85,7 @@ from torneos import (
     ZONAS,
     crear_estado,
     nueva_temporada,
+    primera_terminada,
     simular_fecha,
     simular_fecha_b,
     simular_fecha_f,
@@ -98,6 +99,8 @@ from torneos import (
     tabla_pb,
     tabla_pc,
     tabla_zona,
+    total_b,
+    total_primera,
 )
 from vista import (
     COLORES_B,
@@ -177,16 +180,16 @@ if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_E
 S = st.session_state.S
 SB, SF, SPB, SPC = S["b"], S["f"], S["pb"], S["pc"]
 
-terminada = S["fecha"] >= TOTAL_FECHAS
-terminada_b = SB["fecha"] >= B_TOTAL
+terminada = primera_terminada(S)            # incluye las fechas de desempate
+terminada_b = SB["fecha"] >= total_b(SB)
 terminada_f = SF["fecha"] >= SF["total"]
 terminada_pb = SPB["fecha"] >= SPB["total"]
 terminada_pc = SPC["fecha"] >= SPC["total"]
 ambas = terminada and terminada_b and terminada_f and terminada_pb and terminada_pc
-b_espera_primera = SB["fecha"] == B_TOTAL - 1 and not terminada
+b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
-pct_p = 100 * S["fecha"] / TOTAL_FECHAS
-pct_b = 100 * SB["fecha"] / B_TOTAL
+pct_p = 100 * S["fecha"] / total_primera(S)
+pct_b = 100 * SB["fecha"] / total_b(SB)
 pct_f = 100 * SF["fecha"] / SF["total"]
 pct_pb = 100 * SPB["fecha"] / SPB["total"] if SPB["total"] else 0
 pct_pc = 100 * SPC["fecha"] / SPC["total"] if SPC["total"] else 0
@@ -197,9 +200,9 @@ st.markdown(
     f'<h1>Simulador de la Liga Argentina</h1>'
     f'<p>Primera División · Primera Nacional · Federal A · Primera B · Primera C</p></div>'
     f'<div class="hero-stats">'
-    f'<div class="hs"><span>Primera División</span><b>Fecha {S["fecha"]}/{TOTAL_FECHAS}</b>'
+    f'<div class="hs"><span>Primera División</span><b>Fecha {S["fecha"]}/{total_primera(S)}</b>'
     f'<div class="bar"><i style="width:{pct_p:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Primera Nacional</span><b>Fecha {SB["fecha"]}/{B_TOTAL}</b>'
+    f'<div class="hs"><span>Primera Nacional</span><b>Fecha {SB["fecha"]}/{total_b(SB)}</b>'
     f'<div class="bar"><i style="width:{pct_b:.1f}%"></i></div></div>'
     f'<div class="hs"><span>Federal A</span><b>Fecha {SF["fecha"]}/{SF["total"]}</b>'
     f'<div class="bar"><i style="width:{pct_f:.1f}%"></i></div></div>'
@@ -214,12 +217,13 @@ st.markdown(
 g0, g1, g2, g3 = st.columns([3, 1.4, 1.4, 1.2], vertical_alignment="center")
 g0.caption("Simulá fecha por fecha desde cada categoría, o todo junto con los botones de la derecha.")
 if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary"):
-    # 1. Primero terminar Primera División (la B necesita saber el 27° para la Promoción)
-    while S["fecha"] < TOTAL_FECHAS: 
+    # 1. Primero terminar Primera División, desempates incluidos
+    #    (la B necesita saber el 27° definitivo para la Promoción)
+    while not primera_terminada(S):
         simular_fecha(S, P, acumular)
         
     # 2. Ahora sí corre la B Nacional hasta el final sin trabarse
-    while SB["fecha"] < B_TOTAL + SB.get("extra_f2", 0) and not (SB["fecha"] == B_TOTAL + SB.get("extra_f2", 0) - 1 and S["fecha"] < TOTAL_FECHAS): 
+    while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
         simular_fecha_b(S, P)
         
     # 3. Resto de las categorías
@@ -467,7 +471,7 @@ with tab_b:
         
     if c3.button("⏩ Hasta el final", key="b_all", width="stretch",
                  disabled=terminada_b or b_espera_primera):
-        while SB["fecha"] < B_TOTAL + SB.get("extra_f2", 0) and not (SB["fecha"] == B_TOTAL + SB.get("extra_f2", 0) - 1 and S["fecha"] < TOTAL_FECHAS):
+        while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
             simular_fecha_b(S, P)
         st.rerun()
 

@@ -125,6 +125,21 @@ def destino_f2(z, pos):
     return ""
 
 
+def total_primera(S):
+    """Fechas de Primera contando las de desempate (si las hubo)."""
+    return TOTAL_FECHAS + S.get("extra_f2", 0)
+
+
+def primera_terminada(S):
+    """Primera terminó de verdad: 38 fechas y también sus desempates."""
+    return S["fecha"] >= total_primera(S)
+
+
+def total_b(SB):
+    """Fechas de la Primera Nacional contando las de desempate (si las hubo)."""
+    return B_TOTAL + SB.get("extra_f2", 0)
+
+
 def rotulo_p(S, n):
     extra = S.get("extra_f2", 0)
     if n <= FECHAS_F1:
@@ -551,7 +566,9 @@ def simular_fecha_b(S, P):
     extra = SB.get("extra_f2", 0)
     B_TOTAL_DYN = B_TOTAL + extra  # Alarga el campeonato dinámicamente si hay desempate
     
-    if f >= B_TOTAL_DYN or (f == B_TOTAL_DYN - 1 and S["fecha"] < TOTAL_FECHAS):
+    # La promoción se juega contra el 27° de Primera: espera a que Primera termine
+    # TODO, incluidos sus desempates (pueden cambiar quién queda 27°).
+    if f >= B_TOTAL_DYN or (f == B_TOTAL_DYN - 1 and not primera_terminada(S)):
         return
     r, nom = SB["r"], SB["nombres"]
 
