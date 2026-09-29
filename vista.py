@@ -543,7 +543,7 @@ def coincide(consulta, texto, fecha, marcadores):
 
 def todos_los_partidos():
     S, SB, SF, SPB, SPC = _estado()
-    return S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"]
+    return S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
 
 
 def categoria_de(nombre):
@@ -558,6 +558,8 @@ def categoria_de(nombre):
         return "Primera B"
     if nombre in S["primera_c"]:
         return "Primera C"
+    if nombre in st.session_state.S["reg"]["nombres"]:
+        return "Regional Amateur"
     return ""
 
 
@@ -716,6 +718,16 @@ def partidos_fecha_pc(n):
     return [pendiente("Primera C", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SPC["fechas"][n - 1]]
 
 
+def fechas_conocidas_reg():
+    return st.session_state.S["reg"]["total"]
+
+def partidos_fecha_reg(n):
+    SREG = st.session_state.S["reg"]
+    if n <= SREG["fecha"]: return [p for p in SREG["log"] if p["fecha"] == n]
+    nom = SREG["nombres"]
+    return [pendiente("Regional Amateur", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SREG["fechas"][n - 1]]
+
+
 def proximo_partido(nombre):
     S, SB, SF, SPB, SPC = _estado()
     if nombre in S["nombres"]:
@@ -741,6 +753,10 @@ def proximo_partido(nombre):
     elif nombre in SPC["nombres"]:
         for n in range(SPC["fecha"] + 1, fechas_conocidas_pc() + 1):
             for p in partidos_fecha_pc(n):
+                if nombre in (p["local"], p["visita"]): return p
+    elif nombre in st.session_state.S["reg"]["nombres"]:
+        for n in range(st.session_state.S["reg"]["fecha"] + 1, fechas_conocidas_reg() + 1):
+            for p in partidos_fecha_reg(n):
                 if nombre in (p["local"], p["visita"]): return p
     return None
 
@@ -892,6 +908,11 @@ def vista_fixture(liga):
         total, jugadas = fechas_conocidas_pc(), SPC["fecha"]
         obtener, rotulo = partidos_fecha_pc, lambda n: f"Fecha {n}"
         extra = ""
+    elif liga == "reg":
+        SREG = st.session_state.S["reg"]
+        total, jugadas = fechas_conocidas_reg(), SREG["fecha"]
+        obtener, rotulo = partidos_fecha_reg, lambda n: f"Fecha {n}"
+        extra = " · Formato de liga provisional"
     else:
         total, jugadas = fechas_conocidas_f(), SF["fecha"]
         obtener, rotulo = partidos_fecha_f, lambda n: rotulo_f(SF, n)

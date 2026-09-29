@@ -77,6 +77,19 @@ EQUIPOS_PRIMERA_C = {
     "Central Ballester": 32, "El Porvenir": 35, "Ituzaingó": 38,
     "Puerto Nuevo": 31, "Real Pilar": 41, "Sacachispas": 38,
 }
+# Torneo Regional Amateur
+EQUIPOS_REGIONAL = {
+    "Deportivo Mandiyú": 35, "Altos Hornos Zapla": 36, "Desamparados (SJ)": 36,
+    "Guaraní Antonio Franco": 35, "Ben Hur (Rafaela)": 37, "Loma Negra": 25,
+    "Crucero del Norte": 30, "Juventud Unida (G)": 34, "General Paz Juniors": 22,
+    "Liniers (BB)": 36, "Atlético Paraná": 32, "Huracán (Ing. White)": 30,
+    "Boxing Club": 25, "CAI": 33, "Deportivo Roca": 32, "Jorge Newbery": 23,
+    "Alianza de Cutral Có": 30, "Independiente de Neuquén": 31, "Racing de Olavarría": 30,
+    "Atlético Mar del Plata": 29, "Ferro (Gral. Pico)": 38, "Juventud Alianza": 20,
+    "DEPRO": 34, "Resistencia Central": 20, "Talleres de Perico": 21,
+    "Bella Vista (Tucumán)": 30, "San Lorenzo de Alem": 30, "Unión Santiago": 20,
+    "Deportivo Norte (MdP)": 30, "Independiente de Tandil": 23,
+}
 
 
 # Escudos oficiales: ESPN (Primera y Primera Nacional), Wikimedia Commons / Wikipedia y
@@ -267,7 +280,7 @@ ORIGEN = {
 
 
 def origen(nombre):
-    if nombre in EQUIPOS_FEDERAL:
+    if nombre in EQUIPOS_FEDERAL or nombre in EQUIPOS_REGIONAL:
         return "Interior"
     if nombre in EQUIPOS_PRIMERA_B or nombre in EQUIPOS_PRIMERA_C:
         return "Metropolitana"

@@ -19,7 +19,7 @@ AMORTIGUAR = np.where(_TOT >= 8, 0.06, np.where(_TOT >= 6, 0.16, np.where(_TOT =
 _LOG_FACT = np.concatenate([[0.0], np.cumsum(np.log(np.arange(1, TOPE_GOLES)))])
 P_GOL_PENAL = 0.76   # probabilidad de convertir cada penal de la tanda
 REVERSION = 0.15     # cuánto vuelven las medias hacia el promedio de su liga cada temporada
-MIN_R, MAX_R = 30.0, 90.0
+MIN_R, MAX_R = 20.0, 90.0
 STATS = ("pj", "g", "e", "p", "gf", "gc")
 
 

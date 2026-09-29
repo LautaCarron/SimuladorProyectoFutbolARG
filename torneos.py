@@ -15,6 +15,7 @@ from datos import (
     EQUIPOS_FEDERAL,
     EQUIPOS_PRIMERA_B,
     EQUIPOS_PRIMERA_C,
+    EQUIPOS_REGIONAL,
     F_GRUPOS_NOMBRES,
     N,
     NB,
@@ -1091,6 +1092,26 @@ def tabla_pc(SPC):
     return df
 
 
+def destino_reg(pos):
+    return "Ascenso directo" if pos <= 4 else ""
+
+def tabla_reg(S_REG):
+    df = df_stats(S_REG["nombres"], S_REG["r"], S_REG, np.arange(len(S_REG["nombres"])))
+    if S_REG.get("orden_final") is not None:
+        df = df.set_index("id").loc[S_REG["orden_final"]].reset_index()
+        
+    df.insert(0, "Pos", df.index + 1)
+    df["Destino"] = [destino_reg(p) for p in df["Pos"]]
+    
+    if S_REG.get("motivos_desempate"):
+        ids_act = df["id"].to_numpy()
+        for motivo in S_REG["motivos_desempate"]:
+            nombre_frontera = motivo.split()[1]
+            inicio, fin = map(int, motivo.split()[2].split("-"))
+            df.loc[df["id"].isin(ids_act[inicio:fin]), "Destino"] = f"Desempate {nombre_frontera}"
+    return df
+
+
 def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     f = S_LIGA["fecha"]
     if f >= S_LIGA["total"]: return
@@ -1292,11 +1313,13 @@ def crear_estado():
                    **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()},
                    **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()},
                    **{k: float(v) for k, v in EQUIPOS_PRIMERA_C.items()}},
+                   **{k: float(v) for k, v in EQUIPOS_REGIONAL.items()}},
         "nombres": list(EQUIPOS),
         "r": np.array(list(EQUIPOS.values()), dtype=float),
         "federal": list(EQUIPOS_FEDERAL),
         "primera_b": list(EQUIPOS_PRIMERA_B),
         "primera_c": list(EQUIPOS_PRIMERA_C),
+        "regional": list(EQUIPOS_REGIONAL),
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
     nueva_estructura(S)
@@ -1312,12 +1335,15 @@ def crear_estado():
     SPC = {"nombres": list(EQUIPOS_PRIMERA_C), "r": np.array(list(EQUIPOS_PRIMERA_C.values()), dtype=float)}
     nueva_estructura_liga(SPC, rng)
     S["pc"] = SPC
+    SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
+    nueva_estructura_liga(SREG, rng)
+    S["reg"] = SREG
     return S
 
 
 def nueva_temporada(S, volatilidad):
     SB, SF, SPB, SPC, rng = S["b"], S["f"], S["pb"], S["pc"], S["rng"]
-    for lig in (S, SB, SF, SPB, SPC):
+    for lig in (S, SB, SF, SPB, SPC, S["reg"]):
         for nom, x in zip(lig["nombres"], lig["r"]):
             S["rating"][nom] = float(x)
 
@@ -1411,9 +1437,12 @@ def nueva_temporada(S, volatilidad):
     S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
     nueva_estructura_liga(S["pc"], rng)
 
+    S["reg"]["nombres"] = list(S["reg"]["nombres"]) # Quedan los mismos por ahora
+    S["reg"]["r"] = np.array([S["rating"][n] for n in S["reg"]["nombres"]])
+    nueva_estructura_liga(S["reg"], rng)
 
-    # Limpiar la memoria de desempates de la temporada anterior
-    for liga in [S["pb"], S["pc"]]:
+    #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
+    for liga in [S["pb"], S["pc"], S["reg"]]:
         liga["desempate_pendiente"] = False
         liga["ids_desempate"] = []
         liga["motivos_desempate"] = []

@@ -102,6 +102,7 @@ from torneos import (
     tabla_zona,
     total_b,
     total_primera,
+    tabla_reg,
 )
 from vista import (
     COLORES_B,
