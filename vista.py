@@ -232,7 +232,7 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .tlist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px;}
 .tl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:3px;padding:5px 10px 5px 6px;font-weight:600;font-size:.86rem;background:var(--papel);}
 .tl small{color:var(--tinta-3);font-weight:700;}
-.champ{container-type:inline-size;border-radius:4px;padding:22px 18px;text-align:center;background:var(--papel);border:1px solid var(--line);border-top:3px solid var(--gold);}
+.champ{container-type:inline-size;width:100%;box-sizing:border-box;border-radius:4px;padding:22px 18px;text-align:center;background:var(--papel);border:1px solid var(--line);border-top:3px solid var(--gold);}
 .champ .t{font-stretch:85%;font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;font-weight:800;color:var(--gold);}
 /* el nombre se ajusta al ancho de la tarjeta y sólo corta entre palabras (nunca a mitad) */
 .champ .nm{font-stretch:108%;font-weight:900;font-size:clamp(.92rem,8.4cqi,1.45rem);line-height:1.12;margin-top:10px;text-transform:uppercase;overflow-wrap:normal;word-break:normal;hyphens:manual;text-wrap:balance;}
@@ -365,7 +365,7 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .round-h{text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
 .round-h::after{content:"";flex:1;border-top:1px solid var(--line);}
 .round-b{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;align-items:start;}
-.round.last .round-b{display:flex;flex-direction:column;gap:14px;max-width:560px;}
+.round.last .round-b{display:flex;flex-direction:column;align-items:stretch;gap:14px;max-width:560px;}
 .round:not(.last) .bm::after{display:none;}
 .bt{padding:8px 10px;}
 .bt .nm{white-space:normal;overflow:visible;line-height:1.2;}
