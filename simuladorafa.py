@@ -133,6 +133,7 @@ from vista import (
     render_ficha,
     render_movimientos,
     seccion,
+    ver_equipo,
     vista_fixture,
 )
 
@@ -940,14 +941,22 @@ with tab_c:
     cat = cat or "Primera División"
     lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
                     "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat], key=norm)
-    elegido = st.selectbox("Club", lista, index=None, placeholder="Elegí un club…", key=f"club_sel_{cat}")
+    elegido = st.selectbox(":material/search: Buscar club", lista, index=None,
+                           placeholder="Escribí o elegí un club…", key=f"club_sel_{cat}")
     if elegido:
         with st.container(border=True):
             render_ficha(elegido, "clubes")
-    st.markdown('<div class="mlab" style="margin-top:14px">'
-                f'{esc(cat)} · {len(lista)} clubes</div><div class="cgrid">'
-                + "".join(f'<div class="ct">{crest(n, 52)}<span>{esc(n)}</span></div>' for n in lista)
-                + "</div>", unsafe_allow_html=True)
+    st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat)} · {len(lista)} clubes · '
+                f'tocá uno para ver su ficha</div>', unsafe_allow_html=True)
+    # Grilla de clubes: cada casilla es un botón (invisible, ocupa toda la casilla) que abre la ficha
+    slug = norm(cat).replace(" ", "_")
+    with st.container(key=f"cgrid_{slug}"):
+        for i, n in enumerate(lista):
+            with st.container(key=f"ctile_{slug}_{i}"):
+                st.markdown(f'<div class="ct-in">{crest(n, 52)}<span>{esc(n)}</span></div>',
+                            unsafe_allow_html=True)
+                if st.button(n, key=f"clubbtn_{slug}_{i}"):
+                    ver_equipo(n)
 
 
 # ============================================================================

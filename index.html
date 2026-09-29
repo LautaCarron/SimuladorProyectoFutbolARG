@@ -30,8 +30,12 @@
       --luz: rgba(255, 255, 255, .95);
       --franja: rgba(116, 172, 223, .10);
       --rayado: rgba(15, 27, 45, .05);
+      --sol-op: .55;
       --ease-out: cubic-bezier(.16, 1, .3, 1);
       --ease-io: cubic-bezier(.65, 0, .35, 1);
+      /* una sola grilla: barra, escena y pie alinean sus bordes */
+      --ancho: 1320px;
+      --margen: max(clamp(20px, 5vw, 64px), calc((100vw - var(--ancho)) / 2 + clamp(20px, 5vw, 64px)));
       color-scheme: light;
     }
     /* Modo oscuro: noche de estadio. Mismos roles, otra luz. */
@@ -46,6 +50,7 @@
       --luz: rgba(116, 172, 223, .10);
       --franja: rgba(116, 172, 223, .07);
       --rayado: rgba(232, 230, 223, .05);
+      --sol-op: .3;
       color-scheme: dark;
     }
     html { transition: background-color .4s var(--ease-io); }
@@ -65,7 +70,7 @@
     #intro {
       position: fixed; inset: 0; z-index: 20; overflow-y: auto; overflow-x: hidden;
       background: var(--tiza);
-      display: grid; grid-template-rows: auto 1fr auto;
+      display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
       transition: opacity .5s var(--ease-io);
     }
     #intro[hidden] { display: none; }
@@ -86,13 +91,13 @@
     .fondo .sol-gigante {  /* el sol sale detrás de "AFA" */
       position: absolute; width: min(78vw, 860px); aspect-ratio: 1; left: max(-14vw, -200px); top: 52%;
       translate: 0 -50%; color: var(--celeste); opacity: 0;
-      animation: tenue 2.2s .1s var(--ease-io) forwards, girar 240s linear infinite;
+      animation: tenue 2.2s .1s var(--ease-io) forwards;
     }
     .fondo .sol-gigante svg { width: 100%; height: 100%; }
 
     .barra {
       position: relative; display: flex; align-items: center; justify-content: space-between;
-      padding: 22px clamp(20px, 5vw, 64px); font-size: 13px; letter-spacing: .02em;
+      padding: 22px var(--margen); font-size: 13px; letter-spacing: .02em;
     }
     .marca { display: flex; align-items: center; gap: 10px; font-weight: 800; font-stretch: 112%;
       text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
@@ -102,8 +107,8 @@
     .barra .meta b { color: var(--tinta); font-weight: 700; }
 
     .escena {
-      position: relative; align-self: center; width: 100%; max-width: 1240px; margin: 0 auto;
-      padding: 12px clamp(20px, 5vw, 64px) 40px;
+      position: relative; align-self: center; width: 100%; margin: 0;
+      padding: 12px var(--margen) 40px;
       display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(28px, 5vw, 80px);
       align-items: end;
     }
@@ -141,7 +146,7 @@
       box-shadow: inset 0 0 0 1px var(--regla); }
     .firma .cinta i:nth-child(odd) { background: var(--celeste); }
     .firma .cinta i:nth-child(2) { background: #fff; }
-    .firma small { font-stretch: 80%; text-transform: uppercase; letter-spacing: .16em; font-size: 11px;
+    .firma small { white-space: nowrap; font-stretch: 80%; text-transform: uppercase; letter-spacing: .16em; font-size: 11px;
       font-weight: 600; color: var(--tinta-3); opacity: 0; animation: aparecer .8s 1.5s forwards; }
 
     /* Modos: un índice, no tarjetas */
@@ -212,7 +217,7 @@
     .modo.bloqueado.sacudir .sello { animation: sacudir .45s var(--ease-io); }
 
     .pie { position: relative; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-      padding: 18px clamp(20px, 5vw, 64px) calc(18px + env(safe-area-inset-bottom));
+      padding: 18px var(--margen) calc(18px + env(safe-area-inset-bottom));
       font-size: 11.5px; color: var(--tinta-3); border-top: 1px solid var(--regla);
       opacity: 0; animation: aparecer .8s 1.9s forwards; }
 
@@ -222,8 +227,7 @@
       letter-spacing: .12em; text-transform: uppercase; color: var(--tinta-2);
       transition: border-color .25s, color .25s; }
     .tema:hover, .tema:focus-visible { border-color: var(--tinta); color: var(--tinta); }
-    .tema svg { width: 15px; height: 15px; transition: rotate .6s var(--ease-out); }
-    .tema:hover svg { rotate: 25deg; }
+    .tema svg { width: 15px; height: 15px; }
     .tema .luna { display: none; }
     :root[data-tema="oscuro"] .tema .luna { display: block; }
     :root[data-tema="oscuro"] .tema .sol-ico { display: none; }
@@ -237,40 +241,36 @@
     body.intro-lista .titulo .proyecto { letter-spacing: .5em !important; }
     body.intro-lista .titulo .afa .m span { translate: none !important; }
     body.intro-lista .firma .cinta { scale: 1 1 !important; }
-    body.intro-lista .fondo .sol-gigante { opacity: .55 !important; }
+    body.intro-lista .fondo .sol-gigante { opacity: var(--sol-op) !important; }
 
-    /* ------------------------------------------- telón (transición) */
-    #telon { position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr);
-      pointer-events: none; }
-    #telon i { translate: 0 101%; transition: translate .62s var(--ease-io); }
-    #telon i:nth-child(odd) { background: var(--celeste); }
-    #telon i:nth-child(2) { background: #FAFAF7; transition-delay: .06s; }
-    #telon i:nth-child(3) { transition-delay: .12s; }
-    #telon.cubre { pointer-events: auto; }
-    #telon.cubre i { translate: 0 0; }
-    #telon.sale i { translate: 0 -101%; }
-    #telon.sin-transicion i { transition: none; }
+    /* ------------------------------------------- transición: fundido */
+    #intro.saliendo { opacity: 0; translate: 0 -12px; pointer-events: none;
+      transition: opacity .42s var(--ease-io), translate .42s var(--ease-io); }
+    #intro.llegando { animation: llegar .5s var(--ease-out) both; }
+    body.app-llega #app { animation: aparecer-app .55s var(--ease-out) both; }
+    @keyframes llegar { from { opacity: 0; translate: 0 12px; } }
+    @keyframes aparecer-app { from { opacity: 0; } }
 
     .preparando { position: fixed; inset: 0; z-index: 41; display: grid; place-content: center; justify-items: center;
       gap: 18px; text-align: center; pointer-events: none; opacity: 0; transition: opacity .35s; }
     .preparando.visible { opacity: 1; }
-    .preparando { color: #0F1B2D; }
-    .preparando .sol { width: 54px; height: 54px; color: #0F1B2D; animation: girar 9s linear infinite; }
+    .preparando { color: var(--tinta); background: var(--tiza); }
+    .preparando.visible { pointer-events: auto; }
+    .preparando .sol { width: 46px; height: 46px; color: var(--sol); animation: latido 1.8s ease-in-out infinite; }
     .preparando b { font-stretch: 112%; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
       font-size: 18px; }
-    .preparando .etapa { font-size: 13px; color: #4A5566; min-height: 1.2em; }
-    .preparando .linea { width: min(260px, 70vw); height: 3px; background: rgba(15, 27, 45, .12); overflow: hidden; }
-    .preparando .linea i { display: block; height: 100%; width: 0; background: #0F1B2D;
+    .preparando .etapa { font-size: 13px; color: var(--tinta-2); min-height: 1.2em; }
+    .preparando .linea { width: min(260px, 70vw); height: 3px; background: var(--regla); overflow: hidden; }
+    .preparando .linea i { display: block; height: 100%; width: 0; background: var(--tinta);
       transition: width .5s var(--ease-out); }
 
     /* --------------------------------------------------- animaciones */
     @keyframes aparecer { to { opacity: 1; } }
-    @keyframes tenue { to { opacity: .55; } }
+    @keyframes tenue { to { opacity: var(--sol-op); } }
     @keyframes subir { to { opacity: 1; translate: 0 0; } }
     @keyframes letra { to { translate: 0 0; } }
     @keyframes dibujar { to { scale: 1 1; } }
     @keyframes tracking { from { letter-spacing: 1.1em; opacity: 0; } to { letter-spacing: .5em; opacity: 1; } }
-    @keyframes girar { to { rotate: 360deg; } }
     @keyframes latido { 50% { opacity: .35; } }
     @keyframes sacudir { 20% { rotate: -9deg; } 45% { rotate: 2deg; } 70% { rotate: -6deg; } 100% { rotate: -4deg; } }
 
@@ -285,6 +285,9 @@
       .barra { padding: 16px 20px; }
       .barra .meta > span:not(:first-child) { display: none; }
       .tema .txt { display: none; }
+      .barra { gap: 12px; }
+      .firma .cinta { width: 84px; }
+      .firma small { font-size: 10px; letter-spacing: .12em; }
       .escena { padding: 2vh 20px 28px; gap: 30px; }
       .titulo .afa { font-size: 33vw; }
       .titulo .proyecto { letter-spacing: .42em; }
@@ -301,6 +304,9 @@
       .fondo .sol-gigante { width: 150vw; left: -50vw; top: 20%; }
       .fondo .franjas { width: 45vw; }
       .pie { font-size: 11px; }
+    }
+    @media (max-width: 400px) {
+      .barra .meta > span { display: none; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important;
@@ -376,8 +382,7 @@
     </footer>
   </main>
 
-  <!-- Transición -->
-  <div id="telon" aria-hidden="true"><i></i><i></i><i></i></div>
+  <!-- Espera (sólo si se entra antes de que el motor termine de cargar) -->
   <div class="preparando" id="preparando" role="status" aria-live="polite">
     <svg class="sol" viewBox="-50 -50 100 100" data-sol="lleno" aria-hidden="true"></svg>
     <b>Preparando el simulador</b>
@@ -465,7 +470,7 @@
     import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.js";
 
     const $ = (s) => document.querySelector(s);
-    const intro = $("#intro"), telon = $("#telon"), prep = $("#preparando");
+    const intro = $("#intro"), prep = $("#preparando");
     const estado = $("#estado"), barra = $("#barra"), etapa = $("#etapa");
     const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -524,49 +529,40 @@
       }
     }, 300);
 
-    // ---- 2. Entrar: telón celeste-blanco-celeste, y si hace falta, esperar al motor
+    // ---- 2. Entrar: la intro se funde y aparece el simulador (si hace falta, espera al motor)
     let entrando = false;
     async function entrar() {
-      if (entrando) return;
+      if (entrando || intro.hidden) return;
       entrando = true;
       montar();
       $("#entrar .accion").firstChild.textContent = "Entrando ";
-      telon.classList.remove("sale", "sin-transicion");
-      telon.classList.add("cubre");
-      await espera(760);
+      intro.classList.add("saliendo");
+      await espera(420);
       if (!listo) {
         prep.classList.add("visible");
         await new Promise((r) => document.addEventListener("afa:listo", r, { once: true }));
-        await espera(350);
-        prep.classList.remove("visible");
         await espera(250);
       }
       intro.hidden = true;
+      intro.classList.remove("saliendo");
       document.body.classList.remove("intro-activa");
+      document.body.classList.add("app-llega");
       window.scrollTo(0, 0);
       window.dispatchEvent(new Event("resize"));   // que las tablas midan su ancho real
-      telon.classList.add("sale");
-      await espera(800);
-      telon.classList.add("sin-transicion");
-      telon.classList.remove("cubre", "sale");
+      prep.classList.remove("visible");
       $("#entrar .accion").firstChild.textContent = "Entrar ";
+      setTimeout(() => document.body.classList.remove("app-llega"), 600);
       entrando = false;
       if (location.hash !== "#simulador") history.pushState(null, "", "#simulador");
     }
 
-    // ---- 3. Volver a la intro (link "Proyecto AFA" en la cabecera del simulador / botón atrás)
-    async function volver() {
+    // ---- 3. Volver a la intro (marca "Proyecto AFA" del simulador o botón atrás)
+    function volver() {
       if (!intro.hidden || entrando) return;
-      telon.classList.remove("sale", "sin-transicion");
-      telon.classList.add("cubre");
-      await espera(700);
       document.body.classList.add("intro-activa");
       intro.hidden = false;
       intro.scrollTop = 0;
-      telon.classList.add("sale");
-      await espera(800);
-      telon.classList.add("sin-transicion");
-      telon.classList.remove("cubre", "sale");
+      intro.classList.remove("llegando"); void intro.offsetWidth; intro.classList.add("llegando");
     }
 
     $("#entrar").addEventListener("click", entrar);
