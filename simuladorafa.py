@@ -57,6 +57,8 @@ import streamlit as st
 
 st.set_page_config(page_title="Simulador Fútbol Argentino", page_icon="⚽", layout="wide")
 
+import sys
+
 import numpy as np
 import pandas as pd
 
@@ -129,6 +131,22 @@ from vista import (
     seccion,
     vista_fixture,
 )
+
+
+def editar_medias(nombres, r, clave):
+    """Editor de medias internas. En la versión web (stlite, corre en el navegador)
+    st.data_editor no funciona, así que ahí se edita club por club."""
+    if sys.platform != "emscripten":
+        ed = st.data_editor(pd.DataFrame({"Equipo": nombres, "Media": r}),
+                            disabled=["Equipo"], hide_index=True, width="stretch", key=clave)
+        return np.clip(ed["Media"].to_numpy(float), MIN_R, MAX_R)
+    r = np.array(r, dtype=float)
+    c1, c2 = st.columns([3, 2], vertical_alignment="bottom")
+    i = c1.selectbox("Club", range(len(nombres)), format_func=lambda k: nombres[k],
+                     key=f"{clave}_club")
+    r[i] = c2.number_input("Media", MIN_R, MAX_R, float(round(r[i], 1)), 0.5,
+                           key=f"{clave}_media_{i}")
+    return r
 
 
 # ----------------------------------------------------------------------------
@@ -315,12 +333,7 @@ with tab_p:
             leyenda(LEY_DESTINOS)
         if S["fecha"] == 0:
             with st.expander("✏️ Editar medias internas de esta temporada"):
-                ed = st.data_editor(
-                    pd.DataFrame({"Equipo": S["nombres"], "Media": S["r"]}),
-                    disabled=["Equipo"], hide_index=True, width="stretch",
-                    key=f"editor_p_{S['temp']}",
-                )
-                S["r"] = np.clip(ed["Media"].to_numpy(float), MIN_R, MAX_R)
+                S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
     with sp[1]:
         vista_fixture("p")
     with sp[2]:
@@ -463,12 +476,7 @@ with tab_b:
                 
         if fb == 0:
             with st.expander("✏️ Editar medias internas de esta temporada (Primera Nacional)"):
-                edb = st.data_editor(
-                    pd.DataFrame({"Equipo": SB["nombres"], "Media": SB["r"]}),
-                    disabled=["Equipo"], hide_index=True, width="stretch",
-                    key=f"editor_b_{S['temp']}",
-                )
-                SB["r"] = np.clip(edb["Media"].to_numpy(float), MIN_R, MAX_R)
+                SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
     idx_b += 1
     
     with sb[idx_b]: 
@@ -633,12 +641,7 @@ with tab_f:
             
         if ff == 0:
             with st.expander("✏️ Editar medias internas de esta temporada (Federal A)"):
-                edf = st.data_editor(
-                    pd.DataFrame({"Equipo": nom_f, "Media": SF["r"]}),
-                    disabled=["Equipo"], hide_index=True, width="stretch",
-                    key=f"editor_f_{S['temp']}",
-                )
-                SF["r"] = np.clip(edf["Media"].to_numpy(float), MIN_R, MAX_R)
+                SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
                 
     with sf_tabs[1]:
         vista_fixture("f")

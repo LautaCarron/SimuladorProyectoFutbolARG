@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <meta name="theme-color" content="#0b1d3a" />
+  <title>Simulador de la Liga Argentina</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.css" />
+  <style>
+    html, body { margin: 0; background: #0e1117; }
+    #cargando { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 14px; color: #fff; font: 600 16px system-ui, sans-serif;
+      background: linear-gradient(120deg, #07142b, #123a6b); text-align: center; padding: 24px; }
+    #cargando small { opacity: .7; font-weight: 400; max-width: 320px; }
+    .pelota { font-size: 46px; animation: gira 1.2s linear infinite; }
+    @keyframes gira { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="cargando">
+    <div class="pelota">⚽</div>
+    <div>Cargando el simulador…</div>
+    <small>La primera vez puede tardar un poco (se descarga Python en el navegador). Después abre más rápido.</small>
+  </div>
+  <div id="root"></div>
+  <script type="module">
+    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.js";
+    // Todos los archivos del simulador (si agregan otro .py, súmenlo a esta lista)
+    const ARCHIVOS = ["simuladorafa.py", "datos.py", "motor.py", "torneos.py", "vista.py"];
+    const files = {};
+    await Promise.all(ARCHIVOS.map(async (nombre) => {
+      files[nombre] = await (await fetch(nombre, { cache: "no-cache" })).text();
+    }));
+    mount(
+      {
+        requirements: ["numpy", "pandas"],
+        entrypoint: "simuladorafa.py",
+        files,
+      },
+      document.getElementById("root"),
+    );
+    // Oculta la pantalla de carga cuando Streamlit ya dibujó la app
+    const ocultar = setInterval(() => {
+      if (document.querySelector('[data-testid="stApp"] .hero')) {
+        document.getElementById("cargando").remove();
+        clearInterval(ocultar);
+      }
+    }, 400);
+  </script>
+</body>
+</html>
