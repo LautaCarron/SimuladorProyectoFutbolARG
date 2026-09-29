@@ -698,10 +698,14 @@ with tab_f:
         aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional. "
               "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
 
-    sf_tabs = st.tabs(["Posiciones", "Fixture y resultados", "Reducido", "Movimientos",
-                       "Definiciones"])
+    # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
+    desempate_f = SF.get("desempate_camp")
+    titulos_f = ["Posiciones", "Fixture y resultados"]
+    if desempate_f: titulos_f.append("Desempate")
+    titulos_f.extend(["Reducido", "Movimientos", "Definiciones"])
+    tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
                        
-    with sf_tabs[0]:
+    with tab_f["Posiciones"]:
         if ff < SF["f1_rondas"]:
             seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
                     "cada grupo", "#4f46e5")
@@ -728,10 +732,30 @@ with tab_f:
             with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
                 SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
                 
-    with sf_tabs[1]:
+    with tab_f["Fixture y resultados"]:
         vista_fixture("f")
         
-    with sf_tabs[2]:
+    if desempate_f:
+        with tab_f["Desempate"]:
+            partes = desempate_f["partidos"]
+            seccion("Desempate por el campeonato",
+                    f"Igualaron en puntos en el 1° puesto: {', '.join(desempate_f['equipos'])}",
+                    "#9333ea")
+            if len(partes) > 1:
+                seccion("Tabla final: Liguilla por el campeonato",
+                        "Posiciones del mini-torneo a partido único", "#9333ea")
+                st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
+                with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
+                                 expanded=False):
+                    for p in partes:
+                        st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+            else:
+                for p in partes:
+                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            st.caption("El título se define con desempate en cancha neutral (penales si empatan). "
+                       "El resto de las posiciones se ordena por diferencia de gol.")
+
+    with tab_f["Reducido"]:
         seccion("Reducido por el cuarto ascenso",
                 "Eliminatoria → Semifinal → Final · partido único · gana el mejor ubicado si "
                 "empatan, menos en la final (cancha neutral, penales) · L = local, V = "
@@ -747,10 +771,10 @@ with tab_f:
                 st.dataframe(ent, hide_index=True, width="stretch",
                              column_config={" ": st.column_config.ImageColumn(" ", width=40)})
                              
-    with sf_tabs[3]:
+    with tab_f["Movimientos"]:
         render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
         
-    with sf_tabs[4]:
+    with tab_f["Definiciones"]:
         seccion("Definiciones de la temporada", "Campeón y ascensos a la Primera Nacional",
                 "#b7860b")
         if SF["campeon"] is None:
