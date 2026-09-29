@@ -37,31 +37,31 @@ def _estado():
 
 
 
-COLOR_ORO = "rgba(255, 215, 0, 0.40)"
+COLOR_ORO = "rgba(227, 162, 26, 0.30)"
 COLORES_DESTINO = {
-    "Libertadores": "rgba(52, 152, 219, 0.28)",
-    "Fase previa Libertadores": "rgba(133, 193, 233, 0.30)",
-    "Sudamericana": "rgba(243, 156, 18, 0.28)",
-    "Promoción": "rgba(155, 89, 182, 0.30)",
-    "Desciende": "rgba(231, 76, 60, 0.25)",
+    "Libertadores": "rgba(116, 172, 223, 0.36)",
+    "Fase previa Libertadores": "rgba(116, 172, 223, 0.18)",
+    "Sudamericana": "rgba(224, 138, 40, 0.20)",
+    "Promoción": "rgba(109, 63, 192, 0.16)",
+    "Desciende": "rgba(184, 58, 46, 0.17)",
 }
-COLORES_ZONA = ["rgba(46, 204, 113, 0.22)", "rgba(241, 196, 15, 0.22)", "rgba(231, 76, 60, 0.20)"]
+COLORES_ZONA = ["rgba(46, 125, 79, 0.15)", "rgba(227, 162, 26, 0.15)", "rgba(184, 58, 46, 0.13)"]
 COLORES_B = {
     "Campeón · Ascenso": COLOR_ORO,
-    "Ascenso directo": "rgba(46, 204, 113, 0.30)",
-    "Cuartos del reducido": "rgba(52, 152, 219, 0.28)",
-    "Octavos del reducido": "rgba(133, 193, 233, 0.30)",
-    "Desciende": "rgba(231, 76, 60, 0.25)",
+    "Ascenso directo": "rgba(46, 125, 79, 0.22)",
+    "Cuartos del reducido": "rgba(116, 172, 223, 0.36)",
+    "Octavos del reducido": "rgba(116, 172, 223, 0.18)",
+    "Desciende": "rgba(184, 58, 46, 0.17)",
     "→ Zona Campeonato": COLORES_ZONA[0],
     "→ Zona Intermedia": COLORES_ZONA[1],
     "→ Zona Descenso": COLORES_ZONA[2],
 }
 COLORES_F = {
     "Campeón · Ascenso": COLOR_ORO,
-    "Ascenso directo": "rgba(46, 204, 113, 0.30)",
-    "Reducido": "rgba(52, 152, 219, 0.28)",
-    "→ Fase 2": "rgba(46, 204, 113, 0.22)",
-    "→ Zona Campeonato": "rgba(46, 204, 113, 0.22)",
+    "Ascenso directo": "rgba(46, 125, 79, 0.22)",
+    "Reducido": "rgba(116, 172, 223, 0.30)",
+    "→ Fase 2": "rgba(46, 125, 79, 0.15)",
+    "→ Zona Campeonato": "rgba(46, 125, 79, 0.15)",
 }
 
 
@@ -69,142 +69,220 @@ COLORES_F = {
 # PRESENTACIÓN (estilos, escudos, tarjetas)
 # ----------------------------------------------------------------------------
 CSS = """<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap');
-:root{--cel:#74ACDF;--cel2:#4a90d0;--navy:#0b1d3a;--gold:#d4a017;--line:rgba(128,128,128,.2);--soft:rgba(128,128,128,.055);--soft2:rgba(128,128,128,.1);--acc:#2f7fd0;--pen:#7c3aed;--win:#16a34a;--lose:#dc2626;}
-html,body,.stApp,.stMarkdown,button,input,textarea,[data-testid="stMetricValue"]{font-family:'Inter',system-ui,-apple-system,sans-serif !important;}
-.block-container{padding-top:1.2rem;padding-bottom:3rem;max-width:1440px;}
-[data-testid="stSidebar"] h2{font-size:1.05rem;}
-/* ---------- cabecera ---------- */
-.hero{position:relative;overflow:hidden;background:radial-gradient(circle at 88% 20%,rgba(116,172,223,.35),transparent 42%),linear-gradient(120deg,#07142b 0%,#0b1d3a 45%,#123a6b 100%);color:#fff;border-radius:18px;padding:24px 28px 20px;margin-bottom:12px;box-shadow:0 14px 34px rgba(7,20,43,.28);}
-.hero::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:linear-gradient(90deg,var(--cel) 0 33.3%,#fff 33.3% 66.6%,var(--cel) 66.6%);}
-.hero .sol{position:absolute;right:26px;top:14px;font-size:64px;opacity:.14;}
-.hero-top{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;}
-.hero-k{text-transform:uppercase;letter-spacing:.18em;font-size:.68rem;font-weight:700;color:var(--cel);}
-.hero h1{color:#fff !important;font-family:'Barlow Condensed',sans-serif !important;font-size:2.35rem;font-weight:800;margin:2px 0 0;padding:0;letter-spacing:.01em;line-height:1.05;text-transform:uppercase;}
-.hero p{margin:4px 0 0;opacity:.72;font-size:.9rem;}
-.hero-stats{display:flex;gap:10px;flex-wrap:wrap;}
-.hs{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 14px;min-width:128px;}
-.hs span{display:block;font-size:.64rem;opacity:.7;text-transform:uppercase;letter-spacing:.09em;font-weight:600;}
-.hs b{font-family:'Barlow Condensed',sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:.02em;}
-.hs .bar{height:4px;border-radius:3px;background:rgba(255,255,255,.15);margin-top:4px;overflow:hidden;}
-.hs .bar i{display:block;height:100%;background:var(--cel);}
-/* ---------- navegación ---------- */
-.stTabs [data-baseweb="tab-list"]{gap:6px;border-bottom:1px solid var(--line);}
-.stTabs [data-baseweb="tab"]{font-weight:700;padding:10px 16px;border-radius:10px 10px 0 0;}
-.stTabs [data-baseweb="tab"] p{font-size:.95rem;}
-.stTabs [data-baseweb="tab-highlight"]{background:var(--cel2);height:3px;}
-.stTabs .stTabs [data-baseweb="tab"] p{font-size:.86rem;}
-.stTabs .stTabs [data-baseweb="tab"]{padding:8px 12px;}
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap');
+/* ============ PROYECTO AFA · sistema visual del simulador ============
+   Papel + tinta, celeste como único color de marca, dorado sólo para campeones.
+   Rótulos en Archivo condensada, marca en Archivo expandida, números tabulares. */
+:root{--tiza:#F4F2EC;--tiza-2:#ECE9E0;--papel:#FBFAF6;--tinta:#0F1B2D;--tinta-2:#4A5566;--tinta-3:#8A919C;
+--line:rgba(15,27,45,.13);--line-2:rgba(15,27,45,.22);--soft:rgba(15,27,45,.035);--soft2:rgba(15,27,45,.07);
+--cel:#74ACDF;--cel2:#2F6DB0;--navy:#0F1B2D;--gold:#C8900E;--acc:#2F6DB0;--pen:#6D3FC0;--win:#2E7D4F;--lose:#B83A2E;
+--ease:cubic-bezier(.16,1,.3,1);}
+html,body,.stApp,.stApp p,.stApp label,.stApp li,.stApp h1,.stApp h2,.stApp h3,.stApp button,.stApp input,.stApp textarea,.stApp [data-testid="stMarkdownContainer"],div[role="dialog"] p{font-family:'Archivo',system-ui,sans-serif !important;}
+.stApp{background:var(--tiza);}
+.block-container{padding-top:1.1rem;padding-bottom:4rem;max-width:1320px;}
+[data-testid="stHeader"]{background:transparent;}
+[data-testid="stSidebar"]{background:var(--tiza-2);border-right:1px solid var(--line);}
+[data-testid="stSidebar"] h2{font-size:.78rem;font-stretch:85%;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
+::selection{background:var(--cel);color:var(--tinta);}
+/* ---------- cabecera (masthead) ---------- */
+.masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:6px 0 16px;margin-bottom:8px;position:relative;}
+.masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--cel) 0 33.33%,#fff 33.33% 66.66%,var(--cel) 66.66%);box-shadow:inset 0 0 0 1px var(--line);}
+.mh-marca{display:flex;align-items:center;gap:12px;color:var(--tinta) !important;text-decoration:none !important;}
+.mh-marca svg{width:30px;height:30px;color:var(--gold);flex:none;transition:rotate .8s var(--ease);}
+a.mh-marca:hover svg{rotate:45deg;}
+.mh-marca b{display:block;font-stretch:118%;font-weight:900;font-size:1.25rem;letter-spacing:.03em;text-transform:uppercase;line-height:1;}
+.mh-marca span{display:block;font-stretch:80%;font-weight:600;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-2);margin-top:4px;}
+a.mh-marca span::before{content:"← ";opacity:0;margin-left:-1.1em;transition:opacity .3s,margin .3s var(--ease);}
+a.mh-marca:hover span::before{opacity:1;margin-left:0;}
+.mh-tabla{display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none;}
+.mh-tabla::-webkit-scrollbar{display:none;}
+.mh-c{padding:0 16px;border-left:1px solid var(--line);min-width:104px;}
+.mh-c:first-child{border-left:0;padding-left:0;}
+.mh-c span{display:block;font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-2);white-space:nowrap;}
+.mh-c b{display:block;font-stretch:110%;font-weight:800;font-size:1.12rem;font-variant-numeric:tabular-nums;margin-top:2px;white-space:nowrap;}
+.mh-c .bar{height:2px;background:var(--soft2);margin-top:6px;}
+.mh-c .bar i{display:block;height:100%;background:var(--tinta);transition:width .6s var(--ease);}
+.mh-c.temp b{color:var(--cel2);}
+/* ---------- navegación (cubre tabs viejos baseweb y nuevos react-aria) ---------- */
+.stTabs [role="tablist"]{gap:2px;border-bottom:1.5px solid var(--tinta);}
+.stTabs [role="tab"]{padding:10px 14px 9px;border-radius:0;transition:background-color .2s;}
+.stTabs [role="tab"]:hover{background:var(--soft2);}
+.stTabs [role="tab"] p{font-size:.86rem;font-weight:800;font-stretch:88%;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-2);transition:color .2s;}
+.stTabs [role="tab"][aria-selected="true"] p,.stTabs [role="tab"]:hover p{color:var(--tinta);}
+.stTabs [data-baseweb="tab-highlight"],.stTabs .react-aria-SelectionIndicator{background:var(--cel2) !important;height:3px !important;}
+.stTabs [data-baseweb="tab-border"]{display:none;}
+.stTabs .stTabs [role="tablist"]{border-bottom:1px solid var(--line);}
+.stTabs .stTabs [role="tab"] p{font-size:.84rem;font-weight:600;font-stretch:100%;letter-spacing:0;text-transform:none;}
+.stTabs .stTabs [role="tab"][aria-selected="true"] p{font-weight:700;}
+.stTabs .stTabs [data-baseweb="tab-highlight"],.stTabs .stTabs .react-aria-SelectionIndicator{background:var(--tinta) !important;height:2px !important;}
+.stTabs .stTabs .stTabs [role="tab"] p{font-size:.8rem;}
 /* ---------- botones / widgets ---------- */
-.stButton>button,[data-testid="stBaseButton-primary"],[data-testid="stBaseButton-secondary"]{border-radius:10px;font-weight:600;}
-[data-testid="stExpander"] details{border-radius:12px;border:1px solid var(--line);background:var(--soft);}
+.stButton>button,[data-testid="stBaseButton-primary"],[data-testid="stBaseButton-secondary"]{border-radius:4px;font-weight:700;transition:background-color .2s,border-color .2s,color .2s,transform .12s;}
+[data-testid="stBaseButton-primary"]{background:var(--tinta);border-color:var(--tinta);color:var(--tiza);}
+[data-testid="stBaseButton-primary"]:hover{background:var(--cel2);border-color:var(--cel2);color:#fff;}
+[data-testid="stBaseButton-secondary"]{background:transparent;border:1px solid var(--line-2);}
+[data-testid="stBaseButton-secondary"]:hover{border-color:var(--tinta);color:var(--tinta);background:var(--papel);}
+.stButton>button:active{transform:translateY(1px);}
+.stButton>button:disabled{opacity:.45;}
+.stButton>button p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+[data-testid="stExpander"] details{border-radius:4px;border:1px solid var(--line);background:var(--papel);}
 [data-testid="stExpander"] summary{font-weight:700;}
-[data-testid="stDataFrame"]{border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+[data-testid="stExpander"] summary:hover{color:var(--cel2);}
+[data-testid="stDataFrame"]{border-radius:4px;overflow:hidden;border:1px solid var(--line);}
+[data-baseweb="select"]>div,[data-baseweb="input"]>div{border-radius:4px !important;}
+div[role="dialog"]{border-radius:6px !important;background:var(--tiza) !important;}
+[role="dialog"] h2,[role="dialog"] h2 *{color:inherit !important;}
+[data-testid="stCaptionContainer"]{color:var(--tinta-2);}
 /* ---------- barra de estado de cada liga ---------- */
-.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:6px 0 10px;}
-.stc{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 14px;}
-.stc span{display:block;font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.65;}
-.stc b{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;}
-.stc .bar{height:5px;border-radius:3px;background:var(--soft2);margin-top:6px;overflow:hidden;}
-.stc .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cel2),var(--cel));}
-.aviso{border-left:4px solid var(--cel2);background:color-mix(in srgb,var(--cel) 10%,transparent);border-radius:8px;padding:9px 14px;font-size:.88rem;margin:4px 0 10px;}
+.status{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:10px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.stc{padding:10px 16px;border-left:1px solid var(--line);}
+.stc:first-child{border-left:0;padding-left:0;}
+.stc span{display:block;font-stretch:80%;font-size:.64rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
+.stc b{font-stretch:110%;font-size:1.2rem;font-weight:800;font-variant-numeric:tabular-nums;}
+.stc .bar{height:2px;background:var(--soft2);margin-top:8px;}
+.stc .bar i{display:block;height:100%;background:var(--tinta);transition:width .6s var(--ease);}
+.aviso{border-left:3px solid var(--cel2);background:color-mix(in srgb,var(--cel) 12%,transparent);border-radius:0 4px 4px 0;padding:10px 14px;font-size:.88rem;margin:4px 0 12px;}
 /* ---------- títulos de sección ---------- */
-.sec{display:flex;align-items:baseline;gap:10px;margin:8px 0 10px;flex-wrap:wrap;}
-.sec .tt{font-family:'Barlow Condensed',sans-serif;font-size:1.45rem;font-weight:700;letter-spacing:.01em;text-transform:uppercase;border-left:5px solid var(--c,#2f7fd0);padding-left:10px;line-height:1.1;}
-.sec .sub{font-size:.82rem;opacity:.62;}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.03em;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 38%,transparent);white-space:nowrap;}
-.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.76rem;opacity:.85;margin:8px 2px 4px;}
+.sec{display:flex;align-items:baseline;gap:12px;margin:14px 0 12px;flex-wrap:wrap;}
+.sec .tt{font-stretch:95%;font-size:1.28rem;font-weight:900;letter-spacing:.01em;text-transform:uppercase;line-height:1.1;display:inline-flex;align-items:center;gap:10px;}
+.sec .tt::before{content:"";width:10px;height:10px;background:var(--c,#2F6DB0);flex:none;}
+.sec .sub{font-size:.82rem;color:var(--tinta-2);}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px 2px;border-radius:3px;font-stretch:85%;font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:color-mix(in srgb,var(--c) 11%,transparent);color:color-mix(in srgb,var(--c) 85%,#000);white-space:nowrap;}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.74rem;color:var(--tinta-2);margin:10px 2px 4px;}
 .legend span{display:inline-flex;align-items:center;gap:6px;}
-.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;box-shadow:inset 0 0 0 1px var(--line);}
 /* ---------- escudos ---------- */
-.crest-img{object-fit:contain;flex:none;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18));}
-.crest{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:7px 7px 50% 50%/7px 7px 62% 62%;flex:none;letter-spacing:-.03em;line-height:1;}
+.crest-img{object-fit:contain;flex:none;vertical-align:middle;}
+.crest{display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;border-radius:6px 6px 50% 50%/6px 6px 62% 62%;flex:none;letter-spacing:-.03em;line-height:1;}
 /* ---------- partidos ---------- */
-.score{display:flex;justify-content:center;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.25rem;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.score .n{background:var(--soft2);border-radius:7px;min-width:28px;text-align:center;padding:0 7px;line-height:1.5;}
-.score .n.w{background:color-mix(in srgb,var(--win) 20%,transparent);color:color-mix(in srgb,var(--win) 80%,currentColor);}
-.score small{font-weight:700;font-size:.92rem;color:var(--pen);}
-.score .sep{opacity:.4;}
-.score .vs{font-family:'Inter',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.08em;opacity:.55;border:1px dashed var(--line);border-radius:6px;padding:2px 8px;}
-details.tanda{margin:0 0 8px;border:1px dashed color-mix(in srgb,var(--pen) 45%,transparent);border-radius:10px;padding:5px 10px;background:color-mix(in srgb,var(--pen) 6%,transparent);font-size:.8rem;}
+.score{display:flex;justify-content:center;align-items:center;gap:5px;font-stretch:110%;font-weight:800;font-size:1.1rem;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.score .n{background:var(--tinta);color:var(--tiza);border-radius:3px;min-width:28px;text-align:center;padding:0 7px;line-height:1.6;}
+.score .n.w{background:var(--cel2);color:#fff;}
+.score small{font-weight:800;font-size:.84rem;color:var(--pen);}
+.score .sep{color:var(--tinta-3);}
+.score .vs{font-stretch:85%;font-size:.68rem;font-weight:800;letter-spacing:.14em;color:var(--tinta-2);border:1px solid var(--line-2);border-radius:3px;padding:3px 8px 2px;}
+details.tanda{margin:0 0 8px;border-left:2px solid var(--pen);padding:5px 10px;background:color-mix(in srgb,var(--pen) 6%,transparent);font-size:.8rem;}
 details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .trow{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;}
 .trow .tn{min-width:120px;font-weight:600;}
 .trow .tt{font-weight:800;min-width:16px;}
-.pk{display:inline-flex;width:19px;height:19px;border-radius:50%;align-items:center;justify-content:center;font-size:.66rem;font-weight:800;color:#fff;margin-right:3px;}
+.pk{display:inline-flex;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center;font-size:.64rem;font-weight:800;color:#fff;margin-right:3px;}
 .pk.ok{background:var(--win);}.pk.no{background:var(--lose);}
-[class*="st-key-fx"] [data-testid="stHorizontalBlock"]{flex-wrap:nowrap !important;align-items:center;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:6px 8px;margin-bottom:2px;transition:border-color .15s;}
-[class*="st-key-fx"] [data-testid="stHorizontalBlock"]:hover{border-color:color-mix(in srgb,var(--cel2) 60%,transparent);}
+[class*="st-key-fx"] [data-testid="stHorizontalBlock"]{flex-wrap:nowrap !important;align-items:center;background:var(--papel);border:0;border-bottom:1px solid var(--line);border-radius:0;padding:7px 8px;margin-bottom:0;transition:background-color .2s;}
+[class*="st-key-fx"] [data-testid="stHorizontalBlock"]:hover{background:color-mix(in srgb,var(--cel) 10%,var(--papel));}
+[class*="st-key-fx"]>[data-testid="stVerticalBlock"]{border-top:1px solid var(--line-2);}
 [class*="st-key-fx"] [data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:5 1 0 !important;}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(2){flex:3.6 1 0 !important;}
-[class*="st-key-fx"] [data-testid="stVerticalBlock"]{gap:.45rem;}
+[class*="st-key-fx"] [data-testid="stVerticalBlock"]{gap:0;}
 [class*="st-key-fx"] button{border:none !important;background:transparent !important;box-shadow:none !important;padding:2px 4px !important;min-height:0 !important;}
 [class*="st-key-fx"] button p{font-weight:600;font-size:.88rem;line-height:1.2;}
-[class*="st-key-fx"] button:hover p{color:var(--cel2);text-decoration:underline;}
+[class*="st-key-fx"] button:hover p{color:var(--cel2);}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(1) button{justify-content:flex-end;text-align:right;width:100%;}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(3) button{justify-content:flex-start;text-align:left;width:100%;}
-.fx-head{display:flex;align-items:center;gap:8px;margin:2px 0 8px;flex-wrap:wrap;}
-.mrow{border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:8px;background:var(--soft);}
-.mrow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.74rem;margin-bottom:5px;}
+[class*="st-key-fx"] [data-testid="stMarkdownContainer"],[class*="st-key-fx"] [data-testid="stMarkdownContainer"]>*{margin:0 !important;}
+[class*="st-key-fx"] [data-testid="stColumn"] [data-testid="stVerticalBlock"]{justify-content:center;}
+.fx-head{display:flex;align-items:center;gap:10px;margin:4px 0 10px;flex-wrap:wrap;}
+.fx-head b{font-stretch:105%;font-weight:800;}
+.mrow{border-bottom:1px solid var(--line);padding:9px 4px;margin-bottom:0;}
+.mrow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.74rem;margin-bottom:6px;color:var(--tinta-2);}
 .mline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;}
 .side{display:flex;align-items:center;gap:8px;font-weight:600;font-size:.9rem;}
 .side.l{justify-content:flex-end;text-align:right;}
 .side.w{font-weight:800;}
-/* ---------- tarjetas ---------- */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:4px 0 14px;}
-.card{border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:13px 16px;border-top:3px solid var(--c,#2f7fd0);}
-.card .k{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.68;}
-.card .v{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.98rem;margin-top:8px;flex-wrap:wrap;}
-.card .v.big{font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;}
-.card .s{font-size:.78rem;opacity:.7;margin-top:5px;}
-.movlist{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 12px;}
-.mv{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:3px 11px 3px 5px;font-size:.8rem;font-weight:600;background:var(--soft);}
-.mv .d{font-weight:800;}
+/* ---------- planilla de datos (movimientos) ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 24px;margin:4px 0 16px;border-top:1.5px solid var(--tinta);}
+.card{padding:14px 0;border-bottom:1px solid var(--line);position:relative;}
+.card .k{font-stretch:80%;font-size:.66rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);display:flex;align-items:center;gap:8px;}
+.card .k::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c,#2F6DB0);flex:none;}
+.card .v{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.96rem;margin-top:8px;flex-wrap:wrap;}
+.card .v.big{font-stretch:115%;font-weight:800;font-size:1.8rem;font-variant-numeric:tabular-nums;}
+.card .s{font-size:.78rem;color:var(--tinta-2);margin-top:5px;}
+.movlist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px;}
+.mv{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:3px;padding:3px 10px 3px 5px;font-size:.8rem;font-weight:600;background:var(--papel);}
+.mv .d{font-weight:800;font-variant-numeric:tabular-nums;}
 .up{color:var(--win);}.down{color:var(--lose);}
-.mlab{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;opacity:.72;margin:6px 0 4px;}
-.tlist{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px;}
-.tl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:10px;padding:5px 10px 5px 6px;font-weight:600;font-size:.86rem;background:var(--soft);}
-.tl small{opacity:.6;font-weight:700;}
-.champ{border-radius:14px;padding:18px;text-align:center;background:linear-gradient(135deg,rgba(212,160,23,.25),rgba(212,160,23,.05));border:1px solid rgba(212,160,23,.55);}
-.champ .t{font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:800;color:#b7860b;}
-.champ .nm{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.5rem;margin-top:8px;text-transform:uppercase;}
-.champ .s{font-size:.76rem;opacity:.75;margin-top:2px;}
+.mlab{font-stretch:80%;font-size:.68rem;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);margin:8px 0 6px;}
+.tlist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px;}
+.tl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:3px;padding:5px 10px 5px 6px;font-weight:600;font-size:.86rem;background:var(--papel);}
+.tl small{color:var(--tinta-3);font-weight:700;}
+.champ{border-radius:4px;padding:22px 18px;text-align:center;background:var(--papel);border:1px solid var(--line);border-top:3px solid var(--gold);}
+.champ .t{font-stretch:85%;font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;font-weight:800;color:var(--gold);}
+.champ .nm{font-stretch:115%;font-weight:900;font-size:1.45rem;margin-top:10px;text-transform:uppercase;}
+.champ .s{font-size:.76rem;color:var(--tinta-2);margin-top:3px;}
 /* ---------- cuadro del reducido ---------- */
 .bracket{display:grid;grid-template-columns:repeat(5,minmax(205px,1fr));gap:28px;overflow-x:auto;padding:4px 2px 14px;}
 .round{display:flex;flex-direction:column;}
 .round-h{text-align:center;margin-bottom:10px;}
 .round-b{display:flex;flex-direction:column;justify-content:space-around;gap:14px;flex:1;}
-.bm{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--soft);}
-.round:not(.last) .bm::after{content:"";position:absolute;right:-29px;top:50%;width:28px;border-top:2px solid var(--line);}
+.bm{position:relative;border:1px solid var(--line);border-radius:4px;background:var(--papel);transition:border-color .2s;}
+.bm:hover{border-color:var(--line-2);}
+.round:not(.last) .bm::after{content:"";position:absolute;right:-29px;top:50%;width:28px;border-top:1px solid var(--line-2);}
 .bt{display:flex;align-items:center;gap:7px;padding:7px 10px;font-size:.84rem;}
 .bt+.bt{border-top:1px solid var(--line);}
 .bt .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
-.bt .g{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;min-width:14px;text-align:right;}
+.bt .g{font-stretch:110%;font-size:1rem;font-weight:800;min-width:14px;text-align:right;font-variant-numeric:tabular-nums;}
 .bt .p{font-size:.74rem;font-weight:800;color:var(--pen);}
-.bt .lv{font-size:.58rem;font-weight:800;border:1px solid var(--line);border-radius:4px;padding:0 4px;opacity:.7;}
-.bt.win{background:color-mix(in srgb,var(--win) 12%,transparent);box-shadow:inset 3px 0 0 var(--win);}
+.bt .lv{font-stretch:85%;font-size:.58rem;font-weight:800;border:1px solid var(--line-2);border-radius:2px;padding:0 4px;color:var(--tinta-2);}
+.bt.win{box-shadow:inset 3px 0 0 var(--cel2);}
 .bt.win .nm{font-weight:800;}
 .bt.lose{opacity:.5;}
-.bt.tbd .nm{opacity:.5;font-style:italic;font-weight:500;}
-.bfoot{font-size:.7rem;padding:4px 10px 6px;border-top:1px dashed var(--line);}
-.bfoot b{color:var(--win);}
+.bt.tbd .nm{color:var(--tinta-3);font-style:italic;font-weight:500;}
+.bfoot{font-size:.7rem;padding:5px 10px 6px;border-top:1px dashed var(--line);color:var(--tinta-2);}
+.bfoot b{color:var(--cel2);}
 .bm details.tanda{margin:0 8px 8px;font-size:.72rem;}
 .bm .trow .tn{min-width:0;}
 .promo{margin-top:14px;}
 /* ---------- ficha de club ---------- */
 .team-head{display:flex;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap;}
-.team-head .tn{font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:800;text-transform:uppercase;line-height:1;}
-.rec{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;}
-.rec div{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:5px 12px;text-align:center;min-width:54px;}
-.rec b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:1.25rem;}
-.rec span{font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;opacity:.7;font-weight:600;}
-.form{display:inline-flex;gap:4px;vertical-align:middle;margin-top:3px;}
-.fm{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.68rem;font-weight:800;}
-.fm.G{background:var(--win);}.fm.E{background:#64748b;}.fm.P{background:var(--lose);}
-.next{border:1px solid var(--line);border-left:4px solid var(--cel2);border-radius:10px;padding:8px 12px;background:var(--soft);font-size:.86rem;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:8px;}
-.ct{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:14px 8px;font-weight:600;font-size:.84rem;}
+.team-head .tn{font-stretch:115%;font-size:1.75rem;font-weight:900;text-transform:uppercase;line-height:1;}
+.rec{display:flex;gap:0;flex-wrap:wrap;margin:10px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
+.rec div{border-left:1px solid var(--line);padding:7px 14px;text-align:left;min-width:60px;}
+.rec div:first-child{border-left:0;padding-left:0;}
+.rec b{display:block;font-stretch:110%;font-size:1.2rem;font-weight:800;font-variant-numeric:tabular-nums;}
+.rec span{font-stretch:80%;font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--tinta-2);font-weight:700;}
+.form{display:inline-flex;gap:3px;vertical-align:middle;margin-top:4px;}
+.fm{width:20px;height:20px;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:.64rem;font-weight:800;}
+.fm.G{background:var(--win);}.fm.E{background:#8A919C;}.fm.P{background:var(--lose);}
+.next{border-left:3px solid var(--cel2);padding:8px 12px;background:var(--papel);font-size:.86rem;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0;margin-top:8px;border-top:1px solid var(--line);border-left:1px solid var(--line);}
+.ct{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 8px;font-weight:600;font-size:.82rem;background:var(--papel);transition:background-color .2s;}
+.ct:hover{background:color-mix(in srgb,var(--cel) 10%,var(--papel));}
+.ct img{transition:transform .35s var(--ease);}
+.ct:hover img{transform:translateY(-2px) scale(1.04);}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
+/* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
+.stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}
+@keyframes afa-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+/* ---------- mobile ---------- */
+@media (max-width:640px){
+.block-container{padding-left:.9rem;padding-right:.9rem;padding-top:.6rem;}
+.masthead{flex-direction:column;align-items:stretch;gap:12px;margin-top:26px;}
+/* acciones globales: los 3 botones en una fila, sin el texto de ayuda */
+.st-key-acciones [data-testid="stHorizontalBlock"]{flex-wrap:nowrap !important;gap:6px !important;}
+.st-key-acciones [data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:1 1 0 !important;}
+.st-key-acciones [data-testid="stColumn"]:first-child{display:none;}
+.st-key-acciones button{padding:6px 4px !important;min-height:40px;}
+.st-key-acciones button p{font-size:.78rem;}
+/* acciones de cada liga: rótulos arriba, "Próxima fecha" y "Hasta el final" lado a lado */
+[data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"]){flex-wrap:wrap !important;flex-direction:row !important;gap:8px !important;}
+[data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"])>[data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:1 1 calc(50% - 8px) !important;}
+[data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"])>[data-testid="stColumn"]:first-child{flex-basis:100% !important;}
+.mh-marca b{font-size:1.05rem;}
+.mh-tabla{margin:0 -.9rem;padding:0 .9rem;}
+.mh-c{min-width:92px;padding:0 12px;}
+.status{grid-template-columns:repeat(2,1fr);}
+.stc:nth-child(3){border-left:0;padding-left:0;}
+.stc:nth-child(n+3){border-top:1px solid var(--line);}
+.sec .tt{font-size:1.1rem;}
+.bracket{grid-template-columns:repeat(5,188px);}
+.cgrid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}
+.ct{font-size:.74rem;padding:12px 4px;}
+[class*="st-key-fx"] button p{font-size:.8rem;}
+.score{font-size:1rem;gap:3px;}
+.cards{grid-template-columns:1fr 1fr;}
+.card .v.big{font-size:1.5rem;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
 </style>"""
 
 COLOR_COMP = [
@@ -333,7 +411,7 @@ def tanda_html(p, abierto=False):
                        for x in serie)
         filas += (f'<div class="trow">{crest(nombre, 18)}<span class="tn">{esc(nombre)}:</span>'
                   f'<span class="tt">{total}</span><span>{dots}</span></div>')
-    return (f'<details class="tanda"{" open" if abierto else ""}><summary>🥅 Penales · '
+    return (f'<details class="tanda"{" open" if abierto else ""}><summary>Penales · '
             f'{esc(p["local"])} {p["pen"][0]} – {p["pen"][1]} {esc(p["visita"])}</summary>'
             f'{filas}</details>')
 
@@ -510,14 +588,14 @@ def render_ficha(nombre, clave):
             pf, pc = p["pen"] if local else p["pen"][::-1]
             res += f" ({pf}-{pc} pen.)"
         if letra == "G":
-            desenlace = "✅ Ganó"
+            desenlace = "Ganó"
         elif letra == "P":
-            desenlace = "❌ Perdió"
+            desenlace = "Perdió"
         elif p["pen"]:
-            desenlace = ("✅ Empató · ganó por penales" if p["gana"] == nombre
-                         else "❌ Empató · perdió por penales")
+            desenlace = ("Empató · ganó por penales" if p["gana"] == nombre
+                         else "Empató · perdió por penales")
         else:
-            desenlace = "➖ Empató"
+            desenlace = "Empató"
         cond = "Neutral" if p["neutral"] else ("Local" if local else "Visitante")
         comp = p["comp"] if p["comp"] == p["liga"] else f"{p['liga']} · {p['comp']}"
         filas.append({
@@ -552,7 +630,7 @@ def render_ficha(nombre, clave):
         st.info("Este club todavía no jugó partidos esta temporada.")
         return
 
-    q = st.text_input("🔍 Buscar partido", key=f"q_{clave}_{nombre}",
+    q = st.text_input(":material/search: Buscar partido", key=f"q_{clave}_{nombre}",
                       placeholder="Rival, número de fecha, resultado (2-1), local, visitante, "
                                   "zona, octavos…")
     vis = [f for f in filas if coincide(q, f["_t"], f["Fecha"], f["_m"])] if q else filas
@@ -565,8 +643,8 @@ def render_ficha(nombre, clave):
 
     def color_res(fila):
         d = fila["Desenlace"]
-        c = ("rgba(22,163,74,.16)" if d.startswith("✅") else
-             "rgba(220,38,38,.14)" if d.startswith("❌") else "rgba(100,116,139,.12)")
+        c = ("rgba(46,125,79,.15)" if d == "Ganó" or "ganó por penales" in d else
+             "rgba(184,58,46,.13)" if d == "Perdió" or "perdió por penales" in d else "rgba(15,27,45,.06)")
         return [f"background-color: {c}" if col in ("Resultado", "Desenlace") else ""
                 for col in fila.index]
 
@@ -654,12 +732,12 @@ def vista_fixture(liga):
     if key not in st.session_state:
         st.session_state[key] = max(1, min(jugadas, total))
     c1, c2, c3 = st.columns([1, 6, 1], vertical_alignment="bottom")
-    c1.button("◀", key=f"{key}_prev", width="stretch", on_click=_mover_fecha,
+    c1.button(":material/chevron_left:", key=f"{key}_prev", width="stretch", on_click=_mover_fecha,
               args=(key, -1, total), disabled=st.session_state[key] <= 1)
     elegida = c2.selectbox("Fecha", list(range(1, total + 1)), key=key, format_func=lambda n:
-                           rotulo(n) + (" · ✔ jugada" if n <= jugadas else " · por jugar"),
+                           rotulo(n) + (" · jugada" if n <= jugadas else " · por jugar"),
                            label_visibility="collapsed")
-    c3.button("▶", key=f"{key}_next", width="stretch", on_click=_mover_fecha,
+    c3.button(":material/chevron_right:", key=f"{key}_next", width="stretch", on_click=_mover_fecha,
               args=(key, 1, total), disabled=elegida >= total)
     estado = chip("Jugada", "#16a34a") if elegida <= jugadas else (
         chip("Próxima fecha", "#2f7fd0") if elegida == jugadas + 1 else chip("Por jugar", "#64748b"))
@@ -839,19 +917,19 @@ def render_movimientos(log, hist, nombres, color):
                           f"{cur[idn] + d[idn]}° al {cur[idn]}°", "#dc2626")
     gole = max(log, key=lambda p: (abs(p["gl"] - p["gv"]), p["gl"] + p["gv"]))
     if gole["gl"] != gole["gv"]:
-        cards += card("💥 Mayor goleada", partido_corto(gole),
+        cards += card("Mayor goleada", partido_corto(gole),
                       f"{gole['rotulo']} · {gole['comp']}", "#ea580c")
     mas = max(log, key=lambda p: (p["gl"] + p["gv"], -abs(p["gl"] - p["gv"])))
-    cards += card("⚽ Partido con más goles", partido_corto(mas),
+    cards += card("Partido con más goles", partido_corto(mas),
                   f"{mas['gl'] + mas['gv']} goles · {mas['rotulo']}", "#0891b2")
     (inv, n_inv), (sg, n_sg), (gan, n_gan) = rachas(log, nombres)
     if n_gan >= 2:
-        cards += card("🔥 Racha ganadora", eq_html(gan), f"{n_gan} victorias seguidas", "#16a34a")
-    cards += card("🛡️ Racha invicta", eq_html(inv), f"{n_inv} partidos sin perder", "#2f7fd0")
-    cards += card("🧊 Racha sin ganar", eq_html(sg), f"{n_sg} partidos sin ganar", "#64748b")
+        cards += card("Racha ganadora", eq_html(gan), f"{n_gan} victorias seguidas", "#16a34a")
+    cards += card("Racha invicta", eq_html(inv), f"{n_inv} partidos sin perder", "#2f7fd0")
+    cards += card("Racha sin ganar", eq_html(sg), f"{n_sg} partidos sin ganar", "#64748b")
     goles = sum(p["gl"] + p["gv"] for p in log)
     emp = sum(p["gl"] == p["gv"] for p in log)
-    cards += card("📈 Goles por partido", f"{goles / len(log):.2f}",
+    cards += card("Goles por partido", f"{goles / len(log):.2f}",
                   f"{goles} goles en {len(log)} partidos · {100 * emp / len(log):.0f}% empates",
                   "#7c3aed", big=True)
     st.markdown(f'<div class="cards">{cards}</div>', unsafe_allow_html=True)
@@ -889,7 +967,7 @@ def bracket_card(m, final=False):
                   f'{esc(nombre)}</span><span class="lv" title="{tit}">{lv}</span>{pk}'
                   f'<span class="g">{g}</span></div>')
     pen = f"Penales {m['pen'][0]}-{m['pen'][1]} · " if m["pen"] else ""
-    que = "🏆 Campeón" if final else "Avanza"
+    que = "Campeón" if final else "Avanza"
     return (f'<div class="bm">{filas}<div class="bfoot">{pen}{que}: <b>{esc(m["gana"])}</b></div>'
             f'{tanda_html(m)}</div>')
 

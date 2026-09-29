@@ -55,7 +55,8 @@ que tiene menos media.
 
 import streamlit as st
 
-st.set_page_config(page_title="Simulador Fútbol Argentino", page_icon="⚽", layout="wide")
+st.set_page_config(page_title="Proyecto AFA · Simulador Fútbol Argentino", page_icon="⚽", layout="wide",
+                   initial_sidebar_state="collapsed")
 
 import sys
 
@@ -158,7 +159,7 @@ def editar_medias(nombres, r, clave):
 st.markdown(CSS, unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("⚙️ Parámetros")
+    st.header("Parámetros de simulación")
     sorpresa = st.slider("Nivel de sorpresas", 0.0, 15.0, 6.0, 0.5,
                          help="Qué tanto varía la 'forma del día' de cada equipo. "
                               "Más alto = más partidos donde gana el que tiene menos media.")
@@ -194,29 +195,41 @@ pct_f = 100 * SF["fecha"] / SF["total"]
 pct_pb = 100 * SPB["fecha"] / SPB["total"] if SPB["total"] else 0
 pct_pc = 100 * SPC["fecha"] / SPC["total"] if SPC["total"] else 0
 
-st.markdown(
-    f'<div class="hero"><span class="sol">☀</span><div class="hero-top"><div>'
-    f'<div class="hero-k">Temporada {S["temp"]} · Fútbol argentino</div>'
-    f'<h1>Simulador de la Liga Argentina</h1>'
-    f'<p>Primera División · Primera Nacional · Federal A · Primera B · Primera C</p></div>'
-    f'<div class="hero-stats">'
-    f'<div class="hs"><span>Primera División</span><b>Fecha {S["fecha"]}/{total_primera(S)}</b>'
-    f'<div class="bar"><i style="width:{pct_p:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Primera Nacional</span><b>Fecha {SB["fecha"]}/{total_b(SB)}</b>'
-    f'<div class="bar"><i style="width:{pct_b:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Federal A</span><b>Fecha {SF["fecha"]}/{SF["total"]}</b>'
-    f'<div class="bar"><i style="width:{pct_f:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Primera B</span><b>Fecha {SPB["fecha"]}/{SPB["total"]}</b>'
-    f'<div class="bar"><i style="width:{pct_pb:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Primera C</span><b>Fecha {SPC["fecha"]}/{SPC["total"]}</b>'
-    f'<div class="bar"><i style="width:{pct_pc:.1f}%"></i></div></div>'
-    f'<div class="hs"><span>Partidos jugados</span>'
-    f'<b>{len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])}</b></div>'
-    f'</div></div></div>', unsafe_allow_html=True)
+# ---- Cabecera (masthead) · Proyecto AFA
+# Sol de Mayo geométrico: 16 rayos alternando largo (mismo dibujo que la intro)
+_RAYOS = "".join(
+    f'<polygon points="-3.2,-21 0,-{36 if k % 2 else 47} 3.2,-21" transform="rotate({k * 22.5})"/>'
+    for k in range(16))
+SOL_SVG = (f'<svg viewBox="-50 -50 100 100" aria-hidden="true"><g fill="currentColor">{_RAYOS}'
+           f'<circle r="16.5"/></g></svg>')
 
-g0, g1, g2, g3 = st.columns([3, 1.4, 1.4, 1.2], vertical_alignment="center")
-g0.caption("Simulá fecha por fecha desde cada categoría, o todo junto con los botones de la derecha.")
-if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary"):
+
+def _celda(nombre, fecha, total, pct):
+    return (f'<div class="mh-c"><span>{nombre}</span><b>{fecha}/{total}</b>'
+            f'<div class="bar"><i style="width:{pct:.1f}%"></i></div></div>')
+
+
+# En la web (stlite) la marca vuelve a la intro de Proyecto AFA; en la PC no hay intro
+_web = sys.platform == "emscripten"
+_marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
+              if _web else 'div class="mh-marca"')
+_jugados = len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
+st.markdown(
+    f'<header class="masthead"><{_marca_tag}>{SOL_SVG}<div><b>Proyecto AFA</b>'
+    f'<span>Simulador Fútbol Argentino</span></div></{"a" if _web else "div"}>'
+    f'<div class="mh-tabla">'
+    f'<div class="mh-c temp"><span>Temporada</span><b>{S["temp"]}</b></div>'
+    + _celda("Primera", S["fecha"], total_primera(S), pct_p)
+    + _celda("B Nacional", SB["fecha"], total_b(SB), pct_b)
+    + _celda("Federal A", SF["fecha"], SF["total"], pct_f)
+    + _celda("Primera B", SPB["fecha"], SPB["total"], pct_pb)
+    + _celda("Primera C", SPC["fecha"], SPC["total"], pct_pc)
+    + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div>'
+    f'</div></header>', unsafe_allow_html=True)
+
+g0, g1, g2, g3 = st.container(key="acciones").columns([2.2, 1.3, 1.5, 1.1], vertical_alignment="center")
+g0.caption("Avanzá fecha por fecha en cada categoría, o simulá todo junto.")
+if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stretch", type="primary"):
     # 1. Primero terminar Primera División, desempates incluidos
     #    (la B necesita saber el 27° definitivo para la Promoción)
     while not primera_terminada(S):
@@ -234,15 +247,15 @@ if g1.button("⏩ Simular todo", disabled=ambas, width="stretch", type="primary"
     while SPC["fecha"] < SPC["total"]: 
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
     st.rerun()
-if g2.button("📅 Nueva temporada", disabled=not ambas, width="stretch"):
+if g2.button(":material/event_repeat: Nueva temporada", disabled=not ambas, width="stretch"):
     nueva_temporada(S, volatilidad)
     st.rerun()
-if g3.button("🔄 Reiniciar", width="stretch"):
+if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
 tab_p, tab_b, tab_f, tab_pb, tab_pc, tab_c, tab_h = st.tabs([
-    "🏆 Primera", "🥈 B Nacional", "🌎 Federal A", "🚍 Primera B", "🚂 Primera C", "🛡️ Clubes", "📜 Historial"
+    "Primera", "B Nacional", "Federal A", "Primera B", "Primera C", "Clubes", "Historial"
 ])
 
 # (Esto va debajo de los imports y la configuración inicial de streamlit)
@@ -305,11 +318,11 @@ with tab_p:
     extra_p = S.get("extra_f2", 0)
     terminada_p_dyn = S["fecha"] >= TOTAL_FECHAS + extra_p
     
-    if c2.button("▶️ Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
+    if c2.button(":material/skip_next: Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
                  type="primary"):
         simular_fecha(S, P, acumular)
         st.rerun()
-    if c3.button("⏩ Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
+    if c3.button(":material/fast_forward: Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
         while S["fecha"] < TOTAL_FECHAS + S.get("extra_f2", 0):
             simular_fecha(S, P, acumular)
         st.rerun()
@@ -329,9 +342,9 @@ with tab_p:
     desempates_p = [p for p in S["log"] if p["rotulo"] == "Desempate"]
     mostrar_desempate_p = S.get("desempate_pendiente") or len(desempates_p) > 0
     
-    titulos_p = ["📊 Posiciones", "📅 Fixture y resultados"]
-    if mostrar_desempate_p: titulos_p.append("⚔️ Desempate")
-    titulos_p.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    titulos_p = ["Posiciones", "Fixture y resultados"]
+    if mostrar_desempate_p: titulos_p.append("Desempate")
+    titulos_p.extend(["Movimientos", "Definiciones"])
     
     sp = st.tabs(titulos_p)
     idx_p = 0
@@ -353,7 +366,7 @@ with tab_p:
             leyenda(LEY_DESTINOS + [("Desempate Campeonato", "rgba(249, 115, 22, 0.3)"), ("Desempate Permanencia/Promoción", "rgba(147, 51, 234, 0.3)")])
             
         if S["fecha"] == 0:
-            with st.expander("✏️ Editar medias internas de esta temporada"):
+            with st.expander(":material/tune: Editar medias internas de esta temporada"):
                 S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
     idx_p += 1
     
@@ -379,13 +392,13 @@ with tab_p:
                 
                 for motivo, parts in grupos.items():
                     if "Liguilla" in motivo:
-                        seccion(f"📊 Tabla Final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
                         st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f"👀 Ver los {len(parts)} enfrentamientos", expanded=False):
+                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
                             for p in parts:
                                 st.markdown(fila_partido_html(p), unsafe_allow_html=True)
                     else:
-                        seccion(f"⚔️ Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
                         for p in parts:
                             st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
         idx_p += 1
@@ -409,26 +422,26 @@ with tab_p:
             st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
             e1, e2 = st.columns(2)
             with e1:
-                with st.expander("🏆 Campeón de Primera División", expanded=False):
+                with st.expander(":material/emoji_events: Campeón de Primera División", expanded=False):
                     campeon = final.iloc[0]["Equipo"]
                     st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
                                 f'</div><div style="margin-top:10px">{crest(campeon, 64)}</div>'
                                 f'<div class="nm">{esc(campeon)}</div></div>', unsafe_allow_html=True)
-                with st.expander("🌎 Clasificados · Copa Libertadores", expanded=False):
+                with st.expander(":material/public: Clasificados · Copa Libertadores", expanded=False):
                     st.markdown('<div class="mlab">Fase de grupos (1° al 5°)</div>'
                                 + equipos(range(1, 6)) + '<div class="mlab">Fase previa (11°)</div>'
                                 + equipos([11]), unsafe_allow_html=True)
-                with st.expander("🌎 Copa Sudamericana", expanded=False):
+                with st.expander(":material/public: Copa Sudamericana", expanded=False):
                     st.markdown('<div class="mlab">6° al 8° y 12°-13°</div>'
                                 + equipos(list(range(6, 9)) + [12, 13]), unsafe_allow_html=True)
             with e2:
-                with st.expander("🔁 Promoción", expanded=False):
+                with st.expander(":material/swap_vert: Promoción", expanded=False):
                     txt = ('<div class="mlab">Juega la Promoción contra el perdedor de la final '
                            'del reducido (27°)</div>' + equipos([N - 3]))
                     if SB["promo_partido"]:
                         txt += fila_partido_html(SB["promo_partido"])
                     st.markdown(txt, unsafe_allow_html=True)
-                with st.expander("⬇️ Descensos", expanded=False):
+                with st.expander(":material/south: Descensos", expanded=False):
                     st.markdown('<div class="mlab">Descienden a la Primera Nacional (28° al 30°)</div>'
                                 + equipos(range(N - 2, N + 1)), unsafe_allow_html=True)
 
@@ -464,12 +477,12 @@ with tab_b:
     c1.markdown(chip("Primera Nacional · 36 equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
                 unsafe_allow_html=True)
     
-    if c2.button("▶️ Próxima fecha", key="b_next", width="stretch", type="primary",
+    if c2.button(":material/skip_next: Próxima fecha", key="b_next", width="stretch", type="primary",
                  disabled=terminada_b or b_espera_primera):
         simular_fecha_b(S, P)
         st.rerun()
         
-    if c3.button("⏩ Hasta el final", key="b_all", width="stretch",
+    if c3.button(":material/fast_forward: Hasta el final", key="b_all", width="stretch",
                  disabled=terminada_b or b_espera_primera):
         while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
             simular_fecha_b(S, P)
@@ -480,7 +493,7 @@ with tab_b:
                   ("Partidos jugados", len(SB["log"]))], pct_b_dyn)
                   
     if b_espera_primera:
-        aviso("⏳ La Promoción se juega contra el 27° de Primera: terminá primero la temporada "
+        aviso("La Promoción se juega contra el 27° de Primera: terminá primero la temporada "
               "de Primera División.")
     if fb == B_F1:
         aviso("Terminó la fase 1: se repartieron los equipos en las zonas Campeonato, "
@@ -493,9 +506,9 @@ with tab_b:
     desempates_b = [p for p in SB["log"] if p["rotulo"] == "Desempate"]
     mostrar_desempate_b = SB.get("desempate_pendiente") or len(desempates_b) > 0
     
-    titulos_b = ["📊 Posiciones", "📅 Fixture y resultados"]
-    if mostrar_desempate_b: titulos_b.append("⚔️ Desempate")
-    titulos_b.extend(["🏟️ Reducido", "🔄 Movimientos", "🏁 Definiciones"])
+    titulos_b = ["Posiciones", "Fixture y resultados"]
+    if mostrar_desempate_b: titulos_b.append("Desempate")
+    titulos_b.extend(["Reducido", "Movimientos", "Definiciones"])
     
     sb = st.tabs(titulos_b)
     idx_b = 0
@@ -523,7 +536,7 @@ with tab_b:
                 st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
             leyenda(LEY_B + [("Desempate Permanencia", "rgba(147, 51, 234, 0.3)")])
             
-        with st.expander("ℹ️ Formato de la Primera Nacional"):
+        with st.expander(":material/info: Formato de la Primera Nacional"):
             st.markdown(
                 "Fase 1: dos zonas de 18, una rueda, más 8 fechas interzonales (localía fija "
                 "4 y 4) cruzando ambas zonas. "
@@ -536,7 +549,7 @@ with tab_b:
                 "de la final juega la promoción contra el 27° de Primera.")
                 
         if fb == 0:
-            with st.expander("✏️ Editar medias internas de esta temporada (Primera Nacional)"):
+            with st.expander(":material/tune: Editar medias internas de esta temporada (Primera Nacional)"):
                 SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
     idx_b += 1
     
@@ -560,13 +573,13 @@ with tab_b:
                 
                 for motivo, parts in grupos.items():
                     if "Liguilla" in motivo:
-                        seccion(f"📊 Tabla Final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
                         st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f"👀 Ver los {len(parts)} enfrentamientos", expanded=False):
+                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
                             for p in parts:
                                 st.markdown(fila_partido_html(p), unsafe_allow_html=True)
                     else:
-                        seccion(f"⚔️ Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
                         for p in parts:
                             st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
         idx_b += 1
@@ -600,13 +613,13 @@ with tab_b:
             st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
             e1, e2 = st.columns(2)
             with e1:
-                with st.expander("🏆 Campeón de la Primera Nacional", expanded=False):
+                with st.expander(":material/emoji_events: Campeón de la Primera Nacional", expanded=False):
                     cb = nom_b[SB["campeon"]]
                     st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
                                 f'</div><div style="margin-top:10px">{crest(cb, 64)}</div>'
                                 f'<div class="nm">{esc(cb)}</div><div class="s">Asciende a Primera'
                                 f'</div></div>', unsafe_allow_html=True)
-                with st.expander("⬆️ Clasificados · Ascensos", expanded=False):
+                with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
                     asc = [(nom_b[SB["asc_directo"][0]], "campeón"), (nom_b[SB["asc_directo"][1]], "2°")]
                     if SB["asc_reducido"] is not None:
                         asc.append((nom_b[SB["asc_reducido"]], "reducido"))
@@ -617,7 +630,7 @@ with tab_b:
                         '<div style="font-size:.8rem;opacity:.65">El tercer ascenso sale del '
                         'reducido.</div>'), unsafe_allow_html=True)
             with e2:
-                with st.expander("🔁 Promoción", expanded=False):
+                with st.expander(":material/swap_vert: Promoción", expanded=False):
                     if SB["promo_partido"]:
                         st.markdown(fila_partido_html(SB["promo_partido"], abierto=True),
                                     unsafe_allow_html=True)
@@ -628,7 +641,7 @@ with tab_b:
                     else:
                         st.caption("La juega el perdedor de la final del reducido contra el 27° "
                                    "de Primera.")
-                with st.expander("⬇️ Descensos", expanded=False):
+                with st.expander(":material/south: Descensos", expanded=False):
                     st.markdown(
                         '<div class="mlab">Descienden (7° al 12° de Zona Descenso): al Federal '
                         'A los del interior, a la Primera B los metropolitanos</div>'
@@ -655,11 +668,11 @@ with tab_f:
     c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
     c1.markdown(chip(f"Federal A · {len(nom_f)} equipos") + " " +
                 chip(f"Fase {fase_txt_f}", "#475569"), unsafe_allow_html=True)
-    if c2.button("▶️ Próxima fecha", key="f_next", width="stretch", type="primary",
+    if c2.button(":material/skip_next: Próxima fecha", key="f_next", width="stretch", type="primary",
                  disabled=terminada_f):
         simular_fecha_f(SF, P, S["rng"])
         st.rerun()
-    if c3.button("⏩ Hasta el final", key="f_all", width="stretch", disabled=terminada_f):
+    if c3.button(":material/fast_forward: Hasta el final", key="f_all", width="stretch", disabled=terminada_f):
         while SF["fecha"] < SF["total"]:
             simular_fecha_f(SF, P, S["rng"])
         st.rerun()
@@ -674,8 +687,8 @@ with tab_f:
         aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional. "
               "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
 
-    sf_tabs = st.tabs(["📊 Posiciones", "📅 Fixture y resultados", "🏟️ Reducido", "🔄 Movimientos",
-                       "🏁 Definiciones"])
+    sf_tabs = st.tabs(["Posiciones", "Fixture y resultados", "Reducido", "Movimientos",
+                       "Definiciones"])
                        
     with sf_tabs[0]:
         if ff < SF["f1_rondas"]:
@@ -701,7 +714,7 @@ with tab_f:
             leyenda(LEY_F)
             
         if ff == 0:
-            with st.expander("✏️ Editar medias internas de esta temporada (Federal A)"):
+            with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
                 SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
                 
     with sf_tabs[1]:
@@ -733,13 +746,13 @@ with tab_f:
             aviso("Las definiciones aparecen acá cuando termina la fase 2 del Federal A.")
         else:
             st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
-            with st.expander("🏆 Campeón del Federal A", expanded=False):
+            with st.expander(":material/emoji_events: Campeón del Federal A", expanded=False):
                 cf = nom_f[SF["campeon"]]
                 st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
                             f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
                             f'<div class="nm">{esc(cf)}</div><div class="s">Asciende a la Primera'
                             f' Nacional</div></div>', unsafe_allow_html=True)
-            with st.expander("⬆️ Clasificados · Ascensos", expanded=False):
+            with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
                 asc_f = [(nom_f[SF["asc_directo"][0]], "campeón"), 
                          (nom_f[SF["asc_directo"][1]], "2°"), 
                          (nom_f[SF["asc_directo"][2]], "3°")]
@@ -758,10 +771,10 @@ with tab_pb:
     c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
     c1.markdown(chip(f"Primera B · {len(SPB['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
-    if c2.button("▶️ Próxima fecha", key="pb_next", width="stretch", type="primary", disabled=terminada_pb):
+    if c2.button(":material/skip_next: Próxima fecha", key="pb_next", width="stretch", type="primary", disabled=terminada_pb):
         simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
-    if c3.button("⏩ Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
+    if c3.button(":material/fast_forward: Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
         while SPB["fecha"] < SPB["total"]: 
             simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
         st.rerun()
@@ -771,9 +784,9 @@ with tab_pb:
     desempates = [p for p in SPB["log"] if p["rotulo"] == "Desempate"]
     mostrar_desempate = SPB.get("desempate_pendiente") or len(desempates) > 0
     
-    titulos = ["📊 Posiciones", "📅 Fixture y resultados"]
-    if mostrar_desempate: titulos.append("⚔️ Desempate")
-    titulos.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    titulos = ["Posiciones", "Fixture y resultados"]
+    if mostrar_desempate: titulos.append("Desempate")
+    titulos.extend(["Movimientos", "Definiciones"])
     
     spb_tabs = st.tabs(titulos)
     idx = 0
@@ -806,13 +819,13 @@ with tab_pb:
                 
                 for motivo, parts in grupos.items():
                     if "Liguilla" in motivo:
-                        seccion(f"📊 Tabla Final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
                         st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f"👀 Ver los {len(parts)} enfrentamientos", expanded=False):
+                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
                             for p in parts:
                                 st.markdown(fila_partido_html(p), unsafe_allow_html=True)
                     else:
-                        seccion(f"⚔️ Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
                         for p in parts:
                             st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
         idx += 1
@@ -824,7 +837,7 @@ with tab_pb:
         seccion("Definiciones de la temporada", "Campeón, ascensos y descensos", "#b7860b")
         if SPB["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
         else:
-            with st.expander("🏆 Campeón de la Primera B", expanded=False):
+            with st.expander(":material/emoji_events: Campeón de la Primera B", expanded=False):
                 cpb = SPB["nombres"][SPB["campeon"]]
                 st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div></div>', unsafe_allow_html=True)
                 
@@ -836,10 +849,10 @@ with tab_pc:
     c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
     c1.markdown(chip(f"Primera C · {len(SPC['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
-    if c2.button("▶️ Próxima fecha", key="pc_next", width="stretch", type="primary", disabled=terminada_pc):
+    if c2.button(":material/skip_next: Próxima fecha", key="pc_next", width="stretch", type="primary", disabled=terminada_pc):
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
         st.rerun()
-    if c3.button("⏩ Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
+    if c3.button(":material/fast_forward: Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
         while SPC["fecha"] < SPC["total"]: 
             simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
         st.rerun()
@@ -849,9 +862,9 @@ with tab_pc:
     desempates_c = [p for p in SPC["log"] if p["rotulo"] == "Desempate"]
     mostrar_desempate_c = SPC.get("desempate_pendiente") or len(desempates_c) > 0
     
-    titulos_c = ["📊 Posiciones", "📅 Fixture y resultados"]
-    if mostrar_desempate_c: titulos_c.append("⚔️ Desempate")
-    titulos_c.extend(["🔄 Movimientos", "🏁 Definiciones"])
+    titulos_c = ["Posiciones", "Fixture y resultados"]
+    if mostrar_desempate_c: titulos_c.append("Desempate")
+    titulos_c.extend(["Movimientos", "Definiciones"])
     
     spc_tabs = st.tabs(titulos_c)
     idx_c = 0
@@ -882,13 +895,13 @@ with tab_pc:
                 
                 for motivo, parts in grupos.items():
                     if "Liguilla" in motivo:
-                        seccion(f"📊 Tabla Final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
                         st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f"👀 Ver los {len(parts)} enfrentamientos", expanded=False):
+                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
                             for p in parts:
                                 st.markdown(fila_partido_html(p), unsafe_allow_html=True)
                     else:
-                        seccion(f"⚔️ Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
                         for p in parts:
                             st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
         idx_c += 1
@@ -900,7 +913,7 @@ with tab_pc:
         seccion("Definiciones de la temporada", "Campeón y ascensos", "#b7860b")
         if SPC["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
         else:
-            with st.expander("🏆 Campeón de la Primera C", expanded=False):
+            with st.expander(":material/emoji_events: Campeón de la Primera C", expanded=False):
                 cpc = SPC["nombres"][SPC["campeon"]]
                 st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpc, 64)}</div><div class="nm">{esc(cpc)}</div></div>', unsafe_allow_html=True)
 
@@ -933,29 +946,29 @@ with tab_h:
     seccion("Historial", "Campeones de cada temporada y cambios de categoría", "#b7860b")
     if S["movimientos"]:
         mv = S["movimientos"]
-        with st.expander(f"📋 Cambios de categoría para la temporada {S['temp']}", expanded=False):
+        with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
             st.markdown(
                 '<div class="catgrid">'
-                f'<div><div class="mlab up">⬆️ Ascendieron a Primera</div>'
+                f'<div><div class="mlab up">▲ Ascendieron a Primera</div>'
                 f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + ([(mv["reducido"], "reducido")] if mv["reducido"] else []))}</div>'
-                f'<div><div class="mlab down">⬇️ Descendieron a B Nacional</div>'
+                f'<div><div class="mlab down">▼ Descendieron a B Nacional</div>'
                 f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
                 
-                f'<div><div class="mlab up">⬆️ Ascendieron a B Nacional</div>'
+                f'<div><div class="mlab up">▲ Ascendieron a B Nacional</div>'
                 f'{lista_equipos_html([(n, "del Federal A") for n in mv.get("suben_f_b", [])] + [(n, "de la B Metro") for n in mv.get("suben_pb_b", [])])}</div>'
-                f'<div><div class="mlab down">⬇️ Descendieron al Federal A</div>'
+                f'<div><div class="mlab down">▼ Descendieron al Federal A</div>'
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_fed", [])])}</div>'
                 
-                f'<div><div class="mlab down">⬇️ Descendieron a la B Metro</div>'
+                f'<div><div class="mlab down">▼ Descendieron a la B Metro</div>'
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_pb", [])])}</div>'
-                f'<div><div class="mlab up">⬆️ Ascendieron a la B Metro</div>'
+                f'<div><div class="mlab up">▲ Ascendieron a la B Metro</div>'
                 f'{lista_equipos_html([(n, "de la C") for n in mv.get("suben_pc_pb", [])])}</div>'
                 
-                f'<div><div class="mlab down">⬇️ Descendieron a Primera C</div>'
+                f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
-                f'</div><div style="margin-top:6px;font-size:.88rem">🔁 {esc(mv.get("promo_texto", ""))}</div>',
+                f'</div><div style="margin-top:6px;font-size:.88rem">{esc(mv.get("promo_texto", ""))}</div>',
                 unsafe_allow_html=True)
     if S["campeones"]:
-        with st.expander("🏆 Campeones por temporada", expanded=False):
+        with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
             df_c = pd.DataFrame(S["campeones"], columns=["Temporada", "Primera División", "Primera Nacional"])
             st.dataframe(df_c, hide_index=True, width="stretch")

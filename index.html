@@ -2,50 +2,469 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-  <meta name="theme-color" content="#0b1d3a" />
-  <title>Simulador de la Liga Argentina</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#F4F2EC" />
+  <meta name="description" content="Proyecto AFA — Fútbol argentino. Simulación. Gestión. Experiencia." />
+  <title>Proyecto AFA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.css" />
   <style>
-    html, body { margin: 0; background: #0e1117; }
-    #cargando { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 14px; color: #fff; font: 600 16px system-ui, sans-serif;
-      background: linear-gradient(120deg, #07142b, #123a6b); text-align: center; padding: 24px; }
-    #cargando small { opacity: .7; font-weight: 400; max-width: 320px; }
-    .pelota { font-size: 46px; animation: gira 1.2s linear infinite; }
-    @keyframes gira { to { transform: rotate(360deg); } }
+    /* =====================================================================
+       PROYECTO AFA — identidad
+       Papel (tiza) + tinta. El celeste es el único color de marca; el sol
+       (dorado) se reserva para lo que importa. Una sola familia: Archivo,
+       expandida para la marca, condensada para rótulos.
+       ===================================================================== */
+    :root {
+      --tiza: #F4F2EC;
+      --tiza-2: #ECE9E0;
+      --tinta: #0F1B2D;
+      --tinta-2: #4A5566;
+      --tinta-3: #8A919C;
+      --regla: rgba(15, 27, 45, .14);
+      --celeste: #74ACDF;
+      --celeste-hondo: #2F6DB0;
+      --sol: #E3A21A;
+      --ease-out: cubic-bezier(.16, 1, .3, 1);
+      --ease-io: cubic-bezier(.65, 0, .35, 1);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: var(--tiza); color: var(--tinta); }
+    body { font-family: "Archivo", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; color: inherit; }
+
+    /* La app (Streamlit en el navegador) carga desde el primer segundo, detrás de la intro */
+    /* Sin posición propia: Streamlit ubica su app en "absolute" respecto de la ventana */
+    body.intro-activa #app { position: fixed; inset: 0; overflow: hidden; visibility: hidden; }
+
+    /* ---------------------------------------------------------------- intro */
+    #intro {
+      position: fixed; inset: 0; z-index: 20; overflow-y: auto; overflow-x: hidden;
+      background: var(--tiza);
+      display: grid; grid-template-rows: auto 1fr auto;
+      transition: opacity .5s var(--ease-io);
+    }
+    #intro[hidden] { display: none; }
+
+    /* Fondo: luz de estadio, franjas de la camiseta y el sol. Todo muy tenue. */
+    .fondo { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    .fondo .luz {
+      position: absolute; inset: -20% -10% auto -10%; height: 90%;
+      background: radial-gradient(60% 60% at 30% 0%, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%);
+    }
+    .fondo .franjas {
+      position: absolute; top: 0; bottom: 0; right: 0; width: 26vw;
+      background: repeating-linear-gradient(90deg, rgba(116, 172, 223, .10) 0 5.2vw, transparent 5.2vw 10.4vw);
+      -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
+              mask-image: linear-gradient(90deg, transparent, #000 40%);
+      opacity: 0; animation: aparecer 1.6s .2s var(--ease-io) forwards;
+    }
+    .fondo .sol-gigante {  /* el sol sale detrás de "AFA" */
+      position: absolute; width: min(78vw, 860px); aspect-ratio: 1; left: max(-14vw, -200px); top: 52%;
+      translate: 0 -50%; color: var(--celeste); opacity: 0;
+      animation: tenue 2.2s .1s var(--ease-io) forwards, girar 240s linear infinite;
+    }
+    .fondo .sol-gigante svg { width: 100%; height: 100%; }
+
+    .barra {
+      position: relative; display: flex; align-items: center; justify-content: space-between;
+      padding: 22px clamp(20px, 5vw, 64px); font-size: 13px; letter-spacing: .02em;
+    }
+    .marca { display: flex; align-items: center; gap: 10px; font-weight: 800; font-stretch: 112%;
+      text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
+    .marca .sol { width: 26px; height: 26px; color: var(--sol); }
+    .barra .meta { color: var(--tinta-2); display: flex; gap: 18px; font-stretch: 85%;
+      text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 600; }
+    .barra .meta b { color: var(--tinta); font-weight: 700; }
+
+    .escena {
+      position: relative; align-self: center; width: 100%; max-width: 1240px; margin: 0 auto;
+      padding: 12px clamp(20px, 5vw, 64px) 40px;
+      display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(28px, 5vw, 80px);
+      align-items: end;
+    }
+
+    /* Título */
+    .kicker {
+      display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 18px; padding: 0; list-style: none;
+      font-stretch: 80%; font-weight: 600; text-transform: uppercase; letter-spacing: .16em; font-size: 12px;
+      color: var(--tinta-2);
+    }
+    .kicker li { opacity: 0; translate: 0 6px; animation: subir .7s var(--ease-out) forwards; }
+    .kicker li + li::before { content: ""; display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+      background: var(--celeste-hondo); margin-right: 14px; vertical-align: middle; translate: 0 -2px; }
+    .kicker li:nth-child(1) { animation-delay: 1.15s; } .kicker li:nth-child(2) { animation-delay: 1.25s; }
+    .kicker li:nth-child(3) { animation-delay: 1.35s; } .kicker li:nth-child(4) { animation-delay: 1.45s; }
+
+    h1.titulo { margin: 0; line-height: .82; font-weight: 900; }
+    .titulo .proyecto {
+      display: block; font-size: clamp(15px, 1.6vw, 20px); font-stretch: 125%; font-weight: 700;
+      letter-spacing: .5em; margin-bottom: clamp(10px, 1.6vw, 18px); padding-left: .12em;
+      opacity: 0; animation: tracking 1.1s .15s var(--ease-out) forwards;
+    }
+    .titulo .afa { display: flex; font-size: clamp(112px, 21vw, 290px); font-stretch: 125%;
+      letter-spacing: -.02em; }
+    .titulo .afa .m { display: inline-block; overflow: hidden; padding: .02em .01em .07em; margin-bottom: -.07em; }
+    .titulo .afa .m span { display: inline-block; translate: 0 105%; animation: letra 1s var(--ease-out) forwards; }
+    .titulo .afa .m:nth-child(1) span { animation-delay: .35s; }
+    .titulo .afa .m:nth-child(2) span { animation-delay: .45s; }
+    .titulo .afa .m:nth-child(3) span { animation-delay: .55s; }
+
+    /* La franja de la camiseta, como firma debajo del título */
+    .firma { display: flex; align-items: center; gap: 14px; margin-top: clamp(16px, 2vw, 26px); }
+    .firma .cinta { width: clamp(120px, 16vw, 200px); height: 8px; display: grid; grid-template-columns: 1fr 1fr 1fr;
+      transform-origin: left; scale: 0 1; animation: dibujar .9s .95s var(--ease-out) forwards;
+      box-shadow: inset 0 0 0 1px var(--regla); }
+    .firma .cinta i:nth-child(odd) { background: var(--celeste); }
+    .firma .cinta i:nth-child(2) { background: #fff; }
+    .firma small { font-stretch: 80%; text-transform: uppercase; letter-spacing: .16em; font-size: 11px;
+      font-weight: 600; color: var(--tinta-3); opacity: 0; animation: aparecer .8s 1.5s forwards; }
+
+    /* Modos: un índice, no tarjetas */
+    .modos { margin: 0; padding: 0; list-style: none; border-top: 1.5px solid var(--tinta); }
+    .modos-titulo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;
+      font-stretch: 80%; text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 700;
+      color: var(--tinta-2); opacity: 0; animation: aparecer .6s 1.55s forwards; }
+    .modo { position: relative; border-bottom: 1px solid var(--regla); opacity: 0; translate: 0 14px;
+      animation: subir .8s var(--ease-out) forwards; }
+    .modo:nth-child(1) { animation-delay: 1.6s; } .modo:nth-child(2) { animation-delay: 1.72s; }
+
+    .modo-btn {
+      width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: center;
+      padding: 22px 18px 22px 4px; background: none; border: 0; text-align: left; cursor: pointer;
+      transition: background-color .35s var(--ease-out), padding .35s var(--ease-out);
+      position: relative; isolation: isolate;
+    }
+    .modo-btn::before { /* barrido celeste al pasar el mouse */
+      content: ""; position: absolute; inset: 0; z-index: -1; background: var(--tinta);
+      transform-origin: left; scale: 0 1; transition: scale .5s var(--ease-out);
+    }
+    .num { font-stretch: 125%; font-weight: 800; font-size: 34px; line-height: 1; color: transparent;
+      -webkit-text-stroke: 1.2px var(--tinta); transition: color .35s, -webkit-text-stroke-color .35s; }
+    .modo-nombre { display: block; font-stretch: 105%; font-weight: 800; font-size: clamp(18px, 1.7vw, 23px);
+      text-transform: uppercase; letter-spacing: .01em; line-height: 1.1; transition: color .35s; }
+    .modo-desc { display: block; margin-top: 6px; font-size: 15px; line-height: 1.45; color: var(--tinta-2);
+      max-width: 40ch; transition: color .35s; }
+    .modo-cats { display: block; margin-top: 10px; font-stretch: 80%; font-size: 11.5px; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--tinta-3); transition: color .35s; }
+    .ir { display: grid; justify-items: end; gap: 8px; }
+    .ir .accion { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-stretch: 100%;
+      font-size: 15px; padding: 11px 16px 11px 18px; background: var(--tinta); color: var(--tiza);
+      transition: background-color .35s, color .35s; white-space: nowrap; }
+    .ir .accion svg { width: 16px; height: 16px; transition: translate .35s var(--ease-out); }
+    .estado { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--tinta-2);
+      font-variant-numeric: tabular-nums; transition: color .35s; white-space: nowrap; }
+    .estado i { width: 7px; height: 7px; border-radius: 50%; background: var(--sol);
+      animation: latido 1.4s ease-in-out infinite; }
+    .estado.listo i { background: #2E8B57; animation: none; }
+
+    @media (hover: hover) {
+      .modo-btn:hover::before, .modo-btn:focus-visible::before { scale: 1 1; }
+      .modo-btn:hover, .modo-btn:focus-visible { padding-left: 16px; }
+      .modo-btn:hover .num, .modo-btn:focus-visible .num { color: var(--celeste); -webkit-text-stroke-color: var(--celeste); }
+      .modo-btn:hover .modo-nombre, .modo-btn:focus-visible .modo-nombre { color: var(--tiza); }
+      .modo-btn:hover .modo-desc, .modo-btn:focus-visible .modo-desc { color: rgba(244, 242, 236, .75); }
+      .modo-btn:hover .modo-cats, .modo-btn:focus-visible .modo-cats,
+      .modo-btn:hover .estado, .modo-btn:focus-visible .estado { color: rgba(244, 242, 236, .6); }
+      .modo-btn:hover .accion, .modo-btn:focus-visible .accion { background: var(--celeste); color: var(--tinta); }
+      .modo-btn:hover .accion svg { translate: 4px 0; }
+    }
+    .modo-btn:focus-visible { outline: 2px solid var(--celeste-hondo); outline-offset: 2px; }
+    .modo-btn:active { scale: .995; }
+
+    /* Modo bloqueado: rayado fino + sello */
+    .modo.bloqueado .modo-btn { cursor: not-allowed; }
+    .modo.bloqueado .modo-btn::before { display: none; }
+    .modo.bloqueado .modo-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .55;
+      background: repeating-linear-gradient(-45deg, transparent 0 7px, rgba(15, 27, 45, .05) 7px 8px); }
+    .modo.bloqueado .modo-nombre, .modo.bloqueado .num { opacity: .55; }
+    .sello {
+      font-stretch: 90%; font-weight: 800; font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
+      color: var(--celeste-hondo); border: 1.5px solid currentColor; padding: 7px 10px 6px;
+      rotate: -4deg; outline: 1px solid currentColor; outline-offset: 2px; white-space: nowrap;
+      transition: rotate .4s var(--ease-out);
+    }
+    .modo.bloqueado .modo-btn:hover .sello { rotate: -1deg; }
+    .modo.bloqueado.sacudir .sello { animation: sacudir .45s var(--ease-io); }
+
+    .pie { position: relative; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+      padding: 18px clamp(20px, 5vw, 64px) calc(18px + env(safe-area-inset-bottom));
+      font-size: 11.5px; color: var(--tinta-3); border-top: 1px solid var(--regla);
+      opacity: 0; animation: aparecer .8s 1.9s forwards; }
+
+    /* ------------------------------------------- telón (transición) */
+    #telon { position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr);
+      pointer-events: none; }
+    #telon i { translate: 0 101%; transition: translate .62s var(--ease-io); }
+    #telon i:nth-child(odd) { background: var(--celeste); }
+    #telon i:nth-child(2) { background: #FAFAF7; transition-delay: .06s; }
+    #telon i:nth-child(3) { transition-delay: .12s; }
+    #telon.cubre { pointer-events: auto; }
+    #telon.cubre i { translate: 0 0; }
+    #telon.sale i { translate: 0 -101%; }
+    #telon.sin-transicion i { transition: none; }
+
+    .preparando { position: fixed; inset: 0; z-index: 41; display: grid; place-content: center; justify-items: center;
+      gap: 18px; text-align: center; pointer-events: none; opacity: 0; transition: opacity .35s; }
+    .preparando.visible { opacity: 1; }
+    .preparando .sol { width: 54px; height: 54px; color: var(--tinta); animation: girar 9s linear infinite; }
+    .preparando b { font-stretch: 112%; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+      font-size: 18px; }
+    .preparando .etapa { font-size: 13px; color: var(--tinta-2); min-height: 1.2em; }
+    .preparando .linea { width: min(260px, 70vw); height: 3px; background: rgba(15, 27, 45, .12); overflow: hidden; }
+    .preparando .linea i { display: block; height: 100%; width: 0; background: var(--tinta);
+      transition: width .5s var(--ease-out); }
+
+    /* --------------------------------------------------- animaciones */
+    @keyframes aparecer { to { opacity: 1; } }
+    @keyframes tenue { to { opacity: .55; } }
+    @keyframes subir { to { opacity: 1; translate: 0 0; } }
+    @keyframes letra { to { translate: 0 0; } }
+    @keyframes dibujar { to { scale: 1 1; } }
+    @keyframes tracking { from { letter-spacing: 1.1em; opacity: 0; } to { letter-spacing: .5em; opacity: 1; } }
+    @keyframes girar { to { rotate: 360deg; } }
+    @keyframes latido { 50% { opacity: .35; } }
+    @keyframes sacudir { 20% { rotate: -9deg; } 45% { rotate: 2deg; } 70% { rotate: -6deg; } 100% { rotate: -4deg; } }
+
+    /* ------------------------------------------------------- tablet */
+    @media (max-width: 980px) {
+      .escena { grid-template-columns: 1fr; align-items: start; gap: 40px; padding-top: 4vh; }
+      .fondo .franjas { width: 40vw; }
+      .fondo .sol-gigante { left: -30vw; top: 24%; width: 110vw; }
+    }
+    /* ------------------------------------------------------- mobile */
+    @media (max-width: 600px) {
+      .barra { padding: 16px 20px; }
+      .barra .meta span:not(:first-child) { display: none; }
+      .escena { padding: 2vh 20px 28px; gap: 30px; }
+      .titulo .afa { font-size: 33vw; }
+      .titulo .proyecto { letter-spacing: .42em; }
+      .kicker { font-size: 10px; letter-spacing: .09em; gap: 4px 7px; margin-bottom: 14px; flex-wrap: nowrap; }
+      .kicker li { white-space: nowrap; }
+      .kicker li + li::before { margin-right: 7px; width: 3px; height: 3px; }
+      .modo-btn { grid-template-columns: 40px minmax(0, 1fr); gap: 4px 12px; padding: 18px 0 18px; align-items: start; }
+      .num { font-size: 22px; padding-top: 2px; }
+      .modo-desc { font-size: 14px; }
+      .ir { grid-column: 1 / -1; justify-items: stretch; margin-top: 14px; }
+      .ir .accion { justify-content: space-between; padding: 14px 16px; font-size: 16px; }
+      .estado { justify-content: center; }
+      .modo.bloqueado .ir { grid-column: 2; justify-items: start; margin-top: 10px; }
+      .fondo .sol-gigante { width: 150vw; left: -50vw; top: 20%; }
+      .fondo .franjas { width: 45vw; }
+      .pie { font-size: 11px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important;
+        transition-duration: .01ms !important; }
+    }
   </style>
 </head>
-<body>
-  <div id="cargando">
-    <div class="pelota">⚽</div>
-    <div>Cargando el simulador…</div>
-    <small>La primera vez puede tardar un poco (se descarga Python en el navegador). Después abre más rápido.</small>
+<body class="intro-activa">
+  <!-- Intro · Proyecto AFA -->
+  <main id="intro" aria-label="Proyecto AFA">
+    <div class="fondo" aria-hidden="true">
+      <div class="luz"></div>
+      <div class="franjas"></div>
+      <div class="sol-gigante"><svg viewBox="-50 -50 100 100" data-sol="linea"></svg></div>
+    </div>
+
+    <header class="barra">
+      <div class="marca"><svg class="sol" viewBox="-50 -50 100 100" data-sol="lleno" aria-hidden="true"></svg>Proyecto AFA</div>
+      <div class="meta"><span>Temporada <b>2026</b></span><span>Beta pública</span></div>
+    </header>
+
+    <section class="escena">
+      <div>
+        <ul class="kicker" aria-label="Fútbol argentino. Simulación. Gestión. Experiencia.">
+          <li>Fútbol argentino</li><li>Simulación</li><li>Gestión</li><li>Experiencia</li>
+        </ul>
+        <h1 class="titulo">
+          <span class="proyecto">PROYECTO</span>
+          <span class="afa" aria-label="AFA"><span class="m"><span>A</span></span><span class="m"><span>F</span></span><span class="m"><span>A</span></span></span>
+        </h1>
+        <div class="firma"><span class="cinta" aria-hidden="true"><i></i><i></i><i></i></span><small>De la Primera a la Primera C</small></div>
+      </div>
+
+      <nav aria-label="Modos de juego">
+        <div class="modos-titulo"><span>Elegí un modo</span><span>2 modos</span></div>
+        <ol class="modos">
+          <li class="modo">
+            <button class="modo-btn" id="entrar" type="button">
+              <span class="num" aria-hidden="true">01</span>
+              <span>
+                <span class="modo-nombre">Simulador Fútbol Argentino</span>
+                <span class="modo-desc">Simulá temporadas completas, fecha por fecha: ascensos, descensos, reducidos, promoción y desempates.</span>
+                <span class="modo-cats">Primera · B Nacional · Federal A · Primera B · Primera C</span>
+              </span>
+              <span class="ir">
+                <span class="accion">Entrar <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span>
+                <span class="estado" id="estado" aria-live="polite"><i></i><span>Preparando…</span></span>
+              </span>
+            </button>
+          </li>
+          <li class="modo bloqueado" id="manager">
+            <button class="modo-btn" type="button" aria-disabled="true">
+              <span class="num" aria-hidden="true">02</span>
+              <span>
+                <span class="modo-nombre">Manager Falopa</span>
+                <span class="modo-desc">Agarrá un club y llevalo temporada tras temporada: plantel, objetivos y presión de la tribuna.</span>
+              </span>
+              <span class="ir"><span class="sello">Próximamente</span></span>
+            </button>
+          </li>
+        </ol>
+      </nav>
+    </section>
+
+    <footer class="pie">
+      <span>Proyecto AFA es un proyecto independiente de fans. No está afiliado a la Asociación del Fútbol Argentino.</span>
+      <span>Escudos: ESPN · Wikimedia · TheSportsDB</span>
+    </footer>
+  </main>
+
+  <!-- Transición -->
+  <div id="telon" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="preparando" id="preparando" role="status" aria-live="polite">
+    <svg class="sol" viewBox="-50 -50 100 100" data-sol="lleno" aria-hidden="true"></svg>
+    <b>Preparando el simulador</b>
+    <div class="linea"><i id="barra"></i></div>
+    <div class="etapa" id="etapa">Descargando el motor</div>
   </div>
-  <div id="root"></div>
+
+  <!-- Simulador (Streamlit corriendo en el navegador con stlite) -->
+  <div id="app"><div id="root"></div></div>
+
+  <script>
+    // ---- Sol de Mayo geométrico: 16 rayos alternando largo, para la marca y el fondo
+    document.querySelectorAll("svg[data-sol]").forEach((svg) => {
+      const lineal = svg.dataset.sol === "linea";
+      let rayos = "";
+      for (let k = 0; k < 16; k++) {
+        const largo = k % 2 ? 36 : 47;
+        rayos += `<polygon points="-3.2,-21 0,-${largo} 3.2,-21" transform="rotate(${k * 22.5})"/>`;
+      }
+      svg.innerHTML = lineal
+        ? `<g fill="none" stroke="currentColor" stroke-width=".16" stroke-linejoin="round">${rayos}<circle r="17"/><circle r="12.5"/></g>`
+        : `<g fill="currentColor">${rayos}<circle r="16.5"/></g>`;
+    });
+  </script>
   <script type="module">
     import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.js";
+
+    const $ = (s) => document.querySelector(s);
+    const intro = $("#intro"), telon = $("#telon"), prep = $("#preparando");
+    const estado = $("#estado"), barra = $("#barra"), etapa = $("#etapa");
+    const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // ---- 1. Arranca el simulador en segundo plano mientras se ve la intro
     // Todos los archivos del simulador (si agregan otro .py, súmenlo a esta lista)
     const ARCHIVOS = ["simuladorafa.py", "datos.py", "motor.py", "torneos.py", "vista.py"];
-    const files = {};
-    await Promise.all(ARCHIVOS.map(async (nombre) => {
-      files[nombre] = await (await fetch(nombre, { cache: "no-cache" })).text();
-    }));
-    mount(
-      {
+    let listo = false;
+    const t0 = performance.now();
+    (async () => {
+      const files = {};
+      await Promise.all(ARCHIVOS.map(async (n) => {
+        files[n] = await (await fetch(n, { cache: "no-cache" })).text();
+      }));
+      mount({
         requirements: ["numpy", "pandas"],
         entrypoint: "simuladorafa.py",
         files,
-      },
-      document.getElementById("root"),
-    );
-    // Oculta la pantalla de carga cuando Streamlit ya dibujó la app
-    const ocultar = setInterval(() => {
-      if (document.querySelector('[data-testid="stApp"] .hero')) {
-        document.getElementById("cargando").remove();
-        clearInterval(ocultar);
+        streamlitConfig: {
+          "theme.base": "light",
+          "theme.primaryColor": "#0F1B2D",
+          "theme.backgroundColor": "#F4F2EC",
+          "theme.secondaryBackgroundColor": "#ECE9E0",
+          "theme.textColor": "#0F1B2D",
+          "client.toolbarMode": "minimal",
+        },
+      }, $("#root"));
+    })();
+
+    // Progreso estimado (Pyodide no informa avance): curva asintótica + etapas reales
+    const ETAPAS = [[0, "Descargando el motor"], [.35, "Instalando numpy y pandas"],
+                    [.7, "Armando fixtures y equipos"], [.9, "Últimos detalles"]];
+    const tick = setInterval(() => {
+      const t = (performance.now() - t0) / 1000;
+      const p = listo ? 1 : Math.min(.95, 1 - Math.exp(-t / 8));
+      const pct = Math.round(p * 100);
+      barra.style.width = pct + "%";
+      etapa.textContent = listo ? "Listo" : ETAPAS.filter(([u]) => p >= u).pop()[1];
+      estado.querySelector("span").textContent = listo ? "Listo para jugar" : `Preparando… ${pct}%`;
+      if (listo) clearInterval(tick);
+    }, 250);
+
+    // La app está lista cuando Streamlit dibujó su cabecera (o mostró un error)
+    const vigia = setInterval(() => {
+      if ($("#root .masthead") || $('#root [data-testid="stException"]')) {
+        listo = true; clearInterval(vigia);
+        estado.classList.add("listo");
+        document.dispatchEvent(new Event("afa:listo"));
       }
-    }, 400);
+    }, 300);
+
+    // ---- 2. Entrar: telón celeste-blanco-celeste, y si hace falta, esperar al motor
+    let entrando = false;
+    async function entrar() {
+      if (entrando) return;
+      entrando = true;
+      $("#entrar .accion").firstChild.textContent = "Entrando ";
+      telon.classList.remove("sale", "sin-transicion");
+      telon.classList.add("cubre");
+      await espera(760);
+      if (!listo) {
+        prep.classList.add("visible");
+        await new Promise((r) => document.addEventListener("afa:listo", r, { once: true }));
+        await espera(350);
+        prep.classList.remove("visible");
+        await espera(250);
+      }
+      intro.hidden = true;
+      document.body.classList.remove("intro-activa");
+      window.scrollTo(0, 0);
+      window.dispatchEvent(new Event("resize"));   // que las tablas midan su ancho real
+      telon.classList.add("sale");
+      await espera(800);
+      telon.classList.add("sin-transicion");
+      telon.classList.remove("cubre", "sale");
+      $("#entrar .accion").firstChild.textContent = "Entrar ";
+      entrando = false;
+      if (location.hash !== "#simulador") history.pushState(null, "", "#simulador");
+    }
+
+    // ---- 3. Volver a la intro (link "Proyecto AFA" en la cabecera del simulador / botón atrás)
+    async function volver() {
+      if (!intro.hidden || entrando) return;
+      telon.classList.remove("sale", "sin-transicion");
+      telon.classList.add("cubre");
+      await espera(700);
+      document.body.classList.add("intro-activa");
+      intro.hidden = false;
+      intro.scrollTop = 0;
+      telon.classList.add("sale");
+      await espera(800);
+      telon.classList.add("sin-transicion");
+      telon.classList.remove("cubre", "sale");
+    }
+
+    $("#entrar").addEventListener("click", entrar);
+    $("#manager .modo-btn").addEventListener("click", () => {
+      const m = $("#manager");
+      m.classList.remove("sacudir"); void m.offsetWidth; m.classList.add("sacudir");
+    });
+    window.addEventListener("hashchange", () => {
+      if (location.hash === "#inicio" || location.hash === "") {
+        history.replaceState(null, "", location.pathname);
+        volver();
+      } else if (location.hash === "#simulador") {
+        entrar();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !intro.hidden && document.activeElement === document.body) entrar();
+    });
   </script>
 </body>
 </html>
