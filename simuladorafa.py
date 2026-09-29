@@ -209,6 +209,16 @@ def _celda(nombre, fecha, total, pct):
             f'<div class="bar"><i style="width:{pct:.1f}%"></i></div></div>')
 
 
+# En la web el tema claro/oscuro lo maneja la intro (index.html): este botón le avisa.
+_BOTON_TEMA = (
+    '<a class="mh-tema" href="#tema" title="Cambiar entre modo claro y oscuro" '
+    'aria-label="Cambiar entre modo claro y oscuro">'
+    '<svg class="sol-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">'
+    '<circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13'
+    'M3 13l1.4-1.4M11.6 4.4L13 3"/></svg>'
+    '<svg class="luna" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">'
+    '<path d="M13.5 9.8A6 6 0 0 1 6.2 2.5a6 6 0 1 0 7.3 7.3z"/></svg></a>')
+
 # En la web (stlite) la marca vuelve a la intro de Proyecto AFA; en la PC no hay intro
 _web = sys.platform == "emscripten"
 _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
@@ -217,15 +227,16 @@ _jugados = len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + l
 st.markdown(
     f'<header class="masthead"><{_marca_tag}>{SOL_SVG}<div><b>Proyecto AFA</b>'
     f'<span>Simulador Fútbol Argentino</span></div></{"a" if _web else "div"}>'
-    f'<div class="mh-tabla">'
+    f'<div class="mh-der"><div class="mh-tabla">'
     f'<div class="mh-c temp"><span>Temporada</span><b>{S["temp"]}</b></div>'
     + _celda("Primera", S["fecha"], total_primera(S), pct_p)
     + _celda("B Nacional", SB["fecha"], total_b(SB), pct_b)
     + _celda("Federal A", SF["fecha"], SF["total"], pct_f)
     + _celda("Primera B", SPB["fecha"], SPB["total"], pct_pb)
     + _celda("Primera C", SPC["fecha"], SPC["total"], pct_pc)
-    + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div>'
-    f'</div></header>', unsafe_allow_html=True)
+    + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div></div>'
+    + (_BOTON_TEMA if _web else "")
+    + '</div></header>', unsafe_allow_html=True)
 
 g0, g1, g2, g3 = st.container(key="acciones").columns([2.2, 1.3, 1.5, 1.1], vertical_alignment="center")
 g0.caption("Avanzá fecha por fecha en cada categoría, o simulá todo junto.")

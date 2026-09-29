@@ -1,9 +1,13 @@
-[theme]
-base = "light"
+# Tema de Proyecto AFA. Con [theme.light] y [theme.dark] Streamlit sigue al sistema
+# operativo y también se puede cambiar desde su menú (⋮ → Settings).
+[theme.light]
 primaryColor = "#0F1B2D"
 backgroundColor = "#F4F2EC"
 secondaryBackgroundColor = "#ECE9E0"
 textColor = "#0F1B2D"
 
-[client]
-toolbarMode = "minimal"
+[theme.dark]
+primaryColor = "#74ACDF"
+backgroundColor = "#0E141C"
+secondaryBackgroundColor = "#18212D"
+textColor = "#E8E6DF"

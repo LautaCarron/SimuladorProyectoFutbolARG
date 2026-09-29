@@ -27,9 +27,28 @@
       --celeste: #74ACDF;
       --celeste-hondo: #2F6DB0;
       --sol: #E3A21A;
+      --luz: rgba(255, 255, 255, .95);
+      --franja: rgba(116, 172, 223, .10);
+      --rayado: rgba(15, 27, 45, .05);
       --ease-out: cubic-bezier(.16, 1, .3, 1);
       --ease-io: cubic-bezier(.65, 0, .35, 1);
+      color-scheme: light;
     }
+    /* Modo oscuro: noche de estadio. Mismos roles, otra luz. */
+    :root[data-tema="oscuro"] {
+      --tiza: #0E141C;
+      --tiza-2: #151D28;
+      --tinta: #E8E6DF;
+      --tinta-2: #A7AEB9;
+      --tinta-3: #6F7885;
+      --regla: rgba(232, 230, 223, .14);
+      --celeste-hondo: #8CC0EE;
+      --luz: rgba(116, 172, 223, .10);
+      --franja: rgba(116, 172, 223, .07);
+      --rayado: rgba(232, 230, 223, .05);
+      color-scheme: dark;
+    }
+    html { transition: background-color .4s var(--ease-io); }
     * { box-sizing: border-box; }
     html, body { margin: 0; background: var(--tiza); color: var(--tinta); }
     body { font-family: "Archivo", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -38,6 +57,9 @@
     /* La app (Streamlit en el navegador) carga desde el primer segundo, detrás de la intro */
     /* Sin posición propia: Streamlit ubica su app en "absolute" respecto de la ventana */
     body.intro-activa #app { position: fixed; inset: 0; overflow: hidden; visibility: hidden; }
+    /* Los avisos de carga propios de stlite sobran (la intro ya muestra el progreso);
+       quedan visibles sólo los de error. */
+    #root .Toastify__toast:not(.Toastify__toast--error):not(.Toastify__toast--warning) { display: none !important; }
 
     /* ---------------------------------------------------------------- intro */
     #intro {
@@ -52,11 +74,11 @@
     .fondo { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
     .fondo .luz {
       position: absolute; inset: -20% -10% auto -10%; height: 90%;
-      background: radial-gradient(60% 60% at 30% 0%, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%);
+      background: radial-gradient(60% 60% at 30% 0%, var(--luz), transparent 70%);
     }
     .fondo .franjas {
       position: absolute; top: 0; bottom: 0; right: 0; width: 26vw;
-      background: repeating-linear-gradient(90deg, rgba(116, 172, 223, .10) 0 5.2vw, transparent 5.2vw 10.4vw);
+      background: repeating-linear-gradient(90deg, var(--franja) 0 5.2vw, transparent 5.2vw 10.4vw);
       -webkit-mask-image: linear-gradient(90deg, transparent, #000 40%);
               mask-image: linear-gradient(90deg, transparent, #000 40%);
       opacity: 0; animation: aparecer 1.6s .2s var(--ease-io) forwards;
@@ -75,7 +97,7 @@
     .marca { display: flex; align-items: center; gap: 10px; font-weight: 800; font-stretch: 112%;
       text-transform: uppercase; letter-spacing: .06em; font-size: 13px; }
     .marca .sol { width: 26px; height: 26px; color: var(--sol); }
-    .barra .meta { color: var(--tinta-2); display: flex; gap: 18px; font-stretch: 85%;
+    .barra .meta { color: var(--tinta-2); display: flex; align-items: center; gap: 18px; font-stretch: 85%;
       text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 600; }
     .barra .meta b { color: var(--tinta); font-weight: 700; }
 
@@ -165,10 +187,10 @@
       .modo-btn:hover, .modo-btn:focus-visible { padding-left: 16px; }
       .modo-btn:hover .num, .modo-btn:focus-visible .num { color: var(--celeste); -webkit-text-stroke-color: var(--celeste); }
       .modo-btn:hover .modo-nombre, .modo-btn:focus-visible .modo-nombre { color: var(--tiza); }
-      .modo-btn:hover .modo-desc, .modo-btn:focus-visible .modo-desc { color: rgba(244, 242, 236, .75); }
+      .modo-btn:hover .modo-desc, .modo-btn:focus-visible .modo-desc { color: color-mix(in srgb, var(--tiza) 78%, transparent); }
       .modo-btn:hover .modo-cats, .modo-btn:focus-visible .modo-cats,
-      .modo-btn:hover .estado, .modo-btn:focus-visible .estado { color: rgba(244, 242, 236, .6); }
-      .modo-btn:hover .accion, .modo-btn:focus-visible .accion { background: var(--celeste); color: var(--tinta); }
+      .modo-btn:hover .estado, .modo-btn:focus-visible .estado { color: color-mix(in srgb, var(--tiza) 62%, transparent); }
+      .modo-btn:hover .accion, .modo-btn:focus-visible .accion { background: var(--celeste); color: #0F1B2D; }
       .modo-btn:hover .accion svg { translate: 4px 0; }
     }
     .modo-btn:focus-visible { outline: 2px solid var(--celeste-hondo); outline-offset: 2px; }
@@ -178,7 +200,7 @@
     .modo.bloqueado .modo-btn { cursor: not-allowed; }
     .modo.bloqueado .modo-btn::before { display: none; }
     .modo.bloqueado .modo-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; opacity: .55;
-      background: repeating-linear-gradient(-45deg, transparent 0 7px, rgba(15, 27, 45, .05) 7px 8px); }
+      background: repeating-linear-gradient(-45deg, transparent 0 7px, var(--rayado) 7px 8px); }
     .modo.bloqueado .modo-nombre, .modo.bloqueado .num { opacity: .55; }
     .sello {
       font-stretch: 90%; font-weight: 800; font-size: 12px; letter-spacing: .18em; text-transform: uppercase;
@@ -193,6 +215,29 @@
       padding: 18px clamp(20px, 5vw, 64px) calc(18px + env(safe-area-inset-bottom));
       font-size: 11.5px; color: var(--tinta-3); border-top: 1px solid var(--regla);
       opacity: 0; animation: aparecer .8s 1.9s forwards; }
+
+    /* Botón de tema (claro / oscuro) */
+    .tema { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--regla);
+      padding: 6px 10px 6px 8px; cursor: pointer; font-stretch: 85%; font-weight: 700; font-size: 11px;
+      letter-spacing: .12em; text-transform: uppercase; color: var(--tinta-2);
+      transition: border-color .25s, color .25s; }
+    .tema:hover, .tema:focus-visible { border-color: var(--tinta); color: var(--tinta); }
+    .tema svg { width: 15px; height: 15px; transition: rotate .6s var(--ease-out); }
+    .tema:hover svg { rotate: 25deg; }
+    .tema .luna { display: none; }
+    :root[data-tema="oscuro"] .tema .luna { display: block; }
+    :root[data-tema="oscuro"] .tema .sol-ico { display: none; }
+
+    /* Red de seguridad: la intro NUNCA depende de que corran las animaciones.
+       Si el navegador las frena (pestaña en segundo plano, hilo ocupado), a los
+       pocos segundos se fuerza el estado final y todo queda visible. */
+    body.intro-lista .kicker li, body.intro-lista .modo, body.intro-lista .modos-titulo,
+    body.intro-lista .pie, body.intro-lista .firma small, body.intro-lista .fondo .franjas,
+    body.intro-lista .titulo .proyecto { opacity: 1 !important; translate: none !important; }
+    body.intro-lista .titulo .proyecto { letter-spacing: .5em !important; }
+    body.intro-lista .titulo .afa .m span { translate: none !important; }
+    body.intro-lista .firma .cinta { scale: 1 1 !important; }
+    body.intro-lista .fondo .sol-gigante { opacity: .55 !important; }
 
     /* ------------------------------------------- telón (transición) */
     #telon { position: fixed; inset: 0; z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr);
@@ -209,12 +254,13 @@
     .preparando { position: fixed; inset: 0; z-index: 41; display: grid; place-content: center; justify-items: center;
       gap: 18px; text-align: center; pointer-events: none; opacity: 0; transition: opacity .35s; }
     .preparando.visible { opacity: 1; }
-    .preparando .sol { width: 54px; height: 54px; color: var(--tinta); animation: girar 9s linear infinite; }
+    .preparando { color: #0F1B2D; }
+    .preparando .sol { width: 54px; height: 54px; color: #0F1B2D; animation: girar 9s linear infinite; }
     .preparando b { font-stretch: 112%; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
       font-size: 18px; }
-    .preparando .etapa { font-size: 13px; color: var(--tinta-2); min-height: 1.2em; }
+    .preparando .etapa { font-size: 13px; color: #4A5566; min-height: 1.2em; }
     .preparando .linea { width: min(260px, 70vw); height: 3px; background: rgba(15, 27, 45, .12); overflow: hidden; }
-    .preparando .linea i { display: block; height: 100%; width: 0; background: var(--tinta);
+    .preparando .linea i { display: block; height: 100%; width: 0; background: #0F1B2D;
       transition: width .5s var(--ease-out); }
 
     /* --------------------------------------------------- animaciones */
@@ -237,7 +283,8 @@
     /* ------------------------------------------------------- mobile */
     @media (max-width: 600px) {
       .barra { padding: 16px 20px; }
-      .barra .meta span:not(:first-child) { display: none; }
+      .barra .meta > span:not(:first-child) { display: none; }
+      .tema .txt { display: none; }
       .escena { padding: 2vh 20px 28px; gap: 30px; }
       .titulo .afa { font-size: 33vw; }
       .titulo .proyecto { letter-spacing: .42em; }
@@ -272,7 +319,12 @@
 
     <header class="barra">
       <div class="marca"><svg class="sol" viewBox="-50 -50 100 100" data-sol="lleno" aria-hidden="true"></svg>Proyecto AFA</div>
-      <div class="meta"><span>Temporada <b>2026</b></span><span>Beta pública</span></div>
+      <div class="meta"><span>Temporada <b>2026</b></span><span>Beta pública</span>
+        <button class="tema" id="tema" type="button" aria-pressed="false" aria-label="Cambiar entre modo claro y oscuro">
+          <svg class="sol-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3"/></svg>
+          <svg class="luna" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13.5 9.8A6 6 0 0 1 6.2 2.5a6 6 0 1 0 7.3 7.3z"/></svg>
+          <span class="txt">Modo oscuro</span>
+        </button></div>
     </header>
 
     <section class="escena">
@@ -337,6 +389,65 @@
   <div id="app"><div id="root"></div></div>
 
   <script>
+    // ---- Tema claro / oscuro ------------------------------------------------
+    // Streamlit (en modo "System") sigue a prefers-color-scheme y cambia en vivo
+    // cuando esa preferencia cambia. Le mostramos la preferencia elegida acá, así
+    // el simulador entero (tablas incluidas) cambia de tema sin recargar ni perder
+    // la temporada.
+    (() => {
+      const leer = () => { try { return localStorage.getItem("afa-tema"); } catch (e) { return null; } };
+      const guardar = (v) => { try { localStorage.setItem("afa-tema", v); } catch (e) {} };
+      try { localStorage.setItem("stActiveTheme-/-v2", '"System"'); } catch (e) {}
+      const real = window.matchMedia("(prefers-color-scheme: dark)");
+      let oscuro = leer() ? leer() === "oscuro" : real.matches;
+      const oyentes = new Set();
+      const falsa = (media, valor) => ({
+        media, onchange: null,
+        get matches() { return valor(); },
+        addEventListener(t, f) { if (t === "change") oyentes.add([this, f]); },
+        removeEventListener(t, f) { oyentes.forEach((o) => o[1] === f && oyentes.delete(o)); },
+        addListener(f) { oyentes.add([this, f]); },
+        removeListener(f) { oyentes.forEach((o) => o[1] === f && oyentes.delete(o)); },
+        dispatchEvent() { return true; },
+      });
+      const mqOscuro = falsa("(prefers-color-scheme: dark)", () => oscuro);
+      const mqClaro = falsa("(prefers-color-scheme: light)", () => !oscuro);
+      const original = window.matchMedia.bind(window);
+      window.matchMedia = (q) => /prefers-color-scheme:\s*dark/.test(q) ? mqOscuro
+        : /prefers-color-scheme:\s*light/.test(q) ? mqClaro : original(q);
+
+      const aplicar = (valor) => {
+        oscuro = valor;
+        document.documentElement.dataset.tema = oscuro ? "oscuro" : "claro";
+        document.querySelector('meta[name="theme-color"]').content = oscuro ? "#0E141C" : "#F4F2EC";
+        const b = document.getElementById("tema");
+        if (b) {
+          b.setAttribute("aria-pressed", String(oscuro));
+          b.querySelector(".txt").textContent = oscuro ? "Modo claro" : "Modo oscuro";
+        }
+        oyentes.forEach(([mq, f]) => {
+          try { f.call(mq, { matches: mq.matches, media: mq.media }); } catch (e) {}
+        });
+      };
+      window.afaTema = {
+        alternar() { guardar(oscuro ? "claro" : "oscuro"); aplicar(!oscuro); },
+        oscuro: () => oscuro,
+      };
+      // Si nunca eligió, acompaña al sistema operativo
+      real.addEventListener("change", (e) => { if (!leer()) aplicar(e.matches); });
+      document.documentElement.dataset.tema = oscuro ? "oscuro" : "claro";
+      document.addEventListener("DOMContentLoaded", () => {
+        aplicar(oscuro);
+        document.getElementById("tema").addEventListener("click", () => window.afaTema.alternar());
+      });
+    })();
+
+    // ---- Red de seguridad de la intro (ver CSS "intro-lista")
+    const introLista = () => document.body.classList.add("intro-lista");
+    window.addEventListener("load", () => setTimeout(introLista, 2600));
+    setTimeout(introLista, 4000);
+    window.addEventListener("pageshow", (e) => { if (e.persisted) introLista(); });
+
     // ---- Sol de Mayo geométrico: 16 rayos alternando largo, para la marca y el fondo
     document.querySelectorAll("svg[data-sol]").forEach((svg) => {
       const lineal = svg.dataset.sol === "linea";
@@ -363,7 +474,10 @@
     const ARCHIVOS = ["simuladorafa.py", "datos.py", "motor.py", "torneos.py", "vista.py"];
     let listo = false;
     const t0 = performance.now();
-    (async () => {
+    let montado = false;
+    async function montar() {
+      if (montado) return;
+      montado = true;
       const files = {};
       await Promise.all(ARCHIVOS.map(async (n) => {
         files[n] = await (await fetch(n, { cache: "no-cache" })).text();
@@ -373,15 +487,20 @@
         entrypoint: "simuladorafa.py",
         files,
         streamlitConfig: {
-          "theme.base": "light",
-          "theme.primaryColor": "#0F1B2D",
-          "theme.backgroundColor": "#F4F2EC",
-          "theme.secondaryBackgroundColor": "#ECE9E0",
-          "theme.textColor": "#0F1B2D",
+          "theme.light.primaryColor": "#0F1B2D",
+          "theme.light.backgroundColor": "#F4F2EC",
+          "theme.light.secondaryBackgroundColor": "#ECE9E0",
+          "theme.light.textColor": "#0F1B2D",
+          "theme.dark.primaryColor": "#74ACDF",
+          "theme.dark.backgroundColor": "#0E141C",
+          "theme.dark.secondaryBackgroundColor": "#18212D",
+          "theme.dark.textColor": "#E8E6DF",
           "client.toolbarMode": "minimal",
         },
       }, $("#root"));
-    })();
+    }
+    // Arranca apenas termina la animación de entrada, para no trabar la intro
+    setTimeout(montar, 1900);
 
     // Progreso estimado (Pyodide no informa avance): curva asintótica + etapas reales
     const ETAPAS = [[0, "Descargando el motor"], [.35, "Instalando numpy y pandas"],
@@ -410,6 +529,7 @@
     async function entrar() {
       if (entrando) return;
       entrando = true;
+      montar();
       $("#entrar .accion").firstChild.textContent = "Entrando ";
       telon.classList.remove("sale", "sin-transicion");
       telon.classList.add("cubre");
@@ -460,6 +580,9 @@
         volver();
       } else if (location.hash === "#simulador") {
         entrar();
+      } else if (location.hash === "#tema") {
+        history.replaceState(null, "", "#simulador");
+        window.afaTema.alternar();
       }
     });
     document.addEventListener("keydown", (e) => {
