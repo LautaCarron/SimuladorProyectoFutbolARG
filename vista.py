@@ -214,9 +214,10 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .tlist{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px;}
 .tl{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:3px;padding:5px 10px 5px 6px;font-weight:600;font-size:.86rem;background:var(--papel);}
 .tl small{color:var(--tinta-3);font-weight:700;}
-.champ{border-radius:4px;padding:22px 18px;text-align:center;background:var(--papel);border:1px solid var(--line);border-top:3px solid var(--gold);}
+.champ{container-type:inline-size;border-radius:4px;padding:22px 18px;text-align:center;background:var(--papel);border:1px solid var(--line);border-top:3px solid var(--gold);}
 .champ .t{font-stretch:85%;font-size:.66rem;text-transform:uppercase;letter-spacing:.18em;font-weight:800;color:var(--gold);}
-.champ .nm{font-stretch:115%;font-weight:900;font-size:1.45rem;margin-top:10px;text-transform:uppercase;}
+/* el nombre se ajusta al ancho de la tarjeta y sólo corta entre palabras (nunca a mitad) */
+.champ .nm{font-stretch:108%;font-weight:900;font-size:clamp(.92rem,8.4cqi,1.45rem);line-height:1.12;margin-top:10px;text-transform:uppercase;overflow-wrap:normal;word-break:normal;hyphens:manual;text-wrap:balance;}
 .champ .s{font-size:.76rem;color:var(--tinta-2);margin-top:3px;}
 /* ---------- cuadro del reducido ---------- */
 .bracket{display:grid;grid-template-columns:repeat(5,minmax(205px,1fr));gap:28px;overflow-x:auto;padding:4px 2px 14px;}
@@ -243,7 +244,8 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .promo{margin-top:14px;}
 /* ---------- ficha de club ---------- */
 .team-head{display:flex;align-items:center;gap:16px;margin-bottom:8px;flex-wrap:wrap;}
-.team-head .tn{font-stretch:115%;font-size:1.75rem;font-weight:900;text-transform:uppercase;line-height:1;}
+.team-head>div{container-type:inline-size;flex:1;min-width:0;}
+.team-head .tn{font-stretch:110%;font-size:clamp(1.05rem,7.4cqi,1.75rem);font-weight:900;text-transform:uppercase;line-height:1.05;overflow-wrap:normal;word-break:normal;text-wrap:balance;}
 .rec{display:flex;gap:0;flex-wrap:wrap;margin:10px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
 .rec div{border-left:1px solid var(--line);padding:7px 14px;text-align:left;min-width:60px;}
 .rec div:first-child{border-left:0;padding-left:0;}
@@ -273,6 +275,17 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .ct-in img{transition:transform .35s var(--ease);}
 [class*="st-key-ctile"]:hover .ct-in img{transform:translateY(-3px) scale(1.05);}
 [class*="st-key-ctile"]:hover .ct-in span{color:var(--cel2);}
+/* tabla de las liguillas de desempate */
+.liguilla-wrap{overflow-x:auto;margin:0 0 14px;border:1px solid var(--line);border-radius:4px;background:var(--papel);}
+.liguilla{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;color:var(--tinta);}
+.liguilla th{font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-2);padding:10px 8px;text-align:center;border-bottom:1px solid var(--line-2);white-space:nowrap;}
+.liguilla td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);color:var(--tinta);}
+.liguilla tr:last-child td{border-bottom:0;}
+.liguilla .club{text-align:left;}
+.liguilla td.club span{display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap;}
+.liguilla .pos{color:var(--tinta-2);font-weight:700;}
+.liguilla .pts{font-weight:800;}
+.liguilla tr:first-child+tr td{background:color-mix(in srgb,var(--cel) 10%,transparent);}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
 .stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}

@@ -301,20 +301,19 @@ def html_tabla_liguilla(partidos):
     lista = [{"Club": k, **v} for k, v in stats.items()]
     lista.sort(key=lambda x: (x["Pts"], x["DG"], x["GF"]), reverse=True)
     
-    # Construimos el HTML visual
-    html = '<table style="width:100%; text-align:center; border-collapse:collapse; font-size:14px; margin-bottom:1rem; background:white; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.1);">'
-    html += '<tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#64748b; font-size:12px; text-transform:uppercase;">'
-    html += '<th style="padding:10px;">Pos</th><th style="text-align:left;">Club</th><th>Pts</th><th>PJ</th><th>G</th><th>P</th><th>GF</th><th>GC</th><th>DG</th></tr>'
-    
+    # Construimos el HTML visual (colores del tema: se lee bien en claro y en oscuro)
+    html = '<div class="liguilla-wrap"><table class="liguilla">'
+    html += ('<tr><th>Pos</th><th class="club">Club</th><th>Pts</th><th>PJ</th><th>G</th><th>P</th>'
+             '<th>GF</th><th>GC</th><th>DG</th></tr>')
     for i, row in enumerate(lista):
-        html += f'<tr style="border-bottom:1px solid #f1f5f9;">'
-        html += f'<td style="padding:10px; color:#94a3b8; font-weight:bold;">{i+1}</td>'
-        html += f'<td style="text-align:left; display:flex; align-items:center; gap:8px; font-weight:500;">{crest(row["Club"], 24)} {esc(row["Club"])}</td>'
-        html += f'<td style="font-weight:bold; color:#0f172a; font-size:15px;">{row["Pts"]}</td>'
+        html += '<tr>'
+        html += f'<td class="pos">{i+1}</td>'
+        html += f'<td class="club"><span>{crest(row["Club"], 24)} {esc(row["Club"])}</span></td>'
+        html += f'<td class="pts">{row["Pts"]}</td>'
         html += f'<td>{row["PJ"]}</td><td>{row["G"]}</td><td>{row["P"]}</td>'
-        html += f'<td>{row["GF"]}</td><td>{row["GC"]}</td><td>{row["DG"]}</td>'
+        html += f'<td>{row["GF"]}</td><td>{row["GC"]}</td><td>{row["DG"]:+d}</td>'
         html += '</tr>'
-    html += '</table>'
+    html += '</table></div>'
     return html
 
 
@@ -764,6 +763,12 @@ with tab_f:
                             f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
                             f'<div class="nm">{esc(cf)}</div><div class="s">Asciende a la Primera'
                             f' Nacional</div></div>', unsafe_allow_html=True)
+                if SF.get("desempate_camp"):
+                    dc = SF["desempate_camp"]
+                    st.markdown(f'<div class="mlab" style="margin-top:14px">Título definido por '
+                                f'desempate · igualaron en puntos: {esc(", ".join(dc["equipos"]))}'
+                                f'</div>' + "".join(fila_partido_html(p) for p in dc["partidos"]),
+                                unsafe_allow_html=True)
             with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
                 asc_f = [(nom_f[SF["asc_directo"][0]], "campeón"), 
                          (nom_f[SF["asc_directo"][1]], "2°"), 

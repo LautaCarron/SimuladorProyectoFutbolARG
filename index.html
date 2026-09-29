@@ -188,15 +188,15 @@
     .estado.listo i { background: #2E8B57; animation: none; }
 
     @media (hover: hover) {
-      .modo-btn:hover::before, .modo-btn:focus-visible::before { scale: 1 1; }
-      .modo-btn:hover, .modo-btn:focus-visible { padding-left: 16px; }
-      .modo-btn:hover .num, .modo-btn:focus-visible .num { color: var(--celeste); -webkit-text-stroke-color: var(--celeste); }
-      .modo-btn:hover .modo-nombre, .modo-btn:focus-visible .modo-nombre { color: var(--tiza); }
-      .modo-btn:hover .modo-desc, .modo-btn:focus-visible .modo-desc { color: color-mix(in srgb, var(--tiza) 78%, transparent); }
-      .modo-btn:hover .modo-cats, .modo-btn:focus-visible .modo-cats,
-      .modo-btn:hover .estado, .modo-btn:focus-visible .estado { color: color-mix(in srgb, var(--tiza) 62%, transparent); }
-      .modo-btn:hover .accion, .modo-btn:focus-visible .accion { background: var(--celeste); color: #0F1B2D; }
-      .modo-btn:hover .accion svg { translate: 4px 0; }
+      .modo:not(.bloqueado) .modo-btn:hover::before, .modo:not(.bloqueado) .modo-btn:focus-visible::before { scale: 1 1; }
+      .modo:not(.bloqueado) .modo-btn:hover, .modo:not(.bloqueado) .modo-btn:focus-visible { padding-left: 16px; }
+      .modo:not(.bloqueado) .modo-btn:hover .num, .modo:not(.bloqueado) .modo-btn:focus-visible .num { color: var(--celeste); -webkit-text-stroke-color: var(--celeste); }
+      .modo:not(.bloqueado) .modo-btn:hover .modo-nombre, .modo:not(.bloqueado) .modo-btn:focus-visible .modo-nombre { color: var(--tiza); }
+      .modo:not(.bloqueado) .modo-btn:hover .modo-desc, .modo:not(.bloqueado) .modo-btn:focus-visible .modo-desc { color: color-mix(in srgb, var(--tiza) 78%, transparent); }
+      .modo:not(.bloqueado) .modo-btn:hover .modo-cats, .modo:not(.bloqueado) .modo-btn:focus-visible .modo-cats,
+      .modo:not(.bloqueado) .modo-btn:hover .estado, .modo:not(.bloqueado) .modo-btn:focus-visible .estado { color: color-mix(in srgb, var(--tiza) 62%, transparent); }
+      .modo:not(.bloqueado) .modo-btn:hover .accion, .modo:not(.bloqueado) .modo-btn:focus-visible .accion { background: var(--celeste); color: #0F1B2D; }
+      .modo:not(.bloqueado) .modo-btn:hover .accion svg { translate: 4px 0; }
     }
     .modo-btn:focus-visible { outline: 2px solid var(--celeste-hondo); outline-offset: 2px; }
     .modo-btn:active { scale: .995; }
@@ -214,6 +214,13 @@
       transition: rotate .4s var(--ease-out);
     }
     .modo.bloqueado .modo-btn:hover .sello { rotate: -1deg; }
+    /* bloqueado: el texto no se mueve ni desaparece; sólo avisa que todavía no está */
+    .modo.bloqueado .ir { display: grid; justify-items: end; gap: 8px; }
+    .bloq { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tinta-2);
+      opacity: 0; translate: 0 -3px; transition: opacity .25s, translate .25s var(--ease-out); white-space: nowrap; }
+    .bloq svg { width: 12px; height: 12px; }
+    .modo.bloqueado .modo-btn:hover .bloq, .modo.bloqueado .modo-btn:focus-visible .bloq,
+    .modo.bloqueado.sacudir .bloq { opacity: 1; translate: 0 0; }
     .modo.bloqueado.sacudir .sello { animation: sacudir .45s var(--ease-io); }
 
     .pie { position: relative; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
@@ -369,7 +376,8 @@
                 <span class="modo-nombre">Manager Falopa</span>
                 <span class="modo-desc">Agarrá un club y llevalo temporada tras temporada: plantel, objetivos y presión de la tribuna.</span>
               </span>
-              <span class="ir"><span class="sello">Próximamente</span></span>
+              <span class="ir"><span class="sello">Próximamente</span>
+                <span class="bloq"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5.5" width="8" height="5.5" rx="1"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5"/></svg>Todavía no disponible</span></span>
             </button>
           </li>
         </ol>

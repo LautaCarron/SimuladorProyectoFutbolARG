@@ -822,6 +822,8 @@ def nueva_estructura_f(SF, rng):
     SF["entrantes"] = None
     SF["asc_reducido"] = None
     SF["ascendidos"] = []
+    SF["orden_f2_camp"] = None      # orden de la zona Campeonato tras el desempate por el título
+    SF["desempate_camp"] = None     # info del desempate por el campeonato (si lo hubo)
 
 
 def tabla_f_grupo(SF, g):
@@ -835,9 +837,55 @@ def tabla_f_grupo(SF, g):
 def tabla_f_f2(SF, z):
     """Tabla de la zona de la fase 2 (0 Campeonato, 1 Descenso)."""
     df = df_stats(SF["nombres"], SF["r"], SF, SF["zonas2"][z])
+    if z == 0 and SF.get("orden_f2_camp") is not None:
+        df = df.set_index("id").loc[SF["orden_f2_camp"]].reset_index()
     df.insert(0, "Pos", df.index + 1)
     df["Destino"] = [destino_f2(z, p) for p in df["Pos"]]
     return df
+
+
+def desempate_campeon_f(SF, P, rng, n_fecha):
+    """Federal A: si dos o más terminan igualados en puntos en el 1° puesto de la zona
+    Campeonato, el título se define SIEMPRE con desempate (2 equipos: partido único; 3 o
+    más: liguilla a partido único), en cancha neutral y con penales si empatan.
+    El ganador queda 1°; el resto del bloque mantiene el orden por diferencia de gol.
+    Las demás posiciones se siguen definiendo por diferencia de gol."""
+    df = tabla_f_f2(SF, 0)
+    pts, ids = df["Pts"].to_numpy(), df["id"].to_numpy()
+    if len(pts) < 2 or pts[0] != pts[1]:
+        return
+    fin = 1
+    while fin < len(pts) and pts[fin] == pts[0]:
+        fin += 1
+    bloque = [int(i) for i in ids[:fin]]
+    r, nom = SF["r"], SF["nombres"]
+    puntos = {e: 0 for e in bloque}
+    dif = {e: 0 for e in bloque}
+    goles = {e: 0 for e in bloque}
+    partidos = []
+    rotulo = "Desempate por el campeonato"
+    comp = "Desempate campeonato" if len(bloque) == 2 else "Liguilla por el campeonato"
+    for i in range(len(bloque)):
+        for j in range(i + 1, len(bloque)):
+            a, b = bloque[i], bloque[j]
+            gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[a]]), np.array([r[b]]),
+                                           P["sorpresa"], localia=0.0)
+            gana = a if gana_l[0] else b
+            tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
+            puntos[gana] += 3
+            dif[a] += int(gl[0] - gv[0]); dif[b] += int(gv[0] - gl[0])
+            goles[a] += int(gl[0]); goles[b] += int(gv[0])
+            partido = nuevo_partido("Federal A", n_fecha, rotulo, comp, nom[a], nom[b],
+                                    gl[0], gv[0], tanda=tanda, gana=nom[gana], neutral=True)
+            partidos.append(partido)
+            SF["log"].append(partido)
+    # Campeón: más puntos en el desempate; si la liguilla queda pareja, DG y goles del
+    # desempate; y si aún así siguen iguales, el mejor ubicado en la tabla.
+    campeon = sorted(bloque, key=lambda e: (-puntos[e], -dif[e], -goles[e], bloque.index(e)))[0]
+    orden = [campeon] + [e for e in bloque if e != campeon] + [int(i) for i in ids[fin:]]
+    SF["orden_f2_camp"] = np.array(orden)
+    SF["desempate_camp"] = {"equipos": [nom[e] for e in bloque], "partidos": partidos,
+                            "campeon": nom[campeon]}
 
 
 def iniciar_fase2_f(SF, rng):
@@ -925,6 +973,7 @@ def simular_fecha_f(SF, P, rng):
         if SF["fecha"] == SF["f1_rondas"]:
             iniciar_fase2_f(SF, rng)
         elif SF["fecha"] == SF["f1_rondas"] + SF["f2_rondas"]:
+            desempate_campeon_f(SF, P, rng, f + 1)
             iniciar_reducido_f(SF)
 
     else:                                                  # ---- reducido
