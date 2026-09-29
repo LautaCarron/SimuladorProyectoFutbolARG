@@ -78,6 +78,8 @@ EQUIPOS_PRIMERA_C = {
     "Victoriano Arenas": 37, "Atlas": 36, "Cambaceres": 33,
     "Central Ballester": 32, "El Porvenir": 35, "Ituzaingó": 38,
     "Puerto Nuevo": 31, "Real Pilar": 41, "Sacachispas": 38,
+    "Argentinos de Rosario": 25, "Central Cordoba de Rosario":30,
+    "Paraguayo":25,
 }
 # Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en regional.py,
 # generado del JSON oficial del torneo). Acá sólo nombre -> media inicial.
@@ -223,7 +225,9 @@ ESCUDOS = {
     "Sportivo Italiano": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Club_Sportivo_Italiano_%28Argentina%29_logo.svg?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
     "Flandria": "https://upload.wikimedia.org/wikipedia/commons/3/30/Club_flandria_escudo.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
     "Argentino (Q)": "https://upload.wikimedia.org/wikipedia/commons/3/33/ArgentinodeQuilmes.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
-
+    "Argentinos de Rosario": "",
+    "Central Cordoba de Rosario": "",
+    "Paraguayo": "",
 
 }
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
