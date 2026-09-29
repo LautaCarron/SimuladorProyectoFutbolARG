@@ -125,8 +125,13 @@ def destino_f2(z, pos):
     return ""
 
 
-def rotulo_p(n):
-    return f"Fecha {n}" + (" · Fase 2" if n > FECHAS_F1 else "")
+def rotulo_p(S, n):
+    extra = S.get("extra_f2", 0)
+    if n <= FECHAS_F1:
+        return f"Fecha {n}"
+    if n <= TOTAL_FECHAS:
+        return f"Fecha {n} · Fase 2"
+    return f"Fecha {n} · Desempate"
 
 
 def rotulo_b(SB, n):
@@ -170,10 +175,18 @@ def nueva_estructura(S):
     for k in STATS:
         S[k] = np.zeros(N, dtype=int)
     S["historial"] = []
-    S["log"] = []           # partidos jugados (dicts de nuevo_partido)
-    S["pos_hist"] = []      # (fase, posiciones por id) después de cada fecha
+    S["log"] = []           
+    S["pos_hist"] = []      
     S["sorpresas"] = 0
     S["cerrada"] = False
+    
+    # Nuevas variables para desempates dinámicos
+    S["extra_f2"] = 0
+    S["orden_final_campeonato"] = None
+    S["orden_final_descenso"] = None
+    S["desempate_pendiente"] = False
+    S["ids_desempate"] = []
+    S["motivos_desempate"] = []
 
 
 def stats_visibles(S):
@@ -195,8 +208,28 @@ def tabla_general(S):
 
 def tabla_zona(S, z):
     df = df_base(S, S["zonas"][z])
+    
+    # Inyectar el desempate en la zona correspondiente
+    if z == 0 and S.get("orden_final_campeonato") is not None:
+        df = df.set_index("id").loc[S["orden_final_campeonato"]].reset_index()
+    elif z == 2 and S.get("orden_final_descenso") is not None:
+        df = df.set_index("id").loc[S["orden_final_descenso"]].reset_index()
+        
     df.insert(0, "Pos", z * ZONA_TAM + df.index + 1)
     df["Destino"] = [destino(p) for p in df["Pos"]]
+    
+    # Pintar fronteras empatadas
+    if S.get("motivos_desempate"):
+        ids_act = df["id"].to_numpy()
+        for motivo in S["motivos_desempate"]:
+            partes = motivo.split()
+            zona_motivo = int(partes[1])
+            if zona_motivo == z:
+                nombre_frontera = partes[2]
+                inicio, fin = map(int, partes[3].split("-"))
+                ids_bloque = ids_act[inicio:fin]
+                df.loc[df["id"].isin(ids_bloque), "Destino"] = f"Desempate {nombre_frontera}"
+                
     return df
 
 
@@ -229,33 +262,89 @@ def iniciar_fase2(S, acumular):
 
 
 def simular_fecha(S, P, acumular=True):
-    if S["fecha"] >= len(S["fechas"]):
+    f = S["fecha"]
+    extra = S.get("extra_f2", 0)
+    TOTAL_DYN = TOTAL_FECHAS + extra
+    
+    if f >= TOTAL_DYN:
         return
-    pares = S["fechas"][S["fecha"]]
-    h = np.array([x[0] for x in pares])
-    a = np.array([x[1] for x in pares])
-    gh, ga = jugar(S["rng"], S["r"][h], S["r"][a], **P)
-    sumar_partidos(S, h, a, gh, ga)
+        
+    r, nom = S["r"], S["nombres"]
+    es_desempate = S.get("desempate_pendiente") and f == TOTAL_DYN - 1
+    
+    if not es_desempate:
+        pares = S["fechas"][f]
+        h = np.array([x[0] for x in pares])
+        a = np.array([x[1] for x in pares])
+        gh, ga = jugar(S["rng"], S["r"][h], S["r"][a], **P)
+        sumar_partidos(S, h, a, gh, ga)
 
-    # Sorpresa = ganó el equipo con menor media (diferencia mínima de 3 puntos)
-    d = S["r"][h] - S["r"][a]
-    sorp = ((d >= 3) & (ga > gh)) | ((d <= -3) & (gh > ga))
-    S["sorpresas"] += int(sorp.sum())
+        d = S["r"][h] - S["r"][a]
+        sorp = ((d >= 3) & (ga > gh)) | ((d <= -3) & (gh > ga))
+        S["sorpresas"] += int(sorp.sum())
 
-    nom = S["nombres"]
-    datos = {
-        "Local": [nom[i] for i in h],
-        "GL": gh, "GV": ga,
-        "Visitante": [nom[i] for i in a],
-    }
-    if S["fase"] == 2:
-        datos = {"Zona": [ZONAS[S["zona_de"][i]] for i in h], **datos}
-    S["historial"].append(pd.DataFrame(datos))
-    n_f = S["fecha"] + 1
-    for x, y, g1, g2 in zip(h, a, gh, ga):
-        comp = "Fase 1" if S["fase"] == 1 else f"Zona {ZONAS[S['zona_de'][x]]}"
-        S["log"].append(nuevo_partido("Primera División", n_f, rotulo_p(n_f), comp,
-                                      nom[x], nom[y], g1, g2))
+        datos = {
+            "Local": [nom[i] for i in h],
+            "GL": gh, "GV": ga,
+            "Visitante": [nom[i] for i in a],
+        }
+        if S["fase"] == 2:
+            datos = {"Zona": [ZONAS[S["zona_de"][i]] for i in h], **datos}
+        S["historial"].append(pd.DataFrame(datos))
+        n_f = f + 1
+        for x, y, g1, g2 in zip(h, a, gh, ga):
+            comp = "Fase 1" if S["fase"] == 1 else f"Zona {ZONAS[S['zona_de'][x]]}"
+            S["log"].append(nuevo_partido("Primera División", n_f, rotulo_p(S, n_f), comp,
+                                          nom[x], nom[y], g1, g2))
+    else:
+        # ---------------- EJECUCIÓN DE LOS DESEMPATES (CAMPEÓN/DESCENSO) ----------------
+        motivos = S.get("motivos_desempate", [])
+        for motivo in motivos:
+            partes = motivo.split()
+            tipo = partes[0]
+            zona = int(partes[1])
+            nombre_frontera = partes[2]
+            inicio, fin = map(int, partes[3].split("-"))
+            
+            df_prev = tabla_zona(S, zona)
+            ids_finales = df_prev["id"].to_numpy().copy()
+            bloque = ids_finales[inicio:fin]
+            
+            if tipo == "Duelo":
+                id_1, id_2 = bloque[0], bloque[1]
+                gl, gv, gana_l, pen = jugar_ko(S["rng"], np.array([r[id_1]]), np.array([r[id_2]]), P["sorpresa"], localia=0.0)
+                tanda = tanda_penales(S["rng"], gana_l[0]) if pen[0] else None
+                gana_id = id_1 if gana_l[0] else id_2
+                
+                partido = nuevo_partido("Primera División", f + 1, "Desempate", nombre_frontera, nom[id_1], nom[id_2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                S["log"].append(partido)
+                
+                if gana_id == id_2:
+                    ids_finales[inicio], ids_finales[inicio+1] = ids_finales[inicio+1], ids_finales[inicio]
+                    
+            elif tipo == "Liguilla":
+                puntos = {eq: 0 for eq in bloque}
+                for i in range(len(bloque)):
+                    for j in range(i+1, len(bloque)):
+                        eq1, eq2 = bloque[i], bloque[j]
+                        gl, gv, gana_l, pen = jugar_ko(S["rng"], np.array([r[eq1]]), np.array([r[eq2]]), P["sorpresa"], localia=0.0)
+                        tanda = tanda_penales(S["rng"], gana_l[0]) if pen[0] else None
+                        gana_id = eq1 if gana_l[0] else eq2
+                        puntos[gana_id] += 3
+                        
+                        partido = nuevo_partido("Primera División", f + 1, "Desempate", f"Liguilla {nombre_frontera}", nom[eq1], nom[eq2], gl[0], gv[0], tanda=tanda, gana=nom[gana_id], neutral=True)
+                        S["log"].append(partido)
+                        
+                bloque_ordenado = sorted(bloque, key=lambda x: puntos[x], reverse=True)
+                ids_finales[inicio:fin] = bloque_ordenado
+                
+            if zona == 0:
+                S["orden_final_campeonato"] = ids_finales
+            elif zona == 2:
+                S["orden_final_descenso"] = ids_finales
+                
+        S["desempate_pendiente"] = False
+
     tabla = tabla_general(S) if S["fase"] == 1 else tabla_final(S)
     pos = np.zeros(N, dtype=int)
     pos[tabla["id"].to_numpy()] = tabla["Pos"].to_numpy()
@@ -264,6 +353,68 @@ def simular_fecha(S, P, acumular=True):
 
     if S["fase"] == 1 and S["fecha"] == FECHAS_F1:
         iniciar_fase2(S, acumular)
+        
+    # ---------------- DETECCIÓN DE EMPATES ----------------
+    ya_se_jugo = S.get("orden_final_campeonato") is not None or S.get("orden_final_descenso") is not None
+    if S["fase"] == 2 and S["fecha"] == TOTAL_FECHAS + extra and not ya_se_jugo:
+        partidos_desempate = []
+        ids_involucrados = []
+        motivos = []
+        
+        # --- ZONA CAMPEONATO (1° Puesto) ---
+        df_camp = tabla_zona(S, 0)
+        pts_camp = df_camp["Pts"].to_numpy()
+        ids_camp = df_camp["id"].to_numpy()
+        if pts_camp[0] == pts_camp[1]:
+            pts_empate = pts_camp[0]
+            inicio, fin = 0, 1
+            while fin < len(pts_camp) and pts_camp[fin] == pts_empate:
+                fin += 1
+            ids_bloque = [int(i) for i in ids_camp[inicio:fin]]
+            ids_involucrados.extend(ids_bloque)
+            if len(ids_bloque) == 2:
+                motivos.append(f"Duelo 0 Campeonato {inicio}-{fin}")
+                partidos_desempate.append((ids_bloque[0], ids_bloque[1]))
+            else:
+                motivos.append(f"Liguilla 0 Campeonato {inicio}-{fin}")
+                partidos_desempate.append((ids_bloque[0], ids_bloque[0]))
+                
+        # --- ZONA DESCENSO (Permanencia y Promoción) ---
+        df_desc = tabla_zona(S, 2)
+        pts_desc = df_desc["Pts"].to_numpy()
+        ids_desc = df_desc["id"].to_numpy()
+        
+        # 6 = Permanencia (27° vs 28° globales), 5 = Promocion (26° vs 27° globales)
+        fronteras = [(6, "Permanencia"), (5, "Promocion")]
+        bloques_procesados = set()
+        for idx_f, nombre_f in fronteras:
+            if pts_desc[idx_f] == pts_desc[idx_f + 1]:
+                pts_empate = pts_desc[idx_f]
+                inicio = idx_f
+                while inicio > 0 and pts_desc[inicio - 1] == pts_empate:
+                    inicio -= 1
+                fin = idx_f + 1
+                while fin < len(pts_desc) and pts_desc[fin] == pts_empate:
+                    fin += 1
+                
+                if inicio not in bloques_procesados:
+                    bloques_procesados.add(inicio)
+                    ids_bloque = [int(i) for i in ids_desc[inicio:fin]]
+                    ids_involucrados.extend(ids_bloque)
+                    if len(ids_bloque) == 2:
+                        motivos.append(f"Duelo 2 {nombre_f} {inicio}-{fin}")
+                        partidos_desempate.append((ids_bloque[0], ids_bloque[1]))
+                    else:
+                        motivos.append(f"Liguilla 2 {nombre_f} {inicio}-{fin}")
+                        partidos_desempate.append((ids_bloque[0], ids_bloque[0]))
+                        
+        if partidos_desempate:
+            S["desempate_pendiente"] = True
+            S["ids_desempate"] = ids_involucrados
+            S["motivos_desempate"] = motivos
+            S["extra_f2"] = extra + 1
+            S["fechas"].append(partidos_desempate)
+            return
 
 
 def nueva_estructura_b(SB, rng):

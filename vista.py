@@ -385,8 +385,16 @@ def partidos_fecha_p(n):
     if n <= S["fecha"]:
         return [p for p in S["log"] if p["fecha"] == n]
     nom = S["nombres"]
-    return [pendiente("Primera División", n, rotulo_p(n),
-                      "Fase 1" if n <= FECHAS_F1 else f"Zona {ZONAS[S['zona_de'][x]]}",
+    if n <= FECHAS_F1:
+        comp = "Fase 1"
+    elif n <= TOTAL_FECHAS:
+        comp = f"Zona {ZONAS[S['zona_de'][x]]}" # Nota interna
+    else:
+        comp = "Desempate"
+    
+    # Construcción segura evitando KeyError
+    return [pendiente("Primera División", n, rotulo_p(S, n),
+                      comp if comp == "Desempate" else ("Fase 1" if n <= FECHAS_F1 else f"Zona {ZONAS[S['zona_de'][x]]}"),
                       nom[x], nom[y]) for x, y in S["fechas"][n - 1]]
 
 
@@ -614,8 +622,11 @@ def _mover_fecha(key, delta, maximo):
 
 def vista_fixture(liga):
     S, SB, SF, SPB, SPC = _estado()
+    
     if liga == "p":
-        total, jugadas, obtener, rotulo = fechas_conocidas_p(), S["fecha"], partidos_fecha_p, rotulo_p
+        # Lo separamos en dos líneas para que sea más claro
+        total, jugadas, obtener = fechas_conocidas_p(), S["fecha"], partidos_fecha_p
+        rotulo = lambda n: rotulo_p(S, n)
         extra = "" if S["fase"] == 2 else " · las 9 fechas de la fase 2 se arman al terminar la fase 1"
     elif liga == "b":
         total, jugadas, obtener = fechas_conocidas_b(), SB["fecha"], partidos_fecha_b
@@ -712,6 +723,14 @@ def colorear_fase1(fila):
 def colorear_destino(fila):
     """Pinta según el destino (copas / promoción / descenso); dorado para el líder."""
     pos = fila["Pos"]
+    d = fila.get("Destino", "")
+    if "Desempate" in d:
+        if "Campeonato" in d:
+            c = "rgba(249, 115, 22, 0.3)"
+        else:
+            c = "rgba(147, 51, 234, 0.3)"
+        return [f"background-color: {c}"] * len(fila)
+        
     c = COLOR_ORO if pos == 1 else COLORES_DESTINO.get(destino(pos), "")
     return [f"background-color: {c}" if c else ""] * len(fila)
 
