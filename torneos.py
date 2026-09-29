@@ -1016,7 +1016,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 6       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 7       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1312,7 +1312,7 @@ def crear_estado():
                    **{k: float(v) for k, v in EQUIPOS_B.items()},
                    **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()},
                    **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()},
-                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_C.items()}},
+                   **{k: float(v) for k, v in EQUIPOS_PRIMERA_C.items()},
                    **{k: float(v) for k, v in EQUIPOS_REGIONAL.items()}},
         "nombres": list(EQUIPOS),
         "r": np.array(list(EQUIPOS.values()), dtype=float),
