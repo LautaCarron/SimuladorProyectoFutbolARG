@@ -468,6 +468,12 @@ def nueva_estructura_b(SB, rng):
     SB["asc_reducido"] = None
     SB["perdedor_final"] = None
     SB["promo"] = None
+    # Desempates: se limpian los de la temporada anterior (si no, la tabla usa ids viejos)
+    SB["extra_f2"] = 0
+    SB["orden_final_descenso"] = None
+    SB["desempate_pendiente"] = False
+    SB["ids_desempate"] = []
+    SB["motivos_desempate"] = []
 
 
 def tabla_b_f1(SB, z):
