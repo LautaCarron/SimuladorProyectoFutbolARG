@@ -340,7 +340,13 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .liguilla td.club .tb-cl{display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap;}
 .liguilla .pos{color:var(--tinta-2);font-weight:700;}
 .liguilla .pts{font-weight:800;}
-.liguilla tr:first-child+tr td{background:color-mix(in srgb,var(--cel) 10%,transparent);}
+.liguilla:not(.marcada) tr:first-child+tr td{background:color-mix(in srgb,var(--cel) 10%,transparent);}
+/* desempates de 3 o más: verde los que logran el objetivo de la tabla, rojo los que no */
+:root{--liga-ok:color-mix(in srgb,var(--win) 20%,transparent);--liga-out:color-mix(in srgb,var(--lose) 18%,transparent);}
+.liguilla tr.ok td{background:var(--liga-ok);}
+.liguilla tr.out td{background:var(--liga-out);}
+.liguilla tr.ok td.pos{box-shadow:inset 3px 0 0 var(--win);}
+.liguilla tr.out td.pos{box-shadow:inset 3px 0 0 var(--lose);}
 /* Regional Amateur: las 6 finales por el ascenso */
 .reg-finales{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin:4px 0 14px;}
 .reg-final .round-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;margin-bottom:8px;}
@@ -757,19 +763,18 @@ def partidos_fecha_reg(n, region=None):
     nom = SR["nombres"]
     if n <= SR["fecha"]:
         lista = [p for p in SR["log"] if p["fecha"] == n]
-    elif n <= SR["f_zonas"]:
+    elif n <= SR["f_liga"]:
         lista = []
         for x, y in SR["fechas"][n - 1]:
-            p = pendiente("Regional Amateur", n, rotulo_reg(SR, n),
-                          SR["zonas"][SR["zona_de"][x]]["nombre"], nom[x], nom[y])
-            p["region"] = {SR["region_de"][x], SR["region_de"][y]}
+            p = pendiente("Regional Amateur", n, rotulo_reg(SR, n), f"Región {SR['region_de'][x]}",
+                          nom[x], nom[y])
+            p["region"] = SR["region_de"][x]
             lista.append(p)
     else:
-        lista = []                                   # los cruces se arman al terminar cada ronda
+        lista = []                                   # desempates y finales: se arman al terminar la liga
     if region is None:
         return lista
-    return [p for p in lista if region in (p["region"] if isinstance(p["region"], set) else
-                                           {p["region"]} | set(p["region"].split(" / ")))]
+    return [p for p in lista if region in {p["region"]} | set(p["region"].split(" / "))]
 
 
 def proximo_partido(nombre):
@@ -799,7 +804,7 @@ def proximo_partido(nombre):
             for p in partidos_fecha_pc(n):
                 if nombre in (p["local"], p["visita"]): return p
     elif nombre in st.session_state.S["reg"]["nombres"]:
-        for n in range(st.session_state.S["reg"]["fecha"] + 1, st.session_state.S["reg"]["f_zonas"] + 1):
+        for n in range(st.session_state.S["reg"]["fecha"] + 1, st.session_state.S["reg"]["f_liga"] + 1):
             for p in partidos_fecha_reg(n):
                 if nombre in (p["local"], p["visita"]): return p
     return None
@@ -956,7 +961,7 @@ def vista_fixture(liga, region=None):
         SREG = st.session_state.S["reg"]
         total, jugadas = fechas_conocidas_reg(), SREG["fecha"]
         obtener, rotulo = (lambda n: partidos_fecha_reg(n, region)), (lambda n: rotulo_reg(SREG, n))
-        extra = (f" · {region}" if region else "") + " · los cruces se arman al terminar cada ronda"
+        extra = (f" · {region}" if region else "") + " · desempates y finales se arman al terminar la liga"
     else:
         total, jugadas = fechas_conocidas_f(), SF["fecha"]
         obtener, rotulo = partidos_fecha_f, lambda n: rotulo_f(SF, n)
@@ -984,7 +989,7 @@ def vista_fixture(liga, region=None):
     partidos = obtener(elegida)
     if not partidos:
         st.info("No hay partidos de esta región en esta fecha." if region else
-                "Los cruces de esta fecha se conocen cuando termina la ronda anterior.")
+                "Los partidos de esta fecha se conocen cuando termina la liga.")
         return
     render_fecha(partidos, f"{liga}{S['temp']}_{elegida}" + (f"_{norm(region)}" if region else ""))
 
@@ -1226,8 +1231,8 @@ def colorear_pb(fila):
 
 def colorear_reg(fila):
     d = fila["Destino"]
-    c = (COLORES_B["Ascenso directo"] if d == "Clasifica · 1° de zona" else
-         COLORES_F["Reducido"] if d == "Clasifica · mejores del resto" else "")
+    c = (COLOR_ORO if d == "Campeón regional" else
+         "rgba(249, 115, 22, 0.3)" if d == "Desempate Campeonato" else "")
     return [f"background-color: {c}" if c else ""] * len(fila)
 
 
@@ -1481,38 +1486,6 @@ def serie_html(SR, x, final=False):
         pie = " · ".join(partes)
     tanda = tanda_html(x["vuelta"]) if x["vuelta"] is not None else ""
     return f'<div class="bm">{filas}<div class="bfoot">{pie}</div>{tanda}</div>'
-
-
-def llave_region_html(SR, reg):
-    """Cuadro de la fase regional de una región, de su primera ronda al campeón."""
-    from torneos import REG_RONDAS
-    cl = SR["clasif"].get(reg)
-    n_cl = len(cl) if cl else min(8, sum(r == reg for r in SR["region_de"]))
-    ini = {8: 0, 4: 1, 2: 2}.get(8 if n_cl >= 8 else 4 if n_cl >= 4 else 2 if n_cl >= 2 else n_cl)
-    cols, n_cols = "", 0
-    if ini is not None:
-        for k in range(ini, len(REG_RONDAS)):
-            series = SR["llaves"][reg][k] or [None] * (2 ** (len(REG_RONDAS) - 1 - k))
-            cards = "".join(serie_html(SR, x, final=False) for x in series)
-            cols += (f'<div class="round"><div class="round-h">{chip(REG_RONDAS[k], "#0e7490")}</div>'
-                     f'<div class="round-b">{cards}</div></div>')
-            n_cols += 1
-    c = SR["campeones"].get(reg)
-    rival = next(b if a == reg else a for a, b in FINALES_REG if reg in (a, b))
-    if c is not None:
-        champ = (f'<div class="champ"><div class="t">Campeón · Región {esc(reg)}</div>'
-                 f'<div style="margin-top:10px">{crest(SR["nombres"][c], 56)}</div>'
-                 f'<div class="nm">{esc(SR["nombres"][c])}</div>'
-                 f'<div class="s">Final por el ascenso vs. el campeón de {esc(rival)}</div></div>')
-    else:
-        champ = (f'<div class="champ" style="opacity:.55"><div class="t">Campeón · Región {esc(reg)}</div>'
-                 f'<div class="nm">Por definir</div><div class="s">Final por el ascenso vs. el campeón '
-                 f'de {esc(rival)}</div></div>')
-    cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
-             f'<div class="round-b" style="justify-content:center">{champ}</div></div>')
-    n_cols += 1
-    return (f'<div class="bracket" style="grid-template-columns:repeat({n_cols},minmax(205px,1fr))">'
-            f'{cols}</div>')
 
 
 def finales_reg_html(SR):
