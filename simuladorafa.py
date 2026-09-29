@@ -350,20 +350,10 @@ with tab_p:
             
         if S["fecha"] == 0:
             with st.expander("✏️ Editar medias internas de esta temporada"):
-<<<<<<< HEAD
-                ed = st.data_editor(
-                    pd.DataFrame({"Equipo": S["nombres"], "Media": S["r"]}),
-                    disabled=["Equipo"], hide_index=True, width="stretch",
-                    key=f"editor_p_{S['temp']}",
-                )
-                S["r"] = np.clip(ed["Media"].to_numpy(float), MIN_R, MAX_R)
+                S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
     idx_p += 1
     
     with sp[idx_p]:
-=======
-                S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
-    with sp[1]:
->>>>>>> 168ee4a7f40209be9191cc694a39dcd47479c997
         vista_fixture("p")
     idx_p += 1
     
