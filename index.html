@@ -35,6 +35,7 @@
       --ease-io: cubic-bezier(.65, 0, .35, 1);
       /* una sola grilla: barra, escena y pie alinean sus bordes */
       --ancho: 1320px;
+      --pad-x: var(--margen);
       --margen: max(clamp(20px, 5vw, 64px), calc((100vw - var(--ancho)) / 2 + clamp(20px, 5vw, 64px)));
       color-scheme: light;
     }
@@ -283,12 +284,13 @@
 
     /* ------------------------------------------------------- tablet */
     @media (max-width: 980px) {
-      .escena { grid-template-columns: 1fr; align-items: start; gap: 40px; padding-top: 4vh; }
+      .escena { grid-template-columns: minmax(0, 1fr); align-items: start; gap: 40px; padding-top: 4vh; }
       .fondo .franjas { width: 40vw; }
       .fondo .sol-gigante { left: -30vw; top: 24%; width: 110vw; }
     }
     /* ------------------------------------------------------- mobile */
     @media (max-width: 600px) {
+      :root { --pad-x: 20px; }
       .barra { padding: 16px 20px; }
       .barra .meta > span:not(:first-child) { display: none; }
       .tema .txt { display: none; }
@@ -314,6 +316,16 @@
     }
     @media (max-width: 400px) {
       .barra .meta > span { display: none; }
+      .kicker { flex-wrap: wrap; row-gap: 6px; }
+      .titulo .proyecto { letter-spacing: .36em; }
+    }
+    /* iPhone con notch / Dynamic Island (horizontal) y barra de inicio */
+    @supports (padding: max(0px)) {
+      @media (max-width: 600px) {
+        .barra { padding-top: max(16px, env(safe-area-inset-top)); }
+      }
+      .barra, .escena, .pie { padding-left: max(var(--pad-x), env(safe-area-inset-left));
+        padding-right: max(var(--pad-x), env(safe-area-inset-right)); }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important;

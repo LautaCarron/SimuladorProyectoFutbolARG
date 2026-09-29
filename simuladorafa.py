@@ -129,6 +129,7 @@ from vista import (
     leyenda,
     lista_equipos_html,
     mostrar_tabla,
+    tabla_html,
     norm,
     render_ficha,
     render_movimientos,
@@ -605,10 +606,7 @@ with tab_b:
         st.markdown(bracket_html(SB), unsafe_allow_html=True)
         if SB["entrantes"] is not None:
             with st.expander("Clasificados al reducido (orden de mérito)"):
-                ent = SB["entrantes"].copy()
-                ent.insert(1, " ", [ESCUDOS.get(n) for n in ent["Equipo"]])
-                st.dataframe(ent, hide_index=True, width="stretch",
-                             column_config={" ": st.column_config.ImageColumn(" ", width=40)})
+                st.markdown(tabla_html(SB["entrantes"]), unsafe_allow_html=True)
     idx_b += 1
     
     with sb[idx_b]:
@@ -766,10 +764,7 @@ with tab_f:
         st.markdown(bracket_html_f(SF), unsafe_allow_html=True)
         if SF["entrantes"] is not None:
             with st.expander("Clasificados al reducido (orden de mérito)"):
-                ent = SF["entrantes"].copy()
-                ent.insert(1, " ", [ESCUDOS.get(n) for n in ent["Equipo"]])
-                st.dataframe(ent, hide_index=True, width="stretch",
-                             column_config={" ": st.column_config.ImageColumn(" ", width=40)})
+                st.markdown(tabla_html(SF["entrantes"]), unsafe_allow_html=True)
                              
     with tab_f["Movimientos"]:
         render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
@@ -1020,4 +1015,5 @@ with tab_h:
     if S["campeones"]:
         with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
             df_c = pd.DataFrame(S["campeones"], columns=["Temporada", "Primera División", "Primera Nacional"])
-            st.dataframe(df_c, hide_index=True, width="stretch")
+            st.markdown(tabla_html(df_c, clubes=("Primera División", "Primera Nacional")),
+                        unsafe_allow_html=True)

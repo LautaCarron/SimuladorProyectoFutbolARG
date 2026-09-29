@@ -80,10 +80,14 @@ CSS = """<style>
 /* Modo oscuro: en la web lo elige la intro (data-tema); en la PC sigue al sistema */
 :root[data-tema="oscuro"]{--tiza:#0E141C;--tiza-2:#151D28;--papel:#121A24;--tinta:#E8E6DF;--tinta-2:#A7AEB9;--tinta-3:#6F7885;--line:rgba(232,230,223,.12);--line-2:rgba(232,230,223,.22);--soft:rgba(232,230,223,.04);--soft2:rgba(232,230,223,.08);--cel2:#8CC0EE;--acc:#8CC0EE;--gold:#E3A21A;--pen:#A98BEA;--win:#4CAF7A;--lose:#E0685C;--mix:#fff;}
 @media (prefers-color-scheme:dark){:root:not([data-tema]){--tiza:#0E141C;--tiza-2:#151D28;--papel:#121A24;--tinta:#E8E6DF;--tinta-2:#A7AEB9;--tinta-3:#6F7885;--line:rgba(232,230,223,.12);--line-2:rgba(232,230,223,.22);--soft:rgba(232,230,223,.04);--soft2:rgba(232,230,223,.08);--cel2:#8CC0EE;--acc:#8CC0EE;--gold:#E3A21A;--pen:#A98BEA;--win:#4CAF7A;--lose:#E0685C;--mix:#fff;}}
-html,body,.stApp,.stApp p,.stApp label,.stApp li,.stApp h1,.stApp h2,.stApp h3,.stApp button,.stApp input,.stApp textarea,.stApp [data-testid="stMarkdownContainer"],div[role="dialog"] p{font-family:'Archivo',system-ui,sans-serif !important;}
+[role="dialog"],[role="dialog"] :is(p,div,td,th,label,input,textarea,summary,h2,button),html,body,.stApp,.stApp p,.stApp label,.stApp li,.stApp h1,.stApp h2,.stApp h3,.stApp button,.stApp input,.stApp textarea,.stApp [data-testid="stMarkdownContainer"],[role="dialog"] p{font-family:'Archivo',system-ui,sans-serif !important;}
 .stApp{background:var(--tiza);}
 .block-container{padding-top:1.1rem;padding-bottom:4rem;max-width:1320px;}
-[data-testid="stHeader"]{background:transparent;}
+[data-testid="stHeader"]{background:transparent;pointer-events:none;}
+[data-testid="stHeader"] button{pointer-events:auto;}
+/* botón de parámetros (»): chip propio para que al hacer scroll no se mezcle con el contenido */
+body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con la ficha abierta no se superpone */
+[data-testid="stExpandSidebarButton"]{width:36px !important;height:36px !important;background:var(--tiza) !important;border:1px solid var(--line-2) !important;border-radius:4px !important;color:var(--tinta-2) !important;}
 [data-testid="stSidebar"]{background:var(--tiza-2);border-right:1px solid var(--line);}
 [data-testid="stSidebar"] h2{font-size:.78rem;font-stretch:85%;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
 ::selection{background:var(--cel);color:var(--tinta);}
@@ -139,7 +143,7 @@ a.mh-marca:hover span::before{opacity:1;margin-left:0;}
 [data-testid="stExpander"] summary:hover{color:var(--cel2);}
 [data-testid="stDataFrame"]{border-radius:4px;overflow:hidden;border:1px solid var(--line);}
 [data-baseweb="select"]>div,[data-baseweb="input"]>div{border-radius:4px !important;}
-div[role="dialog"]{border-radius:6px !important;background:var(--tiza) !important;}
+[role="dialog"]{border-radius:6px !important;background:var(--tiza) !important;}
 [role="dialog"] h2,[role="dialog"] h2 *{color:inherit !important;}
 [data-testid="stCaptionContainer"]{color:var(--tinta-2);}
 /* ---------- barra de estado de cada liga ---------- */
@@ -182,19 +186,29 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 [class*="st-key-fx"]>[data-testid="stVerticalBlock"]{border-top:1px solid var(--line-2);}
 [class*="st-key-fx"] [data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:5 1 0 !important;}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(2){flex:3.6 1 0 !important;}
-[class*="st-key-fx"] [data-testid="stVerticalBlock"]{gap:0;}
+[class*="st-key-fx"] [data-testid="stVerticalBlock"],[class*="st-key-fx"][data-testid="stVerticalBlock"]{gap:0;}
 [class*="st-key-fx"] button{border:none !important;background:transparent !important;box-shadow:none !important;padding:2px 4px !important;min-height:0 !important;}
 [class*="st-key-fx"] button p{font-weight:600;font-size:.88rem;line-height:1.2;}
 [class*="st-key-fx"] button:hover p{color:var(--cel2);}
+/* el marcador toma su ancho y los nombres el resto (en dos líneas si hace falta, nunca encimados) */
+[class*="st-key-fx"] [data-testid="stColumn"]:nth-child(2){flex:0 0 auto !important;}
+[class*="st-key-fx"] button p{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;}
+[class*="st-key-fx"] [data-testid="stColumn"]:nth-child(1) button p{text-align:right;}
+[class*="st-key-fx"] [data-testid="stColumn"]:nth-child(3) button p{text-align:left;}
+[class*="st-key-fx"] [data-testid="stColumn"]:nth-child(1) button>div{justify-content:flex-end;}
+[class*="st-key-fx"] [data-testid="stColumn"]:nth-child(3) button>div{justify-content:flex-start;}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(1) button{justify-content:flex-end;text-align:right;width:100%;}
 [class*="st-key-fx"] [data-testid="stColumn"]:nth-child(3) button{justify-content:flex-start;text-align:left;width:100%;}
 [class*="st-key-fx"] [data-testid="stMarkdownContainer"],[class*="st-key-fx"] [data-testid="stMarkdownContainer"]>*{margin:0 !important;}
 [class*="st-key-fx"] [data-testid="stColumn"] [data-testid="stVerticalBlock"]{justify-content:center;}
+[class*="st-key-fx_sel"] button{border:1px solid var(--line-2) !important;background:var(--papel) !important;min-height:40px !important;padding:0 !important;justify-content:center !important;}
+[class*="st-key-fx_sel"] button:hover:not(:disabled){border-color:var(--tinta) !important;}
+[class*="st-key-fx_sel"] button:disabled{opacity:.35;}
 .fx-head{display:flex;align-items:center;gap:10px;margin:4px 0 10px;flex-wrap:wrap;}
 .fx-head b{font-stretch:105%;font-weight:800;}
 .mrow{border-bottom:1px solid var(--line);padding:9px 4px;margin-bottom:0;}
 .mrow .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.74rem;margin-bottom:6px;color:var(--tinta-2);}
-.mline{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;}
+.mline{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px;}
 .side{display:flex;align-items:center;gap:8px;font-weight:600;font-size:.9rem;}
 .side.l{justify-content:flex-end;text-align:right;}
 .side.w{font-weight:800;}
@@ -229,7 +243,7 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .round:not(.last) .bm::after{content:"";position:absolute;right:-29px;top:50%;width:28px;border-top:1px solid var(--line-2);}
 .bt{display:flex;align-items:center;gap:7px;padding:7px 10px;font-size:.84rem;}
 .bt+.bt{border-top:1px solid var(--line);}
-.bt .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;}
+.bt .nm{flex:1;min-width:0;font-weight:600;line-height:1.2;overflow-wrap:break-word;}
 .bt .g{font-stretch:110%;font-size:1rem;font-weight:800;min-width:14px;text-align:right;font-variant-numeric:tabular-nums;}
 .bt .p{font-size:.74rem;font-weight:800;color:var(--pen);}
 .bt .lv{font-stretch:85%;font-size:.58rem;font-weight:800;border:1px solid var(--line-2);border-radius:2px;padding:0 4px;color:var(--tinta-2);}
@@ -247,8 +261,8 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .team-head>div{container-type:inline-size;flex:1;min-width:0;}
 .team-head .tn{font-stretch:110%;font-size:clamp(1.05rem,7.4cqi,1.75rem);font-weight:900;text-transform:uppercase;line-height:1.05;overflow-wrap:normal;word-break:normal;text-wrap:balance;}
 .rec{display:flex;gap:0;flex-wrap:wrap;margin:10px 0 14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);}
-.rec div{border-left:1px solid var(--line);padding:7px 14px;text-align:left;min-width:60px;}
-.rec div:first-child{border-left:0;padding-left:0;}
+.rec>div{border-left:1px solid var(--line);padding:7px 14px;text-align:left;min-width:60px;}
+.rec>div:first-child{border-left:0;padding-left:0;}
 .rec b{display:block;font-stretch:110%;font-size:1.2rem;font-weight:800;font-variant-numeric:tabular-nums;}
 .rec span{font-stretch:80%;font-size:.62rem;text-transform:uppercase;letter-spacing:.14em;color:var(--tinta-2);font-weight:700;}
 .form{display:inline-flex;gap:3px;vertical-align:middle;margin-top:4px;}
@@ -276,7 +290,31 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 [class*="st-key-ctile"]:hover .ct-in img{transform:translateY(-3px) scale(1.05);}
 [class*="st-key-ctile"]:hover .ct-in span{color:var(--cel2);}
 /* tabla de las liguillas de desempate */
-.liguilla-wrap{overflow-x:auto;margin:0 0 14px;border:1px solid var(--line);border-radius:4px;background:var(--papel);}
+/* ---------- tablas (posiciones, partidos de un club, clasificados, campeones) ----------
+   Integradas a la hoja: filete de tinta arriba, filas con líneas finas, números tabulares.
+   Si no entra en el ancho se desliza de costado con #, ± y club fijos a la izquierda. */
+.tabla-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;margin:2px 0 12px;border-top:1.5px solid var(--tinta);scrollbar-width:thin;scrollbar-color:var(--line-2) transparent;}
+/* width:0 + min-width:100%: la tabla ocupa el ancho disponible sin empujar el de la página */
+.tabla-wrap,.liguilla-wrap,.bracket{width:0;min-width:100%;}
+.tabla-wrap::-webkit-scrollbar{height:4px;}
+.tabla-wrap::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:2px;}
+.tabla-wrap.alto{max-height:460px;overflow-y:auto;}
+.tabla{width:100%;border-collapse:separate;border-spacing:0;font-size:.88rem;line-height:1.2;font-variant-numeric:tabular-nums;color:var(--tinta);}
+.tabla th{background:var(--tiza);font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-2);padding:10px 8px 8px;text-align:center;border-bottom:1px solid var(--line-2);white-space:nowrap;cursor:default;}
+.tabla-wrap.alto th{position:sticky;top:0;z-index:2;}
+.tabla td{padding:6px 8px;height:38px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap;background:linear-gradient(var(--hv,transparent),var(--hv,transparent)),linear-gradient(var(--rc,transparent),var(--rc,transparent)),var(--papel);}
+.tabla tbody tr:hover td{--hv:var(--soft2);}
+.tabla tbody tr:last-child td{border-bottom:0;}
+.tabla .tb-club,.tabla .tb-txt{text-align:left;}
+.tabla td.tb-txt{font-size:.82rem;}
+.tabla .tb-cl{display:inline-flex;align-items:center;gap:9px;font-weight:600;}
+.tabla .tb-cl img,.tabla .tb-cl .crest{flex:none;}
+.tabla .tb-pos{width:34px;min-width:34px;max-width:34px;box-sizing:border-box;padding-left:2px;padding-right:2px;color:var(--tinta-2);font-weight:700;}
+.tabla .tb-mov{width:38px;min-width:38px;max-width:38px;box-sizing:border-box;padding-left:2px;padding-right:2px;font-size:.78rem;}
+.tabla td.tb-pts{font-weight:800;}
+.tabla .tb-fija{position:sticky;z-index:1;}
+.tabla th.tb-fija{z-index:3;}
+.liguilla-wrap{overflow-x:auto;margin:2px 0 14px;border-top:1.5px solid var(--tinta);background:var(--papel);}
 .liguilla{width:100%;border-collapse:collapse;font-size:.88rem;font-variant-numeric:tabular-nums;color:var(--tinta);}
 .liguilla th{font-stretch:80%;font-size:.64rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tinta-2);padding:10px 8px;text-align:center;border-bottom:1px solid var(--line-2);white-space:nowrap;}
 .liguilla td{padding:9px 8px;text-align:center;border-bottom:1px solid var(--line);color:var(--tinta);}
@@ -290,16 +328,43 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
 .stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}
 @keyframes afa-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+/* ---------- tablet y notebooks chicas: la cabecera no entra en una fila ---------- */
+@media (min-width:641px) and (max-width:1180px){
+.masthead{flex-direction:column;align-items:stretch;gap:14px;margin-top:34px;}
+.mh-der{align-items:stretch;}
+.mh-tabla{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
+.mh-c,.mh-c:first-child{min-width:0;padding:9px 12px 0;}
+.mh-c.temp{padding-left:0;}
+.mh-tema{position:absolute;top:0;right:0;}
+}
+/* ---------- fixture en tablet: una sola columna de partidos (los nombres entran completos) ---------- */
+@media (min-width:641px) and (max-width:920px){
+[data-testid="stHorizontalBlock"]:has(>[data-testid="stColumn"]>[data-testid="stVerticalBlock"]>[data-testid="stLayoutWrapper"]>[class*="st-key-fx_"]:not([class*="fx_sel"])){flex-direction:column !important;gap:0 !important;}
+[data-testid="stHorizontalBlock"]:has(>[data-testid="stColumn"]>[data-testid="stVerticalBlock"]>[data-testid="stLayoutWrapper"]>[class*="st-key-fx_"]:not([class*="fx_sel"]))>[data-testid="stColumn"]{width:100% !important;flex:1 1 auto !important;}
+[data-testid="stHorizontalBlock"]:has(>[data-testid="stColumn"]>[data-testid="stVerticalBlock"]>[data-testid="stLayoutWrapper"]>[class*="st-key-fx_"]:not([class*="fx_sel"]))>[data-testid="stColumn"]+[data-testid="stColumn"] [class*="st-key-fx_"]>[data-testid="stVerticalBlock"],
+[data-testid="stHorizontalBlock"]:has(>[data-testid="stColumn"]>[data-testid="stVerticalBlock"]>[data-testid="stLayoutWrapper"]>[class*="st-key-fx_"]:not([class*="fx_sel"]))>[data-testid="stColumn"]+[data-testid="stColumn"] [class*="st-key-fx_"]{border-top:0;}
+}
+/* ---------- reducido en pantallas medianas y chicas: rondas apiladas (nombres completos) ---------- */
+@media (max-width:1180px){
+.bracket{display:flex;flex-direction:column;gap:20px;overflow:visible;padding:4px 0 8px;}
+.round-h{text-align:left;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.round-h::after{content:"";flex:1;border-top:1px solid var(--line);}
+.round-b{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;align-items:start;}
+.round.last .round-b{display:flex;flex-direction:column;gap:14px;max-width:560px;}
+.round:not(.last) .bm::after{display:none;}
+.bt{padding:8px 10px;}
+.bt .nm{white-space:normal;overflow:visible;line-height:1.2;}
+}
 /* ---------- mobile ---------- */
 @media (max-width:640px){
-.block-container{padding-left:.9rem;padding-right:.9rem;padding-top:.6rem;}
+.block-container{padding-left:16px;padding-right:16px;padding-top:.6rem;}
 .masthead{flex-direction:column;align-items:stretch;gap:12px;margin-top:26px;}
 /* acciones globales: los 3 botones en una fila, sin el texto de ayuda */
 .st-key-acciones [data-testid="stHorizontalBlock"]{flex-wrap:nowrap !important;gap:6px !important;}
 .st-key-acciones [data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:1 1 0 !important;}
 .st-key-acciones [data-testid="stColumn"]:first-child{display:none;}
 .st-key-acciones button{padding:6px 4px !important;min-height:40px;}
-.st-key-acciones button p{font-size:.78rem;}
+.st-key-acciones button p{font-size:.76rem;white-space:normal;line-height:1.15;text-align:center;overflow:visible;}
 /* acciones de cada liga: rótulos arriba, "Próxima fecha" y "Hasta el final" lado a lado */
 [data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"]){flex-wrap:wrap !important;flex-direction:row !important;gap:8px !important;}
 [data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"])>[data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:1 1 calc(50% - 8px) !important;}
@@ -307,23 +372,89 @@ details.tanda summary{cursor:pointer;font-weight:700;color:var(--pen);}
 .mh-marca b{font-size:1.05rem;}
 .mh-der{flex-direction:column-reverse;align-items:stretch;gap:10px;}
 .mh-tema{position:absolute;top:0;right:0;}
-.mh-tabla{margin:0 -.9rem;padding:0 .9rem;}
-.mh-c{min-width:92px;padding:0 12px;}
+/* cabecera en celular: Temporada y Partidos arriba, las 5 categorías en una fila pareja */
+.mh-tabla{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));overflow:visible;border-top:1px solid var(--line);}
+.mh-c,.mh-c:first-child{grid-column:span 2;min-width:0;padding:8px 6px 7px 8px;border-top:1px solid var(--line);}
+.mh-c.temp,.mh-c:last-child{grid-column:span 5;border-top:0;padding-left:10px;}
+.mh-c.temp{order:-2;border-left:0;padding-left:0;}
+.mh-c:last-child{order:-1;}
+.mh-c:nth-child(2){border-left:0;padding-left:0;}
+.mh-c span{font-size:.58rem;letter-spacing:.08em;overflow:hidden;text-overflow:ellipsis;}
+.mh-c b{font-size:.98rem;}
+.mh-c .bar{margin-top:5px;}
 .status{grid-template-columns:repeat(2,1fr);}
 .stc:nth-child(3){border-left:0;padding-left:0;}
 .stc:nth-child(n+3){border-top:1px solid var(--line);}
+.stc{padding:9px 12px;}
+.stc b{font-size:1.04rem;line-height:1.25;display:block;margin-top:2px;}
 .sec .tt{font-size:1.1rem;}
-.bracket{grid-template-columns:repeat(5,188px);}
 .cgrid{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}
 .ct{font-size:.74rem;padding:12px 4px;}
-[class*="st-key-fx"] button p{font-size:.8rem;}
+[class*="st-key-fx"] [data-testid="stHorizontalBlock"]{padding:8px 2px;gap:6px !important;}
+[class*="st-key-fx"] button{padding:2px 0 !important;}
+[class*="st-key-fx"] button p{font-size:.8rem;line-height:1.15;}
+[class*="st-key-fx"] .score{gap:3px;}
+[class*="st-key-fx"] .score img,[class*="st-key-fx"] .score .crest{width:18px;height:18px;}
+[class*="st-key-fx"] .score .n{min-width:24px;padding:0 5px;}
+[class*="st-key-fx"] .score small{font-size:.74rem;}
+/* selector de fecha: ‹ [fecha] › en una sola fila */
+[data-testid="stHorizontalBlock"]:has([class*="_prev"]):has([class*="_next"]){flex-wrap:nowrap !important;gap:6px !important;}
+[data-testid="stHorizontalBlock"]:has([class*="_prev"]):has([class*="_next"])>[data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:0 0 44px !important;}
+[data-testid="stHorizontalBlock"]:has([class*="_prev"]):has([class*="_next"])>[data-testid="stColumn"]:nth-child(2){flex:1 1 0 !important;}
+details.tanda{font-size:.76rem;}
+.trow .tn{min-width:0;flex:1 1 auto;}
 [class*="st-key-cgrid"]{grid-template-columns:repeat(3,1fr);}
 [class*="st-key-ctile"]{padding:10px 4px;height:118px;}
 .ct-in{font-size:.72rem;gap:8px;}
 .ct-in img{width:42px;height:42px;}
 .score{font-size:1rem;gap:3px;}
-.cards{grid-template-columns:1fr 1fr;}
+.tabla{font-size:.8rem;}
+.tabla th{padding:9px 6px 7px;font-size:.6rem;letter-spacing:.1em;}
+.tabla td{padding:5px 6px;height:40px;}
+.tabla .tb-pos,.tabla .tb-mov{padding-left:1px;padding-right:1px;}
+.tabla td.tb-club{white-space:normal;min-width:118px;max-width:150px;}
+.tabla .tb-cl{gap:7px;line-height:1.15;}
+.tabla .tb-cl img{width:20px;height:20px;}
+.tabla td.tb-txt{font-size:.74rem;}
+.tabla .tb-borde{box-shadow:inset -1px 0 0 var(--line-2);}
+.tabla td.tb-txt{white-space:normal;min-width:84px;line-height:1.2;}
+.tabla-wrap.alto{max-height:none;overflow-y:visible;}
+/* ficha del club: los 7 números en una fila y la forma debajo */
+.rec{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));}
+.rec>div{min-width:0;padding:7px 4px 7px 8px;}
+.rec>div:last-child{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding-left:0;display:flex;align-items:center;gap:10px;}
+.rec>div:last-child .form{margin-top:0;}
+.rec b{font-size:1.05rem;}
+.team-head{gap:12px;}
+.team-head img{width:52px;height:52px;}
+.liguilla{font-size:.8rem;}
+.liguilla th,.liguilla td{padding:8px 4px;}
+.liguilla th{font-size:.58rem;letter-spacing:.08em;}
+.liguilla td.club span{white-space:normal;line-height:1.15;gap:7px;}
+.liguilla td.club img{width:20px;height:20px;flex:none;}
+.cards{grid-template-columns:1fr 1fr;gap:0 16px;}
+.mline{gap:8px;}
+.side{font-size:.82rem;gap:6px;line-height:1.15;}
+.side img{width:22px;height:22px;}
+.card:has(.v>span>b){grid-column:1/-1;}   /* tarjetas con un partido: a lo ancho, en una línea */
+.card:has(.v>span>b) .v{flex-wrap:nowrap;}
+.card .v{font-size:.9rem;gap:7px;}
+.card .v img{width:22px;height:22px;}
 .card .v.big{font-size:1.5rem;}
+}
+/* celulares muy angostos (iPhone SE, Android chicos) */
+@media (max-width:400px){
+.mh-c:not(.temp):not(:last-child){padding-left:5px;padding-right:3px;}
+.mh-c:nth-child(2){padding-left:0;}
+.mh-c:not(.temp):not(:last-child) span{white-space:normal;word-break:normal;overflow-wrap:normal;hyphens:none;line-height:1.15;min-height:2.3em;overflow:visible;letter-spacing:.04em;font-size:.56rem;}
+.mh-c b{font-size:.92rem;}
+.st-key-acciones button p{font-size:.72rem;}
+.tabla td.tb-club{min-width:104px;max-width:128px;}
+.chip{font-size:.6rem;padding:3px 6px 2px;}
+[class*="st-key-fx"] button p{font-size:.76rem;}
+}
+@media (max-width:359px){
+[class*="st-key-fx"] .score img,[class*="st-key-fx"] .score .crest{display:none;}   /* sin lugar: quedan los nombres */
 }
 @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}}
 </style>"""
@@ -643,7 +774,7 @@ def render_ficha(nombre, clave):
         comp = p["comp"] if p["comp"] == p["liga"] else f"{p['liga']} · {p['comp']}"
         filas.append({
             "Fecha": p["fecha"], "Competición": comp, "Condición": cond,
-            " ": ESCUDOS.get(rival), "Rival": rival, "Resultado": res, "Desenlace": desenlace,
+            "Rival": rival, "Resultado": res, "Desenlace": desenlace,
             "_t": norm(f"{rival} {nombre} {comp} {cond} {desenlace} {p['rotulo']}"),
             "_m": f" {gf}-{gc} {gc}-{gf} ",
         })
@@ -682,7 +813,8 @@ def render_ficha(nombre, clave):
         return
     if q:
         st.caption(f"{len(vis)} de {len(filas)} partidos")
-    df = pd.DataFrame(vis).drop(columns=["_t", "_m"])
+    # rival y resultado primero: en el celular se ven sin deslizar la tabla
+    df = pd.DataFrame(vis)[["Fecha", "Rival", "Resultado", "Desenlace", "Condición", "Competición"]]
 
     def color_res(fila):
         d = fila["Desenlace"]
@@ -691,10 +823,8 @@ def render_ficha(nombre, clave):
         return [f"background-color: {c}" if col in ("Resultado", "Desenlace") else ""
                 for col in fila.index]
 
-    st.dataframe(df.style.apply(color_res, axis=1), hide_index=True, width="stretch",
-                 height=min(35 * (len(df) + 1) + 3, 460),
-                 column_config={"Fecha": st.column_config.NumberColumn("Fecha", width="small"),
-                                " ": st.column_config.ImageColumn(" ", width="small")})
+    st.markdown(tabla_html(df, color_res, clubes=("Rival",)).replace(
+        'class="tabla-wrap"', 'class="tabla-wrap alto"', 1), unsafe_allow_html=True)
     penales = [p for p in partidos if p["pen"]]
     if penales:
         st.markdown('<div class="mlab">Definiciones por penales</div>'
@@ -804,6 +934,75 @@ def color_mov(v):
     return "color: #94a3b8"
 
 
+# ---- Tabla HTML (integrada a la página; en mobile se desliza con el club fijo) ----
+_COL_NUM = {"Pos", "Pts", "PJ", "G", "E", "P", "GF", "GC", "DG", "Media", "Fecha", "Mérito", "Resultado",
+            "Temporada"}
+_TITULOS = {"Pos": "#", "Equipo": "Club"}
+_AYUDAS = {"±": "Puestos ganados o perdidos en la última fecha", "Media": "Fuerza interna del equipo",
+           "Pts": "Puntos", "PJ": "Partidos jugados", "G": "Ganados", "E": "Empatados",
+           "P": "Perdidos", "GF": "Goles a favor", "GC": "Goles en contra", "DG": "Diferencia de gol"}
+_ANCHO_FIJO = {"Pos": 34, "±": 38}
+
+
+def _valor(v, formato):
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return "–"
+    return formato.format(v) if formato else esc(str(v))
+
+
+def tabla_html(df, estilo=None, clubes=("Equipo",), formatos=None, fija=None):
+    """Dibuja un DataFrame como tabla HTML con el estilo del sitio. `estilo(fila)` devuelve una
+    lista de CSS por celda (como pandas Styler); las columnas de `clubes` llevan escudo; `fija`
+    es la columna que queda quieta (junto con las anteriores) al deslizar en pantallas chicas."""
+    formatos = formatos or {}
+    cols = list(df.columns)
+    n_fijas = cols.index(fija) + 1 if fija in cols else 0
+    clases, lefts, x = [], [], 0
+    for i, c in enumerate(cols):
+        k = []
+        if c == "Pos":
+            k.append("tb-pos")
+        elif c == "±":
+            k.append("tb-mov")
+        elif c in clubes:
+            k.append("tb-club")
+        elif c in _COL_NUM:
+            k.append("tb-num")
+        else:
+            k.append("tb-txt")
+        if c == "Pts":
+            k.append("tb-pts")
+        if i < n_fijas:
+            k.append("tb-fija")
+            lefts.append(f' style="left:{x}px"')
+            x += _ANCHO_FIJO.get(c, 0)
+        else:
+            lefts.append("")
+        if i == n_fijas - 1:
+            k.append("tb-borde")
+        clases.append(" ".join(k))
+    th = "".join(
+        f'<th class="{k}"{lf}{(" title=" + chr(34) + esc(_AYUDAS[c]) + chr(34)) if c in _AYUDAS else ""}>'
+        f'{esc(_TITULOS.get(c, c))}</th>' for c, k, lf in zip(cols, clases, lefts))
+    filas = []
+    for _, fila in df.iterrows():
+        css = estilo(fila) if estilo else [""] * len(cols)
+        tds = []
+        for c, k, lf, e in zip(cols, clases, lefts, css):
+            v = fila[c]
+            if c in clubes and isinstance(v, str):
+                txt = f'<span class="tb-cl">{crest(v, 22)}<span>{esc(v)}</span></span>'
+            else:
+                txt = _valor(v, formatos.get(c))
+            e = (e or "").replace("background-color", "--rc").strip()
+            if lf:
+                e = (e + ";" if e else "") + lf[8:-1]
+            tds.append(f'<td class="{k}"' + (f' style="{e}"' if e else "") + f'>{txt}</td>')
+        filas.append("<tr>" + "".join(tds) + "</tr>")
+    return (f'<div class="tabla-wrap"><table class="tabla"><thead><tr>{th}</tr></thead>'
+            f'<tbody>{"".join(filas)}</tbody></table></div>')
+
+
 def mostrar_tabla(df, fn_color, hist=None):
     df = df.copy()
     mov = ultimos_movs(hist) if hist is not None else None
@@ -813,26 +1012,21 @@ def mostrar_tabla(df, fn_color, hist=None):
             df.insert(1, "±", [f"▲{x}" if x > 0 else f"▼{-x}" if x < 0 else "=" for x in d])
         else:
             df.insert(1, "±", ["–"] * len(df))
-    df.insert(2 if "±" in df.columns else 1, "Escudo", [ESCUDOS.get(n) for n in df["Equipo"]])
     df = df.drop(columns="id")
-    orden = [c for c in ["Pos", "±", "Escudo", "Equipo", "Pts", "PJ", "G", "E", "P", "GF", "GC",
+    orden = [c for c in ["Pos", "±", "Equipo", "Pts", "PJ", "G", "E", "P", "GF", "GC",
                          "DG", "Destino", "Media"] if c in df.columns]
     df = df[orden]
-    sty = df.style.apply(fn_color, axis=1)
-    if "±" in df.columns:
-        sty = sty.map(color_mov, subset=["±"])
-    sty = sty.set_properties(subset=["Pts"], **{"font-weight": "700"})
-    st.dataframe(sty, hide_index=True, width="stretch", height=35 * (len(df) + 1) + 3,
-                 column_config={
-                     "Pos": st.column_config.NumberColumn("#", width=38),
-                     "±": st.column_config.TextColumn("±", width=46,
-                                                      help="Puestos ganados o perdidos en la última fecha"),
-                     "Escudo": st.column_config.ImageColumn("", width=40),
-                     "Equipo": st.column_config.TextColumn("Club", width="medium"),
-                     "Pts": st.column_config.NumberColumn("Pts", width=52),
-                     "Media": st.column_config.NumberColumn("Media", format="%.1f", width=62,
-                                                            help="Fuerza interna del equipo"),
-                 })
+    cols = list(df.columns)
+
+    def estilo(fila):
+        css = list(fn_color(fila))
+        if "±" in cols:
+            i = cols.index("±")
+            css[i] = "; ".join(x for x in (css[i], color_mov(fila["±"])) if x)
+        return css
+
+    st.markdown(tabla_html(df, estilo, formatos={"Media": "{:.1f}"}, fija="Equipo"),
+                unsafe_allow_html=True)
 
 
 def colorear_fase1(fila):
