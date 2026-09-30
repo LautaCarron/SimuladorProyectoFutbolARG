@@ -118,6 +118,7 @@ from copas import (
     sortear_copa,
 )
 from logos import LOGOS, logo_img
+from calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
 from vista import (
     COLOR_ORO,
     COLORES_B,
@@ -140,6 +141,9 @@ from vista import (
     colorear_pb,
     colorear_pc,
     colorear_reg,
+    avisos_html,
+    calendario_mes_html,
+    eventos_calendario,
     cuadro_final_copa_html,
     cuadro_llave_html,
     finales_reg_html,
@@ -204,8 +208,6 @@ P = dict(sorpresa=sorpresa)
 if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_ESTADO:
     st.session_state.S = crear_estado()
 S = st.session_state.S
-if ligas_terminadas(S) and not S["copa"]["sorteada"]:
-    S["copa"] = sortear_copa(S, S["rng"])
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 
 terminada = primera_terminada(S)            # incluye las fechas de desempate
@@ -257,6 +259,8 @@ _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proy
               if _web else 'div class="mh-marca"')
 _jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
             + len(SR["log"]) + len(SC["log"]))
+_prox = proximos(S)
+_hoy = min((d for d, _ in _prox.values()), default=None)       # próximo día con partidos
 st.markdown(
     f'<header class="masthead"><{_marca_tag}>{SOL_SVG}<div><b>Proyecto AFA</b>'
     f'<span>Simulador Fútbol Argentino</span></div></{"a" if _web else "div"}>'
@@ -269,12 +273,18 @@ st.markdown(
     + _celda("Primera C", SPC["fecha"], SPC["total"], pct_pc)
     + _celda("Regional", SR["fecha"], SR["total"], pct_reg)
     + _celda("Copa Arg.", SC["ronda"], SC["total"], pct_copa)
-    + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div></div>'
+    + f'<div class="mh-c"><span>Partidos</span><b>{_jugados}</b></div>'
+    + f'<div class="mh-c"><span>Próximo día</span><b>{texto_dia(_hoy, False) if _hoy else "—"}</b></div></div>'
     + (_BOTON_TEMA if _web else "")
     + '</div></header>', unsafe_allow_html=True)
 
-g0, g1, g2, g3 = st.container(key="acciones").columns([2.2, 1.3, 1.5, 1.1], vertical_alignment="center")
-g0.caption("Avanzá fecha por fecha en cada categoría, o simulá todo junto.")
+g0, gd, g1, g2, g3 = st.container(key="acciones").columns([1.6, 1.4, 1.3, 1.5, 1.1],
+                                                          vertical_alignment="center")
+g0.caption("Jugá día por día del calendario, fecha por fecha en cada categoría, o simulá todo junto.")
+if gd.button(":material/calendar_today: Próximo día", disabled=_hoy is None, width="stretch",
+             help=f"Juega todo lo del {texto_dia(_hoy)}" if _hoy else None):
+    jugar_proximo_dia(S, P, acumular)
+    st.rerun()
 if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stretch", type="primary"):
     # 1. Primero terminar Primera División, desempates incluidos
     #    (la B necesita saber el 27° definitivo para la Promoción)
@@ -294,9 +304,7 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
         simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
     while SR["fecha"] < SR["total"]:
         simular_fecha_reg(SR, P, S["rng"])
-    # 4. Copa Argentina: se sortea con las posiciones finales y se juega entera
-    if not S["copa"]["sorteada"]:
-        S["copa"] = sortear_copa(S, S["rng"])
+    # 4. Copa Argentina (se juega en el medio de las ligas; acá se completa lo que falte)
     while S["copa"]["ronda"] < S["copa"]["total"]:
         simular_ronda_copa(S["copa"], P, S["rng"])
     st.rerun()
@@ -307,11 +315,21 @@ if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
+_avisos = [a for L in (S, SB, SF, SPB, SPC, SR, SC) for a in L.get("alertas", [])]
+if _avisos:
+    _ult = _avisos[-1]
+    st.markdown(f'<div class="aviso-banner">🚨 <span><b>Último aviso:</b> {esc(_ult["titulo"])} · '
+                f'{esc(_ult["local"])} vs. {esc(_ult["visita"])} ({esc(_ult["liga"])})</span></div>',
+                unsafe_allow_html=True)
+    with st.expander(f":material/campaign: Avisos de la temporada · suspensiones y sanciones ({len(_avisos)})"):
+        st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
+
+
 def _con_logo(liga, texto):
     return f"![]({LOGOS[liga]}) {texto}" if liga in LOGOS else texto
 
 
-tab_ligas, tab_copas, tab_c, tab_h = st.tabs(["Ligas", "Copas", "Clubes", "Historial"])
+tab_ligas, tab_copas, tab_cal, tab_c, tab_h = st.tabs(["Ligas", "Copas", "Calendario", "Clubes", "Historial"])
 with tab_ligas:
     with st.container(key="menu_ligas"):
         tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc = st.tabs([
@@ -1179,8 +1197,7 @@ with tab_ca:
     if not SC["sorteada"]:
         seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
                 "neutral, penales si empatan", "#1e5aa8")
-        aviso("La Copa se sortea con las posiciones finales de la temporada: se arma sola cuando "
-              "terminan <b>todas las ligas</b> (o con <b>Simular todo</b>).")
+        aviso("La Copa se sortea al empezar la temporada.")
         cupos = pd.DataFrame([
             ("Primera División", "Los 30 equipos", 30), ("Primera Nacional", "Los 36 equipos", 36),
             ("Federal A", "Los 20 de Zona Campeonato y los 8 mejores de Zona Descenso", 28),
@@ -1197,7 +1214,10 @@ with tab_ca:
         tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
         with tab_ca_t["Cuadro"]:
             seccion("Cuadro de la Copa Argentina", "8 llaves de 16 equipos (64avos a octavos) · el ganador "
-                    "de cada llave juega los cuartos · N = cancha neutral", "#1e5aa8")
+                    "de cada llave juega los cuartos · todo en cancha neutral · (n) = penales", "#1e5aa8")
+            st.caption("64avos por categoría: Primera vs. Regional Amateur, B Nacional vs. Primera C, "
+                       "Federal A vs. Primera B; los que sobran se cruzan con la misma regla. Se juega "
+                       "los miércoles, en el medio de las ligas (ver Calendario).")
             opciones = [f"Llave {x}" for x in COPA_LLAVES] + ["Fase final"]
             vista_llave = st.segmented_control("Llave", opciones, default="Llave A", key="ca_llave",
                                                label_visibility="collapsed") or "Llave A"
@@ -1215,7 +1235,8 @@ with tab_ca:
                 for m in SC["cuadro"][ronda_sel]:
                     st.markdown(fila_partido_html(m["p"]), unsafe_allow_html=True)
         with tab_ca_t["Clasificados"]:
-            seccion("Clasificados", "Los 128 equipos y por qué entraron", "#1e5aa8")
+            seccion("Clasificados", "Los 128 equipos y por qué entraron (por la temporada anterior; "
+                    "en la temporada 1, por media)", "#1e5aa8")
             df_cl = pd.DataFrame({"Equipo": SC["nombres"], "Liga": SC["origen"],
                                   "Clasificó como": SC["criterio"],
                                   "Media": np.round(SC["r"], 1)})
@@ -1237,6 +1258,34 @@ with tab_ca:
                             f'<div class="nm">{esc(cc)}</div><div class="s">{esc(SC["origen"][SC["campeon"]])}'
                             f' · finalista: {esc(SC["nombres"][sub])}</div></div>', unsafe_allow_html=True)
                 st.markdown(fila_partido_html(fin["p"], abierto=True), unsafe_allow_html=True)
+
+
+# ============================================================================
+# CALENDARIO
+# ============================================================================
+with tab_cal:
+    seccion(f"Calendario {anio(S)}", "Cuándo se juega cada fecha de cada liga y cada ronda de la Copa "
+            "Argentina (los miércoles, en el medio de las ligas)", "#1e5aa8")
+    c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
+    c1.markdown((f'Próximo día: <b>{esc(texto_dia(_hoy))}</b> · ' + " ".join(
+        logo_img(c, 18) for c, (d, _) in _prox.items() if d == _hoy)) if _hoy else
+        "Terminó la temporada: pasá a la siguiente desde <b>Nueva temporada</b>.", unsafe_allow_html=True)
+    if c2.button(":material/calendar_today: Jugar ese día", key="cal_next", width="stretch", type="primary",
+                 disabled=_hoy is None):
+        jugar_proximo_dia(S, P, acumular)
+        st.rerun()
+    eventos = eventos_calendario(S)
+    meses = sorted({d.month for d, *_ in eventos})
+    mes_def = (_hoy or eventos[-1][0]).month
+    clave_mes = f"cal_mes_{S['temp']}"
+    # el mes elegido sigue al próximo día (cuando avanza el calendario, se mueve solo)
+    if st.session_state.get(f"{clave_mes}_sigue") != mes_def or clave_mes not in st.session_state:
+        st.session_state[clave_mes] = mes_def if mes_def in meses else meses[0]
+        st.session_state[f"{clave_mes}_sigue"] = mes_def
+    mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
+                               label_visibility="collapsed") or mes_def
+    st.markdown(calendario_mes_html(S, eventos, mes, _hoy), unsafe_allow_html=True)
+    st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos).")
 
 
 # ============================================================================
@@ -1286,6 +1335,10 @@ with tab_c:
 # ============================================================================
 with tab_h:
     seccion("Historial", "Campeones de cada temporada y cambios de categoría", "#b7860b")
+    if S.get("alertas_hist"):
+        with st.expander(f":material/campaign: Suspensiones y sanciones de temporadas anteriores "
+                         f"({len(S['alertas_hist'])})", expanded=False):
+            st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
     if S["movimientos"]:
         mv = S["movimientos"]
         with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
@@ -1309,9 +1362,12 @@ with tab_h:
                 f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
                 f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
-                f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])])}</div>'
+                f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])] + [(n, "reubicación") for n in mv.get("suben_reg_fed_extra", [])])}</div>'
                 f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
                 f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
+                + (f'<div><div class="mlab down">▼ Descenso administrativo (Tribunal de Disciplina)</div>'
+                   f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
+                   if mv.get("descenso_adm") else "") +
                 f'</div>', unsafe_allow_html=True)
     if S["campeones"]:
         ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",

@@ -25,6 +25,7 @@ from datos import (
     region_de,
     region_regional,
 )
+from incidentes import revisar_liga
 from motor import (
     MAX_R,
     MIN_R,
@@ -76,6 +77,7 @@ F_ZONA_TAM = 10                   # Campeonato y Descenso en la fase 2 (10 y 10)
 F_F2_RONDAS = F_ZONA_TAM - 1       # 9 fechas, una rueda
 F_RED = 3                          # eliminatoria, semifinales, final
 F_ETAPAS = ["Eliminatoria preliminar", "Semifinales del reducido", "Final del reducido"]
+F_MIN = 36                         # mínimo de equipos del Federal A (si falta, reubicación)
 F_DESC = 6                         # los 6 últimos de la zona Descenso bajan al Regional Amateur
 
 
@@ -357,6 +359,7 @@ def simular_fecha(S, P, acumular=True):
             comp = "Fase 1" if S["fase"] == 1 else f"Zona {ZONAS[S['zona_de'][x]]}"
             S["log"].append(nuevo_partido("Primera División", n_f, rotulo_p(S, n_f), comp,
                                           nom[x], nom[y], g1, g2))
+        revisar_liga(S, S["log"][-len(h):], S["rng"])       # suspensiones y sanciones (rarísimo)
     else:
         # ---------------- EJECUCIÓN DE LOS DESEMPATES (CAMPEÓN/DESCENSO) ----------------
         motivos = S.get("motivos_desempate", [])
@@ -635,6 +638,7 @@ def simular_fecha_b(S, P):
             for x, y, g1, g2 in zip(h, a, gh, ga):
                 SB["log"].append(nuevo_partido("Primera Nacional", f + 1, rotulo_b(SB, f + 1),
                                                etiqueta(x), nom[x], nom[y], g1, g2))
+            revisar_liga(SB, SB["log"][-len(h):], rng)
         else:
             # ---------------- EJECUCIÓN DE LOS DESEMPATES (CAMPEONATO / PERMANENCIA) ----------------
             motivos = SB.get("motivos_desempate", [])
@@ -1033,6 +1037,7 @@ def simular_fecha_f(SF, P, rng):
             for x, y, g1, g2 in zip(h, a, gh, ga):
                 SF["log"].append(nuevo_partido("Federal A", f + 1, rotulo_f(SF, f + 1),
                                                etiqueta(x), nom[x], nom[y], g1, g2))
+            revisar_liga(SF, SF["log"][-len(h):], rng)
             if f < SF["f1_rondas"]:
                 dfs = [tabla_f_grupo(SF, g) for g in range(len(SF["grupos"]))]
             else:
@@ -1088,7 +1093,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 10       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 11       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1353,6 +1358,7 @@ def simular_fecha_reg(SR, P, rng):
                                         nom[x], nom[y], g1, g2)
                 partido["region"] = reg
                 SR["log"].append(partido)
+            revisar_liga(SR, SR["log"][-len(h):], rng)
         SR["fecha"] += 1
         if SR["fecha"] == SR["f_liga"]:
             _cierre_ligas_reg(SR)
@@ -1385,6 +1391,7 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         S_LIGA["historial"].append(_fila_historial(S_LIGA, [nombre_liga] * len(h), h, a, gh, ga, ""))
         for x, y, g1, g2 in zip(h, a, gh, ga):
             S_LIGA["log"].append(nuevo_partido(nombre_liga, f + 1, f"Fecha {f + 1}", "Liga", nom[x], nom[y], g1, g2))
+        revisar_liga(S_LIGA, S_LIGA["log"][-len(h):], rng)
     else:
         df_prev = fn_tabla(S_LIGA)
         ids_finales = df_prev["id"].to_numpy().copy()
@@ -1579,8 +1586,8 @@ def crear_estado():
     SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
     nueva_estructura_reg(SREG, rng)
     S["reg"] = SREG
-    from copas import nueva_copa
-    S["copa"] = nueva_copa()        # se sortea cuando terminan todas las ligas
+    from copas import sortear_copa
+    S["copa"] = sortear_copa(S, rng)    # temporada 1: clasifican los de mejor media de cada liga
     return S
 
 
@@ -1592,6 +1599,9 @@ def nueva_temporada(S, volatilidad):
 
     final = tabla_final(S)
     promo = SB["promo"]
+    # Copa Argentina de la temporada que viene: clasifican por lo hecho en esta
+    from copas import clasificados_copa
+    S["copa_clasif"] = [(x[0], x[3]) for x in clasificados_copa(S)]
 
     # Campeón de cada liga en la temporada que termina (para el Historial)
     def _campeon(L):
@@ -1671,6 +1681,57 @@ def nueva_temporada(S, volatilidad):
                         + (f": asciende {suben[-1]} y baja {p27}." if promo["gana_b"] else f", que se mantiene en Primera.")),
     }
 
+    # ---- Tribunal de Disciplina: avisos de la temporada al historial, descensos
+    # administrativos (lo gravísimo: baja una categoría más) y quitas de puntos a cero
+    ligas_t = (S, SB, SF, SPB, SPC, S["reg"], S.get("copa", {}))
+    S.setdefault("alertas_hist", [])
+    for L in ligas_t:
+        S["alertas_hist"] += [dict(a, temp=S["temp"]) for a in L.get("alertas", [])]
+    bajan_adm = []
+    for club in dict.fromkeys(c for L in ligas_t for c in L.get("desc_adm", [])):
+        if club in S["nombres"]:                         # Primera -> B (sube el mejor de la B)
+            sube = max((n for n in SB["nombres"] if n != club), key=lambda n: S["rating"][n])
+            S["nombres"].remove(club)
+            SB["nombres"].remove(sube)
+            S["nombres"].append(sube)
+            SB["nombres"].append(club)
+        elif club in SB["nombres"]:                      # B -> Federal A / Primera B (sube otro)
+            SB["nombres"].remove(club)
+            (S["federal"] if origen(club) == "Interior" else S["primera_b"]).append(club)
+            sube = max((n for n in S["federal"] + S["primera_b"] if n != club), key=lambda n: S["rating"][n])
+            (S["federal"] if sube in S["federal"] else S["primera_b"]).remove(sube)
+            SB["nombres"].append(sube)
+        elif club in S["federal"]:                       # Federal A -> Regional
+            S["federal"].remove(club)
+            S["regional"].append(club)
+        elif club in S["primera_b"]:                     # Primera B -> Primera C
+            S["primera_b"].remove(club)
+            S["primera_c"].append(club)
+        else:
+            continue
+        bajan_adm.append(club)
+    S["movimientos"]["descenso_adm"] = bajan_adm
+    # Plazas vacantes del Federal A (reubicación): si queda con menos de F_MIN equipos, las
+    # completan los perdedores de las finales del Regional (y después los mejores campeones y
+    # clubes del Regional). Así siempre alcanza para 20 en Zona Campeonato y 6 descensos.
+    extra_reg = []
+    if len(S["federal"]) < F_MIN:
+        SRg = S["reg"]
+        perdedores = [SRg["nombres"][x["b"] if x["gana"] == x["a"] else x["a"]] for x in SRg["finales"]
+                      if x.get("b") is not None and x.get("gana") is not None]
+        campeones = sorted((SRg["nombres"][c] for c in SRg["campeones"].values() if c is not None),
+                           key=lambda n: -S["rating"][n])
+        for n in dict.fromkeys(perdedores + campeones + sorted(S["regional"], key=lambda n: -S["rating"][n])):
+            if len(S["federal"]) >= F_MIN:
+                break
+            if n in S["regional"]:
+                S["regional"].remove(n)
+                S["federal"].append(n)
+                extra_reg.append(n)
+    S["movimientos"]["suben_reg_fed_extra"] = extra_reg
+    for L in ligas_t[:-1]:
+        L["alertas"], L["quita"], L["desc_adm"] = [], {}, []
+
     for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"], S["primera_c"],
                     S["regional"]):
         arr = np.array([S["rating"][n] for n in nombres])
@@ -1708,8 +1769,8 @@ def nueva_temporada(S, volatilidad):
     S["reg"]["nombres"] = del_json + [n for n in S["regional"] if n not in set(del_json)]
     S["reg"]["r"] = np.array([S["rating"][n] for n in S["reg"]["nombres"]])
     nueva_estructura_reg(S["reg"], rng)
-    from copas import nueva_copa
-    S["copa"] = nueva_copa()
+    from copas import sortear_copa
+    S["copa"] = sortear_copa(S, rng)    # se juega durante la temporada, los miércoles
 
     #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
     for liga in [S["pb"], S["pc"]]:

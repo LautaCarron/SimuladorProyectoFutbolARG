@@ -263,6 +263,9 @@ def df_stats(nombres, r, v, ids):
     })
     df["DG"] = df["GF"] - df["GC"]
     df["Pts"] = 3 * df["G"] + df["E"]
+    quita = v.get("quita") if hasattr(v, "get") else None      # sanciones del Tribunal de Disciplina
+    if quita:
+        df["Pts"] -= df["Equipo"].map(quita).fillna(0).astype(int)
     df["Media"] = np.asarray(r)[ids].round(1)
     return df.sort_values(["Pts", "DG", "GF"], ascending=False).reset_index(drop=True)
 

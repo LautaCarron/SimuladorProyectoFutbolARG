@@ -34,6 +34,7 @@ from torneos import (
 )
 from regional import FINALES_REG
 from logos import logo_img
+from calendario import dia_de, dia_partido, texto_dia
 
 
 def _estado():
@@ -385,11 +386,80 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .rf .nm[data-club]{cursor:pointer;}
 .rf .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
 .bt .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
-/* Copa Argentina: cuadro por llaves */
-.copa-bracket{grid-template-columns:repeat(4,minmax(215px,1fr)) minmax(190px,.9fr);}
-.copa-final{grid-template-columns:repeat(3,minmax(215px,1fr)) minmax(200px,.9fr);}
-.copa-bracket .round.last .round-b{justify-content:center;}
-.bt .logo-mini{flex:none;opacity:.9;}
+/* Copa Argentina: cuadro en formato llave (tarjetas iguales y líneas que unen cada cruce) */
+.kb-wrap{overflow-x:auto;padding:4px 2px 12px;margin-bottom:6px;}
+.kb{display:grid;grid-template-columns:repeat(var(--cols),minmax(200px,1fr));column-gap:30px;min-width:calc(var(--cols) * 200px + (var(--cols) - 1) * 30px);}
+.kb-h{text-align:center;margin-bottom:10px;}
+.kb-body{display:flex;flex-direction:column;height:var(--alto);}
+.kb-pair{flex:1;display:flex;flex-direction:column;position:relative;}
+.kb-slot{flex:1;display:flex;align-items:center;position:relative;}
+.kb-slot>*{width:100%;}
+.kb-pair::after{content:"";position:absolute;right:-15px;top:25%;bottom:25%;width:14px;border:1.5px solid var(--line-2);border-left:0;border-radius:0 6px 6px 0;}
+.kb-pair::before{content:"";position:absolute;right:-30px;top:50%;width:15px;border-top:1.5px solid var(--line-2);}
+.kb-solo::after{content:"";position:absolute;right:-30px;top:50%;width:30px;border-top:1.5px solid var(--line-2);}
+.kb-m{position:relative;border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;box-shadow:0 1px 0 var(--soft2);}
+.kb-t{display:flex;align-items:center;gap:7px;height:31px;padding:0 9px;font-size:.8rem;}
+.kb-t+.kb-t{border-top:1px solid var(--line);}
+.kb-n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;cursor:pointer;}
+.kb-n:hover{color:var(--cel2);}
+.kb-g{min-width:14px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:.9rem;}
+.kb-p{font-size:.66rem;font-weight:800;color:var(--pen);}
+.kb-t.win{box-shadow:inset 3px 0 0 var(--cel2);background:color-mix(in srgb,var(--cel) 7%,transparent);}
+.kb-t.win .kb-n{font-weight:800;}
+.kb-t.lose{opacity:.48;}
+.kb-t.tbd .kb-n{font-style:italic;font-weight:500;color:var(--tinta-3);cursor:default;}
+.kb-vacio{width:20px;height:20px;flex:none;border:1.5px dashed var(--line-2);border-radius:50%;}
+.kb-inc{position:absolute;right:4px;top:-1px;font-size:.62rem;color:var(--lose);}
+.kb-champ{border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:6px;background:var(--papel);padding:14px 10px;text-align:center;}
+.kb-champ .t{font-stretch:85%;font-size:.6rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.kb-champ .nm{font-weight:900;font-size:.95rem;text-transform:uppercase;margin-top:6px;line-height:1.15;}
+.kb-champ .s{font-size:.7rem;color:var(--tinta-2);margin-top:2px;}
+.kb-champ.vacio{opacity:.55;}
+.kb .logo-mini,.bt .logo-mini{flex:none;opacity:.9;}
+/* avisos: suspensiones y sanciones */
+.avisos{display:flex;flex-direction:column;gap:10px;}
+.aviso{display:flex;gap:12px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;background:var(--papel);padding:10px 14px;}
+.aviso.grave{border-left-color:var(--lose);}
+.aviso.gravisimo{border-left-color:var(--lose);background:color-mix(in srgb,var(--lose) 8%,var(--papel));}
+.av-ico{font-size:1.4rem;line-height:1.2;}
+.av-cuerpo{min-width:0;flex:1;}
+.av-meta{font-size:.68rem;font-weight:700;color:var(--tinta-3);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.av-tit{font-weight:900;font-size:.98rem;margin-top:3px;}
+.av-partido{font-size:.8rem;font-weight:700;margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.av-partido span{color:var(--tinta-3);font-weight:500;}
+.av-txt{font-size:.82rem;color:var(--tinta-2);margin-top:4px;line-height:1.4;}
+.av-sancion{font-size:.78rem;font-weight:700;margin-top:6px;color:var(--lose);}
+.aviso:not(.grave) .av-sancion{color:var(--tinta-2);}
+.aviso-banner{display:flex;align-items:center;gap:10px;border:1px solid color-mix(in srgb,var(--lose) 45%,transparent);background:color-mix(in srgb,var(--lose) 9%,transparent);border-radius:6px;padding:8px 12px;margin:6px 0 4px;font-size:.84rem;}
+.aviso-banner b{font-weight:900;}
+.inc-badge{font-size:.7rem;font-weight:800;color:var(--lose);border:1px solid color-mix(in srgb,var(--lose) 45%,transparent);border-radius:3px;padding:0 5px;}
+.m-dia{font-size:.72rem;font-weight:700;color:var(--tinta-2);text-transform:capitalize;margin-left:4px;}
+/* calendario */
+.cal{display:flex;flex-direction:column;gap:8px;}
+.cal-dia{display:flex;gap:12px;border:1px solid var(--line);border-radius:6px;background:var(--papel);padding:8px 12px;}
+.cal-dia.jugado{opacity:.78;}
+.cal-dia.hoy{border-color:var(--cel2);box-shadow:inset 3px 0 0 var(--cel2);}
+.cal-num{width:44px;flex:none;text-align:center;}
+.cal-num b{display:block;font-size:1.35rem;font-weight:900;line-height:1.1;}
+.cal-num span{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--tinta-3);}
+.cal-ev{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.cal-comp summary{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.84rem;padding:3px 0;list-style:none;flex-wrap:wrap;}
+.cal-comp summary::-webkit-details-marker{display:none;}
+.cal-comp summary::before{content:"▸";color:var(--tinta-3);font-size:.7rem;width:8px;}
+.cal-comp[open] summary::before{content:"▾";}
+.cal-rot{color:var(--tinta-2);font-size:.78rem;}
+.cal-est{margin-left:auto;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--tinta-3);border:1px solid var(--line-2);border-radius:3px;padding:1px 6px;}
+.cal-est.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 50%,transparent);}
+.cal-ps{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:2px 18px;padding:6px 0 8px 16px;}
+.cal-p{display:grid;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);align-items:center;gap:6px;font-size:.78rem;padding:3px 0;border-bottom:1px dashed var(--line);}
+.cal-p .cl{text-align:right;justify-self:end;display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.cal-p .cv{display:flex;align-items:center;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;}
+.cal-p .cs{text-align:center;font-weight:800;font-variant-numeric:tabular-nums;}
+.cal-p .cs i{font-style:normal;color:var(--lose);margin-left:2px;}
+.cal-p .cn{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cal-p .cs small{display:block;font-size:.62rem;color:var(--pen);font-weight:800;line-height:1;}
+.cal-p .crest-img,.cal-p .crest{flex:none;}
+.cal-vacio{font-size:.78rem;color:var(--tinta-3);padding:4px 0 6px 16px;}
 .logo-comp{vertical-align:middle;object-fit:contain;}
 /* escudos oscuros (p. ej. Central Norte): contorno claro para que se vean en modo oscuro */
 :root[data-tema="oscuro"] .crest-img.crest-osc{filter:drop-shadow(0 0 .7px rgba(255,255,255,.9)) drop-shadow(0 0 .7px rgba(255,255,255,.6));}
@@ -677,9 +747,12 @@ def fila_partido_html(p, abierto=False):
     """Partido en formato tarjeta."""
     wl = " w" if p["gana"] == p["local"] else ""
     wv = " w" if p["gana"] == p["visita"] else ""
+    dia = dia_partido(st.session_state.S, p)
     meta = (chip(p["liga"]) + (chip(p["comp"]) if p["comp"] != p["liga"] else "")
             + f'<span style="opacity:.7;font-weight:600">{esc(p["rotulo"])}</span>'
-            + ('<span style="opacity:.6">· cancha neutral</span>' if p["neutral"] else ""))
+            + (f'<span class="m-dia">{esc(texto_dia(dia, False))}</span>' if dia else "")
+            + ('<span style="opacity:.6">· cancha neutral</span>' if p["neutral"] else "")
+            + (f'<span class="inc-badge">⚠ {esc(p["incidente"])}</span>' if p.get("incidente") else ""))
     return (f'<div class="mrow"><div class="meta">{meta}</div><div class="mline">'
             f'<div class="side l{wl}">{esc(p["local"])} {crest(p["local"], 26)}</div>'
             f'{marcador_html(p)}'
@@ -884,10 +957,14 @@ def render_ficha(nombre, clave):
             desenlace = "Empató"
         cond = "Neutral" if p["neutral"] else ("Local" if local else "Visitante")
         comp = p["comp"] if p["comp"] == p["liga"] else f"{p['liga']} · {p['comp']}"
+        if p.get("incidente"):
+            desenlace += " · ⚠ " + p["incidente"]
         filas.append({
-            "Fecha": p["fecha"], "Competición": comp, "Condición": cond,
+            "Fecha": p["fecha"], "Día": texto_dia(dia_partido(S, p), False),
+            "Competición": comp, "Condición": cond,
             "Rival": rival, "Resultado": res, "Desenlace": desenlace,
-            "_t": norm(f"{rival} {nombre} {comp} {cond} {desenlace} {p['rotulo']}"),
+            "_t": norm(f"{rival} {nombre} {comp} {cond} {desenlace} {p['rotulo']} "
+                       f"{texto_dia(dia_partido(S, p))}"),
             "_m": f" {gf}-{gc} {gc}-{gf} ",
         })
 
@@ -926,7 +1003,7 @@ def render_ficha(nombre, clave):
     if q:
         st.caption(f"{len(vis)} de {len(filas)} partidos")
     # rival y resultado primero: en el celular se ven sin deslizar la tabla
-    df = pd.DataFrame(vis)[["Fecha", "Rival", "Resultado", "Desenlace", "Condición", "Competición"]]
+    df = pd.DataFrame(vis)[["Fecha", "Día", "Rival", "Resultado", "Desenlace", "Condición", "Competición"]]
 
     def color_res(fila):
         d = fila["Desenlace"]
@@ -1031,8 +1108,12 @@ def vista_fixture(liga, region=None):
               args=(key, 1, total), disabled=elegida >= total)
     estado = chip("Jugada", "#16a34a") if elegida <= jugadas else (
         chip("Próxima fecha", "#2f7fd0") if elegida == jugadas + 1 else chip("Por jugar", "#64748b"))
+    liga_cal = {"p": "Primera División", "b": "Primera Nacional", "f": "Federal A", "pb": "Primera B",
+                "pc": "Primera C", "reg": "Regional Amateur"}.get(liga)
+    dia = dia_de(S, liga_cal, elegida) if liga_cal else None
     st.markdown(f'<div class="fx-head"><b style="font-size:1.05rem">{esc(rotulo(elegida))}</b>'
-                f'{estado}</div>', unsafe_allow_html=True)
+                f'{estado}<span class="m-dia">{esc(texto_dia(dia)) if dia else ""}</span></div>',
+                unsafe_allow_html=True)
     partidos = obtener(elegida)
     if not partidos:
         st.info("No hay partidos de esta región en esta fecha." if region else
@@ -1566,79 +1647,196 @@ def finales_reg_html(SR):
 
 
 # ---- Copa Argentina: cuadro por llaves (A-H) y fase final ----
-def _copa_card(SC, m, final=False):
-    """Tarjeta de un cruce de la Copa: escudo, club, logo de su liga y goles (neutral)."""
+def _kb_card(SC, m):
+    """Cruce de la Copa en el cuadro: dos renglones iguales (escudo, club, logo de su liga,
+    penales y goles). El que pasa, resaltado."""
     if m is None:
-        fila = '<div class="bt tbd"><span class="nm">Por definir</span></div>'
-        return f'<div class="bm">{fila}{fila}</div>'
+        fila = '<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">A definir</span></div>'
+        return f'<div class="kb-m">{fila}{fila}</div>'
     nom, p = SC["nombres"], m["p"]
     filas = ""
     for k, i in enumerate((m["a"], m["b"])):
-        cls = "" if m["gana"] is None else ("win" if m["gana"] == i else "lose")
+        cls = "" if m["gana"] is None else (" win" if m["gana"] == i else " lose")
         g = (p["gl"] if k == 0 else p["gv"]) if p else ""
-        pk = f'<span class="p">({p["pen"][k]})</span>' if p and p["pen"] else ""
-        filas += (f'<div class="bt {cls}">{crest(nom[i], 22)}{_nm_club(nom[i])}'
-                  f'{logo_img(SC["origen"][i], 15, "logo-mini")}{pk}<span class="g">{g}</span></div>')
-    if p is None:
-        return f'<div class="bm">{filas}<div class="bfoot">Cancha neutral · a jugar</div></div>'
-    pen = f"Penales {p['pen'][0]}-{p['pen'][1]} · " if p["pen"] else ""
-    que = "Campeón" if final else "Avanza"
-    return f'<div class="bm">{filas}<div class="bfoot">{pen}{que}: <b>{esc(nom[m["gana"]])}</b></div></div>'
+        pk = f'<span class="kb-p">({p["pen"][k]})</span>' if p and p["pen"] else ""
+        n = esc(nom[i])
+        filas += (f'<div class="kb-t{cls}">{crest(nom[i], 20)}'
+                  f'<span class="kb-n" role="button" tabindex="0" data-club="{n}" title="{n}">{n}</span>'
+                  f'{logo_img(SC["origen"][i], 14, "logo-mini")}{pk}<b class="kb-g">{g}</b></div>')
+    alerta = ' <span class="kb-inc" title="{}">⚠</span>'.format(esc(p["incidente"])) if p and p.get("incidente") else ""
+    return f'<div class="kb-m">{filas}{alerta}</div>'
 
 
-def _copa_col(titulo, cards, ultima=False):
-    return (f'<div class="round{" last" if ultima else ""}"><div class="round-h">{chip(titulo, "#1e5aa8")}'
-            f'</div><div class="round-b">{cards}</div></div>')
+def _kb_col(titulo, cuerpo):
+    return f'<div class="kb-col"><div class="kb-h">{chip(titulo, "#1e5aa8")}</div><div class="kb-body">{cuerpo}</div></div>'
+
+
+def _kb_ronda(SC, titulo, cruces):
+    """Una ronda: los cruces van de a pares (una línea une a los dos que se enfrentan después)."""
+    if len(cruces) == 1:
+        return _kb_col(titulo, f'<div class="kb-slot kb-solo">{_kb_card(SC, cruces[0])}</div>')
+    cuerpo = "".join(f'<div class="kb-pair"><div class="kb-slot">{_kb_card(SC, cruces[j])}</div>'
+                     f'<div class="kb-slot">{_kb_card(SC, cruces[j + 1])}</div></div>'
+                     for j in range(0, len(cruces), 2))
+    return _kb_col(titulo, cuerpo)
+
+
+def _kb_final(titulo, sub, nombre, origen):
+    if nombre is None:
+        inner = f'<div class="kb-champ vacio"><div class="t">{esc(titulo)}</div><div class="nm">A definir</div></div>'
+    else:
+        inner = (f'<div class="kb-champ"><div class="t">{esc(titulo)}</div>{crest(nombre, 46)}'
+                 f'<div class="nm">{esc(nombre)}</div><div class="s">{esc(origen)}</div></div>')
+    return _kb_col(sub, f'<div class="kb-slot">{inner}</div>')
+
+
+def _kb(cols, alto):
+    return (f'<div class="kb-wrap"><div class="kb" style="--cols:{len(cols)};--alto:{alto}px">'
+            f'{"".join(cols)}</div></div>')
 
 
 def cuadro_llave_html(SC, letra):
     """Una llave (16 equipos): 64avos, 32avos, 16avos y octavos; el ganador va a cuartos."""
     from copas import COPA_CORTO, COPA_LLAVES
     li = COPA_LLAVES.index(letra)
-    cols = ""
+    cols = []
     for k in range(4):
         n = 8 >> k
         ronda = SC["cuadro"][k][li * n:(li + 1) * n] if k < len(SC["cuadro"]) else [None] * n
-        cols += _copa_col(COPA_CORTO[k], "".join(_copa_card(SC, m) for m in ronda))
+        cols.append(_kb_ronda(SC, COPA_CORTO[k], ronda))
     octavos = SC["cuadro"][3][li] if len(SC["cuadro"]) > 3 else None
     g = octavos["gana"] if octavos is not None else None
-    if g is not None:
-        pasa = (f'<div class="champ copa-pasa"><div class="t">Llave {letra} · a cuartos</div>'
-                f'<div style="margin-top:10px">{crest(SC["nombres"][g], 52)}</div>'
-                f'<div class="nm">{esc(SC["nombres"][g])}</div>'
-                f'<div class="s">{esc(SC["origen"][g])}</div></div>')
-    else:
-        pasa = (f'<div class="champ copa-pasa" style="opacity:.55"><div class="t">Llave {letra} · a cuartos'
-                f'</div><div class="nm">Por definir</div></div>')
-    cols += _copa_col("Cuartos", pasa, ultima=True)
-    return f'<div class="bracket copa-bracket">{cols}</div>'
+    cols.append(_kb_final(f"Llave {letra}", "A cuartos", SC["nombres"][g] if g is not None else None,
+                          SC["origen"][g] if g is not None else ""))
+    return _kb(cols, 8 * 74)
 
 
 def cuadro_final_copa_html(SC):
     """Fase final: cuartos (ganadores de las llaves A-H), semifinales, final y campeón."""
     from copas import COPA_CORTO, COPA_LLAVES
-    cols = ""
+    cols = []
     for k, n in ((4, 4), (5, 2), (6, 1)):
         if k < len(SC["cuadro"]):
-            cards = "".join(_copa_card(SC, m, final=(k == 6)) for m in SC["cuadro"][k])
-        elif k == 4:                                   # todavía no se conocen: qué llaves se cruzan
-            cards = "".join(
-                f'<div class="bm"><div class="bt tbd"><span class="nm">Ganador llave {COPA_LLAVES[2 * j]}'
-                f'</span></div><div class="bt tbd"><span class="nm">Ganador llave {COPA_LLAVES[2 * j + 1]}'
-                f'</span></div></div>' for j in range(4))
+            cols.append(_kb_ronda(SC, COPA_CORTO[k], SC["cuadro"][k]))
+        elif k == 4:                                    # qué llaves se cruzan en cuartos
+            vacias = "".join(
+                f'<div class="kb-pair">' + "".join(
+                    f'<div class="kb-slot"><div class="kb-m">'
+                    f'<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">Ganador llave '
+                    f'{COPA_LLAVES[2 * j2]}</span></div><div class="kb-t tbd"><span class="kb-vacio"></span>'
+                    f'<span class="kb-n">Ganador llave {COPA_LLAVES[2 * j2 + 1]}</span></div></div></div>'
+                    for j2 in (2 * j, 2 * j + 1)) + '</div>' for j in range(2))
+            cols.append(_kb_col(COPA_CORTO[k], vacias))
         else:
-            cards = "".join(_copa_card(SC, None) for _ in range(n))
-        cols += _copa_col(COPA_CORTO[k], cards)
+            cols.append(_kb_ronda(SC, COPA_CORTO[k], [None] * n))
     c = SC["campeon"]
-    if c is not None:
-        champ = (f'<div class="champ"><div class="t">Campeón · Copa Argentina</div>'
-                 f'<div style="margin-top:10px">{crest(SC["nombres"][c], 64)}</div>'
-                 f'<div class="nm">{esc(SC["nombres"][c])}</div><div class="s">{esc(SC["origen"][c])}</div></div>')
-    else:
-        champ = ('<div class="champ" style="opacity:.55"><div class="t">Campeón · Copa Argentina</div>'
-                 '<div class="nm">Por definir</div></div>')
-    cols += _copa_col("Campeón", champ, ultima=True)
-    return f'<div class="bracket copa-bracket copa-final">{cols}</div>'
+    cols.append(_kb_final("Campeón · Copa Argentina", "Campeón", SC["nombres"][c] if c is not None else None,
+                          SC["origen"][c] if c is not None else ""))
+    return _kb(cols, 4 * 84)
+
+
+# ---- Avisos (Tribunal de Disciplina, suspensiones) ----
+_ICONO_AVISO = {"clima": "⛈", "luz": "💡", "bengalas": "🔥", "invasion": "🏃", "micro": "🚌",
+                "huelga": "✋", "arbitro": "🟥", "corrupcion": "⚖", "gravisimo": "🚨"}
+
+
+def avisos_html(avisos, con_temporada=False):
+    """Tarjetas de los avisos (lo más nuevo primero)."""
+    S = st.session_state.S
+    out = ""
+    for a in reversed(avisos):
+        grave = a["clave"] not in ("clima", "luz")
+        dia = dia_de(S, a["liga"], a["fecha"]) if not con_temporada else None
+        cuando = (f'Temporada {a["temp"]}' if con_temporada else texto_dia(dia) if dia else "")
+        out += (f'<div class="aviso{" grave" if grave else ""}{" gravisimo" if a["clave"] == "gravisimo" else ""}">'
+                f'<div class="av-ico">{_ICONO_AVISO.get(a["clave"], "⚠")}</div><div class="av-cuerpo">'
+                f'<div class="av-meta">{logo_img(a["liga"], 16)} {esc(a["liga"])} · {esc(a["rotulo"])}'
+                f'{" · " + esc(cuando) if cuando else ""}</div>'
+                f'<div class="av-tit">{esc(a["titulo"])}</div>'
+                f'<div class="av-partido">{crest(a["local"], 18)} {esc(a["local"])} <span>vs.</span> '
+                f'{crest(a["visita"], 18)} {esc(a["visita"])}</div>'
+                f'<div class="av-txt">{esc(a["texto"])}</div>'
+                f'<div class="av-sancion">{esc(a["sancion"])}</div></div></div>')
+    return f'<div class="avisos">{out}</div>'
+
+
+# ---- Calendario del mes ----
+def _cal_partidos(S, liga, n):
+    """Partidos (jugados o por jugar) de la fecha n de una liga, o la ronda n de la Copa."""
+    if liga == "Copa Argentina":
+        SC = S["copa"]
+        if n - 1 >= len(SC["cuadro"]):
+            return []
+        nom = SC["nombres"]
+        return [m["p"] or pendiente("Copa Argentina", n, "", "", nom[m["a"]], nom[m["b"]])
+                for m in SC["cuadro"][n - 1]]
+    obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
+               "Federal A": partidos_fecha_f, "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
+               "Regional Amateur": partidos_fecha_reg}[liga]
+    try:
+        return obtener(n)
+    except (IndexError, KeyError, TypeError):
+        return []
+
+
+def _cal_rotulo(S, liga, n):
+    from copas import COPA_RONDAS
+    if liga == "Copa Argentina":
+        return COPA_RONDAS[n - 1]
+    return {"Primera División": lambda: rotulo_p(S, n), "Primera Nacional": lambda: rotulo_b(S["b"], n),
+            "Federal A": lambda: rotulo_f(S["f"], n), "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
+            }.get(liga, lambda: f"Fecha {n}")()
+
+
+def eventos_calendario(S):
+    """Todo lo programado en la temporada: lista de (día, competición, n, jugada)."""
+    from calendario import INICIO, total_liga
+    ev = []
+    jugadas = {"Primera División": S["fecha"], "Primera Nacional": S["b"]["fecha"], "Federal A": S["f"]["fecha"],
+               "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Regional Amateur": S["reg"]["fecha"]}
+    for liga in INICIO:
+        for n in range(1, total_liga(S, liga) + 1):
+            ev.append((dia_de(S, liga, n), liga, n, n <= jugadas[liga]))
+    SC = S["copa"]
+    for n in range(1, SC["total"] + 1):
+        ev.append((dia_de(S, "Copa Argentina", n), "Copa Argentina", n, n <= SC["ronda"]))
+    orden = ["Copa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+             "Primera B", "Primera C"]
+    return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
+
+
+def _cal_res(p):
+    if p["gl"] is None:
+        return "vs"
+    pen = f"<small>({p['pen'][0]}-{p['pen'][1]})</small>" if p["pen"] else ""
+    return f"{p['gl']}-{p['gv']}{pen}"
+
+
+def calendario_mes_html(S, eventos, mes, proximo):
+    """Días del mes con lo que se juega cada uno (cada competición se despliega)."""
+    dias = {}
+    for d, liga, n, jugada in eventos:
+        if d.month == mes:
+            dias.setdefault(d, []).append((liga, n, jugada))
+    out = ""
+    for d in sorted(dias):
+        clase = "hoy" if d == proximo else ("jugado" if all(j for _, _, j in dias[d]) else "")
+        comps = ""
+        for liga, n, jugada in dias[d]:
+            partidos = _cal_partidos(S, liga, n)
+            filas = "".join(
+                f'<div class="cal-p"><span class="cl"><span class="cn">{esc(p["local"])}</span>{crest(p["local"], 16)}</span>'
+                f'<span class="cs">{_cal_res(p)}'
+                f'{"<i>⚠</i>" if p.get("incidente") else ""}</span>'
+                f'<span class="cv">{crest(p["visita"], 16)}<span class="cn">{esc(p["visita"])}</span></span></div>'
+                for p in partidos) or '<div class="cal-vacio">Los cruces se conocen más adelante.</div>'
+            estado = ('<span class="cal-est ok">Jugada</span>' if jugada else '<span class="cal-est">Por jugar</span>')
+            comps += (f'<details class="cal-comp"><summary>{logo_img(liga, 20)}<b>{esc(liga)}</b>'
+                      f'<span class="cal-rot">{esc(_cal_rotulo(S, liga, n))}</span>{estado}</summary>'
+                      f'<div class="cal-ps">{filas}</div></details>')
+        out += (f'<div class="cal-dia {clase}"><div class="cal-num"><b>{d.day}</b>'
+                f'<span>{texto_dia(d, False)[:3]}</span></div><div class="cal-ev">{comps}</div></div>')
+    return f'<div class="cal">{out}</div>'
 
 
 def barra_estado(items, progreso):

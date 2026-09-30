@@ -1,26 +1,30 @@
 """Copas: Copa Argentina.
 
 Copa Argentina: 128 equipos, eliminación directa a partido único desde 64avos de final.
-Todos los partidos en cancha neutral; si empatan, penales.
+Todos los partidos en cancha neutral; si empatan, penales. Se juega durante la temporada
+(los miércoles, en el medio de las ligas: ver calendario.py).
 
-Clasifican (con las posiciones finales de la temporada, por eso se sortea cuando terminan
-todas las ligas):
+Clasifican, como en la vida real, por lo hecho en la temporada anterior:
   * Primera División: los 30.
   * Primera Nacional: los 36.
   * Federal A: los 20 de la Zona Campeonato y los 8 mejores de la Zona Descenso.
   * Primera B: los 12 primeros.
   * Primera C: los 10 primeros.
   * Regional Amateur: los campeones de las 12 regiones.
-Si alguna liga no llega a su cupo (p. ej. una región sin campeón), el lugar lo ocupa el
-siguiente mejor de la Zona Descenso del Federal A.
+En la temporada 1 (no hay anterior) entran los de mejor media de cada liga. Si alguna liga no
+llega a su cupo (p. ej. una región sin campeón), el lugar lo ocupa el siguiente mejor de la
+Zona Descenso del Federal A.
 
-Sorteo: bombo 1 con los 64 de mayor categoría (Primera y los mejores de la Primera Nacional
-por media) y bombo 2 con el resto; cada partido de 64avos cruza uno de cada bombo. El cuadro
-se divide en 8 llaves (A-H) de 16 equipos: el ganador de cada llave juega los cuartos.
+Cruces de 64avos (por categoría, lo más justo): la categoría más alta contra la más baja,
+la segunda contra la anteúltima y así (Primera vs. Regional Amateur, B Nacional vs. Primera C,
+Federal A vs. Primera B); los que sobran se vuelven a cruzar con la misma regla. Dentro de
+cada cruce de categorías el rival se sortea. El cuadro se divide en 8 llaves (A-H) de 16
+equipos: el ganador de cada llave juega los cuartos.
 """
 
 import numpy as np
 
+from incidentes import revisar_copa
 from motor import jugar_ko, nuevo_partido, tanda_penales
 from regional import REGIONES_REG
 from torneos import primera_terminada, tabla_f_f2, tabla_pb, tabla_pc, total_b
@@ -61,35 +65,91 @@ def clasificados_copa(S):
     sumar(SB, range(len(SB["nombres"])), "Primera Nacional", lambda k: "Primera Nacional")
     camp = tabla_f_f2(SF, 0)["id"].to_numpy()
     desc = tabla_f_f2(SF, 1)["id"].to_numpy()
-    sumar(SF, camp, "Federal A", lambda k: "Zona Campeonato")
-    sumar(SF, desc[:8], "Federal A", lambda k: f"{k + 1}° Zona Descenso")
-    sumar(SPB, tabla_pb(SPB)["id"].to_numpy()[:12], "Primera B", lambda k: f"{k + 1}° de la tabla")
-    sumar(SPC, tabla_pc(SPC)["id"].to_numpy()[:10], "Primera C", lambda k: f"{k + 1}° de la tabla")
+    sumar(SF, camp, "Federal A", lambda k: "Federal A · Zona Campeonato")
+    sumar(SF, desc[:8], "Federal A", lambda k: f"Federal A · {k + 1}° Zona Descenso")
+    sumar(SPB, tabla_pb(SPB)["id"].to_numpy()[:12], "Primera B", lambda k: f"Primera B · {k + 1}°")
+    sumar(SPC, tabla_pc(SPC)["id"].to_numpy()[:10], "Primera C", lambda k: f"Primera C · {k + 1}°")
     campeones = [(reg, SR["campeones"].get(reg)) for reg in REGIONES_REG]
     for reg, c in campeones:
         if c is not None:
-            lista.append((SR["nombres"][c], float(SR["r"][c]), "Regional Amateur", f"Campeón {reg}"))
+            lista.append((SR["nombres"][c], float(SR["r"][c]), "Regional Amateur", f"Campeón Regional {reg}"))
     extra = 8
     while len(lista) < COPA_EQUIPOS and extra < len(desc):      # cupos vacantes
-        sumar(SF, desc[extra:extra + 1], "Federal A", lambda k, e=extra: f"{e + 1}° Zona Descenso")
+        sumar(SF, desc[extra:extra + 1], "Federal A", lambda k, e=extra: f"Federal A · {e + 1}° Zona Descenso")
         extra += 1
     return lista[:COPA_EQUIPOS]
 
 
-def sortear_copa(S, rng):
-    """Arma el cuadro de 64avos: bombo 1 (los 64 de mayor categoría) contra bombo 2."""
+def clasificados_inicial(S):
+    """Temporada 1: no hay temporada anterior, entran los de mejor media de cada liga."""
+    SB, SF, SPB, SPC, SR = S["b"], S["f"], S["pb"], S["pc"], S["reg"]
+    lista = [(n, "Primera División") for n in S["nombres"]] + [(n, "Primera Nacional") for n in SB["nombres"]]
+
+    def mejores(L, k, criterio):
+        orden = np.argsort(-np.asarray(L["r"]))[:k]
+        return [(L["nombres"][int(i)], criterio) for i in orden]
+
+    lista += mejores(SF, 28, "Federal A (por media)")
+    lista += mejores(SPB, 12, "Primera B (por media)")
+    lista += mejores(SPC, 10, "Primera C (por media)")
+    for reg in REGIONES_REG:
+        ids = [i for i, rg in enumerate(SR["region_de"]) if rg == reg]
+        if ids:
+            i = max(ids, key=lambda k: SR["r"][k])
+            lista.append((SR["nombres"][i], f"Regional {reg} (por media)"))
+    ya = {n for n, _ in lista}
+    extra = [n for n in (SF["nombres"][int(i)] for i in np.argsort(-np.asarray(SF["r"]))) if n not in ya]
+    while len(lista) < COPA_EQUIPOS and extra:
+        lista.append((extra.pop(0), "Federal A (por media)"))
+    return lista[:COPA_EQUIPOS]
+
+
+def categoria_actual(S):
+    """{club: (categoría, media)} de la temporada en curso."""
+    out = {}
+    for L, cat in ((S, "Primera División"), (S["b"], "Primera Nacional"), (S["f"], "Federal A"),
+                   (S["pb"], "Primera B"), (S["pc"], "Primera C"), (S["reg"], "Regional Amateur")):
+        for n, x in zip(L["nombres"], L["r"]):
+            out[n] = (cat, float(x))
+    return out
+
+
+def _cruces_por_categoria(por_cat):
+    """Arma los 64 cruces: la categoría más alta contra la más baja, la segunda contra la
+    anteúltima, etc.; con los que sobran se repite la misma regla."""
+    cruces = []
+    while True:
+        vivas = [c for c in _CATEGORIAS if por_cat.get(c)]
+        if not vivas:
+            return cruces
+        if len(vivas) == 1:
+            eq = por_cat[vivas[0]]
+            while len(eq) >= 2:
+                cruces.append((eq.pop(0), eq.pop(0)))
+            return cruces
+        for k in range(len(vivas) // 2):
+            alta, baja = por_cat[vivas[k]], por_cat[vivas[-1 - k]]
+            while alta and baja:
+                cruces.append((alta.pop(0), baja.pop(0)))
+
+
+def sortear_copa(S, rng, lista=None):
+    """Sorteo de la Copa de la temporada en curso con los clasificados `lista`
+    [(club, cómo clasificó)] (por defecto, los de la temporada anterior)."""
     SC = nueva_copa()
-    lista = clasificados_copa(S)
-    orden = sorted(range(len(lista)), key=lambda k: (_CATEGORIAS.index(lista[k][2]), -lista[k][1]))
-    mitad = len(lista) // 2
-    bombo1 = list(rng.permutation(orden[:mitad]))
-    bombo2 = list(rng.permutation(orden[mitad:]))
-    SC["nombres"] = [x[0] for x in lista]
-    SC["r"] = np.array([x[1] for x in lista], dtype=float)
-    SC["origen"] = [x[2] for x in lista]
-    SC["criterio"] = [x[3] for x in lista]
-    SC["cuadro"] = [[{"a": int(a), "b": int(b), "p": None, "gana": None}
-                     for a, b in zip(bombo1, bombo2)]]
+    lista = lista or S.get("copa_clasif") or clasificados_inicial(S)
+    actual = categoria_actual(S)
+    lista = [(n, c) for n, c in lista if n in actual][:COPA_EQUIPOS]
+    SC["nombres"] = [n for n, _ in lista]
+    SC["criterio"] = [c for _, c in lista]
+    SC["origen"] = [actual[n][0] for n in SC["nombres"]]
+    SC["r"] = np.array([actual[n][1] for n in SC["nombres"]], dtype=float)
+    por_cat = {}
+    for i in rng.permutation(len(lista)):
+        por_cat.setdefault(SC["origen"][int(i)], []).append(int(i))
+    cruces = _cruces_por_categoria(por_cat)
+    orden = rng.permutation(len(cruces))                 # lugar de cada cruce en el cuadro
+    SC["cuadro"] = [[{"a": cruces[k][0], "b": cruces[k][1], "p": None, "gana": None} for k in orden]]
     SC["sorteada"] = True
     return SC
 
@@ -111,6 +171,7 @@ def simular_ronda_copa(SC, P, rng):
         m["p"] = nuevo_partido(COPA_ARG, k + 1, COPA_RONDAS[k], COPA_RONDAS[k], nom[m["a"]], nom[m["b"]],
                                g1, g2, tanda=tanda, gana=nom[m["gana"]], neutral=True)
         SC["log"].append(m["p"])
+    revisar_copa(SC, llaves, rng)                       # suspensiones y exclusiones (rarísimo)
     SC["ronda"] += 1
     if SC["ronda"] < SC["total"]:
         SC["cuadro"].append([{"a": llaves[2 * j]["gana"], "b": llaves[2 * j + 1]["gana"], "p": None,
