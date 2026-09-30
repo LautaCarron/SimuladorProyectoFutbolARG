@@ -164,7 +164,7 @@ ESCUDOS = {
     "Sportivo Belgrano": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Escudo_del_Club_Sportivo_Belgrano_de_San_Francisco.svg/120px-Escudo_del_Club_Sportivo_Belgrano_de_San_Francisco.svg.png",
     "Bartolomé Mitre (Posadas)": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/ESCUDO_MITRE.png/120px-ESCUDO_MITRE.png",
     "Boca Unidos": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Escudo_del_Club_Atl%C3%A9tico_Boca_Unidos.svg/120px-Escudo_del_Club_Atl%C3%A9tico_Boca_Unidos.svg.png",
-    "Defensores de Vilelas": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Club_Atl%C3%A9tico_Defensores_de_Vilelas.png/120px-Club_Atl%C3%A9tico_Defensores_de_Vilelas.png",
+    "Defensores de Vilelas": "https://r2.thesportsdb.com/images/media/team/badge/6kqizu1772810693.png/small",
     "Juventud Antoniana": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Escudo_Oficial_Centro_Juventud_Antoniana.svg/120px-Escudo_Oficial_Centro_Juventud_Antoniana.svg.png",
     "San Martín (Formosa)": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Club_Sportivo_General_San_Mart%C3%ADn.svg/120px-Club_Sportivo_General_San_Mart%C3%ADn.svg.png",
     "Sarmiento (La Banda)": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Escudo_Sarmiento_Estrellas_Doradas.png/120px-Escudo_Sarmiento_Estrellas_Doradas.png",
@@ -184,7 +184,7 @@ ESCUDOS = {
     "Círculo Deportivo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Circulo_deportivo.png/120px-Circulo_deportivo.png",
     "Germinal": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Club_Atl%C3%A9tico_Germinal.svg/120px-Club_Atl%C3%A9tico_Germinal.svg.png",
     "Guillermo Brown": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Escudo_de_Guillermo_Brown.svg/120px-Escudo_de_Guillermo_Brown.svg.png",
-    "Kimberley": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Escudo_Kimberley.png/120px-Escudo_Kimberley.png",
+    "Kimberley": "https://r2.thesportsdb.com/images/media/team/badge/l53nr11734114727.png/small",
     "Olimpo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/EscudoOlimpo.svg/120px-EscudoOlimpo.svg.png",
     "Ramón Santamarina": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Escudo_del_Club_Santa_Marina_de_Tandil.svg/120px-Escudo_del_Club_Santa_Marina_de_Tandil.svg.png",
     "Sol de Mayo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Club_Sol_de_Mayo.png/120px-Club_Sol_de_Mayo.png",
@@ -225,9 +225,9 @@ ESCUDOS = {
     "Sportivo Italiano": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Club_Sportivo_Italiano_%28Argentina%29_logo.svg?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
     "Flandria": "https://upload.wikimedia.org/wikipedia/commons/3/30/Club_flandria_escudo.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
     "Argentino (Q)": "https://upload.wikimedia.org/wikipedia/commons/3/33/ArgentinodeQuilmes.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original",
-    "Argentinos de Rosario": "",
-    "Central Cordoba de Rosario": "",
-    "Paraguayo": "",
+    "Argentinos de Rosario": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10048.png&h=96&w=96",
+    "Central Cordoba de Rosario": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg/120px-Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg.png",
+    "Paraguayo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10110.png&h=96&w=96",
 
 }
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
@@ -329,6 +329,56 @@ REGION.update({x["nombre"]: GRUPO_FEDERAL_REG[x["region"]] for x in REGIONAL})
 
 def region_de(nombre):
     return REGION.get(nombre, "Centro")
+
+
+# Región del Torneo Regional Amateur (una de las 12 del JSON) de cada club del interior que
+# no está en el JSON: los del Federal A y los del interior de Primera y la Primera Nacional.
+# Es la liga que juegan si algún día descienden al Regional (se respeta su provincia/ciudad).
+REGION_REGIONAL = {
+    # Federal A
+    "9 de Julio (Rafaela)": "Litoral", "Atlético Escobar": "AMBA y La Plata",
+    "Defensores de Belgrano (VR)": "Norte Bonaerense", "Douglas Haig": "Norte Bonaerense",
+    "El Linqueño": "Norte Bonaerense", "Gimnasia (Chivilcoy)": "Norte Bonaerense",
+    "Gimnasia (CdU)": "Litoral", "Independiente (Chivilcoy)": "Norte Bonaerense",
+    "Sportivo Las Parejas": "Litoral", "Sportivo Belgrano": "Centro",
+    "Bartolomé Mitre (Posadas)": "NEA Este", "Boca Unidos": "NEA Este",
+    "Defensores de Vilelas": "NEA Oeste", "Juventud Antoniana": "NOA Norte",
+    "San Martín (Formosa)": "NEA Oeste", "Sarmiento (La Banda)": "NOA Sur",
+    "Sarmiento (Resistencia)": "NEA Oeste", "Sol de América (Formosa)": "NEA Oeste",
+    "Tucumán Central": "NOA Sur", "Argentino (Monte Maíz)": "Centro",
+    "Atenas (Río Cuarto)": "Centro", "Cipolletti": "Patagonia Norte",
+    "Costa Brava": "Pampeana Sur", "Deportivo Rincón": "Patagonia Norte",
+    "FADEP": "Cuyo", "Huracán Las Heras": "Cuyo", "Juventud Unida Universitario": "Cuyo",
+    "San Martín (Mendoza)": "Cuyo", "Alvarado": "Pampeana Sur",
+    "Círculo Deportivo": "Pampeana Sur", "Germinal": "Patagonia Sur",
+    "Guillermo Brown": "Patagonia Sur", "Kimberley": "Pampeana Sur",
+    "Olimpo": "Pampeana Sur", "Ramón Santamarina": "Pampeana Sur",
+    "Sol de Mayo": "Patagonia Norte", "Villa Mitre": "Pampeana Sur",
+    # Interior de Primera
+    "Talleres": "Centro", "Belgrano": "Centro", "Instituto": "Centro",
+    "Estudiantes (Río Cuarto)": "Centro", "Independiente Rivadavia": "Cuyo",
+    "Gimnasia (Mendoza)": "Cuyo", "Central Córdoba (SdE)": "NOA Sur",
+    "Atlético Tucumán": "NOA Sur", "Aldosivi": "Pampeana Sur",
+    "Rosario Central": "Litoral", "Newell's": "Litoral", "Unión": "Litoral",
+    "Sarmiento (Junín)": "Norte Bonaerense",
+    # Interior de la Primera Nacional
+    "Godoy Cruz": "Cuyo", "Deportivo Maipú": "Cuyo", "San Martín (San Juan)": "Cuyo",
+    "Patronato": "Litoral", "Atlético de Rafaela": "Litoral", "Colón": "Litoral",
+    "San Martín (Tucumán)": "NOA Sur", "Güemes": "NOA Sur", "Mitre (SdE)": "NOA Sur",
+    "Gimnasia (Jujuy)": "NOA Norte", "Gimnasia y Tiro": "NOA Norte", "Central Norte": "NOA Norte",
+    "Racing (Córdoba)": "Centro", "Chaco For Ever": "NEA Oeste",
+    "Deportivo Madryn": "Patagonia Sur", "Agropecuario": "Norte Bonaerense",
+    "Ciudad de Bolívar": "Pampeana Sur",
+}
+REGION_REGIONAL.update({x["nombre"]: x["region"] for x in REGIONAL})
+# Si aparece un club del interior sin región del Regional asignada, va a la región del
+# Regional que corresponde a su grupo del Federal A
+_GRUPO_A_REGION = {"Norte": "NOA Sur", "Centro": "Centro", "Buenos Aires": "Norte Bonaerense",
+                   "Patagonia": "Patagonia Norte", "Cuyo": "Cuyo"}
+
+
+def region_regional(nombre):
+    return REGION_REGIONAL.get(nombre) or _GRUPO_A_REGION.get(region_de(nombre), "Centro")
 
 
 N = len(EQUIPOS)            # Primera

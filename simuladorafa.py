@@ -34,6 +34,8 @@ FEDERAL A (Equipos indirectamente afiliados)
   * Ascensos: 1°, 2° y 3° de la Zona Campeonato ascienden directo.
   * Reducido: Del 4° al 8° juegan eliminatorias a partido único por el cuarto
     ascenso a la Primera Nacional.
+  * Descenso: los 6 últimos de la Zona Descenso bajan al Regional Amateur (a la
+    región de su provincia). Si hay igualdad en puntos en el límite, desempate.
 
 PRIMERA B (Equipos directamente afiliados)
   * Formato de liga tradicional: Todos contra todos, ida y vuelta.
@@ -69,6 +71,7 @@ from datos import (
     F_GRUPOS_NOMBRES,
     N,
     origen,
+    region_regional,
 )
 from motor import (
     MAX_R,
@@ -725,13 +728,15 @@ with tab_f:
         aviso("Terminó la fase 1: clasificaron los 4 primeros de cada grupo (20 equipos) a Zona Campeonato, "
               "el resto a Zona Descenso, y <b>todos los puntos se reiniciaron a 0</b>.")
     if ff == SF["f1_rondas"] + SF.get("f2_rondas", 0):
-        aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional. "
+        aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional y los 6 últimos "
+              "de Zona Descenso bajan al Regional Amateur. "
               "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
 
     # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
     desempate_f = SF.get("desempate_camp")
+    desempate_fd = SF.get("desempate_desc")
     titulos_f = ["Posiciones", "Fixture y resultados"]
-    if desempate_f: titulos_f.append("Desempate")
+    if desempate_f or desempate_fd: titulos_f.append("Desempate")
     titulos_f.extend(["Reducido", "Movimientos", "Definiciones"])
     tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
                        
@@ -765,29 +770,42 @@ with tab_f:
     with tab_f["Fixture y resultados"]:
         vista_fixture("f")
         
-    if desempate_f:
-        with tab_f["Desempate"]:
-            seccion("Desempate por el campeonato",
-                    f"Igualaron en puntos en el 1° puesto: {', '.join(desempate_f['equipos'])}",
-                    "#9333ea")
-            grupos_f = {}
-            for p in desempate_f["partidos"]:
-                grupos_f.setdefault(p["comp"], []).append(p)
-            for comp_f, partes in grupos_f.items():
-                if "Liguilla" in comp_f:
-                    seccion(f"Tabla final: {comp_f}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                    st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
-                    with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
-                                     expanded=False):
-                        for p in partes:
-                            st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                else:
-                    if len(grupos_f) > 1:
-                        seccion(comp_f, "Partido único definitorio", "#dc2626")
+    def partidos_desempate_f(info):
+        grupos_f = {}
+        for p in info["partidos"]:
+            grupos_f.setdefault(p["comp"], []).append(p)
+        for comp_f, partes in grupos_f.items():
+            if "Liguilla" in comp_f:
+                seccion(f"Tabla final: {comp_f}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
+                with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
+                                 expanded=False):
                     for p in partes:
-                        st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
-            st.caption("El título se define con desempate en cancha neutral (penales si empatan). "
-                       "El resto de las posiciones se ordena por diferencia de gol.")
+                        st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+            else:
+                if len(grupos_f) > 1:
+                    seccion(comp_f, "Partido único definitorio", "#dc2626")
+                for p in partes:
+                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+
+    if desempate_f or desempate_fd:
+        with tab_f["Desempate"]:
+            if desempate_f:
+                seccion("Desempate por el campeonato",
+                        f"Igualaron en puntos en el 1° puesto: {', '.join(desempate_f['equipos'])}",
+                        "#9333ea")
+                partidos_desempate_f(desempate_f)
+                st.caption("El título se define con desempate en cancha neutral (penales si empatan). "
+                           "El resto de las posiciones se ordena por diferencia de gol.")
+            if desempate_fd:
+                seccion("Desempate por la permanencia",
+                        f"Igualaron en puntos en el límite del descenso (Zona Descenso): "
+                        f"{', '.join(desempate_fd['equipos'])} · se salva"
+                        f"{'n' if desempate_fd['salvados'] > 1 else ''} {desempate_fd['salvados']}",
+                        "#9333ea")
+                partidos_desempate_f(desempate_fd)
+                st.caption("Partido único en cancha neutral (penales si empatan). Los 6 últimos bajan "
+                           "al Regional Amateur.")
 
     with tab_f["Reducido"]:
         seccion("Reducido por el cuarto ascenso",
@@ -834,6 +852,11 @@ with tab_f:
                     '' if SF["asc_reducido"] is not None else
                     '<div style="font-size:.8rem;opacity:.65">El cuarto ascenso sale del '
                     'reducido.</div>'), unsafe_allow_html=True)
+            with st.expander(":material/south: Descensos al Regional Amateur", expanded=False):
+                st.markdown('<div class="mlab">Descienden los 6 últimos de Zona Descenso (a la región '
+                            'de su provincia)</div>'
+                            + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]))
+                                                  for i in SF["descendidos"]]), unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -1162,6 +1185,8 @@ with tab_h:
                 f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
                 f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
                 f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])])}</div>'
+                f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
+                f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
                 f'</div><div style="margin-top:6px;font-size:.88rem">{esc(mv.get("promo_texto", ""))}</div>',
                 unsafe_allow_html=True)
     if S["campeones"]:

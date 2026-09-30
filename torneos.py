@@ -23,6 +23,7 @@ from datos import (
     NB,
     origen,
     region_de,
+    region_regional,
 )
 from motor import (
     MAX_R,
@@ -75,6 +76,7 @@ F_ZONA_TAM = 10                   # Campeonato y Descenso en la fase 2 (10 y 10)
 F_F2_RONDAS = F_ZONA_TAM - 1       # 9 fechas, una rueda
 F_RED = 3                          # eliminatoria, semifinales, final
 F_ETAPAS = ["Eliminatoria preliminar", "Semifinales del reducido", "Final del reducido"]
+F_DESC = 6                         # los 6 últimos de la zona Descenso bajan al Regional Amateur
 
 
 def destino(pos):
@@ -120,12 +122,12 @@ def destino_f1(pos):
     return "→ Zona Campeonato" if pos <= 4 else "→ Zona Descenso"
 
 
-def destino_f2(z, pos):
+def destino_f2(z, pos, n=0):
     if z == 0:
         if pos <= 3:
             return "Ascenso directo"
         return "Reducido" if pos <= 8 else ""
-    return ""
+    return "Desciende" if pos > n - F_DESC else ""
 
 
 def total_primera(S):
@@ -863,6 +865,9 @@ def nueva_estructura_f(SF, rng):
     SF["ascendidos"] = []
     SF["orden_f2_camp"] = None      # orden de la zona Campeonato tras el desempate por el título
     SF["desempate_camp"] = None     # info del desempate por el campeonato (si lo hubo)
+    SF["orden_f2_desc"] = None      # orden de la zona Descenso tras el desempate por la permanencia
+    SF["desempate_desc"] = None     # info del desempate por la permanencia (si lo hubo)
+    SF["descendidos"] = []          # los 6 que bajan al Regional Amateur
 
 
 def tabla_f_grupo(SF, g):
@@ -876,10 +881,11 @@ def tabla_f_grupo(SF, g):
 def tabla_f_f2(SF, z):
     """Tabla de la zona de la fase 2 (0 Campeonato, 1 Descenso)."""
     df = df_stats(SF["nombres"], SF["r"], SF, SF["zonas2"][z])
-    if z == 0 and SF.get("orden_f2_camp") is not None:
-        df = df.set_index("id").loc[SF["orden_f2_camp"]].reset_index()
+    orden = SF.get("orden_f2_camp") if z == 0 else SF.get("orden_f2_desc")
+    if orden is not None:
+        df = df.set_index("id").loc[orden].reset_index()
     df.insert(0, "Pos", df.index + 1)
-    df["Destino"] = [destino_f2(z, p) for p in df["Pos"]]
+    df["Destino"] = [destino_f2(z, p, len(df)) for p in df["Pos"]]
     return df
 
 
@@ -916,6 +922,42 @@ def desempate_campeon_f(SF, P, rng, n_fecha):
     SF["orden_f2_camp"] = np.array(orden)
     SF["desempate_camp"] = {"equipos": [nom[e] for e in bloque], "partidos": partidos,
                             "campeon": nom[campeon]}
+
+
+def desempate_descenso_f(SF, P, rng, n_fecha):
+    """Federal A: descienden al Regional los 6 últimos de la zona Descenso. Si el límite
+    (6° desde abajo) queda igualado en puntos, se define con desempate como en las demás
+    ligas (2 equipos: partido único; 3 o más: liguilla), en cancha neutral y con penales si
+    empatan: nunca por diferencia de gol."""
+    df = tabla_f_f2(SF, 1)
+    pts, ids = df["Pts"].to_numpy(), df["id"].to_numpy()
+    n = len(ids)
+    corte = n - F_DESC                               # 1er puesto que desciende (índice)
+    if corte >= 1 and pts[corte - 1] == pts[corte]:
+        inicio = corte - 1
+        while inicio > 0 and pts[inicio - 1] == pts[corte]:
+            inicio -= 1
+        fin = corte + 1
+        while fin < n and pts[fin] == pts[corte]:
+            fin += 1
+        bloque = [int(i) for i in ids[inicio:fin]]
+        r, nom = SF["r"], SF["nombres"]
+        partidos = []
+
+        def registrar(a, b, gl, gv, tanda, gana, comp):
+            partido = nuevo_partido("Federal A", n_fecha, "Desempate por la permanencia", comp, nom[a],
+                                    nom[b], gl, gv, tanda=tanda, gana=nom[gana], neutral=True)
+            partidos.append(partido)
+            SF["log"].append(partido)
+            return partido
+
+        orden = definir_bloque(rng, r, bloque, P["sorpresa"], registrar, "Desempate Permanencia",
+                               "Liguilla Permanencia", nom, cupos=corte - inicio)
+        ids = np.array([int(i) for i in ids[:inicio]] + orden + [int(i) for i in ids[fin:]])
+        SF["orden_f2_desc"] = ids
+        SF["desempate_desc"] = {"equipos": [nom[e] for e in bloque], "partidos": partidos,
+                                "salvados": corte - inicio}
+    SF["descendidos"] = [int(i) for i in ids[max(corte, 0):]]
 
 
 def iniciar_fase2_f(SF, rng):
@@ -1004,6 +1046,7 @@ def simular_fecha_f(SF, P, rng):
             iniciar_fase2_f(SF, rng)
         elif SF["fecha"] == SF["f1_rondas"] + SF["f2_rondas"]:
             desempate_campeon_f(SF, P, rng, f + 1)
+            desempate_descenso_f(SF, P, rng, f + 1)
             iniciar_reducido_f(SF)
 
     else:                                                  # ---- reducido
@@ -1045,7 +1088,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 8       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 9       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1133,11 +1176,10 @@ def tabla_pc(SPC):
 #    ganadores ascienden al Federal A.
 REG_LIGA = "Regional Amateur"
 REG_FINAL = "Final por el ascenso"
-_REG_INFO = {x["nombre"]: x for x in REGIONAL}
 
 
 def region_reg(nombre):
-    return _REG_INFO[nombre]["region"]
+    return region_regional(nombre)
 
 
 def nueva_estructura_reg(SR, rng):
@@ -1572,7 +1614,8 @@ def nueva_temporada(S, volatilidad):
     garantizados = list(ascendidos_f) + list(ascendidos_pb)
     
     faltan = max(0, NB - len(base_b) - len(garantizados))
-    pool_fed = [n for n in S["federal"] if n not in garantizados]
+    descendidos_f = [SF["nombres"][i] for i in SF.get("descendidos", [])]
+    pool_fed = [n for n in S["federal"] if n not in garantizados and n not in descendidos_f]
     pool_pb = [n for n in SPB["nombres"] if n not in garantizados and n not in descendidos_pb]
     pool = pool_fed + pool_pb
     
@@ -1592,7 +1635,7 @@ def nueva_temporada(S, volatilidad):
     # Regional Amateur: los 6 ganadores de las finales ascienden al Federal A
     ascendidos_reg = [S["reg"]["nombres"][i] for i in S["reg"]["ascendidos"]]
     S["federal"] = S["federal"] + ascendidos_reg
-    S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg]
+    S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg] + descendidos_f
     
     SB["nombres"] = base_b + entran
 
@@ -1605,6 +1648,7 @@ def nueva_temporada(S, volatilidad):
         "suben_pb_b": ascendidos_pb,
         "suben_pc_pb": ascendidos_pc,
         "suben_reg_fed": ascendidos_reg,
+        "bajan_fed_reg": descendidos_f,
         "bajan_pb_pc": descendidos_pb,
         "entran_fed": [n for n in entran if origen(n) == "Interior" and n not in ascendidos_f],
         "entran_pb": [n for n in entran if origen(n) == "Metropolitana" and n not in ascendidos_pb],
@@ -1643,9 +1687,11 @@ def nueva_temporada(S, volatilidad):
     S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
     nueva_estructura_liga(S["pc"], rng)
 
-    # Regional: los clubes del JSON que siguen en el torneo (en el orden del JSON)
+    # Regional: los clubes del JSON que siguen en el torneo (en el orden del JSON) y después
+    # los que bajaron del Federal A (cada uno juega en la región de su provincia)
     quedan = set(S["regional"])
-    S["reg"]["nombres"] = [x["nombre"] for x in REGIONAL if x["nombre"] in quedan]
+    del_json = [x["nombre"] for x in REGIONAL if x["nombre"] in quedan]
+    S["reg"]["nombres"] = del_json + [n for n in S["regional"] if n not in set(del_json)]
     S["reg"]["r"] = np.array([S["rating"][n] for n in S["reg"]["nombres"]])
     nueva_estructura_reg(S["reg"], rng)
 

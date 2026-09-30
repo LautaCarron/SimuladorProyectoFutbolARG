@@ -66,6 +66,7 @@ COLORES_F = {
     "Reducido": "rgba(116, 172, 223, 0.30)",
     "→ Fase 2": "rgba(46, 125, 79, 0.15)",
     "→ Zona Campeonato": "rgba(46, 125, 79, 0.15)",
+    "Desciende": "rgba(184, 58, 46, 0.17)",
 }
 
 
@@ -1255,7 +1256,8 @@ LEY_B = [("Campeón", COLOR_ORO), ("Ascenso directo", COLORES_B["Ascenso directo
          ("Octavos del reducido", COLORES_B["Octavos del reducido"]),
          ("Desciende", COLORES_B["Desciende"])]
 LEY_F = [("Campeón", COLOR_ORO), ("Ascenso directo", COLORES_F["Ascenso directo"]),
-         ("Juega el reducido", COLORES_F["Reducido"])]
+         ("Juega el reducido", COLORES_F["Reducido"]),
+         ("Desciende al Regional", COLORES_F["Desciende"])]
 
 
 # ---- Movimientos de la temporada -------------------------------------------
