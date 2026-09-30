@@ -233,6 +233,21 @@ ESCUDOS = {
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
 ESCUDOS.update({x["nombre"]: x["escudo"] for x in REGIONAL})
 
+# Escudos de borde oscuro (negro, bordó, azul marino): en modo oscuro se les dibuja un
+# contorno claro para que no se pierdan contra el fondo (p. ej. Central Norte).
+ESCUDOS_OSCUROS = {
+    "Central Norte", "Santa Cruz Futbol Club (Río Turbio)", "La Cantera (Posadas)",
+    "Unión (Oncativo)", "Parque Sur (Concepción del Uruguay)", "San Lorenzo (Villa Castells)",
+    "San Martín (San Juan)", "Deportivo Español", "Montecaseros",
+    "Colocasi (San Francisco del Monte de Oro)", "Villa Dálmine", "Patronato", "FADEP",
+    "Jorge Newbery (Comodoro Rivadavia)", "Huracán (Corrientes)", "Social Pinto",
+    "Ciudad de Bolívar", "Embajadores (Olavarría)", "Río Grande (Neuquén)",
+    "El Fortín (Olavarría)", "Atlético Escobar", "San Luis de la Puntilla (Belen)",
+    "Defensores de Belgrano", "Deportivo Norte (Mar del Plata)", "Atlético San Julián",
+    "Deportivo Trancas", "Deportivo Municipal (La Leonesa)", "Atlético Regina (Villa Regina)",
+    "Talleres (Nueva Esperanza)",
+}
+
 # Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
 # Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
 # Primera B) el día que descienda del todo. Los del Federal A ya son todos del

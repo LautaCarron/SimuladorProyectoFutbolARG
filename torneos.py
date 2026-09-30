@@ -1088,7 +1088,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 9       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 10       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1579,6 +1579,8 @@ def crear_estado():
     SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
     nueva_estructura_reg(SREG, rng)
     S["reg"] = SREG
+    from copas import nueva_copa
+    S["copa"] = nueva_copa()        # se sortea cuando terminan todas las ligas
     return S
 
 
@@ -1598,6 +1600,8 @@ def nueva_temporada(S, volatilidad):
         "Temporada": S["temp"], "Primera División": final.iloc[0]["Equipo"],
         "Primera Nacional": _campeon(SB), "Federal A": _campeon(SF), "Primera B": _campeon(SPB),
         "Primera C": _campeon(SPC),
+        "Copa Argentina": (S["copa"]["nombres"][S["copa"]["campeon"]]
+                           if S.get("copa", {}).get("campeon") is not None else ""),
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
     p27 = promo["p_nombre"]
@@ -1704,6 +1708,8 @@ def nueva_temporada(S, volatilidad):
     S["reg"]["nombres"] = del_json + [n for n in S["regional"] if n not in set(del_json)]
     S["reg"]["r"] = np.array([S["rating"][n] for n in S["reg"]["nombres"]])
     nueva_estructura_reg(S["reg"], rng)
+    from copas import nueva_copa
+    S["copa"] = nueva_copa()
 
     #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
     for liga in [S["pb"], S["pc"]]:

@@ -16,6 +16,7 @@ import streamlit as st
 
 from datos import (
     ESCUDOS,
+    ESCUDOS_OSCUROS,
     F_GRUPOS_NOMBRES,
 )
 from torneos import (
@@ -32,6 +33,7 @@ from torneos import (
     rotulo_reg,
 )
 from regional import FINALES_REG
+from logos import logo_img
 
 
 def _estado():
@@ -383,6 +385,18 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .rf .nm[data-club]{cursor:pointer;}
 .rf .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
 .bt .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
+/* Copa Argentina: cuadro por llaves */
+.copa-bracket{grid-template-columns:repeat(4,minmax(215px,1fr)) minmax(190px,.9fr);}
+.copa-final{grid-template-columns:repeat(3,minmax(215px,1fr)) minmax(200px,.9fr);}
+.copa-bracket .round.last .round-b{justify-content:center;}
+.bt .logo-mini{flex:none;opacity:.9;}
+.logo-comp{vertical-align:middle;object-fit:contain;}
+/* escudos oscuros (p. ej. Central Norte): contorno claro para que se vean en modo oscuro */
+:root[data-tema="oscuro"] .crest-img.crest-osc{filter:drop-shadow(0 0 .7px rgba(255,255,255,.9)) drop-shadow(0 0 .7px rgba(255,255,255,.6));}
+@media (prefers-color-scheme:dark){:root:not([data-tema]) .crest-img.crest-osc{filter:drop-shadow(0 0 .7px rgba(255,255,255,.9)) drop-shadow(0 0 .7px rgba(255,255,255,.6));}}
+/* menús de Ligas y Copas: logos en las pestañas */
+[role="tab"] img{height:22px !important;width:22px !important;max-height:none !important;object-fit:contain;margin-right:7px;vertical-align:middle;}
+.st-key-menu_ligas>[data-testid="stTabs"]>div>[role="tablist"],.st-key-menu_copas>[data-testid="stTabs"]>div>[role="tablist"]{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:0 10px;margin-top:-4px;}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
 .stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}
@@ -572,7 +586,8 @@ def crest(nombre, size=26):
     """Escudo real del club (o un distintivo con sus iniciales si no hay imagen)."""
     url = ESCUDOS.get(nombre)
     if url:
-        return (f'<img class="crest-img" src="{esc(url)}" width="{size}" height="{size}" '
+        osc = " crest-osc" if nombre in ESCUDOS_OSCUROS else ""
+        return (f'<img class="crest-img{osc}" src="{esc(url)}" width="{size}" height="{size}" '
                 f'alt="" loading="lazy" title="{esc(nombre)}">')
     h = int(hashlib.md5(nombre.encode("utf-8")).hexdigest()[:6], 16)
     return (f'<span class="crest" style="width:{size}px;height:{size + 2}px;'
@@ -608,7 +623,8 @@ def coincide(consulta, texto, fecha, marcadores):
 
 def todos_los_partidos():
     S, SB, SF, SPB, SPC = _estado()
-    return S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
+    return (S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
+            + S.get("copa", {}).get("log", []))
 
 
 def categoria_de(nombre):
@@ -1547,6 +1563,82 @@ def finales_reg_html(SR):
         tarjetas += (f'<article class="rf{" hecha" if x is not None and x["gana"] is not None else ""}">'
                      f'{cab}{filas}<div class="rf-f">{pie}</div>{tanda}</article>')
     return f'<div class="rf-grid">{tarjetas}</div>'
+
+
+# ---- Copa Argentina: cuadro por llaves (A-H) y fase final ----
+def _copa_card(SC, m, final=False):
+    """Tarjeta de un cruce de la Copa: escudo, club, logo de su liga y goles (neutral)."""
+    if m is None:
+        fila = '<div class="bt tbd"><span class="nm">Por definir</span></div>'
+        return f'<div class="bm">{fila}{fila}</div>'
+    nom, p = SC["nombres"], m["p"]
+    filas = ""
+    for k, i in enumerate((m["a"], m["b"])):
+        cls = "" if m["gana"] is None else ("win" if m["gana"] == i else "lose")
+        g = (p["gl"] if k == 0 else p["gv"]) if p else ""
+        pk = f'<span class="p">({p["pen"][k]})</span>' if p and p["pen"] else ""
+        filas += (f'<div class="bt {cls}">{crest(nom[i], 22)}{_nm_club(nom[i])}'
+                  f'{logo_img(SC["origen"][i], 15, "logo-mini")}{pk}<span class="g">{g}</span></div>')
+    if p is None:
+        return f'<div class="bm">{filas}<div class="bfoot">Cancha neutral · a jugar</div></div>'
+    pen = f"Penales {p['pen'][0]}-{p['pen'][1]} · " if p["pen"] else ""
+    que = "Campeón" if final else "Avanza"
+    return f'<div class="bm">{filas}<div class="bfoot">{pen}{que}: <b>{esc(nom[m["gana"]])}</b></div></div>'
+
+
+def _copa_col(titulo, cards, ultima=False):
+    return (f'<div class="round{" last" if ultima else ""}"><div class="round-h">{chip(titulo, "#1e5aa8")}'
+            f'</div><div class="round-b">{cards}</div></div>')
+
+
+def cuadro_llave_html(SC, letra):
+    """Una llave (16 equipos): 64avos, 32avos, 16avos y octavos; el ganador va a cuartos."""
+    from copas import COPA_CORTO, COPA_LLAVES
+    li = COPA_LLAVES.index(letra)
+    cols = ""
+    for k in range(4):
+        n = 8 >> k
+        ronda = SC["cuadro"][k][li * n:(li + 1) * n] if k < len(SC["cuadro"]) else [None] * n
+        cols += _copa_col(COPA_CORTO[k], "".join(_copa_card(SC, m) for m in ronda))
+    octavos = SC["cuadro"][3][li] if len(SC["cuadro"]) > 3 else None
+    g = octavos["gana"] if octavos is not None else None
+    if g is not None:
+        pasa = (f'<div class="champ copa-pasa"><div class="t">Llave {letra} · a cuartos</div>'
+                f'<div style="margin-top:10px">{crest(SC["nombres"][g], 52)}</div>'
+                f'<div class="nm">{esc(SC["nombres"][g])}</div>'
+                f'<div class="s">{esc(SC["origen"][g])}</div></div>')
+    else:
+        pasa = (f'<div class="champ copa-pasa" style="opacity:.55"><div class="t">Llave {letra} · a cuartos'
+                f'</div><div class="nm">Por definir</div></div>')
+    cols += _copa_col("Cuartos", pasa, ultima=True)
+    return f'<div class="bracket copa-bracket">{cols}</div>'
+
+
+def cuadro_final_copa_html(SC):
+    """Fase final: cuartos (ganadores de las llaves A-H), semifinales, final y campeón."""
+    from copas import COPA_CORTO, COPA_LLAVES
+    cols = ""
+    for k, n in ((4, 4), (5, 2), (6, 1)):
+        if k < len(SC["cuadro"]):
+            cards = "".join(_copa_card(SC, m, final=(k == 6)) for m in SC["cuadro"][k])
+        elif k == 4:                                   # todavía no se conocen: qué llaves se cruzan
+            cards = "".join(
+                f'<div class="bm"><div class="bt tbd"><span class="nm">Ganador llave {COPA_LLAVES[2 * j]}'
+                f'</span></div><div class="bt tbd"><span class="nm">Ganador llave {COPA_LLAVES[2 * j + 1]}'
+                f'</span></div></div>' for j in range(4))
+        else:
+            cards = "".join(_copa_card(SC, None) for _ in range(n))
+        cols += _copa_col(COPA_CORTO[k], cards)
+    c = SC["campeon"]
+    if c is not None:
+        champ = (f'<div class="champ"><div class="t">Campeón · Copa Argentina</div>'
+                 f'<div style="margin-top:10px">{crest(SC["nombres"][c], 64)}</div>'
+                 f'<div class="nm">{esc(SC["nombres"][c])}</div><div class="s">{esc(SC["origen"][c])}</div></div>')
+    else:
+        champ = ('<div class="champ" style="opacity:.55"><div class="t">Campeón · Copa Argentina</div>'
+                 '<div class="nm">Por definir</div></div>')
+    cols += _copa_col("Campeón", champ, ultima=True)
+    return f'<div class="bracket copa-bracket copa-final">{cols}</div>'
 
 
 def barra_estado(items, progreso):
