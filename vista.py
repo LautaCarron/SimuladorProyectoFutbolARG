@@ -101,6 +101,13 @@ body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con 
 [data-testid="stSidebar"]{background:var(--tiza-2);border-right:1px solid var(--line);}
 [data-testid="stSidebar"] h2{font-size:.78rem;font-stretch:85%;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
 ::selection{background:var(--cel);color:var(--tinta);}
+/* ---------- mientras el simulador trabaja: aviso "Simulando…" y botones en pausa ----------
+   (cada clic nuevo reinicia el trabajo; si se acumulan, parece que la página se colgó) */
+.stApp[data-test-script-state="running"] button:not([role="tab"]){pointer-events:none !important;opacity:.55;}
+.stApp[data-test-script-state="running"]::after{content:"Simulando…";position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:1000100;background:var(--tinta);color:var(--tiza);font-weight:800;font-size:.8rem;letter-spacing:.06em;padding:8px 18px 8px 34px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.25);animation:afa-simulando 1.2s ease-in-out infinite;}
+.stApp[data-test-script-state="running"]::before{content:"";position:fixed;top:24px;left:calc(50% - 62px);z-index:1000101;width:12px;height:12px;border-radius:50%;border:2px solid var(--tiza);border-top-color:transparent;animation:afa-gira .8s linear infinite;}
+@keyframes afa-gira{to{transform:rotate(360deg);}}
+@keyframes afa-simulando{50%{opacity:.8;}}
 /* ---------- cabecera (masthead) ---------- */
 .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:6px 0 16px;margin-bottom:8px;position:relative;}
 .masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--cel) 0 33.33%,#fff 33.33% 66.66%,var(--cel) 66.66%);box-shadow:inset 0 0 0 1px var(--line);}

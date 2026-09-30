@@ -60,6 +60,7 @@ import streamlit as st
 st.set_page_config(page_title="Proyecto AFA · Simulador Fútbol Argentino", page_icon="⚽", layout="wide",
                    initial_sidebar_state="collapsed")
 
+import os
 import sys
 
 import numpy as np
@@ -117,7 +118,7 @@ from copas import (
     simular_ronda_copa,
     sortear_copa,
 )
-from logos import LOGOS, logo_img
+from logos import LOGOS, LOGOS_CSS, logo_img
 from internacional import fase_actual, listo, pais_de, simular_ronda_int, terminadas
 from calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
 from vista import (
@@ -191,6 +192,7 @@ def editar_medias(nombres, r, clave):
 # INTERFAZ
 # ----------------------------------------------------------------------------
 st.markdown(CSS, unsafe_allow_html=True)
+st.markdown(LOGOS_CSS, unsafe_allow_html=True)   # logos de ligas y copas (una sola vez)
 puente_clubes()     # tocar un club en cualquier tabla abre su ficha
 
 with st.sidebar:
@@ -337,21 +339,36 @@ def _con_logo(liga, texto):
     return f"![]({LOGOS[liga]}) {texto}" if liga in LOGOS else texto
 
 
-tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
-    ["Ligas", "Copas", "Calendario", "Clubes",
-     "Avisos" + (f" :red-background[**{_sin_leer}**]" if _sin_leer else ""), "Historial"])
+# Sólo se dibuja la pestaña abierta (on_change="rerun" + .open): antes se armaban las 6 ligas y
+# todas las copas en cada clic, la página pesaba más de 1 MB y el navegador se quedaba trabado.
+with st.container(key="menu_top"):
+    tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
+        ["Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"], key="tabs_top", on_change="rerun")
+if _sin_leer:                          # contador de avisos nuevos (globito rojo en la pestaña)
+    st.markdown(f'<style>.st-key-menu_top>[data-testid="stTabs"]>div>[role="tablist"]>[role="tab"]:nth-child(5)'
+                f'::after{{content:"{_sin_leer}";margin-left:6px;background:var(--lose);color:#fff;font-size:.66rem;'
+                f'font-weight:800;border-radius:9px;padding:1px 7px;line-height:1.4;}}</style>', unsafe_allow_html=True)
 with tab_ligas:
     with st.container(key="menu_ligas"):
         tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc = st.tabs([
             _con_logo("Primera División", "Primera"), _con_logo("Primera Nacional", "B Nacional"),
             _con_logo("Federal A", "Federal A"), _con_logo("Regional Amateur", "Regional"),
             _con_logo("Primera B", "Primera B"), _con_logo("Primera C", "Primera C"),
-        ])
+        ], key="tabs_ligas", on_change="rerun")
 with tab_copas:
     with st.container(key="menu_copas"):
         tab_ca, tab_lib, tab_sud, tab_rec = st.tabs([
             _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Copa Libertadores", "Libertadores"),
-            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa")])
+            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa")],
+            key="tabs_copas", on_change="rerun")
+
+
+_TODAS = os.environ.get("AFA_TODAS_LAS_PESTANAS") == "1"   # sólo para las pruebas automáticas
+
+
+def _abierta(*tabs):
+    """¿Está a la vista? (la pestaña y sus pestañas madre abiertas)."""
+    return _TODAS or all(t.open is not False for t in tabs)
 
 # (Esto va debajo de los imports y la configuración inicial de streamlit)
 
@@ -418,141 +435,142 @@ def html_tabla_liguilla(partidos):
 # ============================================================================
 # PRIMERA DIVISIÓN
 # ============================================================================
-with tab_p:
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip("Liga Profesional · 30 equipos", "#1e5aa8") + " " +
-                chip("Fase 1 · todos contra todos" if S["fase"] == 1 else "Fase 2 · zonas"),
-                unsafe_allow_html=True)
+if _abierta(tab_ligas, tab_p):
+    with tab_p:
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip("Liga Profesional · 30 equipos", "#1e5aa8") + " " +
+                    chip("Fase 1 · todos contra todos" if S["fase"] == 1 else "Fase 2 · zonas"),
+                    unsafe_allow_html=True)
                 
-    extra_p = S.get("extra_f2", 0)
-    terminada_p_dyn = S["fecha"] >= TOTAL_FECHAS + extra_p
+        extra_p = S.get("extra_f2", 0)
+        terminada_p_dyn = S["fecha"] >= TOTAL_FECHAS + extra_p
     
-    if c2.button(":material/skip_next: Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
-                 type="primary"):
-        simular_fecha(S, P, acumular)
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
-        while S["fecha"] < TOTAL_FECHAS + S.get("extra_f2", 0):
+        if c2.button(":material/skip_next: Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
+                     type="primary"):
             simular_fecha(S, P, acumular)
-        st.rerun()
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
+            while S["fecha"] < TOTAL_FECHAS + S.get("extra_f2", 0):
+                simular_fecha(S, P, acumular)
+            st.rerun()
 
-    jugados = int(S["pj"].sum() // 2)
-    pct = 100 * S["sorpresas"] / jugados if jugados else 0
-    pct_p = 100 * S["fecha"] / (TOTAL_FECHAS + extra_p) if (TOTAL_FECHAS + extra_p) else 0
+        jugados = int(S["pj"].sum() // 2)
+        pct = 100 * S["sorpresas"] / jugados if jugados else 0
+        pct_p = 100 * S["fecha"] / (TOTAL_FECHAS + extra_p) if (TOTAL_FECHAS + extra_p) else 0
     
-    barra_estado([("Fase", "1 · Todos contra todos" if S["fase"] == 1 else "2 · Zonas"),
-                  ("Fecha", f"{S['fecha']} / {TOTAL_FECHAS + extra_p}"),
-                  ("Sorpresas", f"{S['sorpresas']} ({pct:.0f}%)")], pct_p)
+        barra_estado([("Fase", "1 · Todos contra todos" if S["fase"] == 1 else "2 · Zonas"),
+                      ("Fecha", f"{S['fecha']} / {TOTAL_FECHAS + extra_p}"),
+                      ("Sorpresas", f"{S['sorpresas']} ({pct:.0f}%)")], pct_p)
                   
-    if S["fase"] == 2 and S["fecha"] == FECHAS_F1:
-        aviso("Terminó la fase 1: se armaron las zonas Campeonato, Intermedia y Descenso. "
-              "Las 9 fechas siguientes se juegan dentro de cada zona, con la localía invertida.")
+        if S["fase"] == 2 and S["fecha"] == FECHAS_F1:
+            aviso("Terminó la fase 1: se armaron las zonas Campeonato, Intermedia y Descenso. "
+                  "Las 9 fechas siguientes se juegan dentro de cada zona, con la localía invertida.")
 
-    desempates_p = [p for p in S["log"] if p["rotulo"] == "Desempate"]
-    mostrar_desempate_p = S.get("desempate_pendiente") or len(desempates_p) > 0
+        desempates_p = [p for p in S["log"] if p["rotulo"] == "Desempate"]
+        mostrar_desempate_p = S.get("desempate_pendiente") or len(desempates_p) > 0
     
-    titulos_p = ["Posiciones", "Fixture y resultados"]
-    if mostrar_desempate_p: titulos_p.append("Desempate")
-    titulos_p.extend(["Movimientos", "Definiciones"])
+        titulos_p = ["Posiciones", "Fixture y resultados"]
+        if mostrar_desempate_p: titulos_p.append("Desempate")
+        titulos_p.extend(["Movimientos", "Definiciones"])
     
-    sp = st.tabs(titulos_p)
-    idx_p = 0
+        sp = st.tabs(titulos_p)
+        idx_p = 0
     
-    with sp[idx_p]:
-        if S["fase"] == 1:
-            seccion("Tabla de posiciones", "Fase 1 · 29 fechas, todos contra todos", "#475569")
-            mostrar_tabla(tabla_general(S), colorear_fase1, S["pos_hist"])
-            leyenda(LEY_ZONAS)
-        else:
-            seccion("Fase 2 · Zonas", "9 fechas dentro de cada zona, localía invertida", "#16a34a")
-            tabs = st.tabs([f"Zona {n}" for n in ZONAS] + ["Tabla fase 1"])
-            for z, tab in enumerate(tabs[:3]):
-                with tab:
-                    mostrar_tabla(tabla_zona(S, z), colorear_destino, S["pos_hist"])
-            with tabs[3]:
-                mostrar_tabla(S["tabla_f1"], colorear_fase1)
-                st.caption("Tabla final de las 29 fechas de la fase 1.")
-            leyenda(LEY_DESTINOS + [("Desempate Campeonato", "rgba(249, 115, 22, 0.3)"), ("Desempate Permanencia/Promoción", "rgba(147, 51, 234, 0.3)")])
-            
-        if S["fecha"] == 0:
-            with st.expander(":material/tune: Editar medias internas de esta temporada"):
-                S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
-    idx_p += 1
-    
-    with sp[idx_p]:
-        vista_fixture("p")
-    idx_p += 1
-    
-    if mostrar_desempate_p:
         with sp[idx_p]:
-            if S.get("desempate_pendiente"):
-                seccion("Desempate en Primera", "Están empatados en puntos críticos. Jugarán un desempate.", "#9333ea")
-                for z in [0, 2]:
-                    df_des = tabla_zona(S, z)
-                    df_des = df_des[df_des["id"].isin(S.get("ids_desempate", []))]
-                    if not df_des.empty:
-                        mostrar_tabla(df_des, colorear_destino)
+            if S["fase"] == 1:
+                seccion("Tabla de posiciones", "Fase 1 · 29 fechas, todos contra todos", "#475569")
+                mostrar_tabla(tabla_general(S), colorear_fase1, S["pos_hist"])
+                leyenda(LEY_ZONAS)
             else:
-                grupos = {}
-                for p in desempates_p:
-                    m = p["comp"]
-                    if m not in grupos: grupos[m] = []
-                    grupos[m].append(p)
-                
-                for motivo, parts in grupos.items():
-                    if "Liguilla" in motivo:
-                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                        st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
-                            for p in parts:
-                                st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                    else:
-                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
-                        for p in parts:
-                            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+                seccion("Fase 2 · Zonas", "9 fechas dentro de cada zona, localía invertida", "#16a34a")
+                tabs = st.tabs([f"Zona {n}" for n in ZONAS] + ["Tabla fase 1"])
+                for z, tab in enumerate(tabs[:3]):
+                    with tab:
+                        mostrar_tabla(tabla_zona(S, z), colorear_destino, S["pos_hist"])
+                with tabs[3]:
+                    mostrar_tabla(S["tabla_f1"], colorear_fase1)
+                    st.caption("Tabla final de las 29 fechas de la fase 1.")
+                leyenda(LEY_DESTINOS + [("Desempate Campeonato", "rgba(249, 115, 22, 0.3)"), ("Desempate Permanencia/Promoción", "rgba(147, 51, 234, 0.3)")])
+            
+            if S["fecha"] == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada"):
+                    S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
         idx_p += 1
-        
-    with sp[idx_p]:
-        render_movimientos(S["log"], S["pos_hist"], S["nombres"], "#1e5aa8")
-    idx_p += 1
     
-    with sp[idx_p]:
-        seccion("Definiciones de la temporada", "Campeón, copas, promoción y descensos", "#b7860b")
-        if not terminada_p_dyn:
-            aviso("Las definiciones aparecen acá cuando termina la temporada de Primera. "
-                  "Destinos: 1°-5° Libertadores · 6°-8° y 12°-13° Sudamericana · 11° fase previa "
-                  "de Libertadores · 27° Promoción · 28°-30° descienden.")
-        else:
-            final = tabla_final(S)
-            def equipos(posiciones):
-                sel = final[final["Pos"].isin(list(posiciones))]
-                return lista_equipos_html([(r.Equipo, f"{r.Pos}°") for r in sel.itertuples()])
+        with sp[idx_p]:
+            vista_fixture("p")
+        idx_p += 1
+    
+        if mostrar_desempate_p:
+            with sp[idx_p]:
+                if S.get("desempate_pendiente"):
+                    seccion("Desempate en Primera", "Están empatados en puntos críticos. Jugarán un desempate.", "#9333ea")
+                    for z in [0, 2]:
+                        df_des = tabla_zona(S, z)
+                        df_des = df_des[df_des["id"].isin(S.get("ids_desempate", []))]
+                        if not df_des.empty:
+                            mostrar_tabla(df_des, colorear_destino)
+                else:
+                    grupos = {}
+                    for p in desempates_p:
+                        m = p["comp"]
+                        if m not in grupos: grupos[m] = []
+                        grupos[m].append(p)
+                
+                    for motivo, parts in grupos.items():
+                        if "Liguilla" in motivo:
+                            seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
+                            with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
+                                for p in parts:
+                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                        else:
+                            seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                            for p in parts:
+                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            idx_p += 1
+        
+        with sp[idx_p]:
+            render_movimientos(S["log"], S["pos_hist"], S["nombres"], "#1e5aa8")
+        idx_p += 1
+    
+        with sp[idx_p]:
+            seccion("Definiciones de la temporada", "Campeón, copas, promoción y descensos", "#b7860b")
+            if not terminada_p_dyn:
+                aviso("Las definiciones aparecen acá cuando termina la temporada de Primera. "
+                      "Destinos: 1°-5° Libertadores · 6°-8° y 12°-13° Sudamericana · 11° fase previa "
+                      "de Libertadores · 27° Promoción · 28°-30° descienden.")
+            else:
+                final = tabla_final(S)
+                def equipos(posiciones):
+                    sel = final[final["Pos"].isin(list(posiciones))]
+                    return lista_equipos_html([(r.Equipo, f"{r.Pos}°") for r in sel.itertuples()])
 
-            st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
-            e1, e2 = st.columns(2)
-            with e1:
-                with st.expander(":material/emoji_events: Campeón de Primera División", expanded=False):
-                    campeon = final.iloc[0]["Equipo"]
-                    st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
-                                f'</div><div style="margin-top:10px">{crest(campeon, 64)}</div>'
-                                f'<div class="nm">{esc(campeon)}</div></div>', unsafe_allow_html=True)
-                with st.expander(":material/public: Clasificados · Copa Libertadores", expanded=False):
-                    st.markdown('<div class="mlab">Fase de grupos (1° al 5°)</div>'
-                                + equipos(range(1, 6)) + '<div class="mlab">Fase previa (11°)</div>'
-                                + equipos([11]), unsafe_allow_html=True)
-                with st.expander(":material/public: Copa Sudamericana", expanded=False):
-                    st.markdown('<div class="mlab">6° al 8° y 12°-13°</div>'
-                                + equipos(list(range(6, 9)) + [12, 13]), unsafe_allow_html=True)
-            with e2:
-                with st.expander(":material/swap_vert: Promoción", expanded=False):
-                    txt = ('<div class="mlab">Juega la Promoción contra el perdedor de la final '
-                           'del reducido (27°)</div>' + equipos([N - 3]))
-                    if SB["promo_partido"]:
-                        txt += fila_partido_html(SB["promo_partido"])
-                    st.markdown(txt, unsafe_allow_html=True)
-                with st.expander(":material/south: Descensos", expanded=False):
-                    st.markdown('<div class="mlab">Descienden a la Primera Nacional (28° al 30°)</div>'
-                                + equipos(range(N - 2, N + 1)), unsafe_allow_html=True)
+                st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
+                e1, e2 = st.columns(2)
+                with e1:
+                    with st.expander(":material/emoji_events: Campeón de Primera División", expanded=False):
+                        campeon = final.iloc[0]["Equipo"]
+                        st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
+                                    f'</div><div style="margin-top:10px">{crest(campeon, 64)}</div>'
+                                    f'<div class="nm">{esc(campeon)}</div></div>', unsafe_allow_html=True)
+                    with st.expander(":material/public: Clasificados · Copa Libertadores", expanded=False):
+                        st.markdown('<div class="mlab">Fase de grupos (1° al 5°)</div>'
+                                    + equipos(range(1, 6)) + '<div class="mlab">Fase previa (11°)</div>'
+                                    + equipos([11]), unsafe_allow_html=True)
+                    with st.expander(":material/public: Copa Sudamericana", expanded=False):
+                        st.markdown('<div class="mlab">6° al 8° y 12°-13°</div>'
+                                    + equipos(list(range(6, 9)) + [12, 13]), unsafe_allow_html=True)
+                with e2:
+                    with st.expander(":material/swap_vert: Promoción", expanded=False):
+                        txt = ('<div class="mlab">Juega la Promoción contra el perdedor de la final '
+                               'del reducido (27°)</div>' + equipos([N - 3]))
+                        if SB["promo_partido"]:
+                            txt += fila_partido_html(SB["promo_partido"])
+                        st.markdown(txt, unsafe_allow_html=True)
+                    with st.expander(":material/south: Descensos", expanded=False):
+                        st.markdown('<div class="mlab">Descienden a la Primera Nacional (28° al 30°)</div>'
+                                    + equipos(range(N - 2, N + 1)), unsafe_allow_html=True)
 
 # -----------------
 # Recordá que, ARRIBA DE TODO, el botón general ("Simular todo") 
@@ -563,713 +581,719 @@ with tab_p:
 # ============================================================================
 # PRIMERA NACIONAL
 # ============================================================================
-with tab_b:
-    fb = SB["fecha"]
-    nom_b = SB["nombres"]
-    extra = SB.get("extra_f2", 0)  # Offset dinámico por si se alarga con un desempate
+if _abierta(tab_ligas, tab_b):
+    with tab_b:
+        fb = SB["fecha"]
+        nom_b = SB["nombres"]
+        extra = SB.get("extra_f2", 0)  # Offset dinámico por si se alarga con un desempate
     
-    if fb < B_F1:
-        fase_txt = "1 · Zonas A y B"
-    elif fb < B_F1 + B_F2 + extra:
-        if fb < B_F1 + B_F2:
-            fase_txt = "2 · Tres zonas"
-        else:
-            fase_txt = "Desempate"
-    elif fb < B_F1 + B_F2 + extra + B_RED:
-        fase_txt = "Reducido"
-    elif fb < B_TOTAL + extra:
-        fase_txt = "Promoción"
-    else:
-        fase_txt = "Terminada"
-
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip("Primera Nacional · 36 equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
-                unsafe_allow_html=True)
-    
-    if c2.button(":material/skip_next: Próxima fecha", key="b_next", width="stretch", type="primary",
-                 disabled=terminada_b or b_espera_primera):
-        simular_fecha_b(S, P)
-        st.rerun()
-        
-    if c3.button(":material/fast_forward: Hasta el final", key="b_all", width="stretch",
-                 disabled=terminada_b or b_espera_primera):
-        while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
-            simular_fecha_b(S, P)
-        st.rerun()
-
-    pct_b_dyn = 100 * fb / (B_TOTAL + extra) if (B_TOTAL + extra) else 0
-    barra_estado([("Fase", fase_txt), ("Fecha", f"{fb} / {B_TOTAL + extra}"),
-                  ("Partidos jugados", len(SB["log"]))], pct_b_dyn)
-                  
-    if b_espera_primera:
-        aviso("La Promoción se juega contra el 27° de Primera: terminá primero la temporada "
-              "de Primera División.")
-    if fb == B_F1:
-        aviso("Terminó la fase 1: se repartieron los equipos en las zonas Campeonato, "
-              "Intermedia y Descenso y <b>se conservan todos los puntos acumulados</b>.")
-    if fb == B_F1 + B_F2 + extra:
-        aviso("Terminó la fase 2 y sus definiciones: quedaron definidos los 12 clasificados al reducido. "
-              "Mirá el cuadro en la pestaña <b>Reducido</b>.")
-
-    # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
-    desempates_b = [p for p in SB["log"] if p["rotulo"] == "Desempate"]
-    mostrar_desempate_b = SB.get("desempate_pendiente") or len(desempates_b) > 0
-    
-    titulos_b = ["Posiciones", "Fixture y resultados"]
-    if mostrar_desempate_b: titulos_b.append("Desempate")
-    titulos_b.extend(["Reducido", "Movimientos", "Definiciones"])
-    
-    sb = st.tabs(titulos_b)
-    idx_b = 0
-    
-    with sb[idx_b]:
         if fb < B_F1:
-            seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 18 equipos por zona", "#4f46e5")
-            tabs_b = st.tabs(["Zona A", "Zona B"])
-            for z, tab in enumerate(tabs_b):
-                with tab:
-                    mostrar_tabla(tabla_b_f1(SB, z), colorear_b, SB["pos_hist"])
-            leyenda([("1°-6° → Zona Campeonato", COLORES_ZONA[0]),
-                     ("7°-12° → Zona Intermedia", COLORES_ZONA[1]),
-                     ("13°-18° → Zona Descenso", COLORES_ZONA[2])])
-        else:
-            seccion("Fase 2 · Zonas", "Arrastran los puntos de la Fase 1 · una rueda por zona", "#16a34a")
-            tabs_b = st.tabs([f"Zona {n}" for n in B_ZONAS2] + ["Fase 1"])
-            for z in range(3):
-                with tabs_b[z]:
-                    mostrar_tabla(tabla_b_f2(SB, z), colorear_b, SB["pos_hist"])
-            with tabs_b[3]:
-                for z, nz in enumerate(["Zona A", "Zona B"]):
-                    st.markdown(chip(nz), unsafe_allow_html=True)
-                    mostrar_tabla(SB["tablas_f1"][z], colorear_b)
-                st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
-            leyenda(LEY_B + [("Desempate Permanencia", "rgba(147, 51, 234, 0.3)")])
-            
-        with st.expander(":material/info: Formato de la Primera Nacional"):
-            st.markdown(
-                "Fase 1: dos zonas de 18, una rueda, más 8 fechas interzonales (localía fija "
-                "4 y 4) cruzando ambas zonas. "
-                "Después, conservando los puntos acumulados, se arman "
-                "Campeonato, Intermedia y Descenso (12 cada una), una rueda cada una "
-                "(si dos equipos ya se cruzaron en la fase 1, la revancha es con la localía "
-                "invertida). Campeonato: 1° campeón y ascenso, 2° ascenso, 3°-4° a cuartos, "
-                "5°-12° a octavos. Intermedia: 1°-4° a octavos. Descenso: bajan los 6 últimos. "
-                "Reducido a partido único con penales directos; el campeón asciende y el perdedor "
-                "de la final juega la promoción contra el 27° de Primera.")
-                
-        if fb == 0:
-            with st.expander(":material/tune: Editar medias internas de esta temporada (Primera Nacional)"):
-                SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
-    idx_b += 1
-    
-    with sb[idx_b]: 
-        vista_fixture("b")
-    idx_b += 1
-    
-    if mostrar_desempate_b:
-        with sb[idx_b]:
-            if SB.get("desempate_pendiente"):
-                seccion("Desempates en la Primera Nacional", "Están empatados en puntos. Jugarán un desempate.", "#9333ea")
-                for z_des in (0, 2):
-                    df_des = tabla_b_f2(SB, z_des)
-                    df_des = df_des[df_des["id"].isin(SB["ids_desempate"])]
-                    if len(df_des):
-                        mostrar_tabla(df_des, colorear_b)
+            fase_txt = "1 · Zonas A y B"
+        elif fb < B_F1 + B_F2 + extra:
+            if fb < B_F1 + B_F2:
+                fase_txt = "2 · Tres zonas"
             else:
-                grupos = {}
-                for p in desempates_b:
-                    m = p["comp"]
-                    if m not in grupos: grupos[m] = []
-                    grupos[m].append(p)
-                
-                for motivo, parts in grupos.items():
-                    if "Liguilla" in motivo:
-                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                        st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
-                            for p in parts:
-                                st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                    else:
-                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
-                        for p in parts:
-                            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
-        idx_b += 1
-
-    with sb[idx_b]:
-        seccion("Reducido por el tercer ascenso",
-                "Octavos → Cuartos → Semifinal → Final · partido único, penales si empatan · "
-                "L = local, V = visitante, N = neutral", "#2563eb")
-        if fb < B_F1 + B_F2 + extra:
-            aviso("El cuadro se completa al terminar la fase 2 y sus posibles desempates. Entran 3°-4° de Zona Campeonato "
-                  "(directo a cuartos), 5°-12° de Campeonato y 1°-4° de Intermedia (octavos).")
-        st.markdown(bracket_html(SB), unsafe_allow_html=True)
-        if SB["entrantes"] is not None:
-            with st.expander("Clasificados al reducido (orden de mérito)"):
-                st.markdown(tabla_html(SB["entrantes"]), unsafe_allow_html=True)
-    idx_b += 1
-    
-    with sb[idx_b]:
-        render_movimientos(SB["log"], SB["pos_hist"], nom_b, "#0f766e")
-    idx_b += 1
-        
-    with sb[idx_b]:
-        seccion("Definiciones de la temporada", "Campeón, ascensos, promoción y descensos",
-                "#b7860b")
-        if SB["campeon"] is None:
-            aviso("Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
+                fase_txt = "Desempate"
+        elif fb < B_F1 + B_F2 + extra + B_RED:
+            fase_txt = "Reducido"
+        elif fb < B_TOTAL + extra:
+            fase_txt = "Promoción"
         else:
-            st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
-            e1, e2 = st.columns(2)
-            with e1:
-                with st.expander(":material/emoji_events: Campeón de la Primera Nacional", expanded=False):
-                    cb = nom_b[SB["campeon"]]
-                    st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
-                                f'</div><div style="margin-top:10px">{crest(cb, 64)}</div>'
-                                f'<div class="nm">{esc(cb)}</div><div class="s">Asciende a Primera'
-                                f'</div></div>', unsafe_allow_html=True)
-                with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
-                    asc = [(nom_b[SB["asc_directo"][0]], "campeón"), (nom_b[SB["asc_directo"][1]], "2°")]
-                    if SB["asc_reducido"] is not None:
-                        asc.append((nom_b[SB["asc_reducido"]], "reducido"))
-                    if SB["promo"] and SB["promo"]["gana_b"]:
-                        asc.append((nom_b[SB["promo"]["b_id"]], "promoción"))
-                    st.markdown(lista_equipos_html(asc) + (
-                        '' if SB["asc_reducido"] is not None else
-                        '<div style="font-size:.8rem;opacity:.65">El tercer ascenso sale del '
-                        'reducido.</div>'), unsafe_allow_html=True)
-            with e2:
-                with st.expander(":material/swap_vert: Promoción", expanded=False):
-                    if SB["promo_partido"]:
-                        st.markdown(fila_partido_html(SB["promo_partido"], abierto=True),
-                                    unsafe_allow_html=True)
-                    elif SB["perdedor_final"] is not None:
-                        st.markdown('<div class="mlab">Juega la promoción (perdedor de la final)</div>'
-                                    + lista_equipos_html([(nom_b[SB["perdedor_final"]], "")]),
-                                    unsafe_allow_html=True)
-                    else:
-                        st.caption("La juega el perdedor de la final del reducido contra el 27° "
-                                   "de Primera.")
-                with st.expander(":material/south: Descensos", expanded=False):
-                    st.markdown(
-                        '<div class="mlab">Descienden (7° al 12° de Zona Descenso): al Federal '
-                        'A los del interior, a la Primera B los metropolitanos</div>'
-                        + lista_equipos_html([
-                            (nom_b[i], "Federal A" if origen(nom_b[i]) == "Interior" else "Primera B")
-                            for i in SB["desc_b"]
-                        ]), unsafe_allow_html=True)
+            fase_txt = "Terminada"
+
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip("Primera Nacional · 36 equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
+                    unsafe_allow_html=True)
+    
+        if c2.button(":material/skip_next: Próxima fecha", key="b_next", width="stretch", type="primary",
+                     disabled=terminada_b or b_espera_primera):
+            simular_fecha_b(S, P)
+            st.rerun()
+        
+        if c3.button(":material/fast_forward: Hasta el final", key="b_all", width="stretch",
+                     disabled=terminada_b or b_espera_primera):
+            while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
+                simular_fecha_b(S, P)
+            st.rerun()
+
+        pct_b_dyn = 100 * fb / (B_TOTAL + extra) if (B_TOTAL + extra) else 0
+        barra_estado([("Fase", fase_txt), ("Fecha", f"{fb} / {B_TOTAL + extra}"),
+                      ("Partidos jugados", len(SB["log"]))], pct_b_dyn)
+                  
+        if b_espera_primera:
+            aviso("La Promoción se juega contra el 27° de Primera: terminá primero la temporada "
+                  "de Primera División.")
+        if fb == B_F1:
+            aviso("Terminó la fase 1: se repartieron los equipos en las zonas Campeonato, "
+                  "Intermedia y Descenso y <b>se conservan todos los puntos acumulados</b>.")
+        if fb == B_F1 + B_F2 + extra:
+            aviso("Terminó la fase 2 y sus definiciones: quedaron definidos los 12 clasificados al reducido. "
+                  "Mirá el cuadro en la pestaña <b>Reducido</b>.")
+
+        # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
+        desempates_b = [p for p in SB["log"] if p["rotulo"] == "Desempate"]
+        mostrar_desempate_b = SB.get("desempate_pendiente") or len(desempates_b) > 0
+    
+        titulos_b = ["Posiciones", "Fixture y resultados"]
+        if mostrar_desempate_b: titulos_b.append("Desempate")
+        titulos_b.extend(["Reducido", "Movimientos", "Definiciones"])
+    
+        sb = st.tabs(titulos_b)
+        idx_b = 0
+    
+        with sb[idx_b]:
+            if fb < B_F1:
+                seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 18 equipos por zona", "#4f46e5")
+                tabs_b = st.tabs(["Zona A", "Zona B"])
+                for z, tab in enumerate(tabs_b):
+                    with tab:
+                        mostrar_tabla(tabla_b_f1(SB, z), colorear_b, SB["pos_hist"])
+                leyenda([("1°-6° → Zona Campeonato", COLORES_ZONA[0]),
+                         ("7°-12° → Zona Intermedia", COLORES_ZONA[1]),
+                         ("13°-18° → Zona Descenso", COLORES_ZONA[2])])
+            else:
+                seccion("Fase 2 · Zonas", "Arrastran los puntos de la Fase 1 · una rueda por zona", "#16a34a")
+                tabs_b = st.tabs([f"Zona {n}" for n in B_ZONAS2] + ["Fase 1"])
+                for z in range(3):
+                    with tabs_b[z]:
+                        mostrar_tabla(tabla_b_f2(SB, z), colorear_b, SB["pos_hist"])
+                with tabs_b[3]:
+                    for z, nz in enumerate(["Zona A", "Zona B"]):
+                        st.markdown(chip(nz), unsafe_allow_html=True)
+                        mostrar_tabla(SB["tablas_f1"][z], colorear_b)
+                    st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
+                leyenda(LEY_B + [("Desempate Permanencia", "rgba(147, 51, 234, 0.3)")])
+            
+            with st.expander(":material/info: Formato de la Primera Nacional"):
+                st.markdown(
+                    "Fase 1: dos zonas de 18, una rueda, más 8 fechas interzonales (localía fija "
+                    "4 y 4) cruzando ambas zonas. "
+                    "Después, conservando los puntos acumulados, se arman "
+                    "Campeonato, Intermedia y Descenso (12 cada una), una rueda cada una "
+                    "(si dos equipos ya se cruzaron en la fase 1, la revancha es con la localía "
+                    "invertida). Campeonato: 1° campeón y ascenso, 2° ascenso, 3°-4° a cuartos, "
+                    "5°-12° a octavos. Intermedia: 1°-4° a octavos. Descenso: bajan los 6 últimos. "
+                    "Reducido a partido único con penales directos; el campeón asciende y el perdedor "
+                    "de la final juega la promoción contra el 27° de Primera.")
+                
+            if fb == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Primera Nacional)"):
+                    SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
+        idx_b += 1
+    
+        with sb[idx_b]: 
+            vista_fixture("b")
+        idx_b += 1
+    
+        if mostrar_desempate_b:
+            with sb[idx_b]:
+                if SB.get("desempate_pendiente"):
+                    seccion("Desempates en la Primera Nacional", "Están empatados en puntos. Jugarán un desempate.", "#9333ea")
+                    for z_des in (0, 2):
+                        df_des = tabla_b_f2(SB, z_des)
+                        df_des = df_des[df_des["id"].isin(SB["ids_desempate"])]
+                        if len(df_des):
+                            mostrar_tabla(df_des, colorear_b)
+                else:
+                    grupos = {}
+                    for p in desempates_b:
+                        m = p["comp"]
+                        if m not in grupos: grupos[m] = []
+                        grupos[m].append(p)
+                
+                    for motivo, parts in grupos.items():
+                        if "Liguilla" in motivo:
+                            seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
+                            with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
+                                for p in parts:
+                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                        else:
+                            seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                            for p in parts:
+                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            idx_b += 1
+
+        with sb[idx_b]:
+            seccion("Reducido por el tercer ascenso",
+                    "Octavos → Cuartos → Semifinal → Final · partido único, penales si empatan · "
+                    "L = local, V = visitante, N = neutral", "#2563eb")
+            if fb < B_F1 + B_F2 + extra:
+                aviso("El cuadro se completa al terminar la fase 2 y sus posibles desempates. Entran 3°-4° de Zona Campeonato "
+                      "(directo a cuartos), 5°-12° de Campeonato y 1°-4° de Intermedia (octavos).")
+            st.markdown(bracket_html(SB), unsafe_allow_html=True)
+            if SB["entrantes"] is not None:
+                with st.expander("Clasificados al reducido (orden de mérito)"):
+                    st.markdown(tabla_html(SB["entrantes"]), unsafe_allow_html=True)
+        idx_b += 1
+    
+        with sb[idx_b]:
+            render_movimientos(SB["log"], SB["pos_hist"], nom_b, "#0f766e")
+        idx_b += 1
+        
+        with sb[idx_b]:
+            seccion("Definiciones de la temporada", "Campeón, ascensos, promoción y descensos",
+                    "#b7860b")
+            if SB["campeon"] is None:
+                aviso("Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
+            else:
+                st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
+                e1, e2 = st.columns(2)
+                with e1:
+                    with st.expander(":material/emoji_events: Campeón de la Primera Nacional", expanded=False):
+                        cb = nom_b[SB["campeon"]]
+                        st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
+                                    f'</div><div style="margin-top:10px">{crest(cb, 64)}</div>'
+                                    f'<div class="nm">{esc(cb)}</div><div class="s">Asciende a Primera'
+                                    f'</div></div>', unsafe_allow_html=True)
+                    with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
+                        asc = [(nom_b[SB["asc_directo"][0]], "campeón"), (nom_b[SB["asc_directo"][1]], "2°")]
+                        if SB["asc_reducido"] is not None:
+                            asc.append((nom_b[SB["asc_reducido"]], "reducido"))
+                        if SB["promo"] and SB["promo"]["gana_b"]:
+                            asc.append((nom_b[SB["promo"]["b_id"]], "promoción"))
+                        st.markdown(lista_equipos_html(asc) + (
+                            '' if SB["asc_reducido"] is not None else
+                            '<div style="font-size:.8rem;opacity:.65">El tercer ascenso sale del '
+                            'reducido.</div>'), unsafe_allow_html=True)
+                with e2:
+                    with st.expander(":material/swap_vert: Promoción", expanded=False):
+                        if SB["promo_partido"]:
+                            st.markdown(fila_partido_html(SB["promo_partido"], abierto=True),
+                                        unsafe_allow_html=True)
+                        elif SB["perdedor_final"] is not None:
+                            st.markdown('<div class="mlab">Juega la promoción (perdedor de la final)</div>'
+                                        + lista_equipos_html([(nom_b[SB["perdedor_final"]], "")]),
+                                        unsafe_allow_html=True)
+                        else:
+                            st.caption("La juega el perdedor de la final del reducido contra el 27° "
+                                       "de Primera.")
+                    with st.expander(":material/south: Descensos", expanded=False):
+                        st.markdown(
+                            '<div class="mlab">Descienden (7° al 12° de Zona Descenso): al Federal '
+                            'A los del interior, a la Primera B los metropolitanos</div>'
+                            + lista_equipos_html([
+                                (nom_b[i], "Federal A" if origen(nom_b[i]) == "Interior" else "Primera B")
+                                for i in SB["desc_b"]
+                            ]), unsafe_allow_html=True)
 
 # ============================================================================
 # FEDERAL A
 # ============================================================================
-with tab_f:
-    ff = SF["fecha"]
-    nom_f = SF["nombres"]
-    if ff < SF["f1_rondas"]:
-        fase_txt_f = "1 · Grupos por cercanía"
-    elif ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
-        fase_txt_f = "2 · Campeonato y Descenso"
-    elif ff < SF["total"]:
-        fase_txt_f = "Reducido"
-    else:
-        fase_txt_f = "Terminada"
-
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip(f"Federal A · {len(nom_f)} equipos") + " " +
-                chip(f"Fase {fase_txt_f}", "#475569"), unsafe_allow_html=True)
-    if c2.button(":material/skip_next: Próxima fecha", key="f_next", width="stretch", type="primary",
-                 disabled=terminada_f):
-        simular_fecha_f(SF, P, S["rng"])
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="f_all", width="stretch", disabled=terminada_f):
-        while SF["fecha"] < SF["total"]:
-            simular_fecha_f(SF, P, S["rng"])
-        st.rerun()
-
-    barra_estado([("Fase", fase_txt_f), ("Fecha", f"{ff} / {SF['total']}"),
-                  ("Partidos jugados", len(SF["log"]))], pct_f)
-                  
-    if ff == SF["f1_rondas"]:
-        aviso("Terminó la fase 1: clasificaron los 4 primeros de cada grupo (20 equipos) a Zona Campeonato, "
-              "el resto a Zona Descenso, y <b>todos los puntos se reiniciaron a 0</b>.")
-    if ff == SF["f1_rondas"] + SF.get("f2_rondas", 0):
-        aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional y los 6 últimos "
-              "de Zona Descenso bajan al Regional Amateur. "
-              "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
-
-    # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
-    desempate_f = SF.get("desempate_camp")
-    desempate_fd = SF.get("desempate_desc")
-    titulos_f = ["Posiciones", "Fixture y resultados"]
-    if desempate_f or desempate_fd: titulos_f.append("Desempate")
-    titulos_f.extend(["Reducido", "Movimientos", "Definiciones"])
-    tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
-                       
-    with tab_f["Posiciones"]:
+if _abierta(tab_ligas, tab_f):
+    with tab_f:
+        ff = SF["fecha"]
+        nom_f = SF["nombres"]
         if ff < SF["f1_rondas"]:
-            seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
-                    "cada grupo", "#4f46e5")
-            tabs_f = st.tabs(F_GRUPOS_NOMBRES)
-            for g, tab in enumerate(tabs_f):
-                with tab:
-                    mostrar_tabla(tabla_f_grupo(SF, g), colorear_f, SF["pos_hist"])
-            leyenda([("1°-4° → Zona Campeonato", COLORES_F["→ Zona Campeonato"])])
+            fase_txt_f = "1 · Grupos por cercanía"
+        elif ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
+            fase_txt_f = "2 · Campeonato y Descenso"
+        elif ff < SF["total"]:
+            fase_txt_f = "Reducido"
         else:
-            seccion("Fase 2 · Zonas", "Puntos reiniciados a 0 · una rueda por zona", "#16a34a")
-            tabs_f = st.tabs(["Campeonato", "Descenso", "Fase 1"])
-            with tabs_f[0]:
-                mostrar_tabla(tabla_f_f2(SF, 0), colorear_f, SF["pos_hist"])
-            with tabs_f[1]:
-                mostrar_tabla(tabla_f_f2(SF, 1), colorear_f, SF["pos_hist"])
-            with tabs_f[2]:
-                for g, dfg in zip(F_GRUPOS_NOMBRES, SF["tablas_f1"]):
-                    st.markdown(chip(g), unsafe_allow_html=True)
-                    mostrar_tabla(dfg, colorear_f)
-                st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
-            leyenda(LEY_F)
-            
-        if ff == 0:
-            with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
-                SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
-                
-    with tab_f["Fixture y resultados"]:
-        vista_fixture("f")
-        
-    def partidos_desempate_f(info):
-        grupos_f = {}
-        for p in info["partidos"]:
-            grupos_f.setdefault(p["comp"], []).append(p)
-        for comp_f, partes in grupos_f.items():
-            if "Liguilla" in comp_f:
-                seccion(f"Tabla final: {comp_f}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
-                with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
-                                 expanded=False):
-                    for p in partes:
-                        st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+            fase_txt_f = "Terminada"
+
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip(f"Federal A · {len(nom_f)} equipos") + " " +
+                    chip(f"Fase {fase_txt_f}", "#475569"), unsafe_allow_html=True)
+        if c2.button(":material/skip_next: Próxima fecha", key="f_next", width="stretch", type="primary",
+                     disabled=terminada_f):
+            simular_fecha_f(SF, P, S["rng"])
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="f_all", width="stretch", disabled=terminada_f):
+            while SF["fecha"] < SF["total"]:
+                simular_fecha_f(SF, P, S["rng"])
+            st.rerun()
+
+        barra_estado([("Fase", fase_txt_f), ("Fecha", f"{ff} / {SF['total']}"),
+                      ("Partidos jugados", len(SF["log"]))], pct_f)
+                  
+        if ff == SF["f1_rondas"]:
+            aviso("Terminó la fase 1: clasificaron los 4 primeros de cada grupo (20 equipos) a Zona Campeonato, "
+                  "el resto a Zona Descenso, y <b>todos los puntos se reiniciaron a 0</b>.")
+        if ff == SF["f1_rondas"] + SF.get("f2_rondas", 0):
+            aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional y los 6 últimos "
+                  "de Zona Descenso bajan al Regional Amateur. "
+                  "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
+
+        # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
+        desempate_f = SF.get("desempate_camp")
+        desempate_fd = SF.get("desempate_desc")
+        titulos_f = ["Posiciones", "Fixture y resultados"]
+        if desempate_f or desempate_fd: titulos_f.append("Desempate")
+        titulos_f.extend(["Reducido", "Movimientos", "Definiciones"])
+        tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
+                       
+        with tab_f["Posiciones"]:
+            if ff < SF["f1_rondas"]:
+                seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
+                        "cada grupo", "#4f46e5")
+                tabs_f = st.tabs(F_GRUPOS_NOMBRES)
+                for g, tab in enumerate(tabs_f):
+                    with tab:
+                        mostrar_tabla(tabla_f_grupo(SF, g), colorear_f, SF["pos_hist"])
+                leyenda([("1°-4° → Zona Campeonato", COLORES_F["→ Zona Campeonato"])])
             else:
-                if len(grupos_f) > 1:
-                    seccion(comp_f, "Partido único definitorio", "#dc2626")
-                for p in partes:
-                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
-
-    if desempate_f or desempate_fd:
-        with tab_f["Desempate"]:
-            if desempate_f:
-                seccion("Desempate por el campeonato",
-                        f"Igualaron en puntos en el 1° puesto: {', '.join(desempate_f['equipos'])}",
-                        "#9333ea")
-                partidos_desempate_f(desempate_f)
-                st.caption("El título se define con desempate en cancha neutral (penales si empatan). "
-                           "El resto de las posiciones se ordena por diferencia de gol.")
-            if desempate_fd:
-                seccion("Desempate por la permanencia",
-                        f"Igualaron en puntos en el límite del descenso (Zona Descenso): "
-                        f"{', '.join(desempate_fd['equipos'])} · se salva"
-                        f"{'n' if desempate_fd['salvados'] > 1 else ''} {desempate_fd['salvados']}",
-                        "#9333ea")
-                partidos_desempate_f(desempate_fd)
-                st.caption("Partido único en cancha neutral (penales si empatan). Los 6 últimos bajan "
-                           "al Regional Amateur.")
-
-    with tab_f["Reducido"]:
-        seccion("Reducido por el cuarto ascenso",
-                "Eliminatoria → Semifinal → Final · partido único · gana el mejor ubicado si "
-                "empatan, menos en la final (cancha neutral, penales) · L = local, V = "
-                "visitante, N = neutral", "#2563eb")
-        if ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
-            aviso("El cuadro se completa al terminar la fase 2. Entran del 4° al 8° de Zona "
-                  "Campeonato.")
-        st.markdown(bracket_html_f(SF), unsafe_allow_html=True)
-        if SF["entrantes"] is not None:
-            with st.expander("Clasificados al reducido (orden de mérito)"):
-                st.markdown(tabla_html(SF["entrantes"]), unsafe_allow_html=True)
-                             
-    with tab_f["Movimientos"]:
-        render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
+                seccion("Fase 2 · Zonas", "Puntos reiniciados a 0 · una rueda por zona", "#16a34a")
+                tabs_f = st.tabs(["Campeonato", "Descenso", "Fase 1"])
+                with tabs_f[0]:
+                    mostrar_tabla(tabla_f_f2(SF, 0), colorear_f, SF["pos_hist"])
+                with tabs_f[1]:
+                    mostrar_tabla(tabla_f_f2(SF, 1), colorear_f, SF["pos_hist"])
+                with tabs_f[2]:
+                    for g, dfg in zip(F_GRUPOS_NOMBRES, SF["tablas_f1"]):
+                        st.markdown(chip(g), unsafe_allow_html=True)
+                        mostrar_tabla(dfg, colorear_f)
+                    st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
+                leyenda(LEY_F)
+            
+            if ff == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
+                    SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
+                
+        with tab_f["Fixture y resultados"]:
+            vista_fixture("f")
         
-    with tab_f["Definiciones"]:
-        seccion("Definiciones de la temporada", "Campeón y ascensos a la Primera Nacional",
-                "#b7860b")
-        if SF["campeon"] is None:
-            aviso("Las definiciones aparecen acá cuando termina la fase 2 del Federal A.")
-        else:
-            st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
-            with st.expander(":material/emoji_events: Campeón del Federal A", expanded=False):
-                cf = nom_f[SF["campeon"]]
-                st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
-                            f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
-                            f'<div class="nm">{esc(cf)}</div><div class="s">Asciende a la Primera'
-                            f' Nacional</div></div>', unsafe_allow_html=True)
-                if SF.get("desempate_camp"):
-                    dc = SF["desempate_camp"]
-                    st.markdown(f'<div class="mlab" style="margin-top:14px">Título definido por '
-                                f'desempate · igualaron en puntos: {esc(", ".join(dc["equipos"]))}'
-                                f'</div>' + "".join(fila_partido_html(p) for p in dc["partidos"]),
-                                unsafe_allow_html=True)
-            with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
-                asc_f = [(nom_f[SF["asc_directo"][0]], "campeón"), 
-                         (nom_f[SF["asc_directo"][1]], "2°"), 
-                         (nom_f[SF["asc_directo"][2]], "3°")]
-                if SF["asc_reducido"] is not None:
-                    asc_f.append((nom_f[SF["asc_reducido"]], "reducido"))
-                st.markdown(lista_equipos_html(asc_f) + (
-                    '' if SF["asc_reducido"] is not None else
-                    '<div style="font-size:.8rem;opacity:.65">El cuarto ascenso sale del '
-                    'reducido.</div>'), unsafe_allow_html=True)
-            with st.expander(":material/south: Descensos al Regional Amateur", expanded=False):
-                st.markdown('<div class="mlab">Descienden los 6 últimos de Zona Descenso (a la región '
-                            'de su provincia)</div>'
-                            + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]))
-                                                  for i in SF["descendidos"]]), unsafe_allow_html=True)
+        def partidos_desempate_f(info):
+            grupos_f = {}
+            for p in info["partidos"]:
+                grupos_f.setdefault(p["comp"], []).append(p)
+            for comp_f, partes in grupos_f.items():
+                if "Liguilla" in comp_f:
+                    seccion(f"Tabla final: {comp_f}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                    st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
+                    with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
+                                     expanded=False):
+                        for p in partes:
+                            st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                else:
+                    if len(grupos_f) > 1:
+                        seccion(comp_f, "Partido único definitorio", "#dc2626")
+                    for p in partes:
+                        st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+
+        if desempate_f or desempate_fd:
+            with tab_f["Desempate"]:
+                if desempate_f:
+                    seccion("Desempate por el campeonato",
+                            f"Igualaron en puntos en el 1° puesto: {', '.join(desempate_f['equipos'])}",
+                            "#9333ea")
+                    partidos_desempate_f(desempate_f)
+                    st.caption("El título se define con desempate en cancha neutral (penales si empatan). "
+                               "El resto de las posiciones se ordena por diferencia de gol.")
+                if desempate_fd:
+                    seccion("Desempate por la permanencia",
+                            f"Igualaron en puntos en el límite del descenso (Zona Descenso): "
+                            f"{', '.join(desempate_fd['equipos'])} · se salva"
+                            f"{'n' if desempate_fd['salvados'] > 1 else ''} {desempate_fd['salvados']}",
+                            "#9333ea")
+                    partidos_desempate_f(desempate_fd)
+                    st.caption("Partido único en cancha neutral (penales si empatan). Los 6 últimos bajan "
+                               "al Regional Amateur.")
+
+        with tab_f["Reducido"]:
+            seccion("Reducido por el cuarto ascenso",
+                    "Eliminatoria → Semifinal → Final · partido único · gana el mejor ubicado si "
+                    "empatan, menos en la final (cancha neutral, penales) · L = local, V = "
+                    "visitante, N = neutral", "#2563eb")
+            if ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
+                aviso("El cuadro se completa al terminar la fase 2. Entran del 4° al 8° de Zona "
+                      "Campeonato.")
+            st.markdown(bracket_html_f(SF), unsafe_allow_html=True)
+            if SF["entrantes"] is not None:
+                with st.expander("Clasificados al reducido (orden de mérito)"):
+                    st.markdown(tabla_html(SF["entrantes"]), unsafe_allow_html=True)
+                             
+        with tab_f["Movimientos"]:
+            render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
+        
+        with tab_f["Definiciones"]:
+            seccion("Definiciones de la temporada", "Campeón y ascensos a la Primera Nacional",
+                    "#b7860b")
+            if SF["campeon"] is None:
+                aviso("Las definiciones aparecen acá cuando termina la fase 2 del Federal A.")
+            else:
+                st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
+                with st.expander(":material/emoji_events: Campeón del Federal A", expanded=False):
+                    cf = nom_f[SF["campeon"]]
+                    st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
+                                f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
+                                f'<div class="nm">{esc(cf)}</div><div class="s">Asciende a la Primera'
+                                f' Nacional</div></div>', unsafe_allow_html=True)
+                    if SF.get("desempate_camp"):
+                        dc = SF["desempate_camp"]
+                        st.markdown(f'<div class="mlab" style="margin-top:14px">Título definido por '
+                                    f'desempate · igualaron en puntos: {esc(", ".join(dc["equipos"]))}'
+                                    f'</div>' + "".join(fila_partido_html(p) for p in dc["partidos"]),
+                                    unsafe_allow_html=True)
+                with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
+                    asc_f = [(nom_f[SF["asc_directo"][0]], "campeón"), 
+                             (nom_f[SF["asc_directo"][1]], "2°"), 
+                             (nom_f[SF["asc_directo"][2]], "3°")]
+                    if SF["asc_reducido"] is not None:
+                        asc_f.append((nom_f[SF["asc_reducido"]], "reducido"))
+                    st.markdown(lista_equipos_html(asc_f) + (
+                        '' if SF["asc_reducido"] is not None else
+                        '<div style="font-size:.8rem;opacity:.65">El cuarto ascenso sale del '
+                        'reducido.</div>'), unsafe_allow_html=True)
+                with st.expander(":material/south: Descensos al Regional Amateur", expanded=False):
+                    st.markdown('<div class="mlab">Descienden los 6 últimos de Zona Descenso (a la región '
+                                'de su provincia)</div>'
+                                + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]))
+                                                      for i in SF["descendidos"]]), unsafe_allow_html=True)
 
 
 # ============================================================================
 # PRIMERA B
 # ============================================================================
-with tab_pb:
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip(f"Primera B · {len(SPB['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
+if _abierta(tab_ligas, tab_pb):
+    with tab_pb:
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip(f"Primera B · {len(SPB['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
-    if c2.button(":material/skip_next: Próxima fecha", key="pb_next", width="stretch", type="primary", disabled=terminada_pb):
-        simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
-        while SPB["fecha"] < SPB["total"]: 
+        if c2.button(":material/skip_next: Próxima fecha", key="pb_next", width="stretch", type="primary", disabled=terminada_pb):
             simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
-        st.rerun()
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="pb_all", width="stretch", disabled=terminada_pb):
+            while SPB["fecha"] < SPB["total"]: 
+                simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
+            st.rerun()
         
-    barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPB['fecha']} / {SPB['total']}"), ("Partidos jugados", len(SPB["log"]))], pct_pb)
+        barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPB['fecha']} / {SPB['total']}"), ("Partidos jugados", len(SPB["log"]))], pct_pb)
     
-    desempates = [p for p in SPB["log"] if p["rotulo"] == "Desempate"]
-    mostrar_desempate = SPB.get("desempate_pendiente") or len(desempates) > 0
+        desempates = [p for p in SPB["log"] if p["rotulo"] == "Desempate"]
+        mostrar_desempate = SPB.get("desempate_pendiente") or len(desempates) > 0
     
-    titulos = ["Posiciones", "Fixture y resultados"]
-    if mostrar_desempate: titulos.append("Desempate")
-    titulos.extend(["Movimientos", "Definiciones"])
+        titulos = ["Posiciones", "Fixture y resultados"]
+        if mostrar_desempate: titulos.append("Desempate")
+        titulos.extend(["Movimientos", "Definiciones"])
     
-    spb_tabs = st.tabs(titulos)
-    idx = 0
+        spb_tabs = st.tabs(titulos)
+        idx = 0
     
-    with spb_tabs[idx]:
-        seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros, del 18° para abajo descienden", "#4f46e5")
-        mostrar_tabla(tabla_pb(SPB), colorear_pb, SPB["pos_hist"])
-        leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]), 
-                 ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)"),
-                 ("Desempate Permanencia", "rgba(147, 51, 234, 0.3)"),
-                 ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])])
-    idx += 1
-            
-    with spb_tabs[idx]: vista_fixture("pb")
-    idx += 1
-    
-    if mostrar_desempate:
         with spb_tabs[idx]:
-            if SPB.get("desempate_pendiente"):
-                seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
-                df_des = tabla_pb(SPB)
-                df_des = df_des[df_des["id"].isin(SPB["ids_desempate"])]
-                mostrar_tabla(df_des, colorear_pb)
-            else:
-                grupos = {}
-                for p in desempates:
-                    m = p["comp"]
-                    if m not in grupos: grupos[m] = []
-                    grupos[m].append(p)
-                
-                for motivo, parts in grupos.items():
-                    if "Liguilla" in motivo:
-                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                        st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
-                            for p in parts:
-                                st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                    else:
-                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
-                        for p in parts:
-                            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros, del 18° para abajo descienden", "#4f46e5")
+            mostrar_tabla(tabla_pb(SPB), colorear_pb, SPB["pos_hist"])
+            leyenda([("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]), 
+                     ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)"),
+                     ("Desempate Permanencia", "rgba(147, 51, 234, 0.3)"),
+                     ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])])
         idx += 1
             
-    with spb_tabs[idx]: render_movimientos(SPB["log"], SPB["pos_hist"], SPB["nombres"], "#0f766e")
-    idx += 1
+        with spb_tabs[idx]: vista_fixture("pb")
+        idx += 1
+    
+        if mostrar_desempate:
+            with spb_tabs[idx]:
+                if SPB.get("desempate_pendiente"):
+                    seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
+                    df_des = tabla_pb(SPB)
+                    df_des = df_des[df_des["id"].isin(SPB["ids_desempate"])]
+                    mostrar_tabla(df_des, colorear_pb)
+                else:
+                    grupos = {}
+                    for p in desempates:
+                        m = p["comp"]
+                        if m not in grupos: grupos[m] = []
+                        grupos[m].append(p)
+                
+                    for motivo, parts in grupos.items():
+                        if "Liguilla" in motivo:
+                            seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
+                            with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
+                                for p in parts:
+                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                        else:
+                            seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                            for p in parts:
+                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            idx += 1
+            
+        with spb_tabs[idx]: render_movimientos(SPB["log"], SPB["pos_hist"], SPB["nombres"], "#0f766e")
+        idx += 1
         
-    with spb_tabs[idx]:
-        seccion("Definiciones de la temporada", "Campeón, ascensos y descensos", "#b7860b")
-        if SPB["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
-        else:
-            with st.expander(":material/emoji_events: Campeón de la Primera B", expanded=False):
-                cpb = SPB["nombres"][SPB["campeon"]]
-                st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div></div>', unsafe_allow_html=True)
+        with spb_tabs[idx]:
+            seccion("Definiciones de la temporada", "Campeón, ascensos y descensos", "#b7860b")
+            if SPB["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
+            else:
+                with st.expander(":material/emoji_events: Campeón de la Primera B", expanded=False):
+                    cpb = SPB["nombres"][SPB["campeon"]]
+                    st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpb, 64)}</div><div class="nm">{esc(cpb)}</div></div>', unsafe_allow_html=True)
                 
 
 # ============================================================================
 # PRIMERA C
 # ============================================================================
-with tab_pc:
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip(f"Primera C · {len(SPC['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
+if _abierta(tab_ligas, tab_pc):
+    with tab_pc:
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip(f"Primera C · {len(SPC['nombres'])} equipos") + " " + chip("Todos contra todos", "#475569"), unsafe_allow_html=True)
     
-    if c2.button(":material/skip_next: Próxima fecha", key="pc_next", width="stretch", type="primary", disabled=terminada_pc):
-        simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
-        while SPC["fecha"] < SPC["total"]: 
+        if c2.button(":material/skip_next: Próxima fecha", key="pc_next", width="stretch", type="primary", disabled=terminada_pc):
             simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
-        st.rerun()
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="pc_all", width="stretch", disabled=terminada_pc):
+            while SPC["fecha"] < SPC["total"]: 
+                simular_fecha_liga(SPC, P, S["rng"], "Primera C", tabla_pc)
+            st.rerun()
         
-    barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPC['fecha']} / {SPC['total']}"), ("Partidos jugados", len(SPC["log"]))], pct_pc)
+        barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{SPC['fecha']} / {SPC['total']}"), ("Partidos jugados", len(SPC["log"]))], pct_pc)
     
-    desempates_c = [p for p in SPC["log"] if p["rotulo"] == "Desempate"]
-    mostrar_desempate_c = SPC.get("desempate_pendiente") or len(desempates_c) > 0
+        desempates_c = [p for p in SPC["log"] if p["rotulo"] == "Desempate"]
+        mostrar_desempate_c = SPC.get("desempate_pendiente") or len(desempates_c) > 0
     
-    titulos_c = ["Posiciones", "Fixture y resultados"]
-    if mostrar_desempate_c: titulos_c.append("Desempate")
-    titulos_c.extend(["Movimientos", "Definiciones"])
+        titulos_c = ["Posiciones", "Fixture y resultados"]
+        if mostrar_desempate_c: titulos_c.append("Desempate")
+        titulos_c.extend(["Movimientos", "Definiciones"])
     
-    spc_tabs = st.tabs(titulos_c)
-    idx_c = 0
+        spc_tabs = st.tabs(titulos_c)
+        idx_c = 0
     
-    with spc_tabs[idx_c]:
-        seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros", "#4f46e5")
-        mostrar_tabla(tabla_pc(SPC), colorear_pc, SPC["pos_hist"])
-        leyenda([("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"]), 
-                 ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)")])
-    idx_c += 1
-            
-    with spc_tabs[idx_c]: vista_fixture("pc")
-    idx_c += 1
-    
-    if mostrar_desempate_c:
         with spc_tabs[idx_c]:
-            if SPC.get("desempate_pendiente"):
-                seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
-                df_des = tabla_pc(SPC)
-                df_des = df_des[df_des["id"].isin(SPC["ids_desempate"])]
-                mostrar_tabla(df_des, colorear_pc)
-            else:
-                grupos = {}
-                for p in desempates_c:
-                    m = p["comp"]
-                    if m not in grupos: grupos[m] = []
-                    grupos[m].append(p)
-                
-                for motivo, parts in grupos.items():
-                    if "Liguilla" in motivo:
-                        seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                        st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
-                        with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
-                            for p in parts:
-                                st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                    else:
-                        seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
-                        for p in parts:
-                            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            seccion("Tabla de posiciones", "Ida y vuelta · ascienden los 2 primeros", "#4f46e5")
+            mostrar_tabla(tabla_pc(SPC), colorear_pc, SPC["pos_hist"])
+            leyenda([("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"]), 
+                     ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)")])
         idx_c += 1
             
-    with spc_tabs[idx_c]: render_movimientos(SPC["log"], SPC["pos_hist"], SPC["nombres"], "#0f766e")
-    idx_c += 1
+        with spc_tabs[idx_c]: vista_fixture("pc")
+        idx_c += 1
+    
+        if mostrar_desempate_c:
+            with spc_tabs[idx_c]:
+                if SPC.get("desempate_pendiente"):
+                    seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.", "#9333ea")
+                    df_des = tabla_pc(SPC)
+                    df_des = df_des[df_des["id"].isin(SPC["ids_desempate"])]
+                    mostrar_tabla(df_des, colorear_pc)
+                else:
+                    grupos = {}
+                    for p in desempates_c:
+                        m = p["comp"]
+                        if m not in grupos: grupos[m] = []
+                        grupos[m].append(p)
+                
+                    for motivo, parts in grupos.items():
+                        if "Liguilla" in motivo:
+                            seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
+                            with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
+                                for p in parts:
+                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                        else:
+                            seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                            for p in parts:
+                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            idx_c += 1
+            
+        with spc_tabs[idx_c]: render_movimientos(SPC["log"], SPC["pos_hist"], SPC["nombres"], "#0f766e")
+        idx_c += 1
         
-    with spc_tabs[idx_c]:
-        seccion("Definiciones de la temporada", "Campeón y ascensos", "#b7860b")
-        if SPC["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
-        else:
-            with st.expander(":material/emoji_events: Campeón de la Primera C", expanded=False):
-                cpc = SPC["nombres"][SPC["campeon"]]
-                st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpc, 64)}</div><div class="nm">{esc(cpc)}</div></div>', unsafe_allow_html=True)
+        with spc_tabs[idx_c]:
+            seccion("Definiciones de la temporada", "Campeón y ascensos", "#b7860b")
+            if SPC["campeon"] is None: aviso("Las definiciones aparecen acá cuando termina la liga.")
+            else:
+                with st.expander(":material/emoji_events: Campeón de la Primera C", expanded=False):
+                    cpc = SPC["nombres"][SPC["campeon"]]
+                    st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">{crest(cpc, 64)}</div><div class="nm">{esc(cpc)}</div></div>', unsafe_allow_html=True)
 
 
 # ============================================================================
 # TORNEO REGIONAL AMATEUR
 # ============================================================================
-with tab_reg:
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
-                + chip("12 regiones · 6 ascensos al Federal A", "#475569"), unsafe_allow_html=True)
-    if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
-                 disabled=terminada_reg):
-        simular_fecha_reg(SR, P, S["rng"])
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="reg_all", width="stretch",
-                 disabled=terminada_reg):
-        while SR["fecha"] < SR["total"]:
+if _abierta(tab_ligas, tab_reg):
+    with tab_reg:
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
+                    + chip("12 regiones · 6 ascensos al Federal A", "#475569"), unsafe_allow_html=True)
+        if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
+                     disabled=terminada_reg):
             simular_fecha_reg(SR, P, S["rng"])
-        st.rerun()
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="reg_all", width="stretch",
+                     disabled=terminada_reg):
+            while SR["fecha"] < SR["total"]:
+                simular_fecha_reg(SR, P, S["rng"])
+            st.rerun()
 
-    fase_reg = ("Ligas regionales" if SR["fecha"] < SR["f_liga"] else
-                "Desempate por el campeonato" if SR["fecha"] < SR["f_final0"] else
-                "Terminado" if terminada_reg else "Final por el ascenso")
-    barra_estado([("Fase", fase_reg), ("Fecha", f"{SR['fecha']} / {SR['total']}"),
-                  ("Partidos jugados", len(SR["log"]))], pct_reg)
+        fase_reg = ("Ligas regionales" if SR["fecha"] < SR["f_liga"] else
+                    "Desempate por el campeonato" if SR["fecha"] < SR["f_final0"] else
+                    "Terminado" if terminada_reg else "Final por el ascenso")
+        barra_estado([("Fase", fase_reg), ("Fecha", f"{SR['fecha']} / {SR['total']}"),
+                      ("Partidos jugados", len(SR["log"]))], pct_reg)
 
-    desempates_r = [p for p in SR["log"] if p["rotulo"] == "Desempate"]
-    titulos_r = ["Regiones", "Fixture y resultados"]
-    if SR["desempate_pendiente"] or desempates_r:
-        titulos_r.append("Desempate")
-    titulos_r += ["Final por el ascenso", "Movimientos", "Definiciones"]
-    tab_r = dict(zip(titulos_r, st.tabs(titulos_r)))
+        desempates_r = [p for p in SR["log"] if p["rotulo"] == "Desempate"]
+        titulos_r = ["Regiones", "Fixture y resultados"]
+        if SR["desempate_pendiente"] or desempates_r:
+            titulos_r.append("Desempate")
+        titulos_r += ["Final por el ascenso", "Movimientos", "Definiciones"]
+        tab_r = dict(zip(titulos_r, st.tabs(titulos_r)))
 
-    with tab_r["Regiones"]:
-        seccion("Regiones", "Cada región es una liga de todos contra todos a una sola vuelta · "
-                "el 1° es el campeón regional", "#0e7490")
-        region = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="reg_region",
-                          label_visibility="collapsed") or REGIONES_REG[0]
-        n_final, rival = next((k + 1, b if a == region else a) for k, (a, b) in enumerate(FINALES_REG)
-                              if region in (a, b))
-        st.markdown(chip(f"{len(SR['grupos'][region])} clubes", "#0e7490") + " "
-                    + chip(f"Final {n_final} por el ascenso vs. {rival}", "#b7860b"),
-                    unsafe_allow_html=True)
-        seccion(f"Región {region}", "Si hay igualdad en puntos en el 1° puesto, el título se define "
-                "con un desempate (nunca por diferencia de gol)", "#16a34a")
-        mostrar_tabla(tabla_reg_region(SR, region), colorear_reg)
-        leyenda([("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
+        with tab_r["Regiones"]:
+            seccion("Regiones", "Cada región es una liga de todos contra todos a una sola vuelta · "
+                    "el 1° es el campeón regional", "#0e7490")
+            region = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="reg_region",
+                              label_visibility="collapsed") or REGIONES_REG[0]
+            n_final, rival = next((k + 1, b if a == region else a) for k, (a, b) in enumerate(FINALES_REG)
+                                  if region in (a, b))
+            st.markdown(chip(f"{len(SR['grupos'][region])} clubes", "#0e7490") + " "
+                        + chip(f"Final {n_final} por el ascenso vs. {rival}", "#b7860b"),
+                        unsafe_allow_html=True)
+            seccion(f"Región {region}", "Si hay igualdad en puntos en el 1° puesto, el título se define "
+                    "con un desempate (nunca por diferencia de gol)", "#16a34a")
+            mostrar_tabla(tabla_reg_region(SR, region), colorear_reg)
+            leyenda([("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
 
-    if "Desempate" in tab_r:
-        with tab_r["Desempate"]:
-            seccion("Desempates por el campeonato", "Igualdad en puntos en el 1° puesto de la región · "
-                    "partido único en cancha neutral, penales si empatan", "#9333ea")
-            for reg in REGIONES_REG:
-                if SR["desempate_pendiente"] and reg in SR["motivos_desempate"]:
-                    st.markdown(f'<div class="mlab" style="margin-top:14px">Región {esc(reg)}</div>',
-                                unsafe_allow_html=True)
-                    df_des = tabla_reg_region(SR, reg).head(SR["motivos_desempate"][reg])
-                    mostrar_tabla(df_des, colorear_reg)
-                    continue
-                grupos_r = {}
-                for p in desempates_r:
-                    if p["region"] == reg:
-                        grupos_r.setdefault(p["comp"], []).append(p)
-                for comp_r, partes in grupos_r.items():
-                    if "Liguilla" in comp_r:
-                        seccion(f"Tabla final: {comp_r}", "Posiciones del mini-torneo a partido único", "#9333ea")
-                        st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
-                        with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
-                                         expanded=False):
+        if "Desempate" in tab_r:
+            with tab_r["Desempate"]:
+                seccion("Desempates por el campeonato", "Igualdad en puntos en el 1° puesto de la región · "
+                        "partido único en cancha neutral, penales si empatan", "#9333ea")
+                for reg in REGIONES_REG:
+                    if SR["desempate_pendiente"] and reg in SR["motivos_desempate"]:
+                        st.markdown(f'<div class="mlab" style="margin-top:14px">Región {esc(reg)}</div>',
+                                    unsafe_allow_html=True)
+                        df_des = tabla_reg_region(SR, reg).head(SR["motivos_desempate"][reg])
+                        mostrar_tabla(df_des, colorear_reg)
+                        continue
+                    grupos_r = {}
+                    for p in desempates_r:
+                        if p["region"] == reg:
+                            grupos_r.setdefault(p["comp"], []).append(p)
+                    for comp_r, partes in grupos_r.items():
+                        if "Liguilla" in comp_r:
+                            seccion(f"Tabla final: {comp_r}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            st.markdown(html_tabla_liguilla(partes), unsafe_allow_html=True)
+                            with st.expander(f":material/visibility: Ver los {len(partes)} enfrentamientos",
+                                             expanded=False):
+                                for p in partes:
+                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                        else:
+                            seccion(f"Desempate: {comp_r}", "Partido único definitorio", "#dc2626")
                             for p in partes:
-                                st.markdown(fila_partido_html(p), unsafe_allow_html=True)
-                    else:
-                        seccion(f"Desempate: {comp_r}", "Partido único definitorio", "#dc2626")
-                        for p in partes:
-                            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
 
-    with tab_r["Fixture y resultados"]:
-        region_fx = st.selectbox(":material/map: Región", REGIONES_REG, key="reg_fx_region")
-        vista_fixture("reg", region_fx)
+        with tab_r["Fixture y resultados"]:
+            region_fx = st.selectbox(":material/map: Región", REGIONES_REG, key="reg_fx_region")
+            vista_fixture("reg", region_fx)
 
-    with tab_r["Final por el ascenso"]:
-        seccion("Final por el ascenso", "Los 12 campeones regionales se cruzan de a pares, a ida y "
-                "vuelta · los 6 ganadores ascienden al Federal A", "#b7860b")
-        campeones_ya = [(SR["nombres"][c], reg) for reg, c in SR["campeones"].items() if c is not None]
-        if not campeones_ya:
-            aviso("Los cruces se completan con los campeones de cada región.")
-        st.markdown(finales_reg_html(SR), unsafe_allow_html=True)
-        if SR["ascendidos"]:
-            st.markdown('<div class="mlab up">▲ Ascienden al Federal A</div>'
-                        + lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
-                                              for i in SR["ascendidos"]]), unsafe_allow_html=True)
-
-    with tab_r["Movimientos"]:
-        render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
-
-    with tab_r["Definiciones"]:
-        seccion("Definiciones de la temporada", "Campeones regionales y ascensos al Federal A", "#b7860b")
-        if not any(c is not None for c in SR["campeones"].values()):
-            aviso("Las definiciones aparecen acá cuando termina la liga de cada región.")
-        else:
-            with st.expander(":material/emoji_events: Campeones regionales", expanded=False):
-                st.markdown(lista_equipos_html([(SR["nombres"][c], reg) for reg, c in
-                                                SR["campeones"].items() if c is not None]),
-                            unsafe_allow_html=True)
+        with tab_r["Final por el ascenso"]:
+            seccion("Final por el ascenso", "Los 12 campeones regionales se cruzan de a pares, a ida y "
+                    "vuelta · los 6 ganadores ascienden al Federal A", "#b7860b")
+            campeones_ya = [(SR["nombres"][c], reg) for reg, c in SR["campeones"].items() if c is not None]
+            if not campeones_ya:
+                aviso("Los cruces se completan con los campeones de cada región.")
+            st.markdown(finales_reg_html(SR), unsafe_allow_html=True)
             if SR["ascendidos"]:
-                with st.expander(":material/arrow_upward: Ascensos al Federal A", expanded=False):
-                    st.markdown(lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
-                                                    for i in SR["ascendidos"]]), unsafe_allow_html=True)
+                st.markdown('<div class="mlab up">▲ Ascienden al Federal A</div>'
+                            + lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
+                                                  for i in SR["ascendidos"]]), unsafe_allow_html=True)
+
+        with tab_r["Movimientos"]:
+            render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
+
+        with tab_r["Definiciones"]:
+            seccion("Definiciones de la temporada", "Campeones regionales y ascensos al Federal A", "#b7860b")
+            if not any(c is not None for c in SR["campeones"].values()):
+                aviso("Las definiciones aparecen acá cuando termina la liga de cada región.")
+            else:
+                with st.expander(":material/emoji_events: Campeones regionales", expanded=False):
+                    st.markdown(lista_equipos_html([(SR["nombres"][c], reg) for reg, c in
+                                                    SR["campeones"].items() if c is not None]),
+                                unsafe_allow_html=True)
+                if SR["ascendidos"]:
+                    with st.expander(":material/arrow_upward: Ascensos al Federal A", expanded=False):
+                        st.markdown(lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
+                                                        for i in SR["ascendidos"]]), unsafe_allow_html=True)
 
 
 # ============================================================================
 # COPA ARGENTINA
 # ============================================================================
-with tab_ca:
-    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-    c1.markdown(logo_img("Copa Argentina", 30) + " " + chip("Copa Argentina · 128 equipos", "#1e5aa8") + " "
-                + chip("Partido único · cancha neutral", "#475569"), unsafe_allow_html=True)
-    if c2.button(":material/skip_next: Próxima ronda", key="ca_next", width="stretch", type="primary",
-                 disabled=not SC["sorteada"] or terminada_copa):
-        simular_ronda_copa(SC, P, S["rng"])
-        st.rerun()
-    if c3.button(":material/fast_forward: Hasta el final", key="ca_all", width="stretch",
-                 disabled=not SC["sorteada"] or terminada_copa):
-        while SC["ronda"] < SC["total"]:
+if _abierta(tab_copas, tab_ca):
+    with tab_ca:
+        c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+        c1.markdown(logo_img("Copa Argentina", 30) + " " + chip("Copa Argentina · 128 equipos", "#1e5aa8") + " "
+                    + chip("Partido único · cancha neutral", "#475569"), unsafe_allow_html=True)
+        if c2.button(":material/skip_next: Próxima ronda", key="ca_next", width="stretch", type="primary",
+                     disabled=not SC["sorteada"] or terminada_copa):
             simular_ronda_copa(SC, P, S["rng"])
-        st.rerun()
-    ronda_txt = ("Sin sortear" if not SC["sorteada"] else "Terminada" if terminada_copa
-                 else COPA_RONDAS[SC["ronda"]])
-    barra_estado([("Próxima ronda" if SC["sorteada"] and not terminada_copa else "Estado", ronda_txt),
-                  ("Rondas", f"{SC['ronda']} / {SC['total']}"), ("Partidos jugados", len(SC["log"]))],
-                 pct_copa)
+            st.rerun()
+        if c3.button(":material/fast_forward: Hasta el final", key="ca_all", width="stretch",
+                     disabled=not SC["sorteada"] or terminada_copa):
+            while SC["ronda"] < SC["total"]:
+                simular_ronda_copa(SC, P, S["rng"])
+            st.rerun()
+        ronda_txt = ("Sin sortear" if not SC["sorteada"] else "Terminada" if terminada_copa
+                     else COPA_RONDAS[SC["ronda"]])
+        barra_estado([("Próxima ronda" if SC["sorteada"] and not terminada_copa else "Estado", ronda_txt),
+                      ("Rondas", f"{SC['ronda']} / {SC['total']}"), ("Partidos jugados", len(SC["log"]))],
+                     pct_copa)
 
-    if not SC["sorteada"]:
-        seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
-                "neutral, penales si empatan", "#1e5aa8")
-        aviso("La Copa se sortea al empezar la temporada.")
-        cupos = pd.DataFrame([
-            ("Primera División", "Los 30 equipos", 30), ("Primera Nacional", "Los 36 equipos", 36),
-            ("Federal A", "Los 20 de Zona Campeonato y los 8 mejores de Zona Descenso", 28),
-            ("Primera B", "Los 12 primeros", 12), ("Primera C", "Los 10 primeros", 10),
-            ("Regional Amateur", "El campeón de cada una de las 12 regiones", 12)],
-            columns=["Liga", "Clasifican", "Cupos"])
-        st.markdown(tabla_html(cupos, clubes=()), unsafe_allow_html=True)
-        pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
-                                     ("Federal A", terminada_f), ("Primera B", terminada_pb),
-                                     ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
-        st.caption("Faltan terminar: " + ", ".join(pendientes))
-    else:
-        titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Definiciones"]
-        tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
-        with tab_ca_t["Cuadro"]:
-            seccion("Cuadro de la Copa Argentina", "8 llaves de 16 equipos (64avos a octavos) · el ganador "
-                    "de cada llave juega los cuartos · todo en cancha neutral · (n) = penales", "#1e5aa8")
-            st.caption("64avos por categoría: Primera vs. Regional Amateur, B Nacional vs. Primera C, "
-                       "Federal A vs. Primera B; los que sobran se cruzan con la misma regla. Se juega "
-                       "los miércoles, en el medio de las ligas (ver Calendario).")
-            opciones = [f"Llave {x}" for x in COPA_LLAVES] + ["Fase final"]
-            vista_llave = st.segmented_control("Llave", opciones, default="Llave A", key="ca_llave",
-                                               label_visibility="collapsed") or "Llave A"
-            if vista_llave == "Fase final":
-                st.markdown(cuadro_final_copa_html(SC), unsafe_allow_html=True)
-            else:
-                st.markdown(cuadro_llave_html(SC, vista_llave[-1]), unsafe_allow_html=True)
-        with tab_ca_t["Partidos"]:
-            if not SC["log"]:
-                aviso("Todavía no se jugó ninguna ronda. Los cruces de 64avos están en el <b>Cuadro</b>.")
-            else:
-                jugadas = SC["ronda"]
-                ronda_sel = st.selectbox(":material/event: Ronda", range(jugadas), index=jugadas - 1,
-                                         format_func=lambda k: COPA_RONDAS[k], key=f"ca_ronda_{S['temp']}")
-                for m in SC["cuadro"][ronda_sel]:
-                    st.markdown(fila_partido_html(m["p"]), unsafe_allow_html=True)
-        with tab_ca_t["Clasificados"]:
-            seccion("Clasificados", "Los 128 equipos y por qué entraron (por la temporada anterior; "
-                    "en la temporada 1, por media)", "#1e5aa8")
-            df_cl = pd.DataFrame({"Equipo": SC["nombres"], "Liga": SC["origen"],
-                                  "Clasificó como": SC["criterio"],
-                                  "Media": np.round(SC["r"], 1)})
-            df_cl["_o"] = df_cl["Liga"].map({x: k for k, x in enumerate(
-                ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                 "Regional Amateur"])})
-            df_cl = df_cl.sort_values(["_o", "Media"], ascending=[True, False]).drop(columns="_o")
-            st.markdown(tabla_html(df_cl, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
-        with tab_ca_t["Definiciones"]:
-            seccion("Definiciones", "Campeón y finalista de la Copa Argentina", "#b7860b")
-            if SC["campeon"] is None:
-                aviso("El campeón aparece acá cuando se juega la final.")
-            else:
-                fin = SC["cuadro"][-1][0]
-                sub = fin["b"] if fin["gana"] == fin["a"] else fin["a"]
-                cc = SC["nombres"][SC["campeon"]]
-                st.markdown(f'<div class="champ"><div class="t">Campeón · Copa Argentina · Temporada {S["temp"]}'
-                            f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
-                            f'<div class="nm">{esc(cc)}</div><div class="s">{esc(SC["origen"][SC["campeon"]])}'
-                            f' · finalista: {esc(SC["nombres"][sub])}</div></div>', unsafe_allow_html=True)
-                st.markdown(fila_partido_html(fin["p"], abierto=True), unsafe_allow_html=True)
+        if not SC["sorteada"]:
+            seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
+                    "neutral, penales si empatan", "#1e5aa8")
+            aviso("La Copa se sortea al empezar la temporada.")
+            cupos = pd.DataFrame([
+                ("Primera División", "Los 30 equipos", 30), ("Primera Nacional", "Los 36 equipos", 36),
+                ("Federal A", "Los 20 de Zona Campeonato y los 8 mejores de Zona Descenso", 28),
+                ("Primera B", "Los 12 primeros", 12), ("Primera C", "Los 10 primeros", 10),
+                ("Regional Amateur", "El campeón de cada una de las 12 regiones", 12)],
+                columns=["Liga", "Clasifican", "Cupos"])
+            st.markdown(tabla_html(cupos, clubes=()), unsafe_allow_html=True)
+            pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
+                                         ("Federal A", terminada_f), ("Primera B", terminada_pb),
+                                         ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
+            st.caption("Faltan terminar: " + ", ".join(pendientes))
+        else:
+            titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Definiciones"]
+            tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
+            with tab_ca_t["Cuadro"]:
+                seccion("Cuadro de la Copa Argentina", "8 llaves de 16 equipos (64avos a octavos) · el ganador "
+                        "de cada llave juega los cuartos · todo en cancha neutral · (n) = penales", "#1e5aa8")
+                st.caption("64avos por categoría: Primera vs. Regional Amateur, B Nacional vs. Primera C, "
+                           "Federal A vs. Primera B; los que sobran se cruzan con la misma regla. Se juega "
+                           "los miércoles, en el medio de las ligas (ver Calendario).")
+                opciones = [f"Llave {x}" for x in COPA_LLAVES] + ["Fase final"]
+                vista_llave = st.segmented_control("Llave", opciones, default="Llave A", key="ca_llave",
+                                                   label_visibility="collapsed") or "Llave A"
+                if vista_llave == "Fase final":
+                    st.markdown(cuadro_final_copa_html(SC), unsafe_allow_html=True)
+                else:
+                    st.markdown(cuadro_llave_html(SC, vista_llave[-1]), unsafe_allow_html=True)
+            with tab_ca_t["Partidos"]:
+                if not SC["log"]:
+                    aviso("Todavía no se jugó ninguna ronda. Los cruces de 64avos están en el <b>Cuadro</b>.")
+                else:
+                    jugadas = SC["ronda"]
+                    ronda_sel = st.selectbox(":material/event: Ronda", range(jugadas), index=jugadas - 1,
+                                             format_func=lambda k: COPA_RONDAS[k], key=f"ca_ronda_{S['temp']}")
+                    for m in SC["cuadro"][ronda_sel]:
+                        st.markdown(fila_partido_html(m["p"]), unsafe_allow_html=True)
+            with tab_ca_t["Clasificados"]:
+                seccion("Clasificados", "Los 128 equipos y por qué entraron (por la temporada anterior; "
+                        "en la temporada 1, por media)", "#1e5aa8")
+                df_cl = pd.DataFrame({"Equipo": SC["nombres"], "Liga": SC["origen"],
+                                      "Clasificó como": SC["criterio"],
+                                      "Media": np.round(SC["r"], 1)})
+                df_cl["_o"] = df_cl["Liga"].map({x: k for k, x in enumerate(
+                    ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
+                     "Regional Amateur"])})
+                df_cl = df_cl.sort_values(["_o", "Media"], ascending=[True, False]).drop(columns="_o")
+                st.markdown(tabla_html(df_cl, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+            with tab_ca_t["Definiciones"]:
+                seccion("Definiciones", "Campeón y finalista de la Copa Argentina", "#b7860b")
+                if SC["campeon"] is None:
+                    aviso("El campeón aparece acá cuando se juega la final.")
+                else:
+                    fin = SC["cuadro"][-1][0]
+                    sub = fin["b"] if fin["gana"] == fin["a"] else fin["a"]
+                    cc = SC["nombres"][SC["campeon"]]
+                    st.markdown(f'<div class="champ"><div class="t">Campeón · Copa Argentina · Temporada {S["temp"]}'
+                                f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
+                                f'<div class="nm">{esc(cc)}</div><div class="s">{esc(SC["origen"][SC["campeon"]])}'
+                                f' · finalista: {esc(SC["nombres"][sub])}</div></div>', unsafe_allow_html=True)
+                    st.markdown(fila_partido_html(fin["p"], abierto=True), unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -1376,104 +1400,110 @@ def pestaña_int(clave, color):
             st.caption("Clasifica a la Recopa y a la próxima Libertadores.")
 
 
-with tab_lib:
-    pestaña_int("lib", "#8a6d1e")
-with tab_sud:
-    pestaña_int("sud", "#1e5aa8")
-with tab_rec:
-    pestaña_int("rec", "#475569")
+if _abierta(tab_copas, tab_lib):
+    with tab_lib:
+        pestaña_int("lib", "#8a6d1e")
+if _abierta(tab_copas, tab_sud):
+    with tab_sud:
+        pestaña_int("sud", "#1e5aa8")
+if _abierta(tab_copas, tab_rec):
+    with tab_rec:
+        pestaña_int("rec", "#475569")
 
 
 # ============================================================================
 # CALENDARIO
 # ============================================================================
-with tab_cal:
-    seccion(f"Calendario {anio(S)}", "Cuándo se juega cada fecha de cada liga y cada ronda de la Copa "
-            "Argentina (los miércoles, en el medio de las ligas)", "#1e5aa8")
-    c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
-    c1.markdown((f'Próximo día: <b>{esc(texto_dia(_hoy))}</b> · ' + " ".join(
-        logo_img(c, 18) for c, (d, _) in _prox.items() if d == _hoy)) if _hoy else
-        "Terminó la temporada: pasá a la siguiente desde <b>Nueva temporada</b>.", unsafe_allow_html=True)
-    if c2.button(":material/calendar_today: Jugar ese día", key="cal_next", width="stretch", type="primary",
-                 disabled=_hoy is None):
-        jugar_proximo_dia(S, P, acumular)
-        st.rerun()
-    eventos = eventos_calendario(S)
-    meses = sorted({d.month for d, *_ in eventos})
-    mes_def = (_hoy or eventos[-1][0]).month
-    clave_mes = f"cal_mes_{S['temp']}"
-    # el mes elegido sigue al próximo día (cuando avanza el calendario, se mueve solo)
-    if st.session_state.get(f"{clave_mes}_sigue") != mes_def or clave_mes not in st.session_state:
-        st.session_state[clave_mes] = mes_def if mes_def in meses else meses[0]
-        st.session_state[f"{clave_mes}_sigue"] = mes_def
-    mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
-                               label_visibility="collapsed") or mes_def
-    st.markdown(calendario_mes_html(S, eventos, mes, _hoy), unsafe_allow_html=True)
-    st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos).")
+if _abierta(tab_cal):
+    with tab_cal:
+        seccion(f"Calendario {anio(S)}", "Cuándo se juega cada fecha de cada liga y cada ronda de la Copa "
+                "Argentina (los miércoles, en el medio de las ligas)", "#1e5aa8")
+        c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
+        c1.markdown((f'Próximo día: <b>{esc(texto_dia(_hoy))}</b> · ' + " ".join(
+            logo_img(c, 18) for c, (d, _) in _prox.items() if d == _hoy)) if _hoy else
+            "Terminó la temporada: pasá a la siguiente desde <b>Nueva temporada</b>.", unsafe_allow_html=True)
+        if c2.button(":material/calendar_today: Jugar ese día", key="cal_next", width="stretch", type="primary",
+                     disabled=_hoy is None):
+            jugar_proximo_dia(S, P, acumular)
+            st.rerun()
+        eventos = eventos_calendario(S)
+        meses = sorted({d.month for d, *_ in eventos})
+        mes_def = (_hoy or eventos[-1][0]).month
+        clave_mes = f"cal_mes_{S['temp']}"
+        # el mes elegido sigue al próximo día (cuando avanza el calendario, se mueve solo)
+        if st.session_state.get(f"{clave_mes}_sigue") != mes_def or clave_mes not in st.session_state:
+            st.session_state[clave_mes] = mes_def if mes_def in meses else meses[0]
+            st.session_state[f"{clave_mes}_sigue"] = mes_def
+        mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
+                                   label_visibility="collapsed") or mes_def
+        st.markdown(calendario_mes_html(S, eventos, mes, _hoy), unsafe_allow_html=True)
+        st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos).")
 
 
 # ============================================================================
 # CLUBES
 # ============================================================================
-with tab_c:
-    seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
-    cat = st.segmented_control("Categoría",
-                               ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                                "Regional Amateur"],
-                               default="Primera División", key="cat_clubes")
-    cat = cat or "Primera División"
-    if cat == "Regional Amateur":            # 245 clubes: se elige la región
-        region_c = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="club_reg_region",
-                            label_visibility="collapsed") or REGIONES_REG[0]
-        lista = sorted([n for n, r in zip(SR["nombres"], SR["region_de"]) if r == region_c], key=norm)
-        region_club = dict(zip(SR["nombres"], SR["region_de"]))
-        buscables = sorted(SR["nombres"], key=norm)          # el buscador: todas las regiones
-    else:
-        lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
-                        "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat],
-                       key=norm)
-        buscables = lista
-    elegido = st.selectbox(":material/search: Buscar club", buscables, index=None,
-                           placeholder=("Escribí un club de cualquier región…" if cat == "Regional Amateur"
-                                        else "Escribí o elegí un club…"),
-                           format_func=(lambda n: f"{n} · {region_club[n]}") if cat == "Regional Amateur"
-                           else str, key=f"club_sel_{cat}")
-    if elegido:
-        with st.container(border=True):
-            render_ficha(elegido, "clubes")
-    st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat if cat != "Regional Amateur" else f"Regional · {region_c}")} · {len(lista)} clubes · '
-                f'tocá uno para ver su ficha</div>', unsafe_allow_html=True)
-    # Grilla de clubes: cada casilla es un botón (invisible, ocupa toda la casilla) que abre la ficha
-    slug = norm(cat if cat != "Regional Amateur" else f"reg {region_c}").replace(" ", "_")
-    with st.container(key=f"cgrid_{slug}"):
-        for i, n in enumerate(lista):
-            with st.container(key=f"ctile_{slug}_{i}"):
-                st.markdown(f'<div class="ct-in">{crest(n, 52)}<span>{esc(n)}</span></div>',
-                            unsafe_allow_html=True)
-                if st.button(n, key=f"clubbtn_{slug}_{i}"):
-                    ver_equipo(n)
+if _abierta(tab_c):
+    with tab_c:
+        seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
+        cat = st.segmented_control("Categoría",
+                                   ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
+                                    "Regional Amateur"],
+                                   default="Primera División", key="cat_clubes")
+        cat = cat or "Primera División"
+        if cat == "Regional Amateur":            # 245 clubes: se elige la región
+            region_c = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="club_reg_region",
+                                label_visibility="collapsed") or REGIONES_REG[0]
+            lista = sorted([n for n, r in zip(SR["nombres"], SR["region_de"]) if r == region_c], key=norm)
+            region_club = dict(zip(SR["nombres"], SR["region_de"]))
+            buscables = sorted(SR["nombres"], key=norm)          # el buscador: todas las regiones
+        else:
+            lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
+                            "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat],
+                           key=norm)
+            buscables = lista
+        elegido = st.selectbox(":material/search: Buscar club", buscables, index=None,
+                               placeholder=("Escribí un club de cualquier región…" if cat == "Regional Amateur"
+                                            else "Escribí o elegí un club…"),
+                               format_func=(lambda n: f"{n} · {region_club[n]}") if cat == "Regional Amateur"
+                               else str, key=f"club_sel_{cat}")
+        if elegido:
+            with st.container(border=True):
+                render_ficha(elegido, "clubes")
+        st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat if cat != "Regional Amateur" else f"Regional · {region_c}")} · {len(lista)} clubes · '
+                    f'tocá uno para ver su ficha</div>', unsafe_allow_html=True)
+        # Grilla de clubes: cada casilla es un botón (invisible, ocupa toda la casilla) que abre la ficha
+        slug = norm(cat if cat != "Regional Amateur" else f"reg {region_c}").replace(" ", "_")
+        with st.container(key=f"cgrid_{slug}"):
+            for i, n in enumerate(lista):
+                with st.container(key=f"ctile_{slug}_{i}"):
+                    st.markdown(f'<div class="ct-in">{crest(n, 52)}<span>{esc(n)}</span></div>',
+                                unsafe_allow_html=True)
+                    if st.button(n, key=f"clubbtn_{slug}_{i}"):
+                        ver_equipo(n)
 
 
 # ============================================================================
 # AVISOS
 # ============================================================================
-with tab_av:
-    seccion("Avisos", "Partidos suspendidos y sanciones del Tribunal de Disciplina", "#b83a2e")
-    if _sin_leer:
-        c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
-        c1.markdown(f'<div class="aviso-banner">🚨 <span><b>{_sin_leer} aviso{"s" if _sin_leer > 1 else ""} '
-                    f'nuevo{"s" if _sin_leer > 1 else ""}</b></span></div>', unsafe_allow_html=True)
-        if c2.button(":material/done_all: Marcar como leídos", key="avisos_leidos_btn", width="stretch"):
-            S["avisos_leidos"] = _total_avisos
-            st.rerun()
-    if _avisos:
-        st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
-        st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
-    else:
-        aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones.")
-    if S.get("alertas_hist"):
-        st.markdown('<div class="mlab" style="margin-top:18px">Temporadas anteriores</div>', unsafe_allow_html=True)
-        st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
+if _abierta(tab_av):
+    with tab_av:
+        seccion("Avisos", "Partidos suspendidos y sanciones del Tribunal de Disciplina", "#b83a2e")
+        if _sin_leer:
+            c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
+            c1.markdown(f'<div class="aviso-banner">🚨 <span><b>{_sin_leer} aviso{"s" if _sin_leer > 1 else ""} '
+                        f'nuevo{"s" if _sin_leer > 1 else ""}</b></span></div>', unsafe_allow_html=True)
+            if c2.button(":material/done_all: Marcar como leídos", key="avisos_leidos_btn", width="stretch"):
+                S["avisos_leidos"] = _total_avisos
+                st.rerun()
+        if _avisos:
+            st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
+            st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
+        else:
+            aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones.")
+        if S.get("alertas_hist"):
+            st.markdown('<div class="mlab" style="margin-top:18px">Temporadas anteriores</div>', unsafe_allow_html=True)
+            st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
 
 
 # ============================================================================
@@ -1508,72 +1538,73 @@ def tabla_ranking_html(dic_historial, titulo_col1, titulo_col2):
     return html
 
 
-with tab_h:
-    seccion("Historial", "Campeones de cada temporada y rankings históricos", "#b7860b")
+if _abierta(tab_h):
+    with tab_h:
+        seccion("Historial", "Campeones de cada temporada y rankings históricos", "#b7860b")
 
-    if S["campeones"]:
-        ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                   "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
-        with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
-            df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
-            st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
-        with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
-            df_r = pd.DataFrame([{"Temporada": x["Temporada"],
-                                  **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
-                                 for x in S["campeones"]])
-            st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
-    else:
-        aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
+        if S["campeones"]:
+            ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
+                       "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
+            with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
+                df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
+                st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
+            with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
+                df_r = pd.DataFrame([{"Temporada": x["Temporada"],
+                                      **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
+                                     for x in S["campeones"]])
+                st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
+        else:
+            aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
 
-    # Cambiamos el subtítulo acá para que no diga solo argentinos
-    st.markdown('<div class="mlab" style="margin-top:20px; margin-bottom: 12px; font-size: 0.9rem;">Palmarés Histórico (Sudamérica)</div>', unsafe_allow_html=True)
+        # Cambiamos el subtítulo acá para que no diga solo argentinos
+        st.markdown('<div class="mlab" style="margin-top:20px; margin-bottom: 12px; font-size: 0.9rem;">Palmarés Histórico (Sudamérica)</div>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2, gap="medium")
+        col1, col2 = st.columns(2, gap="medium")
     
-    with col1:
-        st.markdown('**Copa Argentina**')
-        st.markdown(tabla_ranking_html(S.get("hist_copa", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+        with col1:
+            st.markdown('**Copa Argentina**')
+            st.markdown(tabla_ranking_html(S.get("hist_copa", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
         
-        st.markdown('<br>**Recopa Sudamericana**', unsafe_allow_html=True)
-        st.markdown(tabla_ranking_html(S.get("hist_rec", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+            st.markdown('<br>**Recopa Sudamericana**', unsafe_allow_html=True)
+            st.markdown(tabla_ranking_html(S.get("hist_rec", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
         
-    with col2:
-        st.markdown('**Copa Libertadores**')
-        st.markdown(tabla_ranking_html(S.get("hist_lib", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+        with col2:
+            st.markdown('**Copa Libertadores**')
+            st.markdown(tabla_ranking_html(S.get("hist_lib", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
         
-        st.markdown('<br>**Copa Sudamericana**', unsafe_allow_html=True)
-        st.markdown(tabla_ranking_html(S.get("hist_sud", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+            st.markdown('<br>**Copa Sudamericana**', unsafe_allow_html=True)
+            st.markdown(tabla_ranking_html(S.get("hist_sud", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
 
         
 
-    if S["movimientos"]:
-        mv = S["movimientos"]
-        with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
-            st.markdown(
-                '<div class="catgrid">'
-                f'<div><div class="mlab up">▲ Ascendieron a Primera</div>'
-                f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + ([(mv["reducido"], "reducido")] if mv["reducido"] else []))}</div>'
-                f'<div><div class="mlab down">▼ Descendieron a B Nacional</div>'
-                f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
+        if S["movimientos"]:
+            mv = S["movimientos"]
+            with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
+                st.markdown(
+                    '<div class="catgrid">'
+                    f'<div><div class="mlab up">▲ Ascendieron a Primera</div>'
+                    f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + ([(mv["reducido"], "reducido")] if mv["reducido"] else []))}</div>'
+                    f'<div><div class="mlab down">▼ Descendieron a B Nacional</div>'
+                    f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
                 
-                f'<div><div class="mlab up">▲ Ascendieron a B Nacional</div>'
-                f'{lista_equipos_html([(n, "del Federal A") for n in mv.get("suben_f_b", [])] + [(n, "de la B Metro") for n in mv.get("suben_pb_b", [])])}</div>'
-                f'<div><div class="mlab down">▼ Descendieron al Federal A</div>'
-                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_fed", [])])}</div>'
+                    f'<div><div class="mlab up">▲ Ascendieron a B Nacional</div>'
+                    f'{lista_equipos_html([(n, "del Federal A") for n in mv.get("suben_f_b", [])] + [(n, "de la B Metro") for n in mv.get("suben_pb_b", [])])}</div>'
+                    f'<div><div class="mlab down">▼ Descendieron al Federal A</div>'
+                    f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_fed", [])])}</div>'
                 
-                f'<div><div class="mlab down">▼ Descendieron a la B Metro</div>'
-                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_pb", [])])}</div>'
-                f'<div><div class="mlab up">▲ Ascendieron a la B Metro</div>'
-                f'{lista_equipos_html([(n, "de la C") for n in mv.get("suben_pc_pb", [])])}</div>'
+                    f'<div><div class="mlab down">▼ Descendieron a la B Metro</div>'
+                    f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_pb", [])])}</div>'
+                    f'<div><div class="mlab up">▲ Ascendieron a la B Metro</div>'
+                    f'{lista_equipos_html([(n, "de la C") for n in mv.get("suben_pc_pb", [])])}</div>'
                 
-                f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
-                f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
-                f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
-                f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])] + [(n, "reubicación") for n in mv.get("suben_reg_fed_extra", [])])}</div>'
-                f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
-                f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
-                + (f'<div><div class="mlab down">▼ Descenso administrativo (Tribunal de Disciplina)</div>'
-                   f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
-                   if mv.get("descenso_adm") else "") +
-                f'</div>', unsafe_allow_html=True)
+                    f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
+                    f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
+                    f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
+                    f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])] + [(n, "reubicación") for n in mv.get("suben_reg_fed_extra", [])])}</div>'
+                    f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
+                    f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
+                    + (f'<div><div class="mlab down">▼ Descenso administrativo (Tribunal de Disciplina)</div>'
+                       f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
+                       if mv.get("descenso_adm") else "") +
+                    f'</div>', unsafe_allow_html=True)
             

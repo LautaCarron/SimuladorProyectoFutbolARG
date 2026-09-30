@@ -17,10 +17,22 @@ LOGOS = {
 }
 
 
+def _clase(nombre):
+    import unicodedata
+    t = unicodedata.normalize("NFKD", nombre.lower())
+    return "lg-" + "".join(c if c.isalnum() else "-" for c in t if not unicodedata.combining(c))
+
+
+# Cada logo se define una sola vez en el CSS (antes iba embebido en cada lugar donde aparecía y
+# la página pesaba cientos de KB de más)
+LOGOS_CSS = ("<style>.lg{display:inline-block;flex:none;vertical-align:middle;background:center/contain "
+             "no-repeat;}" + "".join(f".{_clase(n)}{{background-image:url({u});}}" for n, u in LOGOS.items())
+             + "</style>")
+
+
 def logo_img(nombre, size=22, clase="logo-comp"):
-    """<img> con el logo de una liga o copa (o nada si no tiene)."""
-    url = LOGOS.get(nombre)
-    if not url:
+    """Logo de una liga o copa (o nada si no tiene)."""
+    if nombre not in LOGOS:
         return ""
-    return (f'<img class="{clase}" src="{url}" width="{size}" height="{size}" alt="" '
-            f'title="{nombre}">')
+    return (f'<span class="lg {clase} {_clase(nombre)}" style="width:{size}px;height:{size}px" '
+            f'role="img" aria-label="{nombre}" title="{nombre}"></span>')
