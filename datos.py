@@ -378,11 +378,9 @@ REGION_REGIONAL = {
     "Estudiantes (Río Cuarto)": "Centro", "Independiente Rivadavia": "Cuyo",
     "Gimnasia (Mendoza)": "Cuyo", "Central Córdoba (SdE)": "NOA Sur",
     "Atlético Tucumán": "NOA Sur", "Aldosivi": "Pampeana Sur",
-    "Rosario Central": "Litoral", "Newell's": "Litoral", "Unión": "Litoral",
-    "Sarmiento (Junín)": "Norte Bonaerense",
     # Interior de la Primera Nacional
     "Godoy Cruz": "Cuyo", "Deportivo Maipú": "Cuyo", "San Martín (San Juan)": "Cuyo",
-    "Patronato": "Litoral", "Atlético de Rafaela": "Litoral", "Colón": "Litoral",
+    "Patronato": "Litoral", "Atlético de Rafaela": "Litoral",
     "San Martín (Tucumán)": "NOA Sur", "Güemes": "NOA Sur", "Mitre (SdE)": "NOA Sur",
     "Gimnasia (Jujuy)": "NOA Norte", "Gimnasia y Tiro": "NOA Norte", "Central Norte": "NOA Norte",
     "Racing (Córdoba)": "Centro", "Chaco For Ever": "NEA Oeste",
