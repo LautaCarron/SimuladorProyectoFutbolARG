@@ -1093,7 +1093,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 12       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 13       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1597,18 +1597,10 @@ def crear_estado():
 
 
 
-    # Historial de Ligas (base Promiedos antes del 2026 - Era Amateur + Profesional)
-    S["hist_primera"] = {"River Plate": 38, "Boca Juniors": 35, "Racing": 18, "Independiente": 16, "San Lorenzo": 15, "Vélez": 10, "Estudiantes (LP)": 6, "Newell's": 6, "Huracán": 5, "Rosario Central": 4, "Argentinos Juniors": 3, "Lanús": 2, "Ferro": 2, "Quilmes": 2, "Banfield": 1, "Gimnasia (LP)": 1, "Chacarita": 1, "Arsenal": 1}
-    S["hist_nacional"] = {"Banfield": 3, "Olimpo": 3, "Talleres": 2, "Atlético Tucumán": 2, "Huracán": 2, "Instituto": 2, "Aldosivi": 2,  "Quilmes": 1,"Gimnasia (Mendoza)": 1, "Lanús": 1, "San Martín (Tucumán)": 1, "Rosario Central": 1, "Estudiantes (LP)": 1, "Independiente Rivadavia": 1,  "Sarmiento (Junín)": 1, "Tigre": 1, "Belgrano": 1, "Gimnasia de Jujuy": 1, "Deportivo Armenio":1, "Deportivo Mandiyú":1, "River Plate": 1, "Tiro Federal": 1, "Arsenal": 1, "Chaco For Ever": 1, "Huracán de Corrientes": 1}
-    S["hist_federal"] = {"Racing (Córdoba)": 3, "Juventud Antoniana": 2, "Gimnasia y Tiro": 2, "Talleres": 2, "San Martín (Tucumán)": 1, "Central Norte": 1, "Olimpo": 1, "Douglas Haig": 1, "Patronato": 1, "Boca Unidos": 1, "Estudiantes (Río Cuarto)": 1, "Atlético de Rafaela": 1, "Gimnasia (Mendoza)": 1, "Deportivo Madryn": 1}
-    S["hist_pb"] = {"Ferro": 6, "Tigre": 5, "Almagro": 4, "Los Andes": 4, "All Boys": 4, "Almirante Brown": 3, "Estudiantes (BA)": 3, "Defensores de Belgrano": 2, "Atlanta": 2, "Nueva Chicago": 2, "Temperley": 1, "Chacarita": 1, "San Miguel": 1, "Tristán Suárez": 1, "Colegiales": 1}
-    S["hist_pc"] = {"Colegiales": 3, "Villa Dálmine": 3, "Dock Sud": 2, "San Telmo": 2, "Excursionistas": 2, "Deportivo Laferrere": 2, "Berazategui": 2, "Defensores Unidos": 2, "Villa San Carlos": 1, "Sacachispas": 1, "Argentino (Q)": 1, "Midland": 1, "Comunicaciones": 1, "Deportivo Merlo": 1}
-
-    # Historial de copas (base antes del 2026)
-    S["hist_copa"] = {"Boca Juniors": 4, "River Plate": 3, "Rosario Central": 1, "Arsenal": 1, "Huracán": 1, "Patronato": 1, "Estudiantes (LP)": 1}
-    S["hist_lib"] = {"Independiente": 7, "Boca Juniors": 6, "Peñarol": 5, "River Plate": 4, "Estudiantes (LP)": 4, "Olimpia": 3, "Nacional": 3, "São Paulo": 3, "Palmeiras": 3, "Santos": 3, "Grêmio": 3, "Flamengo": 3, "Cruzeiro": 2, "Internacional": 2, "Atlético Nacional": 2, "Colo Colo": 1, "Racing": 1, "Argentinos Juniors": 1, "Vélez": 1, "San Lorenzo": 1, "Liga de Quito": 1, "Corinthians": 1, "Atlético-MG": 1, "Vasco da Gama": 1, "Once Caldas": 1, "Fluminense": 1}
-    S["hist_sud"] = {"Liga de Quito": 2, "Boca Juniors": 2, "Independiente": 2, "Athletico-PR": 2, "Independiente del Valle": 2, "São Paulo": 1, "Internacional": 1, "San Lorenzo": 1, "Arsenal": 1, "Lanús": 1, "River Plate": 1, "Defensa y Justicia": 1, "Racing": 1, "Universidad de Chile": 1, "Independiente Santa Fe": 1, "Chapecoense": 1}
-    S["hist_rec"] = {"Boca Juniors": 4, "River Plate": 3, "São Paulo": 2, "Internacional": 2, "Olimpia": 2, "Liga de Quito": 2, "Grêmio": 2, "Independiente": 1, "Vélez": 1, "Defensa y Justicia": 1, "Flamengo": 1, "Palmeiras": 1, "Atlético-MG": 1, "Cruzeiro": 1, "Colo Colo": 1, "Atlético Nacional": 1, "Corinthians": 1, "Independiente del Valle": 1, "Fluminense": 1}
+    # Palmarés histórico oficial de cada liga y copa hasta 2025 (ver palmares.py); cada temporada
+    # simulada le suma sus campeones
+    from palmares import palmares_inicial
+    S.update(palmares_inicial())
 
     return S
 
@@ -1643,18 +1635,26 @@ def nueva_temporada(S, volatilidad):
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
 
+    # Sumar +1 al palmarés histórico de cada liga (campeón de la temporada que termina)
+    ultimo = S["campeones"][-1]
+    for clave_h, liga_h in (("hist_primera", "Primera División"), ("hist_nacional", "Primera Nacional"),
+                            ("hist_federal", "Federal A"), ("hist_pb", "Primera B"), ("hist_pc", "Primera C")):
+        camp_h = ultimo.get(liga_h)
+        if camp_h:
+            S.setdefault(clave_h, {})[camp_h] = S.get(clave_h, {}).get(camp_h, 0) + 1
+
     # Sumar +1 al ranking histórico de copas
     campeon_copa = S["copa"]["nombres"][S["copa"]["campeon"]] if S.get("copa", {}).get("campeon") is not None else None
-    if campeon_copa: S["hist_copa"][campeon_copa] = S["hist_copa"].get(campeon_copa, 0) + 1
+    if campeon_copa: S.setdefault("hist_copa", {})[campeon_copa] = S["hist_copa"].get(campeon_copa, 0) + 1
     
     camp_lib = S.get("int", {}).get("lib", {}).get("campeon")
-    if camp_lib: S["hist_lib"][camp_lib] = S["hist_lib"].get(camp_lib, 0) + 1
+    if camp_lib: S.setdefault("hist_lib", {})[camp_lib] = S["hist_lib"].get(camp_lib, 0) + 1
     
     camp_sud = S.get("int", {}).get("sud", {}).get("campeon")
-    if camp_sud: S["hist_sud"][camp_sud] = S["hist_sud"].get(camp_sud, 0) + 1
+    if camp_sud: S.setdefault("hist_sud", {})[camp_sud] = S["hist_sud"].get(camp_sud, 0) + 1
     
     camp_rec = S.get("int", {}).get("rec", {}).get("campeon")
-    if camp_rec: S["hist_rec"][camp_rec] = S["hist_rec"].get(camp_rec, 0) + 1
+    if camp_rec: S.setdefault("hist_rec", {})[camp_rec] = S["hist_rec"].get(camp_rec, 0) + 1
 
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]

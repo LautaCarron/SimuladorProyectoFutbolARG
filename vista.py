@@ -101,13 +101,10 @@ body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con 
 [data-testid="stSidebar"]{background:var(--tiza-2);border-right:1px solid var(--line);}
 [data-testid="stSidebar"] h2{font-size:.78rem;font-stretch:85%;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
 ::selection{background:var(--cel);color:var(--tinta);}
-/* ---------- mientras el simulador trabaja: aviso "Simulando…" y botones en pausa ----------
-   (cada clic nuevo reinicia el trabajo; si se acumulan, parece que la página se colgó) */
-.stApp[data-test-script-state="running"] button:not([role="tab"]){pointer-events:none !important;opacity:.55;}
-.stApp[data-test-script-state="running"]::after{content:"Simulando…";position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:1000100;background:var(--tinta);color:var(--tiza);font-weight:800;font-size:.8rem;letter-spacing:.06em;padding:8px 18px 8px 34px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.25);animation:afa-simulando 1.2s ease-in-out infinite;}
-.stApp[data-test-script-state="running"]::before{content:"";position:fixed;top:24px;left:calc(50% - 62px);z-index:1000101;width:12px;height:12px;border-radius:50%;border:2px solid var(--tiza);border-top-color:transparent;animation:afa-gira .8s linear infinite;}
-@keyframes afa-gira{to{transform:rotate(360deg);}}
-@keyframes afa-simulando{50%{opacity:.8;}}
+/* ---------- "Simular todo": al tocarlo, el mismo botón dice "Simulando…" hasta que termina ---------- */
+button.afa-simulando{position:relative;pointer-events:none;}
+button.afa-simulando>*{visibility:hidden;}
+button.afa-simulando::after{content:"Simulando…";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:700;}
 /* ---------- cabecera (masthead) ---------- */
 .masthead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;padding:6px 0 16px;margin-bottom:8px;position:relative;}
 .masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5px;background:linear-gradient(90deg,var(--cel) 0 33.33%,#fff 33.33% 66.66%,var(--cel) 66.66%);box-shadow:inset 0 0 0 1px var(--line);}
@@ -423,6 +420,23 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .kb-champ .s{font-size:.7rem;color:var(--tinta-2);margin-top:2px;}
 .kb-champ.vacio{opacity:.55;}
 .kb .logo-mini,.bt .logo-mini{flex:none;opacity:.9;}
+/* palmarés histórico (Historial) */
+.pal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;margin:6px 0 10px;}
+.pal{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;display:flex;flex-direction:column;}
+.pal-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--soft);}
+.pal-tit{font-weight:900;font-size:.9rem;flex:1;min-width:0;}
+.pal-tot{font-stretch:85%;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3);white-space:nowrap;}
+.pal-lista{max-height:330px;overflow-y:auto;}
+.pal-f{display:flex;align-items:center;gap:9px;padding:6px 12px;border-top:1px solid var(--line);font-size:.84rem;}
+.pal-f:first-child{border-top:0;}
+.pal-f.oro{background:color-mix(in srgb,var(--gold) 12%,transparent);}
+.pal-pos{width:20px;flex:none;text-align:right;font-weight:800;color:var(--tinta-3);font-variant-numeric:tabular-nums;}
+.pal-f.oro .pal-pos{color:var(--gold);}
+.pal-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;cursor:pointer;}
+.pal-nm:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
+.pal-t{min-width:26px;text-align:right;font-weight:900;font-size:.95rem;font-variant-numeric:tabular-nums;}
+.pal-mas{font-size:.66rem;font-weight:800;color:var(--win);border:1px solid color-mix(in srgb,var(--win) 45%,transparent);border-radius:3px;padding:0 5px;}
+.pal-vacio{padding:12px;color:var(--tinta-3);font-size:.84rem;}
 /* copas CONMEBOL: grupos y banderas */
 .bandera{flex:none;border-radius:2px;box-shadow:0 0 0 1px var(--line);vertical-align:middle;margin-left:4px;}
 .grp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;margin:6px 0 8px;}
@@ -1284,6 +1298,22 @@ _PUENTE_JS = """
     e.preventDefault();
     abrir(t.dataset.club);
   });
+  // "Simular todo": el botón pasa a decir "Simulando…" hasta que la app termina de trabajar
+  let quieto = null;
+  document.addEventListener('click', function (e) {
+    const b = e.target.closest && e.target.closest('button');
+    if (b && !b.disabled && b.innerText.trim().endsWith('Simular todo')) b.classList.add('afa-simulando');
+  }, true);
+  new MutationObserver(function () {
+    const app = document.querySelector('.stApp');
+    if (!app) return;
+    clearTimeout(quieto);
+    if (app.getAttribute('data-test-script-state') !== 'running') {
+      quieto = setTimeout(function () {
+        document.querySelectorAll('button.afa-simulando').forEach(function (x) { x.classList.remove('afa-simulando'); });
+      }, 600);
+    }
+  }).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['data-test-script-state'] });
   document.addEventListener('keydown', function (e) {
     const t = e.target;
     if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('[data-club]')) {

@@ -1510,32 +1510,25 @@ if _abierta(tab_av):
 # HISTORIAL
 # ============================================================================
 
-def tabla_ranking_html(dic_historial, titulo_col1, titulo_col2):
-    """Arma la tabla verde oscura estilo ranking a partir de un diccionario de títulos."""
-    if not dic_historial:
-        return '<div style="opacity:0.6; padding: 10px;">Aún no hay campeones.</div>'
-        
-    lista = [{"Equipo": k, "Titulos": v} for k, v in dic_historial.items() if v > 0]
-    lista.sort(key=lambda x: x["Titulos"], reverse=True)
-    
-    # Se agregó "max-height: 340px; overflow-y: auto;" para que no rompa la pantalla
-    html = '<div style="background-color: #0b2518; border-radius: 8px; border: 1px solid #1a4d33; max-height: 340px; overflow-y: auto; font-family: \'Archivo\', sans-serif;">'
-    html += '<table style="width: 100%; border-collapse: collapse; text-align: left; color: #e5e7eb; font-size: 0.9rem;">'
-    # position: sticky hace que el encabezado no se mueva al scrollear
-    html += '<thead><tr style="background-color: #0a1f14; border-bottom: 1px solid #1a4d33; position: sticky; top: 0; z-index: 2;">'
-    html += f'<th style="padding: 10px 14px; font-weight: 600;">{titulo_col1}</th>'
-    html += f'<th style="padding: 10px 14px; text-align: center; width: 80px; font-weight: 600;">{titulo_col2}</th>'
-    html += '</tr></thead><tbody>'
-    
-    for i, row in enumerate(lista):
-        borde = 'border-bottom: 1px solid rgba(255,255,255,0.05);' if i < len(lista)-1 else ''
-        html += f'<tr style="{borde} transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.backgroundColor=\'transparent\'">'
-        html += f'<td style="padding: 10px 14px; display: flex; align-items: center; gap: 10px;">{crest(row["Equipo"], 20)} <span style="font-weight: 500;">{esc(row["Equipo"])}</span></td>'
-        html += f'<td style="padding: 10px 14px; text-align: center; font-weight: 800; font-size: 1rem; color: #fff;">{row["Titulos"]}</td>'
-        html += '</tr>'
-        
-    html += '</tbody></table></div>'
-    return html
+def tabla_ranking_html(titulo, logo, actual, base):
+    """Tarjeta de palmarés de una liga o copa: posición, escudo, club y títulos. Los ganados
+    en las temporadas simuladas se marcan aparte (+n)."""
+    lista = sorted(((n, t) for n, t in actual.items() if t > 0), key=lambda x: (-x[1], x[0]))
+    total = sum(t for _, t in lista)
+    filas, pos, previo = "", 0, None
+    for k, (n, t) in enumerate(lista):
+        if t != previo:
+            pos, previo = k + 1, t
+        extra = t - base.get(n, 0)
+        clase = " oro" if pos == 1 else ""
+        filas += (f'<div class="pal-f{clase}"><span class="pal-pos">{pos}</span>{crest(n, 22)}'
+                  f'<span class="pal-nm" role="button" tabindex="0" data-club="{esc(n)}" title="{esc(n)}">{esc(n)}</span>'
+                  + (f'<span class="pal-mas" title="Ganados en las temporadas simuladas">+{extra}</span>' if extra > 0 else "")
+                  + f'<b class="pal-t">{t}</b></div>')
+    if not filas:
+        filas = '<div class="pal-vacio">Todavía no hay campeones.</div>'
+    return (f'<div class="pal"><div class="pal-h">{logo_img(logo, 26)}<span class="pal-tit">{esc(titulo)}</span>'
+            f'<span class="pal-tot">{total} títulos</span></div><div class="pal-lista">{filas}</div></div>')
 
 
 if _abierta(tab_h):
@@ -1556,26 +1549,28 @@ if _abierta(tab_h):
         else:
             aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
 
-        # Cambiamos el subtítulo acá para que no diga solo argentinos
-        st.markdown('<div class="mlab" style="margin-top:20px; margin-bottom: 12px; font-size: 0.9rem;">Palmarés Histórico (Sudamérica)</div>', unsafe_allow_html=True)
-    
-        col1, col2 = st.columns(2, gap="medium")
-    
-        with col1:
-            st.markdown('**Copa Argentina**')
-            st.markdown(tabla_ranking_html(S.get("hist_copa", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
-        
-            st.markdown('<br>**Recopa Sudamericana**', unsafe_allow_html=True)
-            st.markdown(tabla_ranking_html(S.get("hist_rec", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown('**Copa Libertadores**')
-            st.markdown(tabla_ranking_html(S.get("hist_lib", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
-        
-            st.markdown('<br>**Copa Sudamericana**', unsafe_allow_html=True)
-            st.markdown(tabla_ranking_html(S.get("hist_sud", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
-
-        
+        # Palmarés histórico: títulos oficiales hasta 2025 (palmares.py) + los de las temporadas simuladas
+        from palmares import PALMARES
+        st.markdown('<div class="mlab" style="margin-top:20px">Palmarés histórico · ligas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="pal-grid">' + "".join(
+            tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
+            for titulo, logo, clave in (("Primera División", "Primera División", "hist_primera"),
+                                        ("Primera Nacional", "Primera Nacional", "hist_nacional"),
+                                        ("Federal A", "Federal A", "hist_federal"),
+                                        ("Primera B Metropolitana", "Primera B", "hist_pb"),
+                                        ("Primera C Metropolitana", "Primera C", "hist_pc"))) + '</div>',
+                    unsafe_allow_html=True)
+        st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas</div>', unsafe_allow_html=True)
+        st.markdown('<div class="pal-grid">' + "".join(
+            tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
+            for titulo, logo, clave in (("Copa Argentina", "Copa Argentina", "hist_copa"),
+                                        ("Copa Libertadores", "Copa Libertadores", "hist_lib"),
+                                        ("Copa Sudamericana", "Copa Sudamericana", "hist_sud"),
+                                        ("Recopa Sudamericana", "Recopa Sudamericana", "hist_rec"))) + '</div>',
+                    unsafe_allow_html=True)
+        st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
+                   "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "
+                   "En verde (+n), los ganados en las temporadas simuladas. Tocá un club para ver su ficha.")
 
         if S["movimientos"]:
             mv = S["movimientos"]
