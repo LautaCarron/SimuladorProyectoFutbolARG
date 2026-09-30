@@ -1594,6 +1594,13 @@ def crear_estado():
     S["copa"] = sortear_copa(S, rng)    # temporada 1: clasifican los de mejor media de cada liga
     from internacional import nuevas_internacionales
     nuevas_internacionales(S, rng)      # Libertadores, Sudamericana y Recopa
+
+    # Historial de copas (base antes del 2026)
+    S["hist_copa"] = {"Boca Juniors": 4, "River Plate": 3, "Rosario Central": 1, "Arsenal": 1, "Huracán": 1, "Patronato": 1, "Estudiantes (LP)": 1}
+    S["hist_lib"] = {"Independiente": 7, "Boca Juniors": 6, "Peñarol": 5, "River Plate": 4, "Estudiantes (LP)": 4, "Olimpia": 3, "Nacional": 3, "São Paulo": 3, "Palmeiras": 3, "Santos": 3, "Grêmio": 3, "Flamengo": 3, "Cruzeiro": 2, "Internacional": 2, "Atlético Nacional": 2, "Colo Colo": 1, "Racing": 1, "Argentinos Juniors": 1, "Vélez": 1, "San Lorenzo": 1, "Liga de Quito": 1, "Corinthians": 1, "Atlético-MG": 1, "Vasco da Gama": 1, "Once Caldas": 1, "Fluminense": 1}
+    S["hist_sud"] = {"Liga de Quito": 2, "Boca Juniors": 2, "Independiente": 2, "Athletico-PR": 2, "Independiente del Valle": 2, "São Paulo": 1, "Internacional": 1, "San Lorenzo": 1, "Arsenal": 1, "Lanús": 1, "River Plate": 1, "Defensa y Justicia": 1, "Racing": 1, "Universidad de Chile": 1, "Independiente Santa Fe": 1, "Chapecoense": 1}
+    S["hist_rec"] = {"Boca Juniors": 4, "River Plate": 3, "São Paulo": 2, "Internacional": 2, "Olimpia": 2, "Liga de Quito": 2, "Grêmio": 2, "Independiente": 1, "Vélez": 1, "Defensa y Justicia": 1, "Flamengo": 1, "Palmeiras": 1, "Atlético-MG": 1, "Cruzeiro": 1, "Colo Colo": 1, "Atlético Nacional": 1, "Corinthians": 1, "Independiente del Valle": 1, "Fluminense": 1}
+
     return S
 
 
@@ -1626,6 +1633,20 @@ def nueva_temporada(S, volatilidad):
         "Recopa": S.get("int", {}).get("rec", {}).get("campeon") or "",
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
+
+    # Sumar +1 al ranking histórico de copas
+    campeon_copa = S["copa"]["nombres"][S["copa"]["campeon"]] if S.get("copa", {}).get("campeon") is not None else None
+    if campeon_copa: S["hist_copa"][campeon_copa] = S["hist_copa"].get(campeon_copa, 0) + 1
+    
+    camp_lib = S.get("int", {}).get("lib", {}).get("campeon")
+    if camp_lib: S["hist_lib"][camp_lib] = S["hist_lib"].get(camp_lib, 0) + 1
+    
+    camp_sud = S.get("int", {}).get("sud", {}).get("campeon")
+    if camp_sud: S["hist_sud"][camp_sud] = S["hist_sud"].get(camp_sud, 0) + 1
+    
+    camp_rec = S.get("int", {}).get("rec", {}).get("campeon")
+    if camp_rec: S["hist_rec"][camp_rec] = S["hist_rec"].get(camp_rec, 0) + 1
+
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]
     reducido = SB["nombres"][SB["asc_reducido"]]

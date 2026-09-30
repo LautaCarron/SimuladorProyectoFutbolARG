@@ -1479,8 +1479,72 @@ with tab_av:
 # ============================================================================
 # HISTORIAL
 # ============================================================================
+
+def tabla_ranking_html(dic_historial, titulo_col1, titulo_col2):
+    """Arma la tabla verde oscura estilo ranking a partir de un diccionario de títulos."""
+    if not dic_historial:
+        return '<div style="opacity:0.6; padding: 10px;">Aún no hay campeones.</div>'
+        
+    lista = [{"Equipo": k, "Titulos": v} for k, v in dic_historial.items() if v > 0]
+    lista.sort(key=lambda x: x["Titulos"], reverse=True)
+    
+    # Se agregó "max-height: 340px; overflow-y: auto;" para que no rompa la pantalla
+    html = '<div style="background-color: #0b2518; border-radius: 8px; border: 1px solid #1a4d33; max-height: 340px; overflow-y: auto; font-family: \'Archivo\', sans-serif;">'
+    html += '<table style="width: 100%; border-collapse: collapse; text-align: left; color: #e5e7eb; font-size: 0.9rem;">'
+    # position: sticky hace que el encabezado no se mueva al scrollear
+    html += '<thead><tr style="background-color: #0a1f14; border-bottom: 1px solid #1a4d33; position: sticky; top: 0; z-index: 2;">'
+    html += f'<th style="padding: 10px 14px; font-weight: 600;">{titulo_col1}</th>'
+    html += f'<th style="padding: 10px 14px; text-align: center; width: 80px; font-weight: 600;">{titulo_col2}</th>'
+    html += '</tr></thead><tbody>'
+    
+    for i, row in enumerate(lista):
+        borde = 'border-bottom: 1px solid rgba(255,255,255,0.05);' if i < len(lista)-1 else ''
+        html += f'<tr style="{borde} transition: background-color 0.2s;" onmouseover="this.style.backgroundColor=\'rgba(255,255,255,0.03)\'" onmouseout="this.style.backgroundColor=\'transparent\'">'
+        html += f'<td style="padding: 10px 14px; display: flex; align-items: center; gap: 10px;">{crest(row["Equipo"], 20)} <span style="font-weight: 500;">{esc(row["Equipo"])}</span></td>'
+        html += f'<td style="padding: 10px 14px; text-align: center; font-weight: 800; font-size: 1rem; color: #fff;">{row["Titulos"]}</td>'
+        html += '</tr>'
+        
+    html += '</tbody></table></div>'
+    return html
+
+
 with tab_h:
-    seccion("Historial", "Campeones de cada temporada y cambios de categoría", "#b7860b")
+    seccion("Historial", "Campeones de cada temporada y rankings históricos", "#b7860b")
+
+    if S["campeones"]:
+        ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
+                   "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
+        with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
+            df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
+            st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
+        with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
+            df_r = pd.DataFrame([{"Temporada": x["Temporada"],
+                                  **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
+                                 for x in S["campeones"]])
+            st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
+    else:
+        aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
+
+    # Cambiamos el subtítulo acá para que no diga solo argentinos
+    st.markdown('<div class="mlab" style="margin-top:20px; margin-bottom: 12px; font-size: 0.9rem;">Palmarés Histórico (Sudamérica)</div>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns(2, gap="medium")
+    
+    with col1:
+        st.markdown('**Copa Argentina**')
+        st.markdown(tabla_ranking_html(S.get("hist_copa", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+        
+        st.markdown('<br>**Recopa Sudamericana**', unsafe_allow_html=True)
+        st.markdown(tabla_ranking_html(S.get("hist_rec", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown('**Copa Libertadores**')
+        st.markdown(tabla_ranking_html(S.get("hist_lib", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+        
+        st.markdown('<br>**Copa Sudamericana**', unsafe_allow_html=True)
+        st.markdown(tabla_ranking_html(S.get("hist_sud", {}), "Equipos", "Títulos"), unsafe_allow_html=True)
+
+        
 
     if S["movimientos"]:
         mv = S["movimientos"]
@@ -1512,16 +1576,4 @@ with tab_h:
                    f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
                    if mv.get("descenso_adm") else "") +
                 f'</div>', unsafe_allow_html=True)
-    if S["campeones"]:
-        ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                   "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
-        with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
-            df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
-            st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
-        with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
-            df_r = pd.DataFrame([{"Temporada": x["Temporada"],
-                                  **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
-                                 for x in S["campeones"]])
-            st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
-    else:
-        aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
+            
