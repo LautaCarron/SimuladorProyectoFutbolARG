@@ -177,7 +177,7 @@ with st.sidebar:
     sorpresa = st.slider("Nivel de sorpresas", 0.0, 15.0, 6.0, 0.5,
                          help="Qué tanto varía la 'forma del día' de cada equipo. "
                               "Más alto = más partidos donde gana el que tiene menos media.")
-    volatilidad = st.slider("Volatilidad entre temporadas", 0.0, 10.0, 4.0, 0.5,
+    volatilidad = st.slider("Volatilidad entre temporadas", 0.0, 10.0, 2.5, 0.5,
                             help="Qué tanto cambia la media de cada equipo al pasar de temporada.")
     acumular = st.checkbox("Arrastrar puntos de la fase 1 a las zonas (Primera)", value=True,
                            help="Solo Primera. Si está activado, las zonas parten con lo sumado en "
@@ -285,8 +285,8 @@ if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
-tab_p, tab_b, tab_f, tab_pb, tab_pc, tab_reg, tab_c, tab_h = st.tabs([
-    "Primera", "B Nacional", "Federal A", "Primera B", "Primera C", "Regional", "Clubes", "Historial"
+tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_c, tab_h = st.tabs([
+    "Primera", "B Nacional", "Federal A", "Regional", "Primera B", "Primera C", "Clubes", "Historial"
 ])
 
 # (Esto va debajo de los imports y la configuración inicial de streamlit)
@@ -1134,12 +1134,18 @@ with tab_c:
         region_c = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="club_reg_region",
                             label_visibility="collapsed") or REGIONES_REG[0]
         lista = sorted([n for n, r in zip(SR["nombres"], SR["region_de"]) if r == region_c], key=norm)
+        region_club = dict(zip(SR["nombres"], SR["region_de"]))
+        buscables = sorted(SR["nombres"], key=norm)          # el buscador: todas las regiones
     else:
         lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
                         "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"]}[cat],
                        key=norm)
-    elegido = st.selectbox(":material/search: Buscar club", lista, index=None,
-                           placeholder="Escribí o elegí un club…", key=f"club_sel_{cat}")
+        buscables = lista
+    elegido = st.selectbox(":material/search: Buscar club", buscables, index=None,
+                           placeholder=("Escribí un club de cualquier región…" if cat == "Regional Amateur"
+                                        else "Escribí o elegí un club…"),
+                           format_func=(lambda n: f"{n} · {region_club[n]}") if cat == "Regional Amateur"
+                           else str, key=f"club_sel_{cat}")
     if elegido:
         with st.container(border=True):
             render_ficha(elegido, "clubes")
@@ -1187,10 +1193,16 @@ with tab_h:
                 f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])])}</div>'
                 f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
                 f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
-                f'</div><div style="margin-top:6px;font-size:.88rem">{esc(mv.get("promo_texto", ""))}</div>',
-                unsafe_allow_html=True)
+                f'</div>', unsafe_allow_html=True)
     if S["campeones"]:
+        ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C"]
         with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
-            df_c = pd.DataFrame(S["campeones"], columns=["Temporada", "Primera División", "Primera Nacional"])
-            st.markdown(tabla_html(df_c, clubes=("Primera División", "Primera Nacional")),
-                        unsafe_allow_html=True)
+            df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
+            st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
+        with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
+            df_r = pd.DataFrame([{"Temporada": x["Temporada"],
+                                  **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
+                                 for x in S["campeones"]])
+            st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
+    else:
+        aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")

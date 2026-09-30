@@ -1590,6 +1590,16 @@ def nueva_temporada(S, volatilidad):
 
     final = tabla_final(S)
     promo = SB["promo"]
+
+    # Campeón de cada liga en la temporada que termina (para el Historial)
+    def _campeon(L):
+        return L["nombres"][L["campeon"]] if L.get("campeon") is not None else ""
+    S["campeones"].append({
+        "Temporada": S["temp"], "Primera División": final.iloc[0]["Equipo"],
+        "Primera Nacional": _campeon(SB), "Federal A": _campeon(SF), "Primera B": _campeon(SPB),
+        "Primera C": _campeon(SPC),
+        "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
+    })
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]
     reducido = SB["nombres"][SB["asc_reducido"]]

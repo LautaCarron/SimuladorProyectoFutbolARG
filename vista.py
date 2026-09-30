@@ -105,8 +105,11 @@ body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con 
 .mh-marca svg{width:30px;height:30px;color:var(--gold);flex:none;}
 .mh-marca b{display:block;font-stretch:118%;font-weight:900;font-size:1.25rem;letter-spacing:.03em;text-transform:uppercase;line-height:1;}
 .mh-marca span{display:block;font-stretch:80%;font-weight:600;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tinta-2);margin-top:4px;}
-a.mh-marca span::before{content:"← ";opacity:0;margin-left:-1.1em;transition:opacity .3s,margin .3s var(--ease);}
-a.mh-marca:hover span::before{opacity:1;margin-left:0;}
+/* la flecha "←" aparece sin ocupar lugar: si cambiara el ancho de la marca, la cabecera
+   podía pasar a dos renglones y quedar titilando mientras el mouse está encima */
+a.mh-marca span{position:relative;}
+a.mh-marca span::before{content:"←";position:absolute;right:100%;margin-right:3px;opacity:0;transform:translateX(4px);transition:opacity .3s,transform .3s var(--ease);pointer-events:none;}
+a.mh-marca:hover span::before{opacity:1;transform:none;}
 .mh-tabla{display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none;}
 .mh-tabla::-webkit-scrollbar{display:none;}
 .mh-c{padding:0 16px;border-left:1px solid var(--line);min-width:104px;}
@@ -349,9 +352,36 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .liguilla tr.ok td.pos{box-shadow:inset 3px 0 0 var(--win);}
 .liguilla tr.out td.pos{box-shadow:inset 3px 0 0 var(--lose);}
 /* Regional Amateur: las 6 finales por el ascenso */
-.reg-finales{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin:4px 0 14px;}
-.reg-final .round-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;margin-bottom:8px;}
-.reg-vs{font-size:.78rem;color:var(--tinta-2);font-weight:600;}
+.rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:14px;margin:6px 0 16px;}
+.rf{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s;}
+.rf:hover{border-color:var(--line-2);}
+.rf-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--soft);}
+.rf-n{font-stretch:85%;font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);}
+.rf-reg{font-size:.76rem;font-weight:700;color:var(--tinta-2);text-align:right;}
+.rf-reg i{font-style:normal;font-weight:500;color:var(--tinta-3);margin:0 2px;}
+.rf-fila{display:grid;grid-template-columns:minmax(0,1fr) 34px 34px 50px;align-items:center;gap:4px;padding:9px 14px;}
+.rf-fila+.rf-fila:not(.rf-cab){border-top:1px solid var(--line);}
+.rf-cab{padding:7px 14px 0;font-stretch:85%;font-size:.58rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-3);}
+.rf-cab span{text-align:center;}
+.rf-eq{display:flex;align-items:center;gap:10px;min-width:0;}
+.rf-nm{display:flex;flex-direction:column;min-width:0;line-height:1.2;}
+.rf-nm .nm,.rf-nm b{font-size:.86rem;font-weight:700;overflow-wrap:break-word;}
+.rf-nm small{font-size:.66rem;font-weight:600;color:var(--tinta-3);margin-top:2px;}
+.rf-g{text-align:center;font-variant-numeric:tabular-nums;font-size:.86rem;font-weight:600;color:var(--tinta-2);}
+.rf-tot{font-stretch:110%;font-size:1.12rem;font-weight:800;color:var(--tinta);}
+.rf-tot sup{font-size:.62rem;font-weight:800;color:var(--pen);margin-left:2px;vertical-align:super;}
+.rf-fila.win{box-shadow:inset 3px 0 0 var(--win);}
+.rf-fila.win .nm{font-weight:800;}
+.rf-fila.win .rf-tot{color:var(--win);}
+.rf-fila.lose{opacity:.5;}
+.rf-fila.tbd b{font-style:italic;font-weight:500;color:var(--tinta-3);}
+.rf-vacio{width:30px;height:30px;flex:none;border:1.5px dashed var(--line-2);border-radius:50%;}
+.rf-f{margin-top:auto;padding:9px 14px;border-top:1px dashed var(--line);font-size:.74rem;color:var(--tinta-2);line-height:1.4;}
+.rf-f .nm{font-weight:800;color:var(--tinta);}
+.rf-sube{font-stretch:85%;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--win);margin-right:4px;}
+.rf details.tanda{margin:0 12px 10px;font-size:.72rem;}
+.rf .nm[data-club]{cursor:pointer;}
+.rf .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
 .bt .nm[data-club]:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
@@ -1056,7 +1086,7 @@ def tabla_html(df, estilo=None, clubes=("Equipo",), formatos=None, fija=None, cl
         return k + (" tb-pts" if c == "Pts" else "")
 
     def contenido(c, v):
-        if c in clubes and isinstance(v, str):
+        if c in clubes and isinstance(v, str) and v:
             return club_link(v) if clic else (f'<span class="tb-cl">{crest(v, 22)}'
                                               f'<span class="tb-nm">{esc(v)}</span></span>')
         return _valor(v, formatos.get(c))
@@ -1458,57 +1488,65 @@ def _nm_club(nombre):
             f'title="Ver la ficha de {n}">{n}</span>')
 
 
-def serie_html(SR, x, final=False):
-    """Serie a ida y vuelta: arriba el mejor ubicado (cierra de local), goles del global y
-    abajo el detalle de cada partido."""
-    if x is None:
-        return bracket_card(None)
-    nom = SR["nombres"]
-    if x["b"] is None:                               # la otra región no tiene campeón
-        return (f'<div class="bm"><div class="bt win">{crest(nom[x["a"]], 24)}{_nm_club(nom[x["a"]])}</div>'
-                f'<div class="bfoot">Sin rival · asciende <b>{esc(nom[x["a"]])}</b></div></div>')
-    jugada = x["ida"] is not None
-    filas = ""
-    for k, (i, g) in enumerate(((x["a"], x["ga"]), (x["b"], x["gb"]))):
-        cls = "" if x["gana"] is None else ("win" if x["gana"] == i else "lose")
-        pk = f'<span class="p">({x["pen"][k]})</span>' if x["pen"] else ""
-        filas += (f'<div class="bt {cls}">{crest(nom[i], 24)}{_nm_club(nom[i])}{pk}'
-                  f'<span class="g">{g if jugada else ""}</span></div>')
-    if not jugada:
-        pie = "Ida y vuelta · cierra de local el de arriba"
-    else:
-        ida = x["ida"]
-        partes = [f"Ida {ida['gv']}-{ida['gl']}"]
-        if x["vuelta"] is not None:
-            partes.append(f"Vuelta {x['vuelta']['gl']}-{x['vuelta']['gv']}")
-        if x["pen"]:
-            partes.append(f"Penales {x['pen'][0]}-{x['pen'][1]}")
-        if x["gana"] is not None:
-            partes.append(f"{'Asciende' if final else 'Avanza'}: <b>{esc(nom[x['gana']])}</b>")
-        pie = " · ".join(partes)
-    tanda = tanda_html(x["vuelta"]) if x["vuelta"] is not None else ""
-    return f'<div class="bm">{filas}<div class="bfoot">{pie}</div>{tanda}</div>'
+def _fila_final(SR, i, reg, goles, clase, pen=None):
+    """Fila de un equipo en una final por el ascenso: escudo, nombre y región, ida, vuelta y
+    global (con los penales, si hubo)."""
+    if i is None:
+        return (f'<div class="rf-fila tbd"><span class="rf-eq"><span class="rf-vacio"></span>'
+                f'<span class="rf-nm"><b>Campeón de {esc(reg)}</b><small>Por definir</small></span></span>'
+                f'<span class="rf-g">–</span><span class="rf-g">–</span><span class="rf-g rf-tot">–</span></div>')
+    n = SR["nombres"][i]
+    ida, vta, tot = goles
+    pk = f'<sup>({pen})</sup>' if pen is not None else ""
+    return (f'<div class="rf-fila {clase}"><span class="rf-eq">{crest(n, 30)}<span class="rf-nm">'
+            f'{_nm_club(n)}<small>{esc(reg)}</small></span></span>'
+            f'<span class="rf-g">{ida}</span><span class="rf-g">{vta}</span>'
+            f'<span class="rf-g rf-tot">{tot}{pk}</span></div>')
 
 
 def finales_reg_html(SR):
-    """Las 6 finales por el ascenso (de a pares de regiones, según el JSON)."""
-    from torneos import REG_FINAL
+    """Las 6 finales por el ascenso (de a pares de regiones, según el JSON): cada tarjeta
+    muestra ida, vuelta y global de cada campeón y quién asciende al Federal A."""
     tarjetas = ""
     for k, (ra, rb) in enumerate(FINALES_REG):
         x = SR["finales"][k] if k < len(SR["finales"]) else None
-        if x is None:
-            filas = ""
-            for reg in (ra, rb):
-                c = SR["campeones"].get(reg)
-                filas += (f'<div class="bt">{crest(SR["nombres"][c], 24)}{_nm_club(SR["nombres"][c])}</div>'
-                          if c is not None else
-                          f'<div class="bt tbd"><span class="nm">Campeón de {esc(reg)}</span></div>')
-            card = f'<div class="bm">{filas}<div class="bfoot">Ida y vuelta</div></div>'
+        cab = (f'<div class="rf-h"><span class="rf-n">Final {k + 1}</span>'
+               f'<span class="rf-reg">{esc(ra)} <i>vs.</i> {esc(rb)}</span></div>'
+               '<div class="rf-fila rf-cab"><span></span><span>Ida</span><span>Vta.</span>'
+               '<span>Global</span></div>')
+        tanda = ""
+        if x is None:                                  # todavía no se armó el cruce
+            filas = "".join(_fila_final(SR, SR["campeones"].get(reg), reg, ("–", "–", "–"), "")
+                            for reg in (ra, rb))
+            listos = sum(SR["campeones"].get(reg) is not None for reg in (ra, rb))
+            pie = ("Ida y vuelta · cierra de local el de mejor campaña" if listos == 2 else
+                   "Se completa con los campeones de cada región")
+        elif x["b"] is None:                           # la otra región no tiene campeón
+            reg_a = SR["region_de"][x["a"]]
+            filas = _fila_final(SR, x["a"], reg_a, ("–", "–", "–"), "win")
+            pie = f'<span class="rf-sube">▲ Asciende</span> {_nm_club(SR["nombres"][x["a"]])} · sin rival'
         else:
-            card = serie_html(SR, x, final=True)
-        tarjetas += (f'<div class="reg-final"><div class="round-h">{chip(f"Final {k + 1}", "#b7860b")}'
-                     f'<span class="reg-vs">{esc(ra)} vs. {esc(rb)}</span></div>{card}</div>')
-    return f'<div class="reg-finales">{tarjetas}</div>'
+            ida, vta = x["ida"], x["vuelta"]
+            # ida: local el de peor campaña (b) · vuelta: cierra de local el mejor ubicado (a)
+            g_a = (ida["gv"] if ida else "–", vta["gl"] if vta else "–", x["ga"] if ida else "–")
+            g_b = (ida["gl"] if ida else "–", vta["gv"] if vta else "–", x["gb"] if ida else "–")
+            filas = ""
+            for k2, (i, g) in enumerate(((x["a"], g_a), (x["b"], g_b))):
+                clase = "" if x["gana"] is None else ("win" if x["gana"] == i else "lose")
+                filas += _fila_final(SR, i, SR["region_de"][i], g, clase,
+                                     x["pen"][k2] if x["pen"] else None)
+            if x["gana"] is not None:
+                pie = (f'<span class="rf-sube">▲ Asciende al Federal A</span> '
+                       f'{_nm_club(SR["nombres"][x["gana"]])}'
+                       + (f' · penales {x["pen"][0]}-{x["pen"][1]}' if x["pen"] else ""))
+                tanda = tanda_html(vta) if vta is not None else ""
+            elif ida:
+                pie = "Se jugó la ida · falta la vuelta"
+            else:
+                pie = "Ida y vuelta · cierra de local el de mejor campaña (arriba)"
+        tarjetas += (f'<article class="rf{" hecha" if x is not None and x["gana"] is not None else ""}">'
+                     f'{cab}{filas}<div class="rf-f">{pie}</div>{tanda}</article>')
+    return f'<div class="rf-grid">{tarjetas}</div>'
 
 
 def barra_estado(items, progreso):
