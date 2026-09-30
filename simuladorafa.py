@@ -118,6 +118,7 @@ from copas import (
     sortear_copa,
 )
 from logos import LOGOS, logo_img
+from internacional import fase_actual, listo, pais_de, simular_ronda_int, terminadas
 from calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
 from vista import (
     COLOR_ORO,
@@ -142,6 +143,11 @@ from vista import (
     colorear_pc,
     colorear_reg,
     avisos_html,
+    bandera,
+    cuadro_int_html,
+    grupos_int_html,
+    series_int_html,
+    serie_int_html,
     calendario_mes_html,
     eventos_calendario,
     cuadro_final_copa_html,
@@ -217,8 +223,9 @@ terminada_pb = SPB["fecha"] >= SPB["total"]
 terminada_pc = SPC["fecha"] >= SPC["total"]
 terminada_reg = SR["fecha"] >= SR["total"]
 terminada_copa = SC["sorteada"] and SC["ronda"] >= SC["total"]
+terminadas_int = terminadas(S)
 ambas = (terminada and terminada_b and terminada_f and terminada_pb and terminada_pc and terminada_reg
-         and terminada_copa)
+         and terminada_copa and terminadas_int)
 b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
 pct_p = 100 * S["fecha"] / total_primera(S)
@@ -307,6 +314,10 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
     # 4. Copa Argentina (se juega en el medio de las ligas; acá se completa lo que falte)
     while S["copa"]["ronda"] < S["copa"]["total"]:
         simular_ronda_copa(S["copa"], P, S["rng"])
+    # 5. Copas CONMEBOL (la Sudamericana espera lo que necesita de la Libertadores)
+    while not terminadas(S):
+        for clave in ("rec", "lib", "sud"):
+            simular_ronda_int(S, clave, P, S["rng"])
     st.rerun()
 if g2.button(":material/event_repeat: Nueva temporada", disabled=not ambas, width="stretch"):
     nueva_temporada(S, volatilidad)
@@ -315,21 +326,20 @@ if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
     st.session_state.S = crear_estado()
     st.rerun()
 
+# Avisos (suspensiones y sanciones): los de esta temporada y los anteriores. Los nuevos (sin leer)
+# se cuentan en la pestaña Avisos.
 _avisos = [a for L in (S, SB, SF, SPB, SPC, SR, SC) for a in L.get("alertas", [])]
-if _avisos:
-    _ult = _avisos[-1]
-    st.markdown(f'<div class="aviso-banner">🚨 <span><b>Último aviso:</b> {esc(_ult["titulo"])} · '
-                f'{esc(_ult["local"])} vs. {esc(_ult["visita"])} ({esc(_ult["liga"])})</span></div>',
-                unsafe_allow_html=True)
-    with st.expander(f":material/campaign: Avisos de la temporada · suspensiones y sanciones ({len(_avisos)})"):
-        st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
+_total_avisos = len(S.get("alertas_hist", [])) + len(_avisos)
+_sin_leer = max(0, _total_avisos - S.get("avisos_leidos", 0))
 
 
 def _con_logo(liga, texto):
     return f"![]({LOGOS[liga]}) {texto}" if liga in LOGOS else texto
 
 
-tab_ligas, tab_copas, tab_cal, tab_c, tab_h = st.tabs(["Ligas", "Copas", "Calendario", "Clubes", "Historial"])
+tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
+    ["Ligas", "Copas", "Calendario", "Clubes",
+     "Avisos" + (f" :red-background[**{_sin_leer}**]" if _sin_leer else ""), "Historial"])
 with tab_ligas:
     with st.container(key="menu_ligas"):
         tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc = st.tabs([
@@ -339,7 +349,9 @@ with tab_ligas:
         ])
 with tab_copas:
     with st.container(key="menu_copas"):
-        (tab_ca,) = st.tabs([_con_logo("Copa Argentina", "Copa Argentina")])
+        tab_ca, tab_lib, tab_sud, tab_rec = st.tabs([
+            _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Copa Libertadores", "Libertadores"),
+            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa")])
 
 # (Esto va debajo de los imports y la configuración inicial de streamlit)
 
@@ -1261,6 +1273,118 @@ with tab_ca:
 
 
 # ============================================================================
+# COPAS CONMEBOL: LIBERTADORES, SUDAMERICANA Y RECOPA
+# ============================================================================
+def pestaña_int(clave, color):
+    C = S["int"][clave]
+    nombre = C["nombre"]
+    terminada_c = C["ronda"] >= C["total"]
+    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+    c1.markdown(logo_img(nombre, 30) + " " + chip(f"{nombre} · {len(C['via'])} equipos", color),
+                unsafe_allow_html=True)
+    espera = not terminada_c and not listo(S, clave)
+    if c2.button(":material/skip_next: Próxima ronda", key=f"{clave}_next", width="stretch", type="primary",
+                 disabled=terminada_c or espera):
+        simular_ronda_int(S, clave, P, S["rng"])
+        st.rerun()
+    if c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch",
+                 disabled=terminada_c or espera):
+        while listo(S, clave):
+            simular_ronda_int(S, clave, P, S["rng"])
+        st.rerun()
+    barra_estado([("Próxima ronda" if not terminada_c else "Estado", fase_actual(C)),
+                  ("Rondas", f"{C['ronda']} / {C['total']}"), ("Partidos jugados", len(C["log"]))],
+                 100 * C["ronda"] / max(C["total"], 1))
+    if espera:
+        aviso("La Sudamericana espera a la Libertadores: sus grupos se arman con los que pierden la Fase 3 "
+              "y los playoffs, con los terceros de los grupos. Avanzá la Libertadores (o usá Próximo día).")
+    if clave == "rec":
+        seccion("Recopa Sudamericana", "Campeón de la Libertadores vs. campeón de la Sudamericana · ida y "
+                "vuelta (si el global empata, penales)", color)
+        if not C["llaves"].get("Final"):
+            aviso("Esta temporada no hay Recopa.")
+        else:
+            st.markdown('<div class="rf-grid">' + serie_int_html(C, C["llaves"]["Final"][0], "Recopa")
+                        + '</div>', unsafe_allow_html=True)
+        return
+    es_lib = clave == "lib"
+    titulos = (["Fase previa"] if es_lib else []) + ["Grupos"] + ([] if es_lib else ["Playoffs"]) + [
+        "Eliminatorias", "Partidos", "Clasificados", "Definiciones"]
+    t = dict(zip(titulos, st.tabs(titulos)))
+    if es_lib:
+        with t["Fase previa"]:
+            seccion("Fase previa", "Fase 2 (16 equipos) y Fase 3 (8) a ida y vuelta · los 4 que ganan la Fase 3 "
+                    "van a los grupos; los 4 que pierden, a la Sudamericana", color)
+            for fase in ("Fase 2", "Fase 3"):
+                if C["llaves"].get(fase):
+                    st.markdown(f'<div class="mlab" style="margin-top:10px">{fase}</div>'
+                                + series_int_html(C, fase), unsafe_allow_html=True)
+    with t["Grupos"]:
+        seccion("Fase de grupos", "8 grupos de 4 · ida y vuelta · " + (
+            "1° y 2° a octavos, 3° a la Sudamericana" if es_lib else "1° a octavos, 2° a los playoffs"), color)
+        if C["grupos"] is None:
+            aviso("Los grupos se sortean cuando termina la fase previa de la Libertadores.")
+        else:
+            destinos = ([("oct", "Octavos"), ("oct", ""), ("sud", "Pasa a la Sudamericana"), ("", "")] if es_lib
+                        else [("oct", "Octavos"), ("sud", "Playoffs"), ("", ""), ("", "")])
+            st.markdown(grupos_int_html(C, destinos), unsafe_allow_html=True)
+    if not es_lib:
+        with t["Playoffs"]:
+            seccion("Playoffs", "2° de cada grupo vs. los 3° de la Libertadores (cierran de local) · ida y vuelta",
+                    color)
+            if C["llaves"].get("Playoffs"):
+                st.markdown(series_int_html(C, "Playoffs"), unsafe_allow_html=True)
+            else:
+                aviso("Se arman cuando terminan los grupos de las dos copas.")
+    with t["Eliminatorias"]:
+        seccion("Eliminatorias", "Octavos, cuartos y semis a ida y vuelta (cierra de local el de mejor campaña) · "
+                "final única en cancha neutral · se ve el global de cada serie", color)
+        st.markdown(cuadro_int_html(C), unsafe_allow_html=True)
+        fases = [f for f in ("Octavos", "Cuartos", "Semifinal") if C["llaves"].get(f)]
+        if fases:
+            with st.expander(":material/visibility: Ver ida y vuelta de cada serie"):
+                for f in fases:
+                    st.markdown(f'<div class="mlab" style="margin-top:10px">{f}</div>' + series_int_html(C, f),
+                                unsafe_allow_html=True)
+    with t["Partidos"]:
+        if not C["log"]:
+            aviso("Todavía no se jugó ninguna ronda.")
+        else:
+            rondas = sorted({p["fecha"] for p in C["log"]})
+            r_sel = st.selectbox(":material/event: Ronda", rondas, index=len(rondas) - 1,
+                                 format_func=lambda n: C["rondas"][n - 1], key=f"{clave}_ronda_{S['temp']}")
+            for p in [p for p in C["log"] if p["fecha"] == r_sel]:
+                st.markdown(fila_partido_html(p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
+    with t["Clasificados"]:
+        seccion("Clasificados", "Argentina: por la tabla de Primera, la Copa Argentina y los campeones · "
+                "los otros países: cupos por país, los clubes se sortean cada año", color)
+        filas = [{"Equipo": n, "País": pais_de(n), "Cómo clasificó": v, "Media": round(C["r"][n], 1)}
+                 for n, v in C["via"].items()]
+        filas.sort(key=lambda x: (x["País"] != "Argentina", x["País"], -x["Media"]))
+        df_i = pd.DataFrame(filas)
+        st.markdown(tabla_html(df_i, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+    with t["Definiciones"]:
+        seccion("Definiciones", f"Campeón de la {nombre}", "#b7860b")
+        if C["campeon"] is None:
+            aviso("El campeón aparece acá cuando se juega la final.")
+        else:
+            cc = C["campeon"]
+            st.markdown(f'<div class="champ"><div class="t">Campeón · {esc(nombre)} {anio(S)}</div>'
+                        f'<div style="margin-top:10px">{crest(cc, 64)}</div><div class="nm">{esc(cc)}</div>'
+                        f'<div class="s">{bandera(pais_de(cc), 18)} {esc(pais_de(cc))} · finalista: '
+                        f'{esc(C["subcampeon"])}</div></div>', unsafe_allow_html=True)
+            st.caption("Clasifica a la Recopa y a la próxima Libertadores.")
+
+
+with tab_lib:
+    pestaña_int("lib", "#8a6d1e")
+with tab_sud:
+    pestaña_int("sud", "#1e5aa8")
+with tab_rec:
+    pestaña_int("rec", "#475569")
+
+
+# ============================================================================
 # CALENDARIO
 # ============================================================================
 with tab_cal:
@@ -1331,14 +1455,33 @@ with tab_c:
 
 
 # ============================================================================
+# AVISOS
+# ============================================================================
+with tab_av:
+    seccion("Avisos", "Partidos suspendidos y sanciones del Tribunal de Disciplina", "#b83a2e")
+    if _sin_leer:
+        c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
+        c1.markdown(f'<div class="aviso-banner">🚨 <span><b>{_sin_leer} aviso{"s" if _sin_leer > 1 else ""} '
+                    f'nuevo{"s" if _sin_leer > 1 else ""}</b></span></div>', unsafe_allow_html=True)
+        if c2.button(":material/done_all: Marcar como leídos", key="avisos_leidos_btn", width="stretch"):
+            S["avisos_leidos"] = _total_avisos
+            st.rerun()
+    if _avisos:
+        st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
+        st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
+    else:
+        aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones.")
+    if S.get("alertas_hist"):
+        st.markdown('<div class="mlab" style="margin-top:18px">Temporadas anteriores</div>', unsafe_allow_html=True)
+        st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
+
+
+# ============================================================================
 # HISTORIAL
 # ============================================================================
 with tab_h:
     seccion("Historial", "Campeones de cada temporada y cambios de categoría", "#b7860b")
-    if S.get("alertas_hist"):
-        with st.expander(f":material/campaign: Suspensiones y sanciones de temporadas anteriores "
-                         f"({len(S['alertas_hist'])})", expanded=False):
-            st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
+
     if S["movimientos"]:
         mv = S["movimientos"]
         with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
@@ -1371,7 +1514,7 @@ with tab_h:
                 f'</div>', unsafe_allow_html=True)
     if S["campeones"]:
         ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                   "Copa Argentina"]
+                   "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
         with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
             df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
             st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)

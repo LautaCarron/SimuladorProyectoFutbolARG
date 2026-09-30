@@ -1093,7 +1093,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 11       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 12       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1283,6 +1283,10 @@ def _armar_finales_reg(SR):
     SR["finales"] = []
     for ra, rb in FINALES_REG:
         ca, cb = SR["campeones"][ra], SR["campeones"][rb]
+        if ca is None and cb is None:                   # las dos regiones sin clubes: final desierta
+            SR["finales"].append({"a": None, "b": None, "reg": f"{ra} / {rb}", "ronda": REG_FINAL,
+                                  "ida": None, "vuelta": None, "gana": None, "ga": 0, "gb": 0, "pen": None})
+            continue
         if ca is None or cb is None:                    # región sin campeón: el otro asciende
             SR["finales"].append({"a": ca if ca is not None else cb, "b": None, "reg": f"{ra} / {rb}",
                                   "ronda": REG_FINAL, "ida": None, "vuelta": None,
@@ -1295,7 +1299,7 @@ def _armar_finales_reg(SR):
 
 
 def _jugar_pierna_reg(SR, P, rng, series, vuelta, n_fecha):
-    series = [x for x in series if x["b"] is not None]
+    series = [x for x in series if x["a"] is not None and x["b"] is not None]
     if not series:
         return
     nom, r = SR["nombres"], SR["r"]
@@ -1588,6 +1592,8 @@ def crear_estado():
     S["reg"] = SREG
     from copas import sortear_copa
     S["copa"] = sortear_copa(S, rng)    # temporada 1: clasifican los de mejor media de cada liga
+    from internacional import nuevas_internacionales
+    nuevas_internacionales(S, rng)      # Libertadores, Sudamericana y Recopa
     return S
 
 
@@ -1602,6 +1608,9 @@ def nueva_temporada(S, volatilidad):
     # Copa Argentina de la temporada que viene: clasifican por lo hecho en esta
     from copas import clasificados_copa
     S["copa_clasif"] = [(x[0], x[3]) for x in clasificados_copa(S)]
+    # copas CONMEBOL de la temporada que viene (tabla de Primera, Copa Argentina y campeones)
+    from internacional import fin_de_temporada
+    fin_de_temporada(S)
 
     # Campeón de cada liga en la temporada que termina (para el Historial)
     def _campeon(L):
@@ -1612,6 +1621,9 @@ def nueva_temporada(S, volatilidad):
         "Primera C": _campeon(SPC),
         "Copa Argentina": (S["copa"]["nombres"][S["copa"]["campeon"]]
                            if S.get("copa", {}).get("campeon") is not None else ""),
+        "Libertadores": S.get("int", {}).get("lib", {}).get("campeon") or "",
+        "Sudamericana": S.get("int", {}).get("sud", {}).get("campeon") or "",
+        "Recopa": S.get("int", {}).get("rec", {}).get("campeon") or "",
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
     p27 = promo["p_nombre"]
@@ -1771,6 +1783,12 @@ def nueva_temporada(S, volatilidad):
     nueva_estructura_reg(S["reg"], rng)
     from copas import sortear_copa
     S["copa"] = sortear_copa(S, rng)    # se juega durante la temporada, los miércoles
+    # clubes del exterior: su media cambia un poco cada año (vuelve hacia la de su club)
+    from internacional import MEDIA_EXT, nuevas_internacionales
+    ri = S.setdefault("rating_int", dict(MEDIA_EXT))
+    for n, base in MEDIA_EXT.items():
+        ri[n] = float(np.clip(ri.get(n, base) + 0.3 * (base - ri.get(n, base)) + rng.normal(0, 1.5), MIN_R, MAX_R))
+    nuevas_internacionales(S, rng)
 
     #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
     for liga in [S["pb"], S["pc"]]:

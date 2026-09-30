@@ -29,6 +29,18 @@ FIN_TEMPORADA = (12, 13)                # las ligas terminan a más tardar a med
 # Copa Argentina: 64avos, 32avos, 16avos, octavos, cuartos, semifinales y final (miércoles)
 COPA_DIAS = [(3, 4), (4, 8), (5, 13), (6, 24), (8, 12), (9, 23), (11, 4)]
 COPA = "Copa Argentina"
+# Copas CONMEBOL: (mes, a partir del día, día de la semana). Libertadores los martes,
+# Sudamericana los jueves, finales únicas un sábado de noviembre, Recopa en febrero.
+INT_DIAS = {
+    "Copa Libertadores": [(2, 17, 1), (2, 24, 1), (3, 3, 1), (3, 10, 1), (4, 7, 1), (4, 14, 1), (4, 21, 1),
+                          (5, 5, 1), (5, 19, 1), (5, 26, 1), (8, 11, 1), (8, 18, 1), (9, 15, 1), (9, 22, 1),
+                          (10, 20, 1), (10, 27, 1), (11, 28, 5)],
+    "Copa Sudamericana": [(4, 9, 3), (4, 16, 3), (4, 23, 3), (5, 7, 3), (5, 21, 3), (5, 28, 3), (7, 16, 3),
+                          (7, 23, 3), (8, 13, 3), (8, 20, 3), (9, 17, 3), (9, 24, 3), (10, 22, 3), (10, 29, 3),
+                          (11, 21, 5)],
+    "Recopa Sudamericana": [(2, 19, 3), (2, 26, 3)],
+}
+_CLAVE_INT = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
 
 
 def anio(S):
@@ -73,6 +85,9 @@ def dia_de(S, liga, n):
     if liga == COPA:
         mes, dia = COPA_DIAS[min(n, len(COPA_DIAS)) - 1]
         return _desde(anio(S), mes, dia, 2)
+    if liga in INT_DIAS:
+        mes, dia, wd = INT_DIAS[liga][min(n, len(INT_DIAS[liga])) - 1]
+        return _desde(anio(S), mes, dia, wd)
     if liga == "Promoción":                            # la juega el perdedor de la final de la B
         liga = "Primera Nacional"
     if liga not in INICIO:
@@ -116,6 +131,11 @@ def proximos(S):
     SC = S.get("copa")
     if SC and SC["sorteada"] and SC["ronda"] < SC["total"]:
         pend[COPA] = SC["ronda"] + 1
+    if S.get("int"):
+        from internacional import listo
+        for nombre, clave in _CLAVE_INT.items():
+            if listo(S, clave):
+                pend[nombre] = S["int"][clave]["ronda"] + 1
     return {c: (dia_de(S, c, n), n) for c, n in pend.items()}
 
 
@@ -148,4 +168,7 @@ def jugar_proximo_dia(S, P, acumular=True):
                 simular_fecha_reg(S["reg"], P, S["rng"])
             elif c == COPA:
                 simular_ronda_copa(S["copa"], P, S["rng"])
+            elif c in _CLAVE_INT:
+                from internacional import simular_ronda_int
+                simular_ronda_int(S, _CLAVE_INT[c], P, S["rng"])
     return hoy

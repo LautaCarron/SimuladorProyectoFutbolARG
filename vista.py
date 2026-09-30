@@ -416,6 +416,27 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .kb-champ .s{font-size:.7rem;color:var(--tinta-2);margin-top:2px;}
 .kb-champ.vacio{opacity:.55;}
 .kb .logo-mini,.bt .logo-mini{flex:none;opacity:.9;}
+/* copas CONMEBOL: grupos y banderas */
+.bandera{flex:none;border-radius:2px;box-shadow:0 0 0 1px var(--line);vertical-align:middle;margin-left:4px;}
+.grp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;margin:6px 0 8px;}
+.grp{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;}
+.grp-h{font-stretch:85%;font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:8px 12px;border-bottom:1px solid var(--line);background:var(--soft);}
+.grp-t{width:100%;border-collapse:collapse;font-size:.8rem;}
+.grp-t th{font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3);padding:5px 6px;text-align:center;}
+.grp-t th:nth-child(2){text-align:left;}
+.grp-t td{padding:6px;text-align:center;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;}
+.grp-t td.gc{text-align:left;max-width:0;width:100%;}
+.grp-t .gcw{display:flex;align-items:center;gap:6px;min-width:0;}
+.grp-t td.gc .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;cursor:pointer;}
+.grp-t td.gp{width:22px;color:var(--tinta-3);font-weight:700;}
+.grp-t td.gpts{font-weight:900;}
+.grp-t tr.oct td.gp{box-shadow:inset 3px 0 0 var(--win);}
+.grp-t tr.oct{background:color-mix(in srgb,var(--win) 9%,transparent);}
+.grp-t tr.sud td.gp{box-shadow:inset 3px 0 0 var(--cel2);}
+.grp-t tr.sud{background:color-mix(in srgb,var(--cel) 9%,transparent);}
+.grp-ley{display:flex;gap:16px;flex-wrap:wrap;font-size:.74rem;color:var(--tinta-2);margin-bottom:10px;}
+.grp-ley i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+.grp-ley i.oct{background:var(--win);} .grp-ley i.sud{background:var(--cel2);}
 /* avisos: suspensiones y sanciones */
 .avisos{display:flex;flex-direction:column;gap:10px;}
 .aviso{display:flex;gap:12px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;background:var(--papel);padding:10px 14px;}
@@ -694,10 +715,11 @@ def coincide(consulta, texto, fecha, marcadores):
 def todos_los_partidos():
     S, SB, SF, SPB, SPC = _estado()
     return (S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
-            + S.get("copa", {}).get("log", []))
+            + S.get("copa", {}).get("log", [])
+            + [p for C in S.get("int", {}).values() for p in C["log"]])
 
 
-def categoria_de(nombre):
+def _categoria_arg(nombre):
     S, SB, SF, SPB, SPC = _estado()
     if nombre in S["nombres"]:
         return "Primera División"
@@ -712,6 +734,14 @@ def categoria_de(nombre):
     if nombre in st.session_state.S["reg"]["nombres"]:
         return "Regional Amateur"
     return ""
+
+
+def categoria_de(nombre):
+    cat = _categoria_arg(nombre)
+    if cat:
+        return cat
+    from internacional import PAIS_EXT
+    return PAIS_EXT.get(nombre)
 
 
 def marcador_html(p, crests=False):
@@ -1618,6 +1648,9 @@ def finales_reg_html(SR):
             listos = sum(SR["campeones"].get(reg) is not None for reg in (ra, rb))
             pie = ("Ida y vuelta · cierra de local el de mejor campaña" if listos == 2 else
                    "Se completa con los campeones de cada región")
+        elif x["a"] is None:                           # las dos regiones sin clubes
+            filas = "".join(_fila_final(SR, None, reg, ("–", "–", "–"), "") for reg in (ra, rb))
+            pie = "Final desierta: ninguna de las dos regiones tiene clubes"
         elif x["b"] is None:                           # la otra región no tiene campeón
             reg_a = SR["region_de"][x["a"]]
             filas = _fila_final(SR, x["a"], reg_a, ("–", "–", "–"), "win")
@@ -1760,9 +1793,160 @@ def avisos_html(avisos, con_temporada=False):
     return f'<div class="avisos">{out}</div>'
 
 
+# ---- Copas CONMEBOL ----
+_INT_CLAVE = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
+_ISO = {"Argentina": "ar", "Brasil": "br", "Colombia": "co", "Paraguay": "py", "Perú": "pe", "Chile": "cl",
+        "Uruguay": "uy", "Ecuador": "ec", "Bolivia": "bo", "Venezuela": "ve"}
+
+
+def bandera(pais, ancho=18):
+    iso = _ISO.get(pais)
+    if not iso:
+        return ""
+    return (f'<img class="bandera" src="https://flagcdn.com/w40/{iso}.png" width="{ancho}" '
+            f'height="{round(ancho * 2 / 3)}" alt="{esc(pais)}" title="{esc(pais)}" loading="lazy">')
+
+
+def _int_pendientes(C, n):
+    """Partidos por jugar de la ronda n de una copa CONMEBOL (si ya se conocen los cruces)."""
+    from internacional import GRUPOS, _FIX4
+    etapa = C["rondas"][n - 1]
+    liga = C["nombre"]
+    if etapa.startswith("Grupos"):
+        if C["grupos"] is None:
+            return []
+        f = int(etapa.split()[-1]) - 1
+        return [pendiente(liga, n, etapa, f"Grupo {GRUPOS[g]}", eq[i], eq[j])
+                for g, eq in enumerate(C["grupos"]) for i, j in _FIX4[f]]
+    fase = "Recopa" if liga == "Recopa Sudamericana" else etapa.split(" · ")[0]
+    series = C["llaves"].get("Final" if liga == "Recopa Sudamericana" else fase)
+    if not series:
+        return []
+    if etapa == "Final":
+        return [dict(pendiente(liga, n, etapa, "Final", series[0]["a"], series[0]["b"]), neutral=True)]
+    ida = etapa.endswith("ida") or etapa == "Ida"
+    return [pendiente(liga, n, etapa, fase, x["b"], x["a"]) if ida else pendiente(liga, n, etapa, fase, x["a"], x["b"])
+            for x in series]
+
+
+def _club_int(n, size=26):
+    from internacional import pais_de
+    e = esc(n)
+    return (f'{crest(n, size)}<span class="nm" role="button" tabindex="0" data-club="{e}" '
+            f'title="Ver la ficha de {e}">{e}</span>{bandera(pais_de(n), 16)}')
+
+
+def serie_int_html(C, x, titulo=""):
+    """Serie a ida y vuelta (o final única) de una copa CONMEBOL, en el formato de las finales
+    del Regional: ida, vuelta y global de cada equipo."""
+    from internacional import pais_de
+    final_unica = C["nombre"] != "Recopa Sudamericana" and x is C["llaves"].get("Final", [None])[0]
+    cab = f'<div class="rf-h"><span class="rf-n">{esc(titulo)}</span><span class="rf-reg">' + (
+        "Final única · cancha neutral" if final_unica else "Ida y vuelta") + '</span></div>'
+    if final_unica:
+        p = x["ida"]
+        cab += '<div class="rf-fila rf-cab"><span></span><span></span><span></span><span>Final</span></div>'
+        filas = ""
+        for k, n in enumerate((x["a"], x["b"])):
+            cls = "" if x["gana"] is None else ("win" if x["gana"] == n else "lose")
+            g = (p["gl"] if k == 0 else p["gv"]) if p else "–"
+            pk = f'<sup>({p["pen"][k]})</sup>' if p and p["pen"] else ""
+            filas += (f'<div class="rf-fila {cls}"><span class="rf-eq">{crest(n, 30)}<span class="rf-nm">'
+                      f'{_nm_club(n)}<small>{esc(pais_de(n))}</small></span></span><span></span><span></span>'
+                      f'<span class="rf-g rf-tot">{g}{pk}</span></div>')
+        pie = (f'<span class="rf-sube">🏆 Campeón</span> {_nm_club(x["gana"])}' if x["gana"] else "Se juega en noviembre")
+        return f'<article class="rf">{cab}{filas}<div class="rf-f">{pie}</div>{tanda_html(p) if p else ""}</article>'
+    cab += '<div class="rf-fila rf-cab"><span></span><span>Ida</span><span>Vta.</span><span>Global</span></div>'
+    ida, vta = x["ida"], x["vuelta"]
+    filas = ""
+    for k, n in enumerate((x["a"], x["b"])):
+        cls = "" if x["gana"] is None else ("win" if x["gana"] == n else "lose")
+        gi = ("–" if ida is None else (ida["gv"] if k == 0 else ida["gl"]))
+        gv = ("–" if vta is None else (vta["gl"] if k == 0 else vta["gv"]))
+        gt = ("–" if ida is None else (x["ga"] if k == 0 else x["gb"]))
+        pk = f'<sup>({x["pen"][k]})</sup>' if x["pen"] else ""
+        filas += (f'<div class="rf-fila {cls}"><span class="rf-eq">{crest(n, 30)}<span class="rf-nm">'
+                  f'{_nm_club(n)}<small>{esc(pais_de(n))}{" · cierra de local" if k == 0 else ""}</small></span></span>'
+                  f'<span class="rf-g">{gi}</span><span class="rf-g">{gv}</span><span class="rf-g rf-tot">{gt}{pk}</span></div>')
+    pie = (f'<span class="rf-sube">▲ Avanza</span> {_nm_club(x["gana"])}'
+           + (f' · penales {x["pen"][0]}-{x["pen"][1]}' if x["pen"] else "")) if x["gana"] else (
+        "Se jugó la ida" if ida else "Por jugar")
+    return f'<article class="rf">{cab}{filas}<div class="rf-f">{pie}</div>{tanda_html(vta) if vta else ""}</article>'
+
+
+def series_int_html(C, fase):
+    series = C["llaves"].get(fase) or []
+    if not series:
+        return ""
+    return '<div class="rf-grid">' + "".join(serie_int_html(C, x, f"{fase} · llave {k + 1}")
+                                             for k, x in enumerate(series)) + '</div>'
+
+
+def grupos_int_html(C, destinos):
+    """Las 8 tablas de grupo. `destinos` = [(clase, texto)] para 1°, 2°, 3° y 4°."""
+    from internacional import GRUPOS, pais_de, tabla_grupo
+    out = ""
+    for g in range(len(C["grupos"])):
+        filas = ""
+        for k, t in enumerate(tabla_grupo(C, g)):
+            clase = destinos[k][0] if C["gstats"] and any(C["gstats"][n]["pj"] for n in C["grupos"][g]) else ""
+            n = t["Equipo"]
+            filas += (f'<tr class="{clase}"><td class="gp">{k + 1}</td><td class="gc"><div class="gcw">{crest(n, 20)}'
+                      f'<span class="nm" role="button" tabindex="0" data-club="{esc(n)}">{esc(n)}</span>'
+                      f'{bandera(pais_de(n), 14)}</div></td><td>{t["PJ"]}</td><td>{t["DG"]:+d}</td><td class="gpts">{t["Pts"]}</td></tr>')
+        out += (f'<div class="grp"><div class="grp-h">Grupo {GRUPOS[g]}</div><table class="grp-t"><thead><tr><th>#</th>'
+                f'<th>Club</th><th>PJ</th><th>DG</th><th>Pts</th></tr></thead><tbody>{filas}</tbody></table></div>')
+    ley = "".join(f'<span><i class="{c}"></i>{esc(t)}</span>' for c, t in destinos if c)
+    return f'<div class="grp-grid">{out}</div><div class="grp-ley">{ley}</div>'
+
+
+def _kb_card_serie(x):
+    """Serie en el cuadro: global de cada equipo (y penales)."""
+    from internacional import pais_de
+    if x is None:
+        fila = '<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">A definir</span></div>'
+        return f'<div class="kb-m">{fila}{fila}</div>'
+    filas = ""
+    jugada = x["ida"] is not None
+    for k, n in enumerate((x["a"], x["b"])):
+        cls = "" if x["gana"] is None else (" win" if x["gana"] == n else " lose")
+        if x.get("vuelta") is None and jugada and x["gana"] is not None:     # final única
+            g = x["ida"]["gl"] if k == 0 else x["ida"]["gv"]
+            pen = x["ida"]["pen"]
+        else:
+            g = (x["ga"] if k == 0 else x["gb"]) if jugada else ""
+            pen = x["pen"]
+        pk = f'<span class="kb-p">({pen[k]})</span>' if pen else ""
+        e = esc(n)
+        filas += (f'<div class="kb-t{cls}">{crest(n, 20)}<span class="kb-n" role="button" tabindex="0" '
+                  f'data-club="{e}" title="{e}">{e}</span>{bandera(pais_de(n), 14)}{pk}<b class="kb-g">{g}</b></div>')
+    return f'<div class="kb-m">{filas}</div>'
+
+
+def cuadro_int_html(C):
+    """Octavos, cuartos, semis (global de cada serie), final única y campeón."""
+    cols = []
+    for fase, n in (("Octavos", 8), ("Cuartos", 4), ("Semifinal", 2), ("Final", 1)):
+        series = C["llaves"].get(fase) or [None] * n
+        if n == 1:
+            cols.append(_kb_col("Final", f'<div class="kb-slot kb-solo">{_kb_card_serie(series[0])}</div>'))
+        else:
+            cuerpo = "".join(f'<div class="kb-pair"><div class="kb-slot">{_kb_card_serie(series[j])}</div>'
+                             f'<div class="kb-slot">{_kb_card_serie(series[j + 1])}</div></div>'
+                             for j in range(0, n, 2))
+            cols.append(_kb_col(fase if fase != "Semifinal" else "Semis", cuerpo))
+    from internacional import pais_de
+    c = C["campeon"]
+    cols.append(_kb_final(f"Campeón · {C['nombre']}", "Campeón", c, pais_de(c) if c else ""))
+    return _kb(cols, 8 * 74)
+
+
 # ---- Calendario del mes ----
 def _cal_partidos(S, liga, n):
     """Partidos (jugados o por jugar) de la fecha n de una liga, o la ronda n de la Copa."""
+    if liga in _INT_CLAVE:
+        C = S["int"][_INT_CLAVE[liga]]
+        return [p for p in C["log"] if p["fecha"] == n] or _int_pendientes(C, n)
     if liga == "Copa Argentina":
         SC = S["copa"]
         if n - 1 >= len(SC["cuadro"]):
@@ -1781,6 +1965,8 @@ def _cal_partidos(S, liga, n):
 
 def _cal_rotulo(S, liga, n):
     from copas import COPA_RONDAS
+    if liga in _INT_CLAVE:
+        return S["int"][_INT_CLAVE[liga]]["rondas"][n - 1]
     if liga == "Copa Argentina":
         return COPA_RONDAS[n - 1]
     return {"Primera División": lambda: rotulo_p(S, n), "Primera Nacional": lambda: rotulo_b(S["b"], n),
@@ -1800,7 +1986,12 @@ def eventos_calendario(S):
     SC = S["copa"]
     for n in range(1, SC["total"] + 1):
         ev.append((dia_de(S, "Copa Argentina", n), "Copa Argentina", n, n <= SC["ronda"]))
-    orden = ["Copa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+    for liga, clave in _INT_CLAVE.items():
+        C = S.get("int", {}).get(clave)
+        if C:
+            for n in range(1, C["total"] + 1):
+                ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
              "Primera B", "Primera C"]
     return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 

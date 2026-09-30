@@ -6,6 +6,7 @@ escudos. No tiene lógica de simulación.
 
 import streamlit as st
 
+from clubes_int import CLUBES_INT, OSCUROS_INT
 from regional import GRUPO_FEDERAL_REG, REGIONAL
 
 # ----------------------------------------------------------------------------
@@ -232,6 +233,8 @@ ESCUDOS = {
 }
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
 ESCUDOS.update({x["nombre"]: x["escudo"] for x in REGIONAL})
+# Clubes de los otros países de la CONMEBOL (copas internacionales)
+ESCUDOS.update({n: url for n, _, _, url in CLUBES_INT})
 
 # Escudos de borde oscuro (negro, bordó, azul marino): en modo oscuro se les dibuja un
 # contorno claro para que no se pierdan contra el fondo (p. ej. Central Norte).
@@ -247,6 +250,7 @@ ESCUDOS_OSCUROS = {
     "Deportivo Trancas", "Deportivo Municipal (La Leonesa)", "Atlético Regina (Villa Regina)",
     "Talleres (Nueva Esperanza)",
 }
+ESCUDOS_OSCUROS |= set(OSCUROS_INT)
 
 # Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
 # Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
