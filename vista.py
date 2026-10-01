@@ -1807,7 +1807,8 @@ def cuadro_final_copa_html(SC):
 
 # ---- Avisos (Tribunal de Disciplina, suspensiones) ----
 _ICONO_AVISO = {"clima": "⛈", "luz": "💡", "bengalas": "🔥", "invasion": "🏃", "micro": "🚌",
-                "huelga": "✋", "arbitro": "🟥", "corrupcion": "⚖", "gravisimo": "🚨"}
+                "huelga": "✋", "arbitro": "🟥", "corrupcion": "⚖", "gravisimo": "🚨",
+                "doping": "💊", "animales": "🐕", "cancha": "🏟️", "logistica": "👕", "hinchada": "🎊"}
 
 
 def avisos_html(avisos, con_temporada=False):
