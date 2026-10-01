@@ -15,6 +15,10 @@ En la temporada 1 (no hay anterior) entran los de mejor media de cada liga. Si a
 llega a su cupo (p. ej. una región sin campeón), el lugar lo ocupa el siguiente mejor de la
 Zona Descenso del Federal A.
 
+Supercopa Argentina: partido único en cancha neutral entre el campeón de Primera y el campeón de
+la Copa Argentina (si es el mismo club, el rival es el subcampeón de Primera). Se juega al terminar
+las dos competencias; si empatan, penales.
+
 Cruces de 64avos (por categoría, lo más justo): la categoría más alta contra la más baja,
 la segunda contra la anteúltima y así (Primera vs. Regional Amateur, B Nacional vs. Primera C,
 Federal A vs. Primera B); los que sobran se vuelven a cruzar con la misma regla. Dentro de
@@ -27,9 +31,10 @@ import numpy as np
 from incidentes import revisar_copa
 from motor import jugar_ko, nuevo_partido, tanda_penales
 from regional import REGIONES_REG
-from torneos import primera_terminada, tabla_f_f2, tabla_pb, tabla_pc, total_b
+from torneos import primera_terminada, tabla_f_f2, tabla_final, tabla_pb, tabla_pc, total_b
 
 COPA_ARG = "Copa Argentina"
+SUPERCOPA = "Supercopa Argentina"
 COPA_RONDAS = ["64avos de final", "32avos de final", "16avos de final", "Octavos de final",
                "Cuartos de final", "Semifinales", "Final"]
 COPA_CORTO = ["64avos", "32avos", "16avos", "Octavos", "Cuartos", "Semifinal", "Final"]
@@ -184,3 +189,57 @@ def llave_de(k_ronda, j):
     """Letra de la llave (A-H) del partido j de la ronda k (sólo hasta octavos)."""
     por_llave = 8 >> k_ronda                      # partidos de cada llave en esa ronda
     return COPA_LLAVES[j // por_llave] if por_llave else None
+
+
+# ----------------------------------------------------------------------------
+# SUPERCOPA ARGENTINA
+# ----------------------------------------------------------------------------
+def nueva_supercopa():
+    """Supercopa de la temporada, todavía sin jugar (a = campeón de Primera, b = su rival)."""
+    return {"jugada": False, "a": None, "b": None, "crit_a": "", "crit_b": "", "p": None,
+            "campeon": None, "log": []}
+
+
+def copa_terminada(S):
+    SC = S["copa"]
+    return bool(SC["sorteada"] and SC["ronda"] >= SC["total"] and SC["campeon"] is not None)
+
+
+def supercopa_lista(S):
+    """Se puede jugar cuando terminaron Primera División (con desempates) y la Copa Argentina."""
+    return (not S["supercopa"]["jugada"]) and primera_terminada(S) and copa_terminada(S)
+
+
+def rivales_supercopa(S):
+    """(club A, media A, cómo clasificó A, club B, media B, cómo clasificó B).
+
+    A es el campeón de Primera; B es el campeón de la Copa Argentina. Si es el mismo club,
+    B pasa a ser el subcampeón de Primera.
+    """
+    final = tabla_final(S)
+    camp = final.iloc[0]
+    SC = S["copa"]
+    c_copa = SC["nombres"][SC["campeon"]]
+    a, ra = camp["Equipo"], float(S["r"][int(camp["id"])])
+    if a == c_copa:
+        sub = final.iloc[1]
+        return (a, ra, "Campeón de Primera y de la Copa Argentina",
+                sub["Equipo"], float(S["r"][int(sub["id"])]),
+                "Subcampeón de Primera (el campeón también ganó la Copa)")
+    return (a, ra, "Campeón de Primera", c_copa, float(SC["r"][SC["campeon"]]),
+            "Campeón de la Copa Argentina")
+
+
+def simular_supercopa(S, P, rng):
+    """Juega la Supercopa (partido único, cancha neutral, penales si empatan)."""
+    if not supercopa_lista(S):
+        return
+    SS = S["supercopa"]
+    a, ra, crit_a, b, rb, crit_b = rivales_supercopa(S)
+    gl, gv, gana_l, pen = jugar_ko(rng, np.array([ra]), np.array([rb]), P["sorpresa"], localia=0.0)
+    g1, g2, gana_local, hubo_pen = int(gl[0]), int(gv[0]), bool(gana_l[0]), bool(pen[0])
+    tanda = tanda_penales(rng, gana_local) if hubo_pen else None
+    gana = a if gana_local else b
+    p = nuevo_partido(SUPERCOPA, 1, "Final", "Final", a, b, g1, g2, tanda=tanda, gana=gana, neutral=True)
+    SS.update(jugada=True, a=a, b=b, crit_a=crit_a, crit_b=crit_b, p=p, campeon=gana)
+    SS["log"].append(p)

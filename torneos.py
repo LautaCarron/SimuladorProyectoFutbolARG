@@ -1093,7 +1093,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 13       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 14       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1590,8 +1590,9 @@ def crear_estado():
     SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
     nueva_estructura_reg(SREG, rng)
     S["reg"] = SREG
-    from copas import sortear_copa
+    from copas import nueva_supercopa, sortear_copa
     S["copa"] = sortear_copa(S, rng)    # temporada 1: clasifican los de mejor media de cada liga
+    S["supercopa"] = nueva_supercopa()  # campeón de Primera vs. campeón de la Copa Argentina
     from internacional import nuevas_internacionales
     nuevas_internacionales(S, rng)      # Libertadores, Sudamericana y Recopa
 
@@ -1632,6 +1633,7 @@ def nueva_temporada(S, volatilidad):
         "Libertadores": S.get("int", {}).get("lib", {}).get("campeon") or "",
         "Sudamericana": S.get("int", {}).get("sud", {}).get("campeon") or "",
         "Recopa": S.get("int", {}).get("rec", {}).get("campeon") or "",
+        "Supercopa": S.get("supercopa", {}).get("campeon") or "",
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
 
@@ -1655,6 +1657,11 @@ def nueva_temporada(S, volatilidad):
     
     camp_rec = S.get("int", {}).get("rec", {}).get("campeon")
     if camp_rec: S.setdefault("hist_rec", {})[camp_rec] = S["hist_rec"].get(camp_rec, 0) + 1
+
+    camp_sup = S.get("supercopa", {}).get("campeon")
+    if camp_sup:
+        S.setdefault("hist_super", {})
+        S["hist_super"][camp_sup] = S["hist_super"].get(camp_sup, 0) + 1
 
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]
@@ -1811,8 +1818,9 @@ def nueva_temporada(S, volatilidad):
     S["reg"]["nombres"] = del_json + [n for n in S["regional"] if n not in set(del_json)]
     S["reg"]["r"] = np.array([S["rating"][n] for n in S["reg"]["nombres"]])
     nueva_estructura_reg(S["reg"], rng)
-    from copas import sortear_copa
+    from copas import nueva_supercopa, sortear_copa
     S["copa"] = sortear_copa(S, rng)    # se juega durante la temporada, los miércoles
+    S["supercopa"] = nueva_supercopa()
     # clubes del exterior: su media cambia un poco cada año (vuelve hacia la de su club)
     from internacional import MEDIA_EXT, nuevas_internacionales
     ri = S.setdefault("rating_int", dict(MEDIA_EXT))
@@ -1826,3 +1834,4 @@ def nueva_temporada(S, volatilidad):
         liga["ids_desempate"] = []
         liga["motivos_desempate"] = []
         liga["orden_final"] = None
+        

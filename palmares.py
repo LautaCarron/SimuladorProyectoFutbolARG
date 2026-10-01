@@ -59,6 +59,12 @@ PALMARES = {
         "Boca Juniors": 4, "River Plate": 3, "Arsenal": 1, "Central Córdoba (SdE)": 1, "Estudiantes (LP)": 1,
         "Huracán": 1, "Independiente Rivadavia": 1, "Patronato": 1, "Rosario Central": 1,
     },
+    # Supercopa Argentina · desde 2012 (campeón de Primera vs. ganador de la Copa Argentina). Ediciones
+    # 2012-2019 y 2022-2024 (la de 2024 se jugó en septiembre de 2025); no se jugaron 2020 ni 2021.
+    "hist_super": {
+        "River Plate": 3, "Boca Juniors": 2, "Vélez": 2, "Arsenal": 1, "Huracán": 1, "Lanús": 1,
+        "San Lorenzo": 1,
+    },
     # Copa Libertadores · 1960-2025.
     "hist_lib": {
         "Independiente": 7, "Boca Juniors": 6, "Peñarol": 5, "Estudiantes (LP)": 4, "Flamengo": 4,

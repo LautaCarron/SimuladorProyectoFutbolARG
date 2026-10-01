@@ -737,6 +737,7 @@ def todos_los_partidos():
     S, SB, SF, SPB, SPC = _estado()
     return (S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
             + S.get("copa", {}).get("log", [])
+            + S.get("supercopa", {}).get("log", [])
             + [p for C in S.get("int", {}).values() for p in C["log"]])
 
 
@@ -1992,6 +1993,15 @@ def _cal_partidos(S, liga, n):
         nom = SC["nombres"]
         return [m["p"] or pendiente("Copa Argentina", n, "", "", nom[m["a"]], nom[m["b"]])
                 for m in SC["cuadro"][n - 1]]
+    if liga == "Supercopa Argentina":
+        from copas import rivales_supercopa, supercopa_lista
+        SS = S["supercopa"]
+        if SS["p"]:
+            return [SS["p"]]
+        if supercopa_lista(S):
+            a, _, _, b, _, _ = rivales_supercopa(S)
+            return [pendiente(liga, n, "Final", "Final", a, b)]
+        return []
     obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
                "Federal A": partidos_fecha_f, "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
                "Regional Amateur": partidos_fecha_reg}[liga]
@@ -2007,6 +2017,8 @@ def _cal_rotulo(S, liga, n):
         return S["int"][_INT_CLAVE[liga]]["rondas"][n - 1]
     if liga == "Copa Argentina":
         return COPA_RONDAS[n - 1]
+    if liga == "Supercopa Argentina":
+        return "Final"
     return {"Primera División": lambda: rotulo_p(S, n), "Primera Nacional": lambda: rotulo_b(S["b"], n),
             "Federal A": lambda: rotulo_f(S["f"], n), "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
             }.get(liga, lambda: f"Fecha {n}")()
@@ -2024,12 +2036,13 @@ def eventos_calendario(S):
     SC = S["copa"]
     for n in range(1, SC["total"] + 1):
         ev.append((dia_de(S, "Copa Argentina", n), "Copa Argentina", n, n <= SC["ronda"]))
+    ev.append((dia_de(S, "Supercopa Argentina", 1), "Supercopa Argentina", 1, S["supercopa"]["jugada"]))
     for liga, clave in _INT_CLAVE.items():
         C = S.get("int", {}).get(clave)
         if C:
             for n in range(1, C["total"] + 1):
                 ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
-    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Supercopa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
              "Primera B", "Primera C"]
     return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 

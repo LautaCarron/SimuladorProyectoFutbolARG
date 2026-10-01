@@ -115,8 +115,11 @@ from copas import (
     COPA_LLAVES,
     COPA_RONDAS,
     ligas_terminadas,
+    rivales_supercopa,
     simular_ronda_copa,
+    simular_supercopa,
     sortear_copa,
+    supercopa_lista,
 )
 from logos import LOGOS, LOGOS_CSS, logo_img
 from internacional import fase_actual, listo, pais_de, simular_ronda_int, terminadas
@@ -217,6 +220,7 @@ if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_E
     st.session_state.S = crear_estado()
 S = st.session_state.S
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
+SS = S["supercopa"]
 
 terminada = primera_terminada(S)            # incluye las fechas de desempate
 terminada_b = SB["fecha"] >= total_b(SB)
@@ -225,9 +229,10 @@ terminada_pb = SPB["fecha"] >= SPB["total"]
 terminada_pc = SPC["fecha"] >= SPC["total"]
 terminada_reg = SR["fecha"] >= SR["total"]
 terminada_copa = SC["sorteada"] and SC["ronda"] >= SC["total"]
+terminada_supercopa = SS["jugada"]
 terminadas_int = terminadas(S)
 ambas = (terminada and terminada_b and terminada_f and terminada_pb and terminada_pc and terminada_reg
-         and terminada_copa and terminadas_int)
+         and terminada_copa and terminada_supercopa and terminadas_int)
 b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
 pct_p = 100 * S["fecha"] / total_primera(S)
@@ -267,7 +272,7 @@ _web = sys.platform == "emscripten"
 _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
               if _web else 'div class="mh-marca"')
 _jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
-            + len(SR["log"]) + len(SC["log"]))
+            + len(SR["log"]) + len(SC["log"]) + len(SS["log"]))
 _prox = proximos(S)
 _hoy = min((d for d, _ in _prox.values()), default=None)       # próximo día con partidos
 st.markdown(
@@ -316,6 +321,8 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
     # 4. Copa Argentina (se juega en el medio de las ligas; acá se completa lo que falte)
     while S["copa"]["ronda"] < S["copa"]["total"]:
         simular_ronda_copa(S["copa"], P, S["rng"])
+    # 4b. Supercopa Argentina (campeón de Primera vs. campeón de la Copa; necesita las dos terminadas)
+    simular_supercopa(S, P, S["rng"])
     # 5. Copas CONMEBOL (la Sudamericana espera lo que necesita de la Libertadores)
     while not terminadas(S):
         for clave in ("rec", "lib", "sud"):
@@ -357,8 +364,9 @@ with tab_ligas:
         ], key="tabs_ligas", on_change="rerun")
 with tab_copas:
     with st.container(key="menu_copas"):
-        tab_ca, tab_lib, tab_sud, tab_rec = st.tabs([
-            _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Copa Libertadores", "Libertadores"),
+        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec = st.tabs([
+            _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Supercopa Argentina", "Supercopa"),
+            _con_logo("Copa Libertadores", "Libertadores"),
             _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa")],
             key="tabs_copas", on_change="rerun")
 
@@ -1297,6 +1305,46 @@ if _abierta(tab_copas, tab_ca):
 
 
 # ============================================================================
+# SUPERCOPA ARGENTINA
+# ============================================================================
+if _abierta(tab_copas, tab_sup):
+    with tab_sup:
+        listo_sup = supercopa_lista(S)
+        c1, c2 = st.columns([4, 1.6], vertical_alignment="center")
+        c1.markdown(logo_img("Supercopa Argentina", 30) + " " + chip("Supercopa Argentina", "#b7860b") + " "
+                    + chip("Partido único · cancha neutral", "#475569"), unsafe_allow_html=True)
+        if c2.button(":material/sports_soccer: Jugar la Supercopa", key="sup_jugar", width="stretch",
+                     type="primary", disabled=not listo_sup):
+            simular_supercopa(S, P, S["rng"])
+            st.rerun()
+        estado_sup = ("Terminada" if SS["jugada"] else "Lista para jugar" if listo_sup
+                      else "Esperando a Primera y a la Copa")
+        barra_estado([("Estado", estado_sup), ("Partidos jugados", len(SS["log"]))],
+                     100 if SS["jugada"] else 0)
+        seccion("Supercopa Argentina", "Campeón de Primera vs. campeón de la Copa Argentina · partido único "
+                "en cancha neutral, penales si empatan", "#b7860b")
+        if SS["jugada"]:
+            cc = SS["campeon"]
+            sub = SS["b"] if cc == SS["a"] else SS["a"]
+            st.markdown(f'<div class="champ"><div class="t">Campeón · Supercopa Argentina · Temporada {S["temp"]}'
+                        f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
+                        f'<div class="nm">{esc(cc)}</div><div class="s">finalista: {esc(sub)}</div></div>',
+                        unsafe_allow_html=True)
+            st.markdown(fila_partido_html(SS["p"], abierto=True), unsafe_allow_html=True)
+            st.caption(f"{esc(SS['a'])}: {SS['crit_a']} · {esc(SS['b'])}: {SS['crit_b']}")
+        elif listo_sup:
+            a_s, _, ca_s, b_s, _, cb_s = rivales_supercopa(S)
+            st.markdown(lista_equipos_html([(a_s, ca_s), (b_s, cb_s)]), unsafe_allow_html=True)
+            st.caption("Se juega el miércoles siguiente a la última fecha de Primera (ver Calendario).")
+        else:
+            aviso("Se juega cuando terminan Primera División y la Copa Argentina. Si el mismo club gana las "
+                  "dos, el rival es el subcampeón de Primera.")
+            faltan_sup = [n for n, ok in (("Primera División", terminada), ("Copa Argentina", terminada_copa))
+                          if not ok]
+            st.caption("Faltan terminar: " + ", ".join(faltan_sup))
+
+
+# ============================================================================
 # COPAS CONMEBOL: LIBERTADORES, SUDAMERICANA Y RECOPA
 # ============================================================================
 def pestaña_int(clave, color):
@@ -1537,7 +1585,7 @@ if _abierta(tab_h):
 
         if S["campeones"]:
             ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                       "Copa Argentina", "Libertadores", "Sudamericana", "Recopa"]
+                       "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa"]
             with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                 df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
                 st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
@@ -1564,6 +1612,7 @@ if _abierta(tab_h):
         st.markdown('<div class="pal-grid">' + "".join(
             tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
             for titulo, logo, clave in (("Copa Argentina", "Copa Argentina", "hist_copa"),
+                                        ("Supercopa Argentina", "Supercopa Argentina", "hist_super"),
                                         ("Copa Libertadores", "Copa Libertadores", "hist_lib"),
                                         ("Copa Sudamericana", "Copa Sudamericana", "hist_sud"),
                                         ("Recopa Sudamericana", "Recopa Sudamericana", "hist_rec"))) + '</div>',
@@ -1602,4 +1651,3 @@ if _abierta(tab_h):
                        f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
                        if mv.get("descenso_adm") else "") +
                     f'</div>', unsafe_allow_html=True)
-            
