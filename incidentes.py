@@ -45,6 +45,9 @@ TEXTOS = {
         ("Se quemó un transformador",
          "Explotó un transformador del barrio y el estadio quedó a oscuras a los {min}'. "
          "Se terminó de jugar 24 horas después: {res}."),
+        ("Suspendido por falta de suministros",
+         "El club local no pago los impuestos y el árbitro suspendió el partido por falta de luz."
+         " Se completó al día siguiente por la mañana: {res}."), 
     ],
     "bengalas": [
         ("Incendio en la tribuna",
@@ -66,12 +69,17 @@ TEXTOS = {
         ("Apedrearon el micro visitante",
          "El micro de {rival} fue atacado a piedrazos llegando a la cancha de {club}: dos "
          "jugadores con cortes y el partido no se jugó."),
+        ("Choco el micro local",
+         "El micro de {club} chocó contra un camión en el trayecto y varios jugadores se lastimaron "
+         "como Toranzo en 2016. El partido se jugo el proximo feriado nacional {res}'."), 
     ],
     "huelga": [
         ("No se presentaron",
          "Los jugadores de {club} no se presentaron: reclaman cinco meses de sueldos atrasados."),
         ("Paro del plantel",
          "El plantel de {club} hizo paro por deudas y el club no llegó a armar un equipo con juveniles."),
+        ("Protesta de los jugadores", 
+         "Los jugadores de {club} se manifestaron por la trata de jugadores en las divisiones inferiores."),
     ],
     "arbitro": [
         ("Agresión al árbitro",
@@ -94,6 +102,11 @@ TEXTOS = {
         ("Agresión brutal al árbitro",
          "Barras de {club} entraron a la cancha a los {min}' y atacaron salvajemente al árbitro, "
          "que terminó internado en terapia intensiva. Conmoción en todo el fútbol argentino."),
+        ("Pelea de Hinchadas",
+         "La barra de {rival} se metió en la tribuna de {club} y hubo una batalla campal con heridos graves. "
+         "El árbitro suspendió el partido a los {min}'."),
+        ("Incidentes en el entre tiempo",
+        "Los jugadores de {club} y {rival} se agarraron a trompadas en el entretiempo y el árbitro suspendió el partido. "), 
     ],
 }
 
