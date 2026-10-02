@@ -8,6 +8,7 @@ import streamlit as st
 
 from clubes_int import CLUBES_INT, OSCUROS_INT
 from regional import GRUPO_FEDERAL_REG, REGIONAL
+from clubes_mundial import MUNDIAL_CLUBES
 
 # ----------------------------------------------------------------------------
 # DATOS: equipos reales de la temporada 2026 (medias orientativas, escala ~40-95).
@@ -235,6 +236,8 @@ ESCUDOS = {
 ESCUDOS.update({x["nombre"]: x["escudo"] for x in REGIONAL})
 # Clubes de los otros países de la CONMEBOL (copas internacionales)
 ESCUDOS.update({n: url for n, _, _, url in CLUBES_INT})
+# Si la fila tiene 5 elementos, agarra el nombre (x[0]) y la URL del escudo (x[4])
+ESCUDOS.update({x[0]: x[4] for x in MUNDIAL_CLUBES if len(x) >= 5})
 
 # Escudos de borde oscuro (negro, bordó, azul marino): en modo oscuro se les dibuja un
 # contorno claro para que no se pierdan contra el fondo (p. ej. Central Norte).
