@@ -73,6 +73,7 @@ EQUIPOS_PRIMERA_B = {
     "Villa San Carlos": 47, "Villa Dálmine": 45, "Deportivo Merlo": 40,
     "Brown de Adrogué": 47, "Arsenal": 50, "Camioneros": 47,
     "Defensores Unidos": 42, "Sportivo Italiano": 44, "Flandria": 43,
+    "Deportivo Armenio": 42,
 }
 # Primera C (Metropolitana)
 EQUIPOS_PRIMERA_C = {
@@ -230,6 +231,7 @@ ESCUDOS = {
     "Argentinos de Rosario": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10048.png&h=96&w=96",
     "Central Cordoba de Rosario": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg/120px-Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg.png",
     "Paraguayo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10110.png&h=96&w=96",
+    "Deportivo Armenio": "https://img.a.transfermarkt.technology/wappen/head/13264.png?lm=1789459839",
 
 }
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)

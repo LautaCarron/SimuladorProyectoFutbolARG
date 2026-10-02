@@ -67,7 +67,7 @@ PALMARES = {
     },
     # Mundial de Clubes FIFA · edicion 2025, no se cuentan las anteriores.
     "hist_mundial": {
-        "Chealsea": 1,
+        "Chelsea": 1,
     },
     # Copa Libertadores · 1960-2025.
     "hist_lib": {

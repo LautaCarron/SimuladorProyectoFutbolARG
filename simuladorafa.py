@@ -384,10 +384,13 @@ with tab_ligas:
 with tab_copas:
     with st.container(key="menu_copas"):
         tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = st.tabs([
-            _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Supercopa Argentina", "Supercopa"),
+            _con_logo("Copa Argentina", "Copa Argentina"), 
+            _con_logo("Supercopa Argentina", "Supercopa"),
             _con_logo("Copa Libertadores", "Libertadores"),
-            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa"),
-            "Mundial de Clubes"],
+            _con_logo("Copa Sudamericana", "Sudamericana"), 
+            _con_logo("Recopa Sudamericana", "Recopa"),
+            _con_logo("Mundial de Clubes", "Mundial de Clubes")
+            ],
             key="tabs_copas", on_change="rerun")
 
 

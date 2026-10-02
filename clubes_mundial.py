@@ -19,9 +19,8 @@ porque en Primera B ya existe "Arsenal").
 CUPOS_2029 = {"UEFA": 12, "CONMEBOL": 6, "AFC": 4, "CAF": 4, "CONCACAF": 4, "OFC": 1, "Anfitrión": 1}
 
 # Clasificados por título continental (al 1/10/2026, según las notas de junio de 2026 de TUDN,
-# El Universal y 365Scores; conviene revisarlo antes de usarlo): Paris Saint-Germain (Champions
-# 2025 y 2026), Al-Ahli (AFC 2025), Pyramids y Mamelodi Sundowns (CAF 2025 y 2026), Cruz Azul
-# (Concacaf 2025) y Toluca (Concacaf 2026). Flamengo (Libertadores 2025) es CONMEBOL.
+# El Universal y 365Scores: Paris Saint-Germain (Champions 2025 y 2026), Al-Ahli (AFC 2025), Pyramids 
+# y Mamelodi Sundowns (CAF 2025 y 2026), Cruz Azul (Concacaf 2025) y Toluca (Concacaf 2026). Flamengo (Libertadores 2025) es CONMEBOL.
 CLASIFICADOS_2029 = {
     "Paris Saint-Germain", "Al-Ahli", "Pyramids", "Mamelodi Sundowns", "Cruz Azul", "Toluca",
 }
@@ -82,13 +81,13 @@ MUNDIAL_CLUBES = [
     ("Al Ahly", "Egipto", "CAF", 75, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10207.png&h=96&w=96"),
     ("Pyramids", "Egipto", "CAF", 72, "https://img.a.transfermarkt.technology/wappen/head/44664.png?lm=1789461893"),
     ("Mamelodi Sundowns", "Sudáfrica", "CAF", 71, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7084.png&h=96&w=96"),
-    ("Wydad Casablanca", "Marruecos", "CAF", 70),
-    ("Espérance de Tunis", "Túnez", "CAF", 70),
-    ("Zamalek", "Egipto", "CAF", 68),
-    ("RS Berkane", "Marruecos", "CAF", 66),
+    ("Wydad Casablanca", "Marruecos", "CAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8625.png&h=96&w=96"),
+    ("Espérance de Tunis", "Túnez", "CAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8377.png&h=96&w=96"),
+    ("Zamalek", "Egipto", "CAF", 68, "https://img.a.transfermarkt.technology/wappen/head/664.png?lm=1789459205"),
+    ("RS Berkane", "Marruecos", "CAF", 66, "https://img.a.transfermarkt.technology/wappen/head/37176.png?lm=1789461352"),
     ("Orlando Pirates", "Sudáfrica", "CAF", 66, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7085.png&h=96&w=96"),
-    ("Raja Casablanca", "Marruecos", "CAF", 64),
-    ("TP Mazembe", "RD Congo", "CAF", 62),
+    ("Raja Casablanca", "Marruecos", "CAF", 64, "https://img.a.transfermarkt.technology/wappen/head/2068.png?lm=1789360910"),
+    ("TP Mazembe", "RD Congo", "CAF", 62, "https://upload.wikimedia.org/wikipedia/en/7/7a/TP_Mazembe_Logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original"),
     # CONCACAF
     ("Club América", "México", "CONCACAF", 77, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/227.png&h=96&w=96"),
     ("Monterrey", "México", "CONCACAF", 76, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/220.png&h=96&w=96"),
@@ -104,7 +103,7 @@ MUNDIAL_CLUBES = [
     ("Columbus Crew", "Estados Unidos", "CONCACAF", 69, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/183.png&h=96&w=96"),
     ("Seattle Sounders", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9726.png&h=96&w=96"),
     ("FC Cincinnati", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18267.png&h=96&w=96"),
-    ("Nashvilel SC", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18986.png&h=96&w=96"),
+    ("Nashville SC", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18986.png&h=96&w=96"),
     ("Vancouver Whitecaps", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9727.png&h=96&w=96"),
     ("Toronto FC", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7318.png&h=96&w=96"),
     ("New York City FC", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17606.png&h=96&w=96"),
