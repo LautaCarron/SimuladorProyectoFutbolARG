@@ -755,6 +755,8 @@ def _categoria_arg(nombre):
         return "Primera B"
     if nombre in S["primera_c"]:
         return "Primera C"
+    if nombre in st.session_state.S.get("promocional", []):
+        return "Promocional Amateur"
     if nombre in st.session_state.S["reg"]["nombres"]:
         return "Regional Amateur"
     return ""
@@ -927,6 +929,18 @@ def partidos_fecha_pc(n):
     return [pendiente("Primera C", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SPC["fechas"][n - 1]]
 
 
+def fechas_conocidas_pd():
+    S, SB, SF, SPB, SPC = _estado()
+    return S["pd"]["total"]
+
+def partidos_fecha_pd(n):
+    S, SB, SF, SPB, SPC = _estado()
+    SPD = S["pd"]
+    if n <= SPD["fecha"]: return [p for p in SPD["log"] if p["fecha"] == n]
+    nom = SPD["nombres"]
+    return [pendiente("Promocional Amateur", n, f"Fecha {n}", "Liga", nom[x], nom[y]) for x, y in SPD["fechas"][n - 1]]
+
+
 def fechas_conocidas_reg():
     return st.session_state.S["reg"]["total"]
 
@@ -977,6 +991,10 @@ def proximo_partido(nombre):
     elif nombre in SPC["nombres"]:
         for n in range(SPC["fecha"] + 1, fechas_conocidas_pc() + 1):
             for p in partidos_fecha_pc(n):
+                if nombre in (p["local"], p["visita"]): return p
+    elif nombre in st.session_state.S.get("pd", {}).get("nombres", []):
+        for n in range(st.session_state.S["pd"]["fecha"] + 1, fechas_conocidas_pd() + 1):
+            for p in partidos_fecha_pd(n):
                 if nombre in (p["local"], p["visita"]): return p
     elif nombre in st.session_state.S["reg"]["nombres"]:
         for n in range(st.session_state.S["reg"]["fecha"] + 1, st.session_state.S["reg"]["f_liga"] + 1):
@@ -1135,6 +1153,11 @@ def vista_fixture(liga, region=None):
     elif liga == "pc":
         total, jugadas = fechas_conocidas_pc(), SPC["fecha"]
         obtener, rotulo = partidos_fecha_pc, lambda n: f"Fecha {n}"
+        extra = ""
+    elif liga == "pd":
+        SPD = st.session_state.S["pd"]
+        total, jugadas = fechas_conocidas_pd(), SPD["fecha"]
+        obtener, rotulo = partidos_fecha_pd, lambda n: f"Fecha {n}"
         extra = ""
     elif liga == "reg":
         SREG = st.session_state.S["reg"]
@@ -1436,6 +1459,15 @@ def colorear_reg(fila):
 
 
 def colorear_pc(fila):
+    d = fila["Destino"]
+    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
+        COLORES_B["Desciende"] if d == "Desciende" else (
+        "rgba(147, 51, 234, 0.3)" if d == "Desempate Permanencia" else (
+        "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
+        )))
+    return [f"background-color: {c}" if c else ""] * len(fila)
+
+def colorear_pd(fila):
     d = fila["Destino"]
     c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
         "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
@@ -2073,6 +2105,7 @@ def _cal_partidos(S, liga, n):
         return hechos or [pendiente(liga, n, rot, comp, a, b) for a, b, rot, comp in partidos_ronda(M, n)]
     obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
                "Federal A": partidos_fecha_f, "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
+               "Promocional Amateur": partidos_fecha_pd,
                "Regional Amateur": partidos_fecha_reg}[liga]
     try:
         return obtener(n)
@@ -2101,25 +2134,20 @@ def eventos_calendario(S):
     from calendario import INICIO, total_liga
     ev = []
     jugadas = {"Primera División": S["fecha"], "Primera Nacional": S["b"]["fecha"], "Federal A": S["f"]["fecha"],
-               "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Regional Amateur": S["reg"]["fecha"]}
+               "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Promocional Amateur": S["pd"]["fecha"], "Regional Amateur": S["reg"]["fecha"]}
     for liga in INICIO:
         for n in range(1, total_liga(S, liga) + 1):
             ev.append((dia_de(S, liga, n), liga, n, n <= jugadas[liga]))
     SC = S["copa"]
     for n in range(1, SC["total"] + 1):
         ev.append((dia_de(S, "Copa Argentina", n), "Copa Argentina", n, n <= SC["ronda"]))
-    ev.append((dia_de(S, "Supercopa Argentina", 1), "Supercopa Argentina", 1, S["supercopa"]["jugada"]))
-    M = S.get("mundial")
-    if M and M["sorteado"]:
-        for n in range(1, M["total"] + 1):
-            ev.append((dia_de(S, "Mundial de Clubes", n), "Mundial de Clubes", n, n <= M["ronda"]))
     for liga, clave in _INT_CLAVE.items():
         C = S.get("int", {}).get(clave)
         if C:
             for n in range(1, C["total"] + 1):
                 ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
-    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Supercopa Argentina", "Mundial de Clubes", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
-             "Primera B", "Primera C"]
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+             "Primera B", "Primera C", "Promocional Amateur"]
     return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 
 

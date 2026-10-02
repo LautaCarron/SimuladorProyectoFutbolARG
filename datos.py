@@ -84,6 +84,14 @@ EQUIPOS_PRIMERA_C = {
     "Argentinos de Rosario": 25, "Central Cordoba de Rosario":30,
     "Paraguayo":25,
 }
+# Torneo Promocional Amateur (Primera D)
+EQUIPOS_PRIMERA_D = {
+    "Estrella del Sur": 31, "SAT": 25, "Metalúrgico": 23,
+    "Defensores de Glew": 22, "Nautico Hacoaj":22, "Estrella de Berisso": 20,
+    "Barrancas": 20, "FC Ezeiza": 20, "Bs.As. City FC": 20,
+    "Alumni (Los Hornos)": 20, "Everton (LP)": 20, "Tiro Federal (Rosario)": 20,
+}
+
 # Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en regional.py,
 # generado del JSON oficial del torneo). Acá sólo nombre -> media inicial.
 EQUIPOS_REGIONAL = {x["nombre"]: x["media"] for x in REGIONAL}
@@ -408,9 +416,10 @@ NB = len(EQUIPOS_B)         # Primera Nacional
 NF = len(EQUIPOS_FEDERAL)   # Federal A
 NPB = len(EQUIPOS_PRIMERA_B)  # Primera B
 NPC = len(EQUIPOS_PRIMERA_C)  # Primera C
+NPD = len(EQUIPOS_PRIMERA_D)  # TPA (Primera D)
 
 _todos = (list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
-          + list(EQUIPOS_PRIMERA_C) + [x["nombre"] for x in REGIONAL])
-if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or len(set(_todos)) != len(_todos):
+          + list(EQUIPOS_PRIMERA_C) + list(EQUIPOS_PRIMERA_D) + [x["nombre"] for x in REGIONAL])
+if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or NPD < 6 or len(set(_todos)) != len(_todos):
     st.error("Hay un error en la cantidad de equipos o nombres repetidos.")
     st.stop()

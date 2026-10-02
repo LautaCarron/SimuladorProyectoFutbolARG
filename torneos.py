@@ -1097,7 +1097,7 @@ VERSION_ESTADO = 15       # cambia si se modifica la estructura del estado guard
 
 
 # ----------------------------------------------------------------------------
-# MOTOR PRIMERA B Y PRIMERA C
+# MOTOR PRIMERA B, PRIMERA C y Torneo Promocional Amateur (Nueva Primera D)
 # ----------------------------------------------------------------------------
 def destino_pb(pos, total):
     if pos <= 2: return "Ascenso directo"
@@ -1105,8 +1105,15 @@ def destino_pb(pos, total):
     return ""
 
 
-def destino_pc(pos):
-    return "Ascenso directo" if pos <= 2 else ""
+def destino_pc(pos, total):
+    if pos <= 2: return "Ascenso directo"
+    if total >= 18 and pos >= 18: return "Desciende"
+    return ""
+
+
+def destino_pd(pos, total):
+    if pos <= 2: return "Ascenso directo"
+    return ""
 
 
 def nueva_estructura_liga(S_LIGA, rng):
@@ -1149,17 +1156,38 @@ def tabla_pb(SPB):
             
     return df
 
+
 def tabla_pc(SPC):
     df = df_stats(SPC["nombres"], SPC["r"], SPC, np.arange(len(SPC["nombres"])))
     if SPC.get("orden_final") is not None:
         df = df.set_index("id").loc[SPC["orden_final"]].reset_index()
         
     df.insert(0, "Pos", df.index + 1)
-    df["Destino"] = [destino_pc(p) for p in df["Pos"]]
+    df["Destino"] = [destino_pc(p, len(SPC["nombres"])) for p in df["Pos"]]
     
     if SPC.get("motivos_desempate"):
         ids_actuales = df["id"].to_numpy()
         for motivo in SPC["motivos_desempate"]:
+            partes = motivo.split()
+            nombre_frontera = partes[1]
+            inicio, fin = map(int, partes[2].split("-"))
+            ids_bloque = ids_actuales[inicio:fin]
+            df.loc[df["id"].isin(ids_bloque), "Destino"] = f"Desempate {nombre_frontera}"
+            
+    return df
+
+
+def tabla_pd(SPD):
+    df = df_stats(SPD["nombres"], SPD["r"], SPD, np.arange(len(SPD["nombres"])))
+    if SPD.get("orden_final") is not None:
+        df = df.set_index("id").loc[SPD["orden_final"]].reset_index()
+        
+    df.insert(0, "Pos", df.index + 1)
+    df["Destino"] = [destino_pd(p, len(SPD["nombres"])) for p in df["Pos"]]
+    
+    if SPD.get("motivos_desempate"):
+        ids_actuales = df["id"].to_numpy()
+        for motivo in SPD["motivos_desempate"]:
             partes = motivo.split()
             nombre_frontera = partes[1]
             inicio, fin = map(int, partes[2].split("-"))
@@ -1587,6 +1615,11 @@ def crear_estado():
     SPC = {"nombres": list(EQUIPOS_PRIMERA_C), "r": np.array(list(EQUIPOS_PRIMERA_C.values()), dtype=float)}
     nueva_estructura_liga(SPC, rng)
     S["pc"] = SPC
+    from datos import EQUIPOS_PRIMERA_D
+    SPD = {"nombres": list(EQUIPOS_PRIMERA_D), "r": np.array(list(EQUIPOS_PRIMERA_D.values()), dtype=float)}
+    nueva_estructura_liga(SPD, rng)
+    S["pd"] = SPD
+    S["promocional"] = list(EQUIPOS_PRIMERA_D)
     SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
     nueva_estructura_reg(SREG, rng)
     S["reg"] = SREG
@@ -1609,8 +1642,8 @@ def crear_estado():
 
 
 def nueva_temporada(S, volatilidad):
-    SB, SF, SPB, SPC, rng = S["b"], S["f"], S["pb"], S["pc"], S["rng"]
-    for lig in (S, SB, SF, SPB, SPC, S["reg"]):
+    SB, SF, SPB, SPC, SPD, rng = S["b"], S["f"], S["pb"], S["pc"], S["pd"], S["rng"]
+    for lig in (S, SB, SF, SPB, SPC, SPD, S["reg"]):
         for nom, x in zip(lig["nombres"], lig["r"]):
             S["rating"][nom] = float(x)
 
@@ -1695,6 +1728,8 @@ def nueva_temporada(S, volatilidad):
     ascendidos_pb = [SPB["nombres"][i] for i in SPB["asc_directo"]]
     descendidos_pb = [SPB["nombres"][i] for i in SPB["desc_directo"]]
     ascendidos_pc = [SPC["nombres"][i] for i in SPC["asc_directo"]]
+    descendidos_pc = [SPC["nombres"][i] for i in SPC.get("desc_directo", [])]
+    ascendidos_pd = [SPD["nombres"][i] for i in SPD["asc_directo"]]
     garantizados = list(ascendidos_f) + list(ascendidos_pb)
     
     faltan = max(0, NB - len(base_b) - len(garantizados))
@@ -1714,7 +1749,8 @@ def nueva_temporada(S, volatilidad):
     # Reasignación a las ligas inferiores
     S["federal"] = [n for i, n in enumerate(pool) if i not in elegidos and origen(n) == "Interior"] + bajan_b_fed
     S["primera_b"] = [n for i, n in enumerate(pool) if i not in elegidos and origen(n) == "Metropolitana"] + bajan_b_pb + ascendidos_pc
-    S["primera_c"] = [n for n in SPC["nombres"] if n not in ascendidos_pc] + descendidos_pb
+    S["primera_c"] = [n for n in SPC["nombres"] if n not in ascendidos_pc and n not in descendidos_pc] + descendidos_pb + ascendidos_pd
+    S["promocional"] = [n for n in SPD["nombres"] if n not in ascendidos_pd] + descendidos_pc
 
     # Regional Amateur: los 6 ganadores de las finales ascienden al Federal A
     ascendidos_reg = [S["reg"]["nombres"][i] for i in S["reg"]["ascendidos"]]
@@ -1734,6 +1770,8 @@ def nueva_temporada(S, volatilidad):
         "suben_reg_fed": ascendidos_reg,
         "bajan_fed_reg": descendidos_f,
         "bajan_pb_pc": descendidos_pb,
+        "suben_pd_pc": ascendidos_pd,
+        "bajan_pc_pd": descendidos_pc,
         "entran_fed": [n for n in entran if origen(n) == "Interior" and n not in ascendidos_f],
         "entran_pb": [n for n in entran if origen(n) == "Metropolitana" and n not in ascendidos_pb],
         "campeon_federal": SF["nombres"][SF["campeon"]] if SF["campeon"] is not None else None,
@@ -1821,6 +1859,10 @@ def nueva_temporada(S, volatilidad):
     S["pc"]["nombres"] = list(S["primera_c"])
     S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
     nueva_estructura_liga(S["pc"], rng)
+
+    S["pd"]["nombres"] = list(S["promocional"])
+    S["pd"]["r"] = np.array([S["rating"][n] for n in S["pd"]["nombres"]])
+    nueva_estructura_liga(S["pd"], rng)
 
     # Regional: los clubes del JSON que siguen en el torneo (en el orden del JSON) y después
     # los que bajaron del Federal A (cada uno juega en la región de su provincia)

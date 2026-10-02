@@ -12,6 +12,7 @@ Copa Argentina, como en la vida real.
 """
 
 import datetime as dt
+from torneos import tabla_pd
 
 _MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
           "octubre", "noviembre", "diciembre"]
@@ -25,6 +26,7 @@ INICIO = {
     "Federal A": (3, 14, 6),            # domingos desde marzo
     "Primera B": (2, 7, 5),             # sábados
     "Primera C": (2, 21, 5),            # sábados
+    "Promocional Amateur": (3, 1, 5),   # sábados desde marzo
     "Regional Amateur": (6, 6, 6),      # domingos desde junio
 }
 FIN_TEMPORADA = (12, 13)                # las ligas terminan a más tardar a mediados de diciembre
@@ -63,7 +65,8 @@ def total_liga(S, liga):
     from torneos import total_b, total_primera
     return {"Primera División": lambda: total_primera(S), "Primera Nacional": lambda: total_b(S["b"]),
             "Federal A": lambda: S["f"]["total"], "Primera B": lambda: S["pb"]["total"],
-            "Primera C": lambda: S["pc"]["total"], "Regional Amateur": lambda: S["reg"]["total"]}[liga]()
+            "Primera C": lambda: S["pc"]["total"], "Promocional Amateur": lambda: S["pd"]["total"],
+            "Regional Amateur": lambda: S["reg"]["total"]}[liga]()
 
 
 def _dias_liga(S, liga):
@@ -136,7 +139,7 @@ def proximos(S):
     if SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
         pend["Primera Nacional"] = SB["fecha"] + 1
     for liga, L in (("Federal A", S["f"]), ("Primera B", S["pb"]), ("Primera C", S["pc"]),
-                    ("Regional Amateur", S["reg"])):
+                    ("Promocional Amateur", S["pd"]), ("Regional Amateur", S["reg"])):
         if L["fecha"] < L["total"]:
             pend[liga] = L["fecha"] + 1
     SC = S.get("copa")
@@ -183,6 +186,8 @@ def jugar_proximo_dia(S, P, acumular=True):
                 simular_fecha_liga(S["pb"], P, S["rng"], "Primera B", tabla_pb)
             elif c == "Primera C":
                 simular_fecha_liga(S["pc"], P, S["rng"], "Primera C", tabla_pc)
+            elif c == "Promocional Amateur":
+                simular_fecha_liga(S["pd"], P, S["rng"], "Promocional Amateur", tabla_pd)
             elif c == "Regional Amateur":
                 simular_fecha_reg(S["reg"], P, S["rng"])
             elif c == COPA:
