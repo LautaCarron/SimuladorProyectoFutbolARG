@@ -650,6 +650,7 @@ details.tanda{font-size:.76rem;}
 </style>"""
 
 COLOR_COMP = [
+    ("Mundial de Clubes", "#be185d"),
     ("Campeonato", "#16a34a"), ("Intermedia", "#d97706"), ("Descenso", "#dc2626"),
     ("Zona A", "#4f46e5"), ("Zona B", "#0891b2"), ("Octavos", "#2563eb"),
     ("Cuartos", "#1d4ed8"), ("Semifinal", "#7c3aed"), ("Final", "#b7860b"),
@@ -738,6 +739,7 @@ def todos_los_partidos():
     return (S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["reg"]["log"]
             + S.get("copa", {}).get("log", [])
             + S.get("supercopa", {}).get("log", [])
+            + S.get("mundial", {}).get("log", [])
             + [p for C in S.get("int", {}).values() for p in C["log"]])
 
 
@@ -762,8 +764,9 @@ def categoria_de(nombre):
     cat = _categoria_arg(nombre)
     if cat:
         return cat
+    from clubes_mundial import PAIS_MUNDIAL
     from internacional import PAIS_EXT
-    return PAIS_EXT.get(nombre)
+    return PAIS_EXT.get(nombre) or PAIS_MUNDIAL.get(nombre)
 
 
 def marcador_html(p, crests=False):
@@ -1835,7 +1838,12 @@ def avisos_html(avisos, con_temporada=False):
 # ---- Copas CONMEBOL ----
 _INT_CLAVE = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
 _ISO = {"Argentina": "ar", "Brasil": "br", "Colombia": "co", "Paraguay": "py", "Perú": "pe", "Chile": "cl",
-        "Uruguay": "uy", "Ecuador": "ec", "Bolivia": "bo", "Venezuela": "ve"}
+        "Uruguay": "uy", "Ecuador": "ec", "Bolivia": "bo", "Venezuela": "ve",
+        "Francia": "fr", "España": "es", "Inglaterra": "gb-eng", "Alemania": "de", "Italia": "it",
+        "Portugal": "pt", "Países Bajos": "nl", "Arabia Saudita": "sa", "Japón": "jp",
+        "Corea del Sur": "kr", "Qatar": "qa", "Emiratos Árabes Unidos": "ae", "Egipto": "eg",
+        "Sudáfrica": "za", "Marruecos": "ma", "Túnez": "tn", "RD Congo": "cd", "México": "mx",
+        "Estados Unidos": "us", "Canadá": "ca", "Nueva Zelanda": "nz"}
 
 
 def bandera(pais, ancho=18):
@@ -1980,6 +1988,62 @@ def cuadro_int_html(C):
     return _kb(cols, 8 * 74)
 
 
+def grupos_mundial_html(M):
+    """Las 8 tablas de grupo del Mundial de Clubes (1° y 2° pasan a octavos)."""
+    from mundial import GRUPOS, pais_club, tabla_grupo
+    out = ""
+    for g in range(len(M["grupos"])):
+        jugado = any(M["gstats"][n]["pj"] for n in M["grupos"][g])
+        filas = ""
+        for k, t in enumerate(tabla_grupo(M, g)):
+            clase = "oct" if jugado and k < 2 else ""
+            n = t["Equipo"]
+            filas += (f'<tr class="{clase}"><td class="gp">{k + 1}</td><td class="gc"><div class="gcw">{crest(n, 20)}'
+                      f'<span class="nm" role="button" tabindex="0" data-club="{esc(n)}">{esc(n)}</span>'
+                      f'{bandera(pais_club(n), 14)}</div></td><td>{t["PJ"]}</td><td>{t["DG"]:+d}</td>'
+                      f'<td class="gpts">{t["Pts"]}</td></tr>')
+        out += (f'<div class="grp"><div class="grp-h">Grupo {GRUPOS[g]}</div><table class="grp-t"><thead><tr><th>#</th>'
+                f'<th>Club</th><th>PJ</th><th>DG</th><th>Pts</th></tr></thead><tbody>{filas}</tbody></table></div>')
+    return (f'<div class="grp-grid">{out}</div><div class="grp-ley"><span><i class="oct"></i>'
+            f'Pasan a octavos</span></div>')
+
+
+def _kb_card_mundial(m):
+    """Cruce del Mundial en el cuadro: goles de cada equipo (y penales)."""
+    from mundial import pais_club
+    if m is None:
+        fila = '<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">A definir</span></div>'
+        return f'<div class="kb-m">{fila}{fila}</div>'
+    p = m["p"]
+    filas = ""
+    for k, n in enumerate((m["a"], m["b"])):
+        cls = "" if m["gana"] is None else (" win" if m["gana"] == n else " lose")
+        g = (p["gl"] if k == 0 else p["gv"]) if p else ""
+        pk = f'<span class="kb-p">({p["pen"][k]})</span>' if p and p.get("pen") else ""
+        e = esc(n)
+        filas += (f'<div class="kb-t{cls}">{crest(n, 20)}<span class="kb-n" role="button" tabindex="0" '
+                  f'data-club="{e}" title="{e}">{e}</span>{bandera(pais_club(n), 14)}{pk}<b class="kb-g">{g}</b></div>')
+    return f'<div class="kb-m">{filas}</div>'
+
+
+def cuadro_mundial_html(M):
+    """Octavos, cuartos, semis, final y campeón del Mundial de Clubes."""
+    from mundial import MUNDIAL, pais_club
+    cols = []
+    for k, (titulo, n) in enumerate((("Octavos", 8), ("Cuartos", 4), ("Semis", 2), ("Final", 1))):
+        ronda = M["cuadro"][k] if k < len(M["cuadro"]) else [None] * n
+        if n == 1:
+            cols.append(_kb_col(titulo, f'<div class="kb-slot kb-solo">{_kb_card_mundial(ronda[0])}</div>'))
+        else:
+            cuerpo = "".join(f'<div class="kb-pair"><div class="kb-slot">{_kb_card_mundial(ronda[j])}</div>'
+                             f'<div class="kb-slot">{_kb_card_mundial(ronda[j + 1])}</div></div>'
+                             for j in range(0, n, 2))
+            cols.append(_kb_col(titulo, cuerpo))
+    c = M["campeon"]
+    cols.append(_kb_final(f"Campeón · {MUNDIAL}", "Campeón", c, pais_club(c) if c else ""))
+    return _kb(cols, 8 * 74)
+
+
 # ---- Calendario del mes ----
 def _cal_partidos(S, liga, n):
     """Partidos (jugados o por jugar) de la fecha n de una liga, o la ronda n de la Copa."""
@@ -2002,6 +2066,11 @@ def _cal_partidos(S, liga, n):
             a, _, _, b, _, _ = rivales_supercopa(S)
             return [pendiente(liga, n, "Final", "Final", a, b)]
         return []
+    if liga == "Mundial de Clubes":
+        from mundial import partidos_ronda
+        M = S["mundial"]
+        hechos = [p for p in M["log"] if p["fecha"] == n]
+        return hechos or [pendiente(liga, n, rot, comp, a, b) for a, b, rot, comp in partidos_ronda(M, n)]
     obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
                "Federal A": partidos_fecha_f, "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
                "Regional Amateur": partidos_fecha_reg}[liga]
@@ -2019,6 +2088,9 @@ def _cal_rotulo(S, liga, n):
         return COPA_RONDAS[n - 1]
     if liga == "Supercopa Argentina":
         return "Final"
+    if liga == "Mundial de Clubes":
+        from mundial import RONDAS
+        return RONDAS[n - 1]
     return {"Primera División": lambda: rotulo_p(S, n), "Primera Nacional": lambda: rotulo_b(S["b"], n),
             "Federal A": lambda: rotulo_f(S["f"], n), "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
             }.get(liga, lambda: f"Fecha {n}")()
@@ -2037,12 +2109,16 @@ def eventos_calendario(S):
     for n in range(1, SC["total"] + 1):
         ev.append((dia_de(S, "Copa Argentina", n), "Copa Argentina", n, n <= SC["ronda"]))
     ev.append((dia_de(S, "Supercopa Argentina", 1), "Supercopa Argentina", 1, S["supercopa"]["jugada"]))
+    M = S.get("mundial")
+    if M and M["sorteado"]:
+        for n in range(1, M["total"] + 1):
+            ev.append((dia_de(S, "Mundial de Clubes", n), "Mundial de Clubes", n, n <= M["ronda"]))
     for liga, clave in _INT_CLAVE.items():
         C = S.get("int", {}).get(clave)
         if C:
             for n in range(1, C["total"] + 1):
                 ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
-    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Supercopa Argentina", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", "Copa Argentina", "Supercopa Argentina", "Mundial de Clubes", "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
              "Primera B", "Primera C"]
     return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 

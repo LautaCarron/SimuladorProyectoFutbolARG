@@ -7,6 +7,7 @@ Copa Argentina, como en la vida real.
   entre semana (miércoles) repartidas en toda la temporada.
 * La Copa Argentina se juega los miércoles, en el medio de las ligas (de marzo a noviembre).
 * La Supercopa Argentina se juega el miércoles después de la última fecha de Primera.
+* El Mundial de Clubes (cada 4 temporadas) se juega entre mediados de junio y mediados de julio.
 * Las fechas extra (desempates) van la semana siguiente a la última programada.
 """
 
@@ -31,6 +32,9 @@ FIN_TEMPORADA = (12, 13)                # las ligas terminan a más tardar a med
 COPA_DIAS = [(3, 4), (4, 8), (5, 13), (6, 24), (8, 12), (9, 23), (11, 4)]
 COPA = "Copa Argentina"
 SUPERCOPA = "Supercopa Argentina"
+MUNDIAL = "Mundial de Clubes"
+# Mundial de Clubes: 3 fechas de grupos, octavos, cuartos, semifinales y final (mes, día)
+MUNDIAL_DIAS = [(6, 15), (6, 19), (6, 23), (6, 28), (7, 4), (7, 8), (7, 13)]
 # Copas CONMEBOL: (mes, a partir del día, día de la semana). Libertadores los martes,
 # Sudamericana los jueves, finales únicas un sábado de noviembre, Recopa en febrero.
 INT_DIAS = {
@@ -90,6 +94,9 @@ def dia_de(S, liga, n):
     if liga in INT_DIAS:
         mes, dia, wd = INT_DIAS[liga][min(n, len(INT_DIAS[liga])) - 1]
         return _desde(anio(S), mes, dia, wd)
+    if liga == MUNDIAL:
+        mes, dia = MUNDIAL_DIAS[min(n, len(MUNDIAL_DIAS)) - 1]
+        return dt.date(anio(S), mes, dia)
     if liga == SUPERCOPA:                              # miércoles siguiente a la última fecha de Primera
         return dia_de(S, "Primera División", total_liga(S, "Primera División")) + dt.timedelta(days=3)
     if liga == "Promoción":                            # la juega el perdedor de la final de la B
@@ -135,6 +142,9 @@ def proximos(S):
     SC = S.get("copa")
     if SC and SC["sorteada"] and SC["ronda"] < SC["total"]:
         pend[COPA] = SC["ronda"] + 1
+    M = S.get("mundial")
+    if M and M["sorteado"] and M["ronda"] < M["total"]:
+        pend[MUNDIAL] = M["ronda"] + 1
     if S.get("supercopa"):
         from copas import supercopa_lista
         if supercopa_lista(S):
@@ -150,6 +160,7 @@ def proximos(S):
 def jugar_proximo_dia(S, P, acumular=True):
     """Juega todo lo programado para el próximo día del calendario (ligas y Copa)."""
     from copas import simular_ronda_copa, simular_supercopa
+    from mundial import simular_ronda_mundial
     from torneos import (simular_fecha, simular_fecha_b, simular_fecha_f, simular_fecha_liga,
                          simular_fecha_reg, tabla_pb, tabla_pc)
     prox = proximos(S)
@@ -178,6 +189,8 @@ def jugar_proximo_dia(S, P, acumular=True):
                 simular_ronda_copa(S["copa"], P, S["rng"])
             elif c == SUPERCOPA:
                 simular_supercopa(S, P, S["rng"])
+            elif c == MUNDIAL:
+                simular_ronda_mundial(S, P, S["rng"])
             elif c in _CLAVE_INT:
                 from internacional import simular_ronda_int
                 simular_ronda_int(S, _CLAVE_INT[c], P, S["rng"])

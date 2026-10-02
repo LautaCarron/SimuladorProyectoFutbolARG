@@ -1093,7 +1093,7 @@ def simular_fecha_f(SF, P, rng):
         SF["fecha"] += 1
 
 
-VERSION_ESTADO = 14       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 15       # cambia si se modifica la estructura del estado guardado
 
 
 # ----------------------------------------------------------------------------
@@ -1595,6 +1595,8 @@ def crear_estado():
     S["supercopa"] = nueva_supercopa()  # campeón de Primera vs. campeón de la Copa Argentina
     from internacional import nuevas_internacionales
     nuevas_internacionales(S, rng)      # Libertadores, Sudamericana y Recopa
+    from mundial import nuevo_mundial
+    S["mundial"] = nuevo_mundial()      # el Mundial de Clubes se sortea al empezar la temporada 4, 8, 12...
 
 
 
@@ -1634,6 +1636,7 @@ def nueva_temporada(S, volatilidad):
         "Sudamericana": S.get("int", {}).get("sud", {}).get("campeon") or "",
         "Recopa": S.get("int", {}).get("rec", {}).get("campeon") or "",
         "Supercopa": S.get("supercopa", {}).get("campeon") or "",
+        "Mundial": S.get("mundial", {}).get("campeon") or "",
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
 
@@ -1662,6 +1665,14 @@ def nueva_temporada(S, volatilidad):
     if camp_sup:
         S.setdefault("hist_super", {})
         S["hist_super"][camp_sup] = S["hist_super"].get(camp_sup, 0) + 1
+
+    camp_mun = S.get("mundial", {}).get("campeon")
+    if camp_mun:
+        S.setdefault("hist_mundial", {})
+        S["hist_mundial"][camp_mun] = S["hist_mundial"].get(camp_mun, 0) + 1
+    # campeones continentales del año y puntos del ranking CONMEBOL (antes de armar las copas que vienen)
+    from mundial import cerrar_temporada as cerrar_temporada_mundial
+    cerrar_temporada_mundial(S, rng)
 
     p27 = promo["p_nombre"]
     directos = [SB["nombres"][i] for i in SB["asc_directo"]]
@@ -1827,6 +1838,10 @@ def nueva_temporada(S, volatilidad):
     for n, base in MEDIA_EXT.items():
         ri[n] = float(np.clip(ri.get(n, base) + 0.3 * (base - ri.get(n, base)) + rng.normal(0, 1.5), MIN_R, MAX_R))
     nuevas_internacionales(S, rng)
+    # Mundial de Clubes: cada 4 temporadas (2029 = temporada 4) se arman los clasificados y los grupos
+    from mundial import actualizar_ratings, es_temporada_mundial, nuevo_mundial, sortear_mundial
+    actualizar_ratings(S, rng)
+    S["mundial"] = sortear_mundial(S, rng) if es_temporada_mundial(S["temp"]) else nuevo_mundial()
 
     #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
     for liga in [S["pb"], S["pc"]]:
@@ -1834,4 +1849,3 @@ def nueva_temporada(S, volatilidad):
         liga["ids_desempate"] = []
         liga["motivos_desempate"] = []
         liga["orden_final"] = None
-        

@@ -65,6 +65,10 @@ PALMARES = {
         "River Plate": 3, "Boca Juniors": 2, "Vélez": 2, "Arsenal": 1, "Huracán": 1, "Lanús": 1,
         "San Lorenzo": 1,
     },
+    # Mundial de Clubes FIFA · edicion 2025, no se cuentan las anteriores.
+    "hist_mundial": {
+        "Chealsea": 1,
+    },
     # Copa Libertadores · 1960-2025.
     "hist_lib": {
         "Independiente": 7, "Boca Juniors": 6, "Peñarol": 5, "Estudiantes (LP)": 4, "Flamengo": 4,

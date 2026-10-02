@@ -123,6 +123,18 @@ from copas import (
 )
 from logos import LOGOS, LOGOS_CSS, logo_img
 from internacional import fase_actual, listo, pais_de, simular_ronda_int, terminadas
+from mundial import (
+    RONDAS as MUNDIAL_RONDAS,
+    anio_de as anio_mundial,
+    calcular_clasificados,
+    fase_actual as fase_mundial,
+    hay_mundial,
+    medias as medias_mundial,
+    mundial_terminado,
+    pais_club,
+    proxima_temporada,
+    simular_ronda_mundial,
+)
 from calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
 from vista import (
     COLOR_ORO,
@@ -150,6 +162,8 @@ from vista import (
     bandera,
     cuadro_int_html,
     grupos_int_html,
+    grupos_mundial_html,
+    cuadro_mundial_html,
     series_int_html,
     serie_int_html,
     calendario_mes_html,
@@ -221,6 +235,7 @@ if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_E
 S = st.session_state.S
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 SS = S["supercopa"]
+SM = S["mundial"]
 
 terminada = primera_terminada(S)            # incluye las fechas de desempate
 terminada_b = SB["fecha"] >= total_b(SB)
@@ -230,9 +245,10 @@ terminada_pc = SPC["fecha"] >= SPC["total"]
 terminada_reg = SR["fecha"] >= SR["total"]
 terminada_copa = SC["sorteada"] and SC["ronda"] >= SC["total"]
 terminada_supercopa = SS["jugada"]
+terminada_mundial = mundial_terminado(S)
 terminadas_int = terminadas(S)
 ambas = (terminada and terminada_b and terminada_f and terminada_pb and terminada_pc and terminada_reg
-         and terminada_copa and terminada_supercopa and terminadas_int)
+         and terminada_copa and terminada_supercopa and terminada_mundial and terminadas_int)
 b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
 pct_p = 100 * S["fecha"] / total_primera(S)
@@ -272,7 +288,7 @@ _web = sys.platform == "emscripten"
 _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
               if _web else 'div class="mh-marca"')
 _jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
-            + len(SR["log"]) + len(SC["log"]) + len(SS["log"]))
+            + len(SR["log"]) + len(SC["log"]) + len(SS["log"]) + len(SM["log"]))
 _prox = proximos(S)
 _hoy = min((d for d, _ in _prox.values()), default=None)       # próximo día con partidos
 st.markdown(
@@ -323,6 +339,9 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
         simular_ronda_copa(S["copa"], P, S["rng"])
     # 4b. Supercopa Argentina (campeón de Primera vs. campeón de la Copa; necesita las dos terminadas)
     simular_supercopa(S, P, S["rng"])
+    # 4c. Mundial de Clubes (solo en las temporadas que corresponde: 4, 8, 12...)
+    while not mundial_terminado(S):
+        simular_ronda_mundial(S, P, S["rng"])
     # 5. Copas CONMEBOL (la Sudamericana espera lo que necesita de la Libertadores)
     while not terminadas(S):
         for clave in ("rec", "lib", "sud"):
@@ -364,10 +383,11 @@ with tab_ligas:
         ], key="tabs_ligas", on_change="rerun")
 with tab_copas:
     with st.container(key="menu_copas"):
-        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec = st.tabs([
+        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = st.tabs([
             _con_logo("Copa Argentina", "Copa Argentina"), _con_logo("Supercopa Argentina", "Supercopa"),
             _con_logo("Copa Libertadores", "Libertadores"),
-            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa")],
+            _con_logo("Copa Sudamericana", "Sudamericana"), _con_logo("Recopa Sudamericana", "Recopa"),
+            "Mundial de Clubes"],
             key="tabs_copas", on_change="rerun")
 
 
@@ -1460,6 +1480,82 @@ if _abierta(tab_copas, tab_rec):
 
 
 # ============================================================================
+# MUNDIAL DE CLUBES (cada 4 temporadas: 2029, 2033...)
+# ============================================================================
+def pestaña_mundial(color):
+    M = S["mundial"]
+    if not hay_mundial(S):
+        prox = proxima_temporada(S["temp"])
+        c1 = st.columns(1)[0]
+        c1.markdown(chip("Mundial de Clubes · 32 equipos", color) + " " + chip(
+            f"Próxima edición: {anio_mundial(prox)} (temporada {prox})", "#475569"), unsafe_allow_html=True)
+        seccion("Camino al Mundial", "Los campeones continentales de los 4 años anteriores clasifican directo; "
+                "el resto de cada cupo sale del ranking (máximo 2 clubes por país)", color)
+        aviso("Esta temporada no hay Mundial de Clubes. Se sortea al empezar la temporada de la edición, con "
+              "lo que haya pasado en las copas hasta entonces. Abajo, los clasificados hasta ahora.")
+        med = medias_mundial(S)
+        filas = [{"Equipo": x["club"], "País": pais_club(x["club"]), "Confederación": x["conf"],
+                  "Cómo clasifica": x["via"], "Media": round(med.get(x["club"], 0.0), 1)}
+                 for x in calcular_clasificados(S, prox)]
+        st.markdown(tabla_html(pd.DataFrame(filas), formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+        return
+    terminado = M["ronda"] >= M["total"]
+    c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
+    c1.markdown(chip(f"Mundial de Clubes {M['anio']} · 32 equipos", color), unsafe_allow_html=True)
+    if c2.button(":material/skip_next: Próxima ronda", key="mun_next", width="stretch", type="primary",
+                 disabled=terminado):
+        simular_ronda_mundial(S, P, S["rng"])
+        st.rerun()
+    if c3.button(":material/fast_forward: Hasta el final", key="mun_all", width="stretch", disabled=terminado):
+        while not mundial_terminado(S):
+            simular_ronda_mundial(S, P, S["rng"])
+        st.rerun()
+    barra_estado([("Próxima ronda" if not terminado else "Estado", fase_mundial(M)),
+                  ("Rondas", f"{M['ronda']} / {M['total']}"), ("Partidos jugados", len(M["log"]))],
+                 100 * M["ronda"] / max(M["total"], 1))
+    titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Definiciones"]
+    t = dict(zip(titulos, st.tabs(titulos)))
+    with t["Grupos"]:
+        seccion("Fase de grupos", "8 grupos de 4 · una rueda en cancha neutral · 1° y 2° a octavos", color)
+        st.markdown(grupos_mundial_html(M), unsafe_allow_html=True)
+    with t["Eliminatorias"]:
+        seccion("Eliminatorias", "Octavos, cuartos, semifinales y final en cancha neutral · si empatan, penales",
+                color)
+        st.markdown(cuadro_mundial_html(M), unsafe_allow_html=True)
+    with t["Partidos"]:
+        if not M["log"]:
+            aviso("Todavía no se jugó ninguna ronda.")
+        else:
+            rondas = sorted({p["fecha"] for p in M["log"]})
+            r_sel = st.selectbox(":material/event: Ronda", rondas, index=len(rondas) - 1,
+                                 format_func=lambda n: MUNDIAL_RONDAS[n - 1], key=f"mun_ronda_{S['temp']}")
+            for p in [p for p in M["log"] if p["fecha"] == r_sel]:
+                st.markdown(fila_partido_html(p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
+    with t["Clasificados"]:
+        seccion("Clasificados", "UEFA 12 · CONMEBOL 6 · AFC 4 · CAF 4 · Concacaf 4 · OFC 1 · anfitrión 1", color)
+        orden_conf = ["UEFA", "CONMEBOL", "AFC", "CAF", "CONCACAF", "OFC"]
+        filas = [{"Equipo": n, "País": pais_club(n), "Confederación": M["conf"][n], "Cómo clasificó": M["via"][n],
+                  "Media": round(M["r"][n], 1)} for n in M["nombres"]]
+        filas.sort(key=lambda x: (orden_conf.index(x["Confederación"]), -x["Media"]))
+        st.markdown(tabla_html(pd.DataFrame(filas), formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+    with t["Definiciones"]:
+        seccion("Definiciones", "Campeón del Mundial de Clubes", "#b7860b")
+        if M["campeon"] is None:
+            aviso("El campeón aparece acá cuando se juega la final.")
+        else:
+            cc = M["campeon"]
+            st.markdown(f'<div class="champ"><div class="t">Campeón · Mundial de Clubes {M["anio"]}</div>'
+                        f'<div style="margin-top:10px">{crest(cc, 64)}</div><div class="nm">{esc(cc)}</div>'
+                        f'<div class="s">{bandera(pais_club(cc), 18)} {esc(pais_club(cc))} · finalista: '
+                        f'{esc(M["subcampeon"])}</div></div>', unsafe_allow_html=True)
+
+
+if _abierta(tab_copas, tab_mun):
+    with tab_mun:
+        pestaña_mundial("#be185d")
+
+
+# ============================================================================
 # CALENDARIO
 # ============================================================================
 if _abierta(tab_cal):
@@ -1585,7 +1681,7 @@ if _abierta(tab_h):
 
         if S["campeones"]:
             ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                       "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa"]
+                       "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
             with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                 df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
                 st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
@@ -1613,6 +1709,7 @@ if _abierta(tab_h):
             tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
             for titulo, logo, clave in (("Copa Argentina", "Copa Argentina", "hist_copa"),
                                         ("Supercopa Argentina", "Supercopa Argentina", "hist_super"),
+                                        ("Mundial de Clubes", "Mundial de Clubes", "hist_mundial"),
                                         ("Copa Libertadores", "Copa Libertadores", "hist_lib"),
                                         ("Copa Sudamericana", "Copa Sudamericana", "hist_sud"),
                                         ("Recopa Sudamericana", "Recopa Sudamericana", "hist_rec"))) + '</div>',
@@ -1651,3 +1748,4 @@ if _abierta(tab_h):
                        f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
                        if mv.get("descenso_adm") else "") +
                     f'</div>', unsafe_allow_html=True)
+            
