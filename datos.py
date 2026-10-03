@@ -90,6 +90,7 @@ EQUIPOS_PRIMERA_D = {
     "Defensores de Glew": 22, "Nautico Hacoaj":22, "Estrella de Berisso": 20,
     "Barrancas": 20, "FC Ezeiza": 20, "Bs.As. City FC": 20,
     "Alumni (Los Hornos)": 20, "Everton (LP)": 20, "Tiro Federal (Rosario)": 20,
+    "Leones de Rosario FC": 25,
 }
 
 # Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en regional.py,
@@ -240,6 +241,19 @@ ESCUDOS = {
     "Central Cordoba de Rosario": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg/120px-Club_Atl%C3%A9tico_Central_C%C3%B3rdoba_Rosario%29.svg.png",
     "Paraguayo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10110.png&h=96&w=96",
     "Deportivo Armenio": "https://img.a.transfermarkt.technology/wappen/head/13264.png?lm=1789459839",
+    "Alumni (Los Hornos)": "https://api.promiedos.com.ar/images/team/jejdg/1",
+    "Barrancas": "https://api.promiedos.com.ar/images/team/hjbef/1",
+    "Bs. As. City FC": "https://api.promiedos.com.ar/images/team/jejdh/1",
+    "Nautico Hacoaj": "https://api.promiedos.com.ar/images/team/hjbfd/1",
+    "Metalúrgico": "https://api.promiedos.com.ar/images/team/hjbej/1",
+    "Defensores de Glew": "https://api.promiedos.com.ar/images/team/hjbeh/1",
+    "Estrella de Berisso": "https://api.promiedos.com.ar/images/team/hjbfa/1",
+    "Everton (LP)": "https://api.promiedos.com.ar/images/team/hjbfc/1",
+    "FC Ezeiza": "https://api.promiedos.com.ar/images/team/hjbfg/1",
+    "SAT": "https://api.promiedos.com.ar/images/team/hjbfh/1",
+    "Estrella del Sur": "https://api.promiedos.com.ar/images/team/hjbfb/1",
+    "Tiro Federal (Rosario)": "https://img.a.transfermarkt.technology/wappen/head/9645.png?lm=1789459669",
+    "Leones de Rosario FC": "https://api.promiedos.com.ar/images/team/jcbji/1",
 
 }
 # Regional Amateur: escudos del JSON del torneo (interiorfutbolero.com.ar)
