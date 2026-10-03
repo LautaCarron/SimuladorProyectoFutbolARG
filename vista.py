@@ -91,10 +91,14 @@ CSS = """<style>
 [role="dialog"],[role="dialog"] :is(p,div,td,th,label,input,textarea,summary,h2,button),html,body,.stApp,.stApp p,.stApp label,.stApp li,.stApp h1,.stApp h2,.stApp h3,.stApp button,.stApp input,.stApp textarea,.stApp [data-testid="stMarkdownContainer"],[role="dialog"] p{font-family:'Archivo',system-ui,sans-serif !important;}
 .stApp{background:var(--tiza);}
 .block-container{padding-top:1.1rem;padding-bottom:4rem;max-width:1320px;}
-[data-testid="stHeader"]{background:transparent;pointer-events:none;}
+[data-testid="stHeader"]{background:transparent;}
+/* la franja superior de Streamlit no debe tapar lo que queda debajo al hacer scroll: nada de la cabecera
+   recibe clics salvo sus botones (menú, Deploy, »). Con !important y en todos los hijos, porque algunas
+   versiones de Streamlit ponen un contenedor a todo el ancho con pointer-events propio */
+[data-testid="stHeader"],[data-testid="stHeader"] *,[data-testid="stToolbar"],[data-testid="stDecoration"],[data-testid="stStatusWidget"]{pointer-events:none !important;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 .st-key-puente{position:absolute !important;width:0 !important;height:0 !important;overflow:hidden !important;opacity:0;pointer-events:none;}
-[data-testid="stHeader"] button{pointer-events:auto;}
+[data-testid="stHeader"] :is(button,a,[role="button"],[role="menuitem"]),[data-testid="stHeader"] :is(button,a) *,[data-testid="stToolbar"] :is(button,a,[role="button"]),[data-testid="stExpandSidebarButton"],[data-testid="stExpandSidebarButton"] *{pointer-events:auto !important;}
 /* botón de parámetros (»): chip propio para que al hacer scroll no se mezcle con el contenido */
 body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con la ficha abierta no se superpone */
 [data-testid="stExpandSidebarButton"]{width:36px !important;height:36px !important;background:var(--tiza) !important;border:1px solid var(--line-2) !important;border-radius:4px !important;color:var(--tinta-2) !important;}
