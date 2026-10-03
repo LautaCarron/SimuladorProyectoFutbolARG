@@ -243,7 +243,7 @@ ESCUDOS = {
     "Deportivo Armenio": "https://img.a.transfermarkt.technology/wappen/head/13264.png?lm=1789459839",
     "Alumni (Los Hornos)": "https://api.promiedos.com.ar/images/team/jejdg/1",
     "Barrancas": "https://api.promiedos.com.ar/images/team/hjbef/1",
-    "Bs. As. City FC": "https://api.promiedos.com.ar/images/team/jejdh/1",
+    "Bs.As. City FC": "https://api.promiedos.com.ar/images/team/jejdh/1",
     "Nautico Hacoaj": "https://api.promiedos.com.ar/images/team/hjbfd/1",
     "Metalúrgico": "https://api.promiedos.com.ar/images/team/hjbej/1",
     "Defensores de Glew": "https://api.promiedos.com.ar/images/team/hjbeh/1",

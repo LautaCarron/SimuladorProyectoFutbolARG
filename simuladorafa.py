@@ -1015,6 +1015,9 @@ if _abierta(tab_ligas, tab_pb):
                      ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)"),
                      ("Desempate Permanencia", "rgba(147, 51, 234, 0.3)"),
                      ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])])
+            if SPB["fecha"] == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Primera B)"):
+                    SPB["r"] = editar_medias(SPB["nombres"], SPB["r"], f"editor_pb_{S['temp']}")
         idx += 1
             
         with spb_tabs[idx]: vista_fixture("pb")
@@ -1094,6 +1097,9 @@ if _abierta(tab_ligas, tab_pc):
                  ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)"),
                  ("Desempate Permanencia", "rgba(147, 51, 234, 0.3)"),
                  ("18° o peor Descenso al Promocional", COLORES_B["Desciende"])])
+            if SPC["fecha"] == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Primera C)"):
+                    SPC["r"] = editar_medias(SPC["nombres"], SPC["r"], f"editor_pc_{S['temp']}")
         idx_c += 1
             
         with spc_tabs[idx_c]: vista_fixture("pc")
@@ -1172,6 +1178,9 @@ if _abierta(tab_ligas, tab_pd):
             mostrar_tabla(tabla_pd(SPD), colorear_pd, SPD["pos_hist"])
             leyenda([("1°-2° Ascenso a Primera C", COLORES_B["Ascenso directo"]), 
                      ("Desempate Campeonato / Ascenso", "rgba(249, 115, 22, 0.3)")])
+            if SPD["fecha"] == 0:
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Promocional Amateur)"):
+                    SPD["r"] = editar_medias(SPD["nombres"], SPD["r"], f"editor_pd_{S['temp']}")
         idx_d += 1
             
         with spd_tabs[idx_d]: vista_fixture("pd")
@@ -1253,6 +1262,10 @@ if _abierta(tab_ligas, tab_reg):
                     "con un desempate (nunca por diferencia de gol)", "#16a34a")
             mostrar_tabla(tabla_reg_region(SR, region), colorear_reg)
             leyenda([("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
+            if SR["fecha"] == 0:
+                nom_reg_ed = [f"{n} · {rg}" for n, rg in zip(SR["nombres"], SR["region_de"])]
+                with st.expander(":material/tune: Editar medias internas de esta temporada (Regional Amateur)"):
+                    SR["r"] = editar_medias(nom_reg_ed, SR["r"], f"editor_reg_{S['temp']}")
 
         if "Desempate" in tab_r:
             with tab_r["Desempate"]:
