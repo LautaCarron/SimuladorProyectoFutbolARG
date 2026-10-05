@@ -31,7 +31,10 @@ import numpy as np
 from incidentes import revisar_copa
 from motor import jugar_ko, nuevo_partido, tanda_penales
 from regional import REGIONES_REG
-from torneos import primera_terminada, tabla_f_f2, tabla_final, tabla_pb, tabla_pc, total_b
+from liga_federal import tabla_f_f2
+from liga_nacional import total_b
+from liga_primera import primera_terminada, tabla_final
+from ligas_simples import tabla_pb, tabla_pc
 
 COPA_ARG = "Copa Argentina"
 SUPERCOPA = "Supercopa Argentina"

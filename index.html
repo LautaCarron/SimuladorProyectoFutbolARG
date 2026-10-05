@@ -74,7 +74,7 @@
       display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr);
       transition: opacity .5s var(--ease-io);
     }
-    #intro[hidden] { display: none; }
+    #intro[hidden], html.sin-intro #intro { display: none; }
 
     /* Fondo: luz de estadio, franjas de la camiseta y el sol. Todo muy tenue. */
     .fondo { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
@@ -332,6 +332,12 @@
         transition-duration: .01ms !important; }
     }
   </style>
+  <script>
+    // Interruptor del menú de modos. false = abre directo en el simulador (el modo Manager Falopa todavía no
+    // está implementado). Cuando esté listo, ponerlo en true y vuelve la pantalla "Elegí un modo".
+    window.MOSTRAR_INTRO = false;
+    if (!window.MOSTRAR_INTRO) document.documentElement.classList.add("sin-intro");
+  </script>
 </head>
 <body class="intro-activa">
   <!-- Intro · Proyecto AFA -->
@@ -493,10 +499,58 @@
     const intro = $("#intro"), prep = $("#preparando");
     const estado = $("#estado"), barra = $("#barra"), etapa = $("#etapa");
     const espera = (ms) => new Promise((r) => setTimeout(r, ms));
+    const MOSTRAR_INTRO = window.MOSTRAR_INTRO !== false;   // ver el interruptor en el <head>
 
     // ---- 1. Arranca el simulador en segundo plano mientras se ve la intro
     // Todos los archivos del simulador (si agregan otro .py, súmenlo a esta lista)
-    const ARCHIVOS = ["simuladorafa.py", "datos.py", "regional.py", "motor.py", "torneos.py", "copas.py", "calendario.py", "incidentes.py", "clubes_int.py", "internacional.py", "palmares.py", "logos.py", "vista.py"];
+    const ARCHIVOS = [
+      "simuladorafa.py",
+      "datos.py",
+      "regional.py",
+      "motor.py",
+      "incidentes.py",
+      "clubes_int.py",
+      "clubes_mundial.py",
+      "palmares.py",
+      "logos.py",
+      "liga_primera.py",
+      "liga_nacional.py",
+      "liga_federal.py",
+      "ligas_simples.py",
+      "liga_regional.py",
+      "fechas_ligas.py",
+      "copas.py",
+      "internacional.py",
+      "mundial.py",
+      "competencias.py",
+      "temporada.py",
+      "torneos.py",
+      "calendario.py",
+      "vista_css.py",
+      "vista_base.py",
+      "vista_partidos.py",
+      "vista_ficha.py",
+      "vista_fixture.py",
+      "vista_tablas.py",
+      "vista_puente.py",
+      "vista_cuadros.py",
+      "vista_copas_int.py",
+      "vista_calendario.py",
+      "vista.py",
+      "ui_primera.py",
+      "ui_nacional.py",
+      "ui_federal.py",
+      "ui_ligas_simples.py",
+      "ui_regional.py",
+      "ui_copa_argentina.py",
+      "ui_supercopa.py",
+      "ui_conmebol.py",
+      "ui_mundial.py",
+      "ui_calendario.py",
+      "ui_clubes.py",
+      "ui_avisos.py",
+      "ui_historial.py",
+    ];
     let listo = false;
     const t0 = performance.now();
     let montado = false;
@@ -525,7 +579,24 @@
       }, $("#root"));
     }
     // Arranca apenas termina la animación de entrada, para no trabar la intro
-    setTimeout(montar, 1900);
+    if (MOSTRAR_INTRO) setTimeout(montar, 1900);
+    else arrancarDirecto();
+
+    // Sin intro: pantalla de espera mientras carga el motor y se entra solo al simulador
+    async function arrancarDirecto() {
+      intro.hidden = true;
+      document.body.classList.remove("intro-activa");
+      prep.classList.add("visible");
+      montar();
+      if (!listo) await new Promise((r) => document.addEventListener("afa:listo", r, { once: true }));
+      await espera(250);
+      document.body.classList.add("app-llega");
+      window.scrollTo(0, 0);
+      window.dispatchEvent(new Event("resize"));   // que las tablas midan su ancho real
+      prep.classList.remove("visible");
+      setTimeout(() => document.body.classList.remove("app-llega"), 600);
+      if (location.hash !== "#simulador") history.replaceState(null, "", "#simulador");
+    }
 
     // Progreso estimado (Pyodide no informa avance): curva asintótica + etapas reales
     const ETAPAS = [[0, "Descargando el motor"], [.35, "Instalando numpy y pandas"],
@@ -578,7 +649,7 @@
 
     // ---- 3. Volver a la intro (marca "Proyecto AFA" del simulador o botón atrás)
     function volver() {
-      if (!intro.hidden || entrando) return;
+      if (!MOSTRAR_INTRO || !intro.hidden || entrando) return;
       document.body.classList.add("intro-activa");
       intro.hidden = false;
       intro.scrollTop = 0;
@@ -591,7 +662,9 @@
       m.classList.remove("sacudir"); void m.offsetWidth; m.classList.add("sacudir");
     });
     window.addEventListener("hashchange", () => {
-      if (location.hash === "#inicio" || location.hash === "") {
+      if (!MOSTRAR_INTRO && (location.hash === "#inicio" || location.hash === "")) {
+        history.replaceState(null, "", "#simulador");   // sin intro, "inicio" es el propio simulador
+      } else if (location.hash === "#inicio" || location.hash === "") {
         history.replaceState(null, "", location.pathname);
         volver();
       } else if (location.hash === "#simulador") {

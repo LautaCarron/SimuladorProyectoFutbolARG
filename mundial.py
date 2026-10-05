@@ -21,7 +21,7 @@ from collections import Counter
 import numpy as np
 
 from clubes_mundial import CUPOS_2029, MEDIA_MUNDIAL, PAIS_MUNDIAL, clubes_de
-from internacional import _medias, pais_de
+from internacional import PAIS_EXT, _medias, pais_de
 from motor import MAX_R, MIN_R, jugar, jugar_ko, nuevo_partido, tanda_penales
 
 MUNDIAL = "Mundial de Clubes"
@@ -158,7 +158,6 @@ def calcular_clasificados(S, temp):
     usados, out = set(), []
     puntos = _puntos_ciclo(S, anios)
     pool_conmebol = set(puntos) | set(S["nombres"])
-    from internacional import PAIS_EXT
     pool_conmebol |= set(PAIS_EXT)
 
     def llenar(conf, cupo, candidatos, via_directo, via_rank):

@@ -25,6 +25,8 @@ Formato:
 import numpy as np
 
 from clubes_int import CLUBES_INT, PAISES
+from copas import categoria_actual
+from liga_primera import tabla_final
 from motor import jugar, jugar_ko, nuevo_partido, tanda_penales
 
 LIB, SUD, REC = "Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana"
@@ -62,7 +64,6 @@ def pais_de(nombre):
 def clasif_argentina(S):
     """Clasificados argentinos por la temporada que termina: {grupos, previa, sud} con
     (club, cómo clasificó), más los campeones para la Recopa y la Libertadores siguiente."""
-    from torneos import tabla_final
     tabla = tabla_final(S).sort_values("Pos")
     orden = list(tabla["Equipo"])
     SC = S.get("copa", {})
@@ -114,7 +115,6 @@ def fin_de_temporada(S):
 
 
 def _medias(S):
-    from copas import categoria_actual
     out = {n: m for n, (_, m) in categoria_actual(S).items()}
     out.update(S.setdefault("rating_int", dict(MEDIA_EXT)))
     return out

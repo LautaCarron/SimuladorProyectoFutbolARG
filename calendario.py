@@ -5,38 +5,27 @@ Copa Argentina, como en la vida real.
 * Cada liga juega un día fijo del fin de semana, una fecha por semana desde su arranque.
   Si una liga tiene más fechas que fines de semana hasta mitad de diciembre, suma fechas
   entre semana (miércoles) repartidas en toda la temporada.
-* La Copa Argentina se juega los miércoles, en el medio de las ligas (de marzo a noviembre).
-* La Supercopa Argentina se juega el miércoles después de la última fecha de Primera.
-* El Mundial de Clubes (cada 4 temporadas) se juega entre mediados de junio y mediados de julio.
+* Las copas por rondas (Copa Argentina, Supercopa, Mundial de Clubes) fijan sus días en
+  competencias.py; acá solo se consulta el registro.
 * Las fechas extra (desempates) van la semana siguiente a la última programada.
 """
 
 import datetime as dt
-from torneos import tabla_pd
+
+from competencias import REGISTRO, por_nombre
+from fechas_ligas import INICIO, anio, desde, dia_liga, total_liga
+from internacional import listo, simular_ronda_int
+from liga_federal import simular_fecha_f
+from liga_nacional import simular_fecha_b, total_b
+from liga_primera import primera_terminada, simular_fecha
+from liga_regional import simular_fecha_reg
+from ligas_simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
 
 _MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
           "octubre", "noviembre", "diciembre"]
 _DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 _DIAS_CORTOS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
 
-# Arranque de cada liga: (mes, día a partir del cual, día de la semana: 0 = lunes ... 6 = domingo)
-INICIO = {
-    "Primera División": (1, 24, 6),     # domingos desde fines de enero
-    "Primera Nacional": (2, 7, 5),      # sábados desde febrero
-    "Federal A": (3, 14, 6),            # domingos desde marzo
-    "Primera B": (2, 7, 5),             # sábados
-    "Primera C": (2, 21, 5),            # sábados
-    "Promocional Amateur": (3, 1, 5),   # sábados desde marzo
-    "Regional Amateur": (6, 6, 6),      # domingos desde junio
-}
-FIN_TEMPORADA = (12, 13)                # las ligas terminan a más tardar a mediados de diciembre
-# Copa Argentina: 64avos, 32avos, 16avos, octavos, cuartos, semifinales y final (miércoles)
-COPA_DIAS = [(3, 4), (4, 8), (5, 13), (6, 24), (8, 12), (9, 23), (11, 4)]
-COPA = "Copa Argentina"
-SUPERCOPA = "Supercopa Argentina"
-MUNDIAL = "Mundial de Clubes"
-# Mundial de Clubes: 3 fechas de grupos, octavos, cuartos, semifinales y final (mes, día)
-MUNDIAL_DIAS = [(6, 15), (6, 19), (6, 23), (6, 28), (7, 4), (7, 8), (7, 13)]
 # Copas CONMEBOL: (mes, a partir del día, día de la semana). Libertadores los martes,
 # Sudamericana los jueves, finales únicas un sábado de noviembre, Recopa en febrero.
 INT_DIAS = {
@@ -51,65 +40,15 @@ INT_DIAS = {
 _CLAVE_INT = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
 
 
-def anio(S):
-    return 2025 + S["temp"]
-
-
-def _desde(y, mes, dia, wd):
-    d = dt.date(y, mes, dia)
-    return d + dt.timedelta(days=(wd - d.weekday()) % 7)
-
-
-def total_liga(S, liga):
-    """Cantidad de fechas que tiene hoy la liga (con sus desempates, si los hubo)."""
-    from torneos import total_b, total_primera
-    return {"Primera División": lambda: total_primera(S), "Primera Nacional": lambda: total_b(S["b"]),
-            "Federal A": lambda: S["f"]["total"], "Primera B": lambda: S["pb"]["total"],
-            "Primera C": lambda: S["pc"]["total"], "Promocional Amateur": lambda: S["pd"]["total"],
-            "Regional Amateur": lambda: S["reg"]["total"]}[liga]()
-
-
-def _dias_liga(S, liga):
-    y = anio(S)
-    mes, dia, wd = INICIO[liga]
-    ini = _desde(y, mes, dia, wd)
-    fin = dt.date(y, *FIN_TEMPORADA)
-    semanas = []
-    d = ini
-    while d <= fin:
-        semanas.append(d)
-        d += dt.timedelta(weeks=1)
-    total = total_liga(S, liga)
-    if total <= len(semanas):
-        return semanas
-    # más fechas que fines de semana: se suman miércoles, repartidos en toda la temporada
-    todos = sorted(semanas + [s - dt.timedelta(days=(s.weekday() - 2) % 7 or 7) for s in semanas[1:]])
-    if total >= len(todos):
-        return todos
-    return [todos[round(i * (len(todos) - 1) / (total - 1))] for i in range(total)]
-
-
 def dia_de(S, liga, n):
-    """Día (datetime.date) en que se juega la fecha n de una liga o la ronda n de la Copa."""
-    if liga == COPA:
-        mes, dia = COPA_DIAS[min(n, len(COPA_DIAS)) - 1]
-        return _desde(anio(S), mes, dia, 2)
+    """Día (datetime.date) en que se juega la fecha n de una liga o la ronda n de una copa."""
+    comp = por_nombre(liga)
+    if comp:                                           # Copa Argentina, Supercopa, Mundial de Clubes
+        return comp.dia(S, n)
     if liga in INT_DIAS:
         mes, dia, wd = INT_DIAS[liga][min(n, len(INT_DIAS[liga])) - 1]
-        return _desde(anio(S), mes, dia, wd)
-    if liga == MUNDIAL:
-        mes, dia = MUNDIAL_DIAS[min(n, len(MUNDIAL_DIAS)) - 1]
-        return dt.date(anio(S), mes, dia)
-    if liga == SUPERCOPA:                              # miércoles siguiente a la última fecha de Primera
-        return dia_de(S, "Primera División", total_liga(S, "Primera División")) + dt.timedelta(days=3)
-    if liga == "Promoción":                            # la juega el perdedor de la final de la B
-        liga = "Primera Nacional"
-    if liga not in INICIO:
-        return None
-    dias = _dias_liga(S, liga)
-    if n <= len(dias):
-        return dias[n - 1]
-    return dias[-1] + dt.timedelta(weeks=n - len(dias))
+        return desde(anio(S), mes, dia, wd)
+    return dia_liga(S, liga, n)
 
 
 def dia_partido(S, p):
@@ -131,7 +70,6 @@ def nombre_mes(m):
 # ---------------------------------------------------------------- lo que viene en el calendario
 def proximos(S):
     """Próximo evento pendiente de cada competición: {competición: (día, n)}."""
-    from torneos import primera_terminada, total_b
     SB = S["b"]
     pend = {}
     if not primera_terminada(S):
@@ -142,18 +80,11 @@ def proximos(S):
                     ("Promocional Amateur", S["pd"]), ("Regional Amateur", S["reg"])):
         if L["fecha"] < L["total"]:
             pend[liga] = L["fecha"] + 1
-    SC = S.get("copa")
-    if SC and SC["sorteada"] and SC["ronda"] < SC["total"]:
-        pend[COPA] = SC["ronda"] + 1
-    M = S.get("mundial")
-    if M and M["sorteado"] and M["ronda"] < M["total"]:
-        pend[MUNDIAL] = M["ronda"] + 1
-    if S.get("supercopa"):
-        from copas import supercopa_lista
-        if supercopa_lista(S):
-            pend[SUPERCOPA] = 1
+    for comp in REGISTRO:
+        n = comp.pendiente(S)
+        if n is not None:
+            pend[comp.nombre] = n
     if S.get("int"):
-        from internacional import listo
         for nombre, clave in _CLAVE_INT.items():
             if listo(S, clave):
                 pend[nombre] = S["int"][clave]["ronda"] + 1
@@ -162,10 +93,6 @@ def proximos(S):
 
 def jugar_proximo_dia(S, P, acumular=True):
     """Juega todo lo programado para el próximo día del calendario (ligas y Copa)."""
-    from copas import simular_ronda_copa, simular_supercopa
-    from mundial import simular_ronda_mundial
-    from torneos import (simular_fecha, simular_fecha_b, simular_fecha_f, simular_fecha_liga,
-                         simular_fecha_reg, tabla_pb, tabla_pc)
     prox = proximos(S)
     if not prox:
         return None
@@ -190,13 +117,8 @@ def jugar_proximo_dia(S, P, acumular=True):
                 simular_fecha_liga(S["pd"], P, S["rng"], "Promocional Amateur", tabla_pd)
             elif c == "Regional Amateur":
                 simular_fecha_reg(S["reg"], P, S["rng"])
-            elif c == COPA:
-                simular_ronda_copa(S["copa"], P, S["rng"])
-            elif c == SUPERCOPA:
-                simular_supercopa(S, P, S["rng"])
-            elif c == MUNDIAL:
-                simular_ronda_mundial(S, P, S["rng"])
+            elif por_nombre(c):
+                por_nombre(c).jugar(S, P, S["rng"])
             elif c in _CLAVE_INT:
-                from internacional import simular_ronda_int
                 simular_ronda_int(S, _CLAVE_INT[c], P, S["rng"])
     return hoy

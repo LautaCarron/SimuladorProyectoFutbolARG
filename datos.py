@@ -4,8 +4,6 @@ Es el único archivo que hay que tocar para cambiar planteles, medias iniciales 
 escudos. No tiene lógica de simulación.
 """
 
-import streamlit as st
-
 from clubes_int import CLUBES_INT, OSCUROS_INT
 from regional import GRUPO_FEDERAL_REG, REGIONAL
 from clubes_mundial import MUNDIAL_CLUBES
@@ -432,8 +430,8 @@ NPB = len(EQUIPOS_PRIMERA_B)  # Primera B
 NPC = len(EQUIPOS_PRIMERA_C)  # Primera C
 NPD = len(EQUIPOS_PRIMERA_D)  # TPA (Primera D)
 
+ERROR_DATOS = None        # texto del error si los datos no cierran (lo muestra la interfaz)
 _todos = (list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
           + list(EQUIPOS_PRIMERA_C) + list(EQUIPOS_PRIMERA_D) + [x["nombre"] for x in REGIONAL])
 if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or NPD < 6 or len(set(_todos)) != len(_todos):
-    st.error("Hay un error en la cantidad de equipos o nombres repetidos.")
-    st.stop()
+    ERROR_DATOS = "Hay un error en la cantidad de equipos o nombres repetidos."
