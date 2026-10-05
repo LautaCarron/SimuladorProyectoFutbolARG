@@ -68,7 +68,7 @@ import numpy as np
 import pandas as pd
 
 
-from datos import (
+from datos.equipos import (
     ERROR_DATOS,
     ESCUDOS,
     F_GRUPOS_NOMBRES,
@@ -80,44 +80,38 @@ from datos import (
 if ERROR_DATOS:                 # datos.py ya no depende de Streamlit: el aviso lo muestra la interfaz
     st.error(ERROR_DATOS)
     st.stop()
-from motor import (
+from motor.nucleo import (
     MAX_R,
     MIN_R,
 )
-from torneos import (
+from ligas.federal import simular_fecha_f, tabla_f_f2, tabla_f_grupo
+from ligas.nacional import (
     B_F1,
     B_F2,
     B_RED,
     B_TOTAL,
     B_ZONAS2,
-    FECHAS_F1,
-    TOTAL_FECHAS,
-    VERSION_ESTADO,
-    ZONAS,
-    crear_estado,
-    nueva_temporada,
-    primera_terminada,
-    simular_fecha,
     simular_fecha_b,
-    simular_fecha_f,
-    simular_fecha_liga,
     tabla_b_f1,
     tabla_b_f2,
-    tabla_f_f2,
-    tabla_f_grupo,
+    total_b,
+)
+from ligas.primera import (
+    FECHAS_F1,
+    TOTAL_FECHAS,
+    ZONAS,
+    primera_terminada,
+    simular_fecha,
     tabla_final,
     tabla_general,
-    tabla_pb,
-    tabla_pc,
-    tabla_pd,
     tabla_zona,
-    total_b,
     total_primera,
-    simular_fecha_reg,
-    tabla_reg_region,
 )
-from regional import FINALES_REG, REGIONES_REG
-from copas import (
+from ligas.regional import simular_fecha_reg, tabla_reg_region
+from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from motor.temporada import VERSION_ESTADO, crear_estado, nueva_temporada
+from datos.regional import FINALES_REG, REGIONES_REG
+from copas.argentina import (
     COPA_CORTO,
     COPA_LLAVES,
     COPA_RONDAS,
@@ -128,10 +122,10 @@ from copas import (
     sortear_copa,
     supercopa_lista,
 )
-from competencias import REGISTRO
-from logos import LOGOS, LOGOS_CSS, logo_img
-from internacional import fase_actual, listo, pais_de, simular_ronda_int, terminadas
-from mundial import (
+from copas.registro import REGISTRO
+from datos.logos import LOGOS, LOGOS_CSS, logo_img
+from copas.conmebol import fase_actual, listo, pais_de, simular_ronda_int, terminadas
+from copas.mundial import (
     RONDAS as MUNDIAL_RONDAS,
     anio_de as anio_mundial,
     calcular_clasificados,
@@ -143,8 +137,8 @@ from mundial import (
     proxima_temporada,
     simular_ronda_mundial,
 )
-from calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
-from vista import (
+from motor.calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
+from ui.vista import (
     COLOR_ORO,
     COLORES_B,
     COLORES_F,
@@ -477,19 +471,19 @@ def html_tabla_liguilla(partidos):
 # PESTAÑAS · cada una vive en su propio módulo ui_*.py y recibe en `ctx` el estado compartido
 # (S, P, las pestañas, las banderas terminada_*, los ayudantes). El orden es el de la pantalla.
 # ============================================================================
-import ui_primera
-import ui_nacional
-import ui_federal
-import ui_ligas_simples
-import ui_regional
-import ui_copa_argentina
-import ui_supercopa
-import ui_conmebol
-import ui_mundial
-import ui_calendario
-import ui_clubes
-import ui_avisos
-import ui_historial
+from ui import primera as ui_primera
+from ui import nacional as ui_nacional
+from ui import federal as ui_federal
+from ui import ligas_simples as ui_ligas_simples
+from ui import regional as ui_regional
+from ui import copa_argentina as ui_copa_argentina
+from ui import supercopa as ui_supercopa
+from ui import conmebol as ui_conmebol
+from ui import mundial as ui_mundial
+from ui import calendario as ui_calendario
+from ui import clubes as ui_clubes
+from ui import avisos as ui_avisos
+from ui import historial as ui_historial
 
 ctx = SimpleNamespace(**{k: v for k, v in globals().items() if not k.startswith("__")})
 for _modulo in (ui_primera, ui_nacional, ui_federal, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
