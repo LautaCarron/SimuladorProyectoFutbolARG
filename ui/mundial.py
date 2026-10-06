@@ -7,9 +7,12 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 import pandas as pd
 import streamlit as st
 from copas.mundial import (
+    ANIO_BASE,
+    CADA,
     RONDAS as MUNDIAL_RONDAS,
     anio_de as anio_mundial,
     calcular_clasificados,
+    clasificacion_conmebol,
     fase_actual as fase_mundial,
     hay_mundial,
     medias as medias_mundial,
@@ -28,6 +31,7 @@ from ui.vista import (
     esc,
     fila_partido_html,
     grupos_mundial_html,
+    ranking_conmebol_html,
     seccion,
     tabla_html,
 )
@@ -39,6 +43,23 @@ def render(ctx):
     # ============================================================================
     # MUNDIAL DE CLUBES (cada 4 temporadas: 2029, 2033...)
     # ============================================================================
+    def ranking_sudamerica(temp, color):
+        """Tabla del ranking CONMEBOL en vivo para la edición de la temporada `temp`."""
+        R = clasificacion_conmebol(S, temp)
+        y0, y1 = R["anios"][0], R["anios"][-1]
+        seccion(f"Ranking CONMEBOL · Mundial {anio_mundial(temp)}",
+                f"6 cupos: los campeones de la Libertadores {y0}-{y1} y el resto por ranking · "
+                "máximo 2 clubes por país (salvo campeones)", color)
+        if R["en_curso"] and not dict(R["campeones"]).get(R["en_curso"][0]):
+            st.caption(f"En vivo: la Libertadores {R['en_curso'][0]} suma puntos partido a partido. "
+                       "Mientras falten campeones, la tabla es una proyección.")
+        st.markdown(ranking_conmebol_html(R), unsafe_allow_html=True)
+        st.caption(f"Puntos (reglamento CONMEBOL): sólo la Copa Libertadores, desde la fase de grupos · 3 por "
+                   f"llegar a los grupos · 3 por victoria y 1 por empate (una serie definida por penales cuenta "
+                   f"como empate) · 3 más por cada ronda alcanzada: octavos, cuartos, semifinal y final. La fase "
+                   f"previa y la Sudamericana no suman. {ANIO_BASE}: puntos reales. A igual puntaje, desempata el "
+                   f"que sumó más en la última temporada.")
+
     def pestaña_mundial(color):
         M = S["mundial"]
         if not hay_mundial(S):
@@ -49,12 +70,14 @@ def render(ctx):
             seccion("Camino al Mundial", "Los campeones continentales de los 4 años anteriores clasifican directo; "
                     "el resto de cada cupo sale del ranking (máximo 2 clubes por país)", color)
             aviso("Esta temporada no hay Mundial de Clubes. Se sortea al empezar la temporada de la edición, con "
-                  "lo que haya pasado en las copas hasta entonces. Abajo, los clasificados hasta ahora.")
-            med = medias_mundial(S)
-            filas = [{"Equipo": x["club"], "País": pais_club(x["club"]), "Confederación": x["conf"],
-                      "Cómo clasifica": x["via"], "Media": round(med.get(x["club"], 0.0), 1)}
-                     for x in calcular_clasificados(S, prox)]
-            st.markdown(tabla_html(pd.DataFrame(filas), formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+                  "lo que haya pasado en las copas hasta entonces.")
+            ranking_sudamerica(prox, color)
+            with st.expander(":material/public: Clasificados de todas las confederaciones (hasta ahora)"):
+                med = medias_mundial(S)
+                filas = [{"Equipo": x["club"], "País": pais_club(x["club"]), "Confederación": x["conf"],
+                          "Cómo clasifica": x["via"], "Media": round(med.get(x["club"], 0.0), 1)}
+                         for x in calcular_clasificados(S, prox)]
+                st.markdown(tabla_html(pd.DataFrame(filas), formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
             return
         terminado = M["ronda"] >= M["total"]
         c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
@@ -70,7 +93,7 @@ def render(ctx):
         barra_estado([("Próxima ronda" if not terminado else "Estado", fase_mundial(M)),
                       ("Rondas", f"{M['ronda']} / {M['total']}"), ("Partidos jugados", len(M["log"]))],
                      100 * M["ronda"] / max(M["total"], 1))
-        titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Definiciones"]
+        titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Ranking CONMEBOL", "Definiciones"]
         t = dict(zip(titulos, st.tabs(titulos)))
         with t["Grupos"]:
             seccion("Fase de grupos", "8 grupos de 4 · una rueda en cancha neutral · 1° y 2° a octavos", color)
@@ -95,6 +118,11 @@ def render(ctx):
                       "Media": round(M["r"][n], 1)} for n in M["nombres"]]
             filas.sort(key=lambda x: (orden_conf.index(x["Confederación"]), -x["Media"]))
             st.markdown(tabla_html(pd.DataFrame(filas), formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+        with t["Ranking CONMEBOL"]:
+            ranking_sudamerica(M["temp"], color)
+            st.markdown('<div class="mlab" style="margin-top:22px">Camino al próximo Mundial</div>',
+                        unsafe_allow_html=True)
+            ranking_sudamerica(M["temp"] + CADA, color)
         with t["Definiciones"]:
             seccion("Definiciones", "Campeón del Mundial de Clubes", "#b7860b")
             if M["campeon"] is None:

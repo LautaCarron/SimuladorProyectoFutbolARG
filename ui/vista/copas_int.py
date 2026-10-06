@@ -176,6 +176,43 @@ def _kb_card_mundial(m):
     return f'<div class="kb-m">{filas}</div>'
 
 
+_RK_ESTADO = {"campeon": ("Clasificado", "campeón"), "ranking": ("Clasificado", "por ranking"),
+              "tope": ("Afuera", "cupo del país"), "afuera": ("", "")}
+
+
+def ranking_conmebol_html(R):
+    """Ranking CONMEBOL para el Mundial de Clubes: campeones del ciclo y tabla de puntos por año."""
+    anios = R["anios"]
+    camp = "".join(
+        f'<div class="rk-c{" pend" if not c else ""}"><span class="rk-y">Campeón {y}</span>'
+        + (f'{crest(c, 22)}<span class="rk-cn" role="button" tabindex="0" data-club="{esc(c)}">{esc(c)}</span>'
+           if c else '<span class="rk-cn">A definir</span>') + '</div>'
+        for y, c in R["campeones"])
+    n_rank = R["cupos_ranking"]
+    cupo = (f'<div class="rk-c rk-cupo"><span class="rk-y">Por ranking</span><b>{n_rank}</b>'
+            f'<span class="rk-cn">{"lugar" if n_rank == 1 else "lugares"}</span></div>')
+    camp_de = dict(R["campeones"])
+    cab = "".join(f'<th class="rk-n{" vivo" if y in R["en_curso"] else ""}">{y}'
+                  + (f'<i>{"terminada" if camp_de.get(y) else "en juego"}</i>' if y in R["en_curso"] else "")
+                  + '</th>' for y in anios)
+    filas = ""
+    for k, f in enumerate(R["filas"]):
+        e = f["estado"]
+        tit, sub = _RK_ESTADO[e]
+        estado = (f'<span class="rk-e {e}">{tit}<small>{esc(f["nota"] if e != "ranking" else sub)}</small></span>'
+                  if tit else "")
+        celdas = "".join(f'<td class="rk-n{" vivo" if y in R["en_curso"] else ""}">'
+                         f'{"–" if f["anios"][y] is None else f["anios"][y]}</td>' for y in anios)
+        n = esc(f["club"])
+        filas += (f'<tr class="{e}"><td class="rk-pos">{k + 1}</td><td class="rk-club">{crest(f["club"], 22)}'
+                  f'<span class="nm" role="button" tabindex="0" data-club="{n}" title="Ver la ficha de {n}">{n}</span>'
+                  f'{bandera(f["pais"], 16)}</td>{celdas}<td class="rk-n rk-tot">{f["total"]}</td>'
+                  f'<td class="rk-est">{estado}</td></tr>')
+    return (f'<div class="rk-camp">{camp}{cupo}</div><div class="rk-wrap"><table class="rk"><thead><tr>'
+            f'<th class="rk-pos">#</th><th class="rk-club">Club</th>{cab}<th class="rk-n">Total</th>'
+            f'<th class="rk-est">Estado</th></tr></thead><tbody>{filas}</tbody></table></div>')
+
+
 def cuadro_mundial_html(M):
     """Octavos, cuartos, semis, final y campeón del Mundial de Clubes."""
     cols = []

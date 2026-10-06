@@ -353,6 +353,36 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .kb-champ .s{font-size:.7rem;color:var(--tinta-2);margin-top:2px;}
 .kb-champ.vacio{opacity:.55;}
 .kb .logo-mini,.bt .logo-mini{flex:none;opacity:.9;}
+/* ranking CONMEBOL para el Mundial de Clubes */
+.rk-camp{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:8px;margin:6px 0 12px;}
+.rk-c{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:6px;background:var(--papel);padding:8px 10px;min-width:0;}
+.rk-c.pend{border-top-color:var(--line-2);}
+.rk-c.rk-cupo{border-top-color:var(--win);}
+.rk-c.rk-cupo b{font-size:1.1rem;font-weight:900;color:var(--win);}
+.rk-y{flex-basis:100%;font-stretch:85%;font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--tinta-3);}
+.rk-cn{font-weight:700;font-size:.84rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rk-c.pend .rk-cn{color:var(--tinta-3);font-weight:600;}
+.rk-c [data-club]{cursor:pointer;}
+.rk-wrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--papel);}
+table.rk{width:100%;border-collapse:collapse;font-size:.84rem;}
+.rk thead th{position:sticky;top:0;z-index:1;background:var(--tiza-2);font-stretch:85%;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3);padding:8px 8px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap;}
+.rk thead th i{display:block;font-style:normal;color:var(--acc);letter-spacing:.06em;}
+.rk td{padding:6px 8px;border-top:1px solid var(--line);white-space:nowrap;}
+.rk .rk-pos{width:28px;text-align:right;font-weight:800;color:var(--tinta-3);font-variant-numeric:tabular-nums;}
+.rk .rk-club{display:flex;align-items:center;gap:8px;min-width:190px;}
+.rk .rk-club .nm{font-weight:600;cursor:pointer;}
+.rk .rk-club .nm:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
+.rk .rk-n{text-align:center;font-variant-numeric:tabular-nums;color:var(--tinta-2);}
+.rk .rk-n.vivo{background:color-mix(in srgb,var(--acc) 8%,transparent);color:var(--tinta);font-weight:700;}
+.rk .rk-tot{font-weight:900;font-size:.95rem;color:var(--tinta);}
+.rk tr.campeon td.rk-pos{box-shadow:inset 3px 0 0 var(--gold);}
+.rk tr.ranking td.rk-pos{box-shadow:inset 3px 0 0 var(--win);}
+.rk tr.tope td.rk-pos{box-shadow:inset 3px 0 0 var(--lose);}
+.rk tr.campeon{background:color-mix(in srgb,var(--gold) 9%,transparent);}
+.rk tr.ranking{background:color-mix(in srgb,var(--win) 9%,transparent);}
+.rk-e{display:inline-flex;flex-direction:column;font-size:.7rem;font-weight:800;line-height:1.15;}
+.rk-e small{font-size:.66rem;font-weight:600;color:var(--tinta-3);}
+.rk-e.campeon{color:var(--gold);}.rk-e.ranking{color:var(--win);}.rk-e.tope{color:var(--lose);}
 /* palmarés histórico (Historial) */
 .pal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;margin:6px 0 10px;}
 .pal{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;display:flex;flex-direction:column;}

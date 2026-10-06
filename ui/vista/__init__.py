@@ -130,6 +130,7 @@ from ui.vista.copas_int import (
     grupos_mundial_html,
     _kb_card_mundial,
     cuadro_mundial_html,
+    ranking_conmebol_html,
 )
 from ui.vista.calendario import (
     _cal_partidos,

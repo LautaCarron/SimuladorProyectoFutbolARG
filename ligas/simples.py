@@ -246,7 +246,7 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         
         # Define qué límites importan para cortar la tabla
         fronteras = [(0, "Campeonato"), (1, "Ascenso")]
-        if nombre_liga == "Primera B" and len(ids) >= 18:
+        if nombre_liga in ("Primera B", "Primera C") and len(ids) >= 18:   # descienden del 18° para abajo
             fronteras.append((16, "Permanencia"))
             
         bloques_procesados = set()
@@ -290,5 +290,5 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
         ids_cierre = S_LIGA["orden_final"] if ya_se_jugo else ids
         S_LIGA["campeon"] = int(ids_cierre[0])
         S_LIGA["asc_directo"] = [int(ids_cierre[0]), int(ids_cierre[1])]
-        if nombre_liga == "Primera B":
+        if nombre_liga in ("Primera B", "Primera C"):
             S_LIGA["desc_directo"] = [int(i) for i in ids_cierre[17:]] if len(ids_cierre) >= 18 else []

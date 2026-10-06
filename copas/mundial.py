@@ -5,9 +5,13 @@ los 4 años anteriores clasifican directo y el resto de cada cupo sale del ranki
 clubes por país (salvo campeones). Cupos: UEFA 12, CONMEBOL 6, AFC 4, CAF 4, Concacaf 4, OFC 1 y el
 anfitrión (ver clubes_mundial.py).
 
-  * CONMEBOL: campeones de la Libertadores simulada de cada temporada. El ranking suma los puntos de
-    partidos (victoria 3, empate 1) de la Libertadores y la mitad de los de la Sudamericana de los 4 años.
-    El año 2025 arranca con los campeones y el ranking reales.
+  * CONMEBOL (6 cupos): los 4 campeones de la Libertadores del ciclo y los 2 mejores del ranking que no
+    fueron campeones. El ranking es el oficial de CONMEBOL para el Mundial: suma 4 Libertadores, y sólo
+    desde la fase de grupos (la fase previa y la Sudamericana no cuentan): 3 puntos por llegar a los
+    grupos, 3 por victoria, 1 por empate (una serie definida por penales cuenta como empate) y 3 más
+    por cada ronda alcanzada (octavos, cuartos, semifinal y final). Máximo 2 clubes por país, salvo que
+    los que sobran sean campeones. A igual puntaje, el que sumó más en la última temporada y después
+    la media. 2025: campeón y puntos reales (Flamengo campeón).
   * UEFA, AFC, CAF, Concacaf y OFC no se simulan como torneo: al terminar cada temporada se sortea su
     campeón continental entre los clubes de clubes_mundial.py (los de mayor media tienen más chances).
     El "ranking" de esas confederaciones se aproxima con la media del club. 2025: campeones reales.
@@ -21,7 +25,7 @@ from collections import Counter
 import numpy as np
 
 from datos.clubes_mundial import CUPOS_2029, MEDIA_MUNDIAL, PAIS_MUNDIAL, clubes_de
-from copas.conmebol import PAIS_EXT, _medias, pais_de
+from copas.conmebol import _medias, pais_de
 from motor.nucleo import MAX_R, MIN_R, jugar, jugar_ko, nuevo_partido, tanda_penales
 
 MUNDIAL = "Mundial de Clubes"
@@ -38,12 +42,21 @@ TORNEO_CONF = {"UEFA": "Champions League", "CONMEBOL": "Copa Libertadores", "AFC
 _FIX3 = [[(0, 1), (2, 3)], [(3, 0), (1, 2)], [(0, 2), (3, 1)]]       # una rueda de un grupo de 4
 _TEMP_SORTEO = 5.0            # cuánto pesa la media al sortear un campeón continental
 
-# Campeones continentales reales de 2025 y ranking CONMEBOL real de 2025 (puntos para el Mundial 2029)
+# Campeones continentales reales de 2025 y ranking CONMEBOL real de la Libertadores 2025 (puntos para el
+# Mundial 2029), calculados partido por partido con el reglamento: coinciden con la tabla oficial.
 CAMPEONES_2025 = {"UEFA": "Paris Saint-Germain", "CONMEBOL": "Flamengo", "AFC": "Al-Ahli",
                   "CAF": "Pyramids", "CONCACAF": "Cruz Azul", "OFC": "Auckland City"}
-PUNTOS_2025 = {"Palmeiras": 57, "Flamengo": 55, "Liga de Quito": 44, "Estudiantes (LP)": 37, "Racing": 35,
-               "São Paulo": 25, "Peñarol": 25, "Vélez": 24, "Cerro Porteño": 24, "River Plate": 23,
-               "Universitario": 22, "Independiente del Valle": 21, "Universidad de Chile": 13}
+PUNTOS_2025 = {"Palmeiras": 46, "Flamengo": 42, "Liga de Quito": 35, "Racing": 35, "Estudiantes (LP)": 28,
+               "São Paulo": 25, "Vélez": 24, "River Plate": 23, "Botafogo": 21, "Peñarol": 20, "Libertad": 17,
+               "Atlético Nacional": 17, "Internacional": 17, "Fortaleza": 15, "Universitario": 15,
+               "Cerro Porteño": 14, "Central Córdoba (SdE)": 14, "Universidad de Chile": 13,
+               "Independiente del Valle": 11, "Bahia": 10, "Nacional": 10, "Bolívar": 9,
+               "San Antonio Bulo Bulo": 9, "Atlético Bucaramanga": 9, "Olimpia": 8, "Colo Colo": 8,
+               "Alianza Lima": 8, "Sporting Cristal": 7, "Talleres": 7, "Barcelona SC": 7, "Carabobo": 4,
+               "Deportivo Táchira": 3}
+CUPO_CONMEBOL = 6
+TOPE_PAIS = 2
+FASES_RANKING = ("Octavos", "Cuartos", "Semifinal", "Final")     # +3 por alcanzar cada una
 
 
 # ---------------------------------------------------------------- calendario de ediciones
@@ -116,14 +129,29 @@ def _sortear_campeon(rng, conf, rm):
     return clubes[int(rng.choice(len(clubes), p=p / p.sum()))]
 
 
-def _puntos_conmebol(S):
-    """Puntos del ranking de la temporada que termina: victoria 3, empate 1 (Sudamericana, la mitad)."""
+def puntos_libertadores(L):
+    """Puntos de ranking que da una Libertadores (terminada o en curso): 3 por llegar a los grupos,
+    3 por victoria y 1 por empate desde los grupos, y 3 por cada ronda alcanzada (octavos a final)."""
     pts = {}
-    for clave, peso in (("lib", 1.0), ("sud", 0.5)):
-        for p in S.get("int", {}).get(clave, {}).get("log", []):
-            for n, f, c in ((p["local"], p["gl"], p["gv"]), (p["visita"], p["gv"], p["gl"])):
-                pts[n] = pts.get(n, 0.0) + peso * (3 if f > c else 1 if f == c else 0)
-    return {n: round(v, 1) for n, v in pts.items()}
+    if not L or L.get("grupos") is None:
+        return pts
+    for g in L["grupos"]:
+        for n in g:
+            pts[n] = 3
+    for p in L["log"]:
+        if p["comp"].startswith("Fase"):                        # la fase previa no suma
+            continue
+        for n, f, c in ((p["local"], p["gl"], p["gv"]), (p["visita"], p["gv"], p["gl"])):
+            pts[n] = pts.get(n, 0) + (3 if f > c else 1 if f == c else 0)
+    for fase in FASES_RANKING:
+        for x in L["llaves"].get(fase) or []:
+            for n in (x["a"], x["b"]):
+                pts[n] = pts.get(n, 0) + 3
+    return pts
+
+
+def _puntos_conmebol(S):
+    return puntos_libertadores(S.get("int", {}).get("lib"))
 
 
 def cerrar_temporada(S, rng):
@@ -140,25 +168,86 @@ def cerrar_temporada(S, rng):
 
 
 # ---------------------------------------------------------------- clasificación
-def _puntos_ciclo(S, anios):
-    tot = {}
+def anios_ciclo(temp):
+    """Los 4 años que cuentan para la edición de la temporada `temp` (2029: 2025-2028)."""
+    y0 = anio_de(temp)
+    return list(range(y0 - CADA, y0))
+
+
+def _en_curso(S, y):
+    """¿El año y es la temporada que se está jugando (todavía sin cerrar)?"""
+    return y == anio_de(S["temp"]) and y not in ciclo(S)["puntos"]
+
+
+def puntos_por_anio(S, anios):
+    """{año: {club: puntos}}. 2025 es real; la temporada en juego se calcula en vivo."""
+    c = ciclo(S)
+    out = {}
     for y in anios:
-        for n, v in ciclo(S)["puntos"].get(y, {}).items():
-            tot[n] = tot.get(n, 0.0) + v
-    return tot
+        if y == ANIO_BASE:
+            out[y] = dict(PUNTOS_2025)
+        elif y in c["puntos"]:
+            out[y] = c["puntos"][y]
+        elif _en_curso(S, y):
+            out[y] = _puntos_conmebol(S)
+        else:
+            out[y] = {}
+    return out
+
+
+def campeon_conmebol(S, y):
+    """Campeón de la Libertadores del año y (None si todavía no se jugó la final)."""
+    if _en_curso(S, y):
+        return S.get("int", {}).get("lib", {}).get("campeon")
+    return ciclo(S)["campeones"].get(y, {}).get("CONMEBOL")
+
+
+def clasificacion_conmebol(S, temp):
+    """Ranking CONMEBOL en vivo para la edición de la temporada `temp`.
+
+    Devuelve {anios, campeones: [(año, club|None)], cupos_ranking, pendientes, en_curso, filas}; cada
+    fila es {club, pais, anios: {año: pts}, total, estado, nota} con estado "campeon", "ranking"
+    (entra), "tope" (le alcanzaría, pero su país ya tiene 2) o "afuera"."""
+    anios = anios_ciclo(temp)
+    ppa = puntos_por_anio(S, anios)
+    campeones = [(y, campeon_conmebol(S, y)) for y in anios]
+    camp_set = list(dict.fromkeys(c for _, c in campeones if c))
+    pendientes = sum(1 for _, c in campeones if not c)
+    cupos_rank = max(0, CUPO_CONMEBOL - len(camp_set) - pendientes)
+    clubes = set(camp_set)
+    for d in ppa.values():
+        clubes |= {n for n, v in d.items() if v > 0}
+    med = medias(S)
+    total = {n: sum(ppa[y].get(n, 0) for y in anios) for n in clubes}
+    ult = {n: next((ppa[y].get(n, 0) for y in reversed(anios) if ppa[y]), 0) for n in clubes}
+    orden = sorted(clubes, key=lambda n: (-total[n], -ult[n], -med.get(n, 0.0), n))
+    cuenta = Counter(pais_club(n) for n in camp_set)
+    usados, filas = 0, []
+    for n in orden:
+        pais = pais_club(n)
+        if n in camp_set:
+            estado, nota = "campeon", "Campeón " + " y ".join(str(y) for y, c in campeones if c == n)
+        elif usados < cupos_rank and cuenta[pais] < TOPE_PAIS:
+            estado, nota = "ranking", "Entra por ranking"
+            usados += 1
+            cuenta[pais] += 1
+        elif usados < cupos_rank:
+            estado, nota = "tope", f"{pais} ya tiene {TOPE_PAIS}"
+        else:
+            estado, nota = "afuera", ""
+        filas.append({"club": n, "pais": pais, "anios": {y: ppa[y].get(n) for y in anios},
+                      "total": total[n], "estado": estado, "nota": nota})
+    return {"anios": anios, "campeones": campeones, "cupos_ranking": cupos_rank, "pendientes": pendientes,
+            "en_curso": [y for y in anios if _en_curso(S, y)], "filas": filas}
 
 
 def calcular_clasificados(S, temp):
     """Los 32 clasificados de la edición de la temporada `temp`, según lo registrado hasta ahora:
     lista de dicts {club, conf, via}. Antes de que termine el ciclo es una proyección."""
     C = ciclo(S)
-    y0 = anio_de(temp)
-    anios = list(range(y0 - CADA, y0))
+    anios = anios_ciclo(temp)
     med = medias(S)
     usados, out = set(), []
-    puntos = _puntos_ciclo(S, anios)
-    pool_conmebol = set(puntos) | set(S["nombres"])
-    pool_conmebol |= set(PAIS_EXT)
 
     def llenar(conf, cupo, candidatos, via_directo, via_rank):
         lista, cuenta = [], Counter()
@@ -180,13 +269,19 @@ def calcular_clasificados(S, temp):
         out.extend({"club": n, "conf": conf, "via": v} for n, v in lista)
 
     for conf in CONFS:
-        if conf == "CONMEBOL":
-            cand = sorted(pool_conmebol, key=lambda n: (-puntos.get(n, 0.0), -med.get(n, 0.0)))
-            via = "Ranking CONMEBOL"
-        else:
-            cand = sorted(clubes_de(conf), key=lambda n: -med.get(n, 0.0))
-            via = f"Ranking {conf}"
-        llenar(conf, CUPOS_2029[conf], cand, "", via)
+        if conf == "CONMEBOL":                                    # ranking oficial (clasificacion_conmebol)
+            for f in clasificacion_conmebol(S, temp)["filas"]:
+                if f["estado"] == "campeon":
+                    via = f["nota"].replace("Campeón", "Campeón Copa Libertadores")
+                elif f["estado"] == "ranking":
+                    via = f"Ranking CONMEBOL ({f['total']} pts)"
+                else:
+                    continue
+                out.append({"club": f["club"], "conf": conf, "via": via})
+                usados.add(f["club"])
+            continue
+        cand = sorted(clubes_de(conf), key=lambda n: -med.get(n, 0.0))
+        llenar(conf, CUPOS_2029[conf], cand, "", f"Ranking {conf}")
     # anfitrión: el mejor club de su confederación que todavía no clasificó
     for club in sorted(clubes_de(ANFITRION), key=lambda n: -med.get(n, 0.0)):
         if club not in usados:
