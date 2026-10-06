@@ -202,12 +202,12 @@ def nuevo_partido(liga, fecha, rotulo, comp, local, visita, gl, gv,
     }
 
 
-def jugar_ko(rng, r_loc, r_vis, sorpresa, localia=LOCALIA):
+def jugar_ko(rng, r_loc, r_vis, sorpresa, localia=LOCALIA, escala=ESCALA):
     """Partido único eliminatorio SIN alargue: si empatan, penales directos.
 
     Devuelve goles local, goles visitante, si ganó el local y si hubo penales.
     """
-    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, localia=localia)
+    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, escala=escala, localia=localia)
     p_loc = np.clip(0.5 + (np.asarray(r_loc, float) - np.asarray(r_vis, float)) / 400, 0.35, 0.65)
     pen_local = rng.random(np.shape(gl)) < p_loc
     gana_local = np.where(gl != gv, gl > gv, pen_local)

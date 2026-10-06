@@ -41,6 +41,9 @@ TORNEO_CONF = {"UEFA": "Champions League", "CONMEBOL": "Copa Libertadores", "AFC
                "OFC": "Champions League de Oceanía"}
 _FIX3 = [[(0, 1), (2, 3)], [(3, 0), (1, 2)], [(0, 2), (3, 1)]]       # una rueda de un grupo de 4
 _TEMP_SORTEO = 5.0            # cuánto pesa la media al sortear un campeón continental
+# En el Mundial la diferencia de nivel entre continentes pesa más que en una liga: con la escala de las
+# ligas, los clubes de África, Asia y Concacaf ganaban casi 1 de cada 10 ediciones (en la realidad, ~2-3%).
+ESCALA_MUNDIAL = 12.0          # (las ligas usan 20; con 12 Europa gana ~84%, Sudamérica ~13%, el resto ~2%)
 
 # Campeones continentales reales de 2025 y ranking CONMEBOL real de la Libertadores 2025 (puntos para el
 # Mundial 2029), calculados partido por partido con el reglamento: coinciden con la tabla oficial.
@@ -377,7 +380,7 @@ def simular_ronda_mundial(S, P, rng):
     if k < 3:
         pares = [(g, M["grupos"][g][i], M["grupos"][g][j]) for g in range(8) for i, j in _FIX3[k]]
         gl, gv = jugar(rng, np.array([r[a] for _, a, _ in pares]), np.array([r[b] for _, _, b in pares]),
-                       P["sorpresa"], localia=0.0)
+                       P["sorpresa"], escala=ESCALA_MUNDIAL, localia=0.0)
         for (g, a, b), x, y in zip(pares, gl, gv):
             x, y = int(x), int(y)
             M["log"].append(nuevo_partido(MUNDIAL, k + 1, RONDAS[k], f"Grupo {GRUPOS[g]}", a, b, x, y,
@@ -389,7 +392,8 @@ def simular_ronda_mundial(S, P, rng):
     else:
         llaves = M["cuadro"][k - 3]
         gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[m["a"]] for m in llaves]),
-                                       np.array([r[m["b"]] for m in llaves]), P["sorpresa"], localia=0.0)
+                                       np.array([r[m["b"]] for m in llaves]), P["sorpresa"], localia=0.0,
+                                       escala=ESCALA_MUNDIAL)
         for m, g1, g2, gl_, pe in zip(llaves, gl, gv, gana_l, pen):
             tanda = tanda_penales(rng, bool(gl_)) if pe else None
             m["gana"] = m["a"] if gl_ else m["b"]
