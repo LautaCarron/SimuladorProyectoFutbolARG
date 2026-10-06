@@ -55,6 +55,7 @@ def nueva_estructura_liga(S_LIGA, rng):
     S_LIGA["orden_final"] = None
     S_LIGA["desempate_pendiente"] = False
     S_LIGA["ids_desempate"] = []
+    S_LIGA["motivos_desempate"] = []        # si no, la tabla nueva sigue marcando el desempate anterior
 
 
 def tabla_pb(SPB):

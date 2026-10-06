@@ -383,6 +383,22 @@ table.rk{width:100%;border-collapse:collapse;font-size:.84rem;}
 .rk-e{display:inline-flex;flex-direction:column;font-size:.7rem;font-weight:800;line-height:1.15;}
 .rk-e small{font-size:.66rem;font-weight:600;color:var(--tinta-3);}
 .rk-e.campeon{color:var(--gold);}.rk-e.ranking{color:var(--win);}.rk-e.tope{color:var(--lose);}
+/* cambios de categoría (Historial), una tarjeta por liga */
+.mv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,290px),1fr));gap:12px;margin:4px 0 6px;align-items:start;}
+.mv-card{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;}
+.mv-h{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--soft);border-bottom:1px solid var(--line);font-weight:900;font-size:.88rem;}
+.mv-sec{padding:8px 12px 10px;}
+.mv-sec+.mv-sec{border-top:1px dashed var(--line);}
+.mv-lab{display:flex;align-items:center;gap:6px;font-stretch:85%;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px;}
+.mv-lab b{margin-left:auto;font-size:.7rem;color:var(--tinta-3);}
+.mv-lab.up{color:var(--win);}.mv-lab.down{color:var(--lose);}
+.mv-lista{display:flex;flex-direction:column;gap:2px;}
+.mv-cl{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:.84rem;min-width:0;}
+.mv-nm{font-weight:600;cursor:pointer;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mv-nm:hover{color:var(--cel2);text-decoration:underline;text-underline-offset:3px;}
+.mv-cl small{margin-left:auto;flex:none;font-size:.68rem;color:var(--tinta-3);}
+.mv-vacio{padding:10px 12px;font-size:.82rem;color:var(--tinta-3);}
+.mv-adm .mv-h{color:var(--lose);}
 /* palmarés histórico (Historial) */
 .pal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px;margin:6px 0 10px;}
 .pal{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;display:flex;flex-direction:column;}

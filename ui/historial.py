@@ -12,6 +12,51 @@ from datos.regional import REGIONES_REG
 from ui.vista import aviso, crest, esc, lista_equipos_html, seccion, tabla_html
 
 
+def _mov_clubes(items):
+    return "".join(f'<span class="mv-cl">{crest(n, 20)}<span class="mv-nm" role="button" tabindex="0" '
+                   f'data-club="{esc(n)}">{esc(n)}</span>{f"<small>{esc(d)}</small>" if d else ""}</span>'
+                   for n, d in items)
+
+
+def movimientos_html(mv):
+    """Cambios de categoría ordenados por liga (de Primera para abajo): quién sube y quién baja de cada una."""
+    g = mv.get
+    ligas = [
+        ("Primera División", "Primera División", [], [("la B Nacional", [(n, "") for n in g("bajan_p", [])])]),
+        ("Primera Nacional", "Primera Nacional",
+         [("Primera", [(n, "directo") for n in g("directos", [])]
+           + ([(g("reducido"), "reducido")] if g("reducido") else []))],
+         [("el Federal A", [(n, "") for n in g("bajan_b_fed", [])]),
+          ("la Primera B", [(n, "") for n in g("bajan_b_pb", [])])]),
+        ("Federal A", "Federal A", [("la B Nacional", [(n, "") for n in g("suben_f_b", [])])],
+         [("el Regional", [(n, region_regional(n)) for n in g("bajan_fed_reg", [])])]),
+        ("Primera B Metropolitana", "Primera B", [("la B Nacional", [(n, "") for n in g("suben_pb_b", [])])],
+         [("la Primera C", [(n, "") for n in g("bajan_pb_pc", [])])]),
+        ("Primera C", "Primera C", [("la Primera B", [(n, "") for n in g("suben_pc_pb", [])])],
+         [("el Promocional", [(n, "") for n in g("bajan_pc_pd", [])])]),
+        ("Promocional Amateur", "Promocional Amateur", [("la Primera C", [(n, "") for n in g("suben_pd_pc", [])])], []),
+        ("Regional Amateur", "Regional Amateur",
+         [("el Federal A", [(n, "final regional") for n in g("suben_reg_fed", [])]
+           + [(n, "reubicación") for n in g("suben_reg_fed_extra", [])])], []),
+    ]
+    tarjetas = ""
+    for titulo, logo, suben, bajan in ligas:
+        filas = ""
+        for flecha, clase, verbo, grupos in (("▲", "up", "Suben a", suben), ("▼", "down", "Bajan a", bajan)):
+            for destino, items in grupos:
+                if items:
+                    filas += (f'<div class="mv-sec"><div class="mv-lab {clase}">{flecha} {f'{verbo} {destino}'.replace(' a el ', ' al ')}'
+                              f'<b>{len(items)}</b></div><div class="mv-lista">{_mov_clubes(items)}</div></div>')
+        tarjetas += (f'<div class="mv-card"><div class="mv-h">{logo_img(logo, 22)}<span>{esc(titulo)}</span></div>'
+                     + (filas or '<div class="mv-vacio">Sin cambios</div>') + '</div>')
+    if g("descenso_adm"):
+        tarjetas += ('<div class="mv-card mv-adm"><div class="mv-h"><span>Tribunal de Disciplina</span></div>'
+                     '<div class="mv-sec"><div class="mv-lab down">▼ Descenso administrativo'
+                     f'<b>{len(g("descenso_adm"))}</b></div><div class="mv-lista">'
+                     f'{_mov_clubes([(n, "sanción") for n in g("descenso_adm")])}</div></div></div>')
+    return f'<div class="mv-grid">{tarjetas}</div>'
+
+
 def render(ctx):
     (S, _abierta, tab_h) = (
         ctx.S, ctx._abierta, ctx.tab_h)
@@ -85,37 +130,6 @@ def render(ctx):
 
             if S["movimientos"]:
                 mv = S["movimientos"]
-                with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}", expanded=False):
-                    st.markdown(
-                        '<div class="catgrid">'
-                        f'<div><div class="mlab up">▲ Ascendieron a Primera</div>'
-                        f'{lista_equipos_html([(n, "directo") for n in mv["directos"]] + ([(mv["reducido"], "reducido")] if mv["reducido"] else []))}</div>'
-                        f'<div><div class="mlab down">▼ Descendieron a B Nacional</div>'
-                        f'{lista_equipos_html([(n, "") for n in mv["bajan_p"]])}</div>'
-                
-                        f'<div><div class="mlab up">▲ Ascendieron a B Nacional</div>'
-                        f'{lista_equipos_html([(n, "del Federal A") for n in mv.get("suben_f_b", [])] + [(n, "de la B Metro") for n in mv.get("suben_pb_b", [])])}</div>'
-                        f'<div><div class="mlab down">▼ Descendieron al Federal A</div>'
-                        f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_fed", [])])}</div>'
-                
-                        f'<div><div class="mlab down">▼ Descendieron a la B Metro</div>'
-                        f'{lista_equipos_html([(n, "") for n in mv.get("bajan_b_pb", [])])}</div>'
-                        f'<div><div class="mlab up">▲ Ascendieron a la B Metro</div>'
-                        f'{lista_equipos_html([(n, "de la C") for n in mv.get("suben_pc_pb", [])])}</div>'
-                
-                        f'<div><div class="mlab down">▼ Descendieron a Primera C</div>'
-                        f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pb_pc", [])])}</div>'
-                        f'<div><div class="mlab up">▲ Ascendieron al Federal A</div>'
-                        f'{lista_equipos_html([(n, "del Regional") for n in mv.get("suben_reg_fed", [])] + [(n, "reubicación") for n in mv.get("suben_reg_fed_extra", [])])}</div>'
-                    
-                        f'<div><div class="mlab down">▼ Descendieron al Promocional Amateur</div>'
-                        f'{lista_equipos_html([(n, "") for n in mv.get("bajan_pc_pd", [])])}</div>'
-                        f'<div><div class="mlab up">▲ Ascendieron a Primera C</div>'
-                        f'{lista_equipos_html([(n, "del Promocional") for n in mv.get("suben_pd_pc", [])])}</div>'
-                    
-                        f'<div><div class="mlab down">▼ Descendieron al Regional</div>'
-                        f'{lista_equipos_html([(n, region_regional(n)) for n in mv.get("bajan_fed_reg", [])])}</div>'
-                        + (f'<div><div class="mlab down">▼ Descenso administrativo (Tribunal de Disciplina)</div>'
-                           f'{lista_equipos_html([(n, "sanción") for n in mv.get("descenso_adm", [])])}</div>'
-                           if mv.get("descenso_adm") else "") +
-                        f'</div>', unsafe_allow_html=True)
+                with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}",
+                                 expanded=False):
+                    st.markdown(movimientos_html(mv), unsafe_allow_html=True)

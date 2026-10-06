@@ -317,7 +317,7 @@ def nueva_temporada(S, volatilidad):
             S[comp.clave] = comp.nueva(S, rng)
 
     #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
-    for liga in [S["pb"], S["pc"]]:
+    for liga in [S["pb"], S["pc"], S["pd"]]:
         liga["desempate_pendiente"] = False
         liga["ids_desempate"] = []
         liga["motivos_desempate"] = []
