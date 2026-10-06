@@ -2,6 +2,7 @@
 """
 
 import json
+import sys
 import streamlit as st
 
 from ui.vista.ficha import ver_equipo
@@ -59,9 +60,12 @@ _PUENTE_JS = """
 
 
 def _instalar_puente_js():
-    """Corre el script en la página. st.html(unsafe_allow_javascript) es lo actual; en versiones
-    de Streamlit que no lo tienen se usa un iframe que lo inyecta en la página de arriba."""
+    """Corre el script en la página. En la web estática (stlite) con st.html(unsafe_allow_javascript);
+    con Streamlit (Community Cloud o la PC) con un iframe que lo inyecta en la página de arriba,
+    porque ahí el sanitizador de st.html puede descartar el script."""
     try:
+        if sys.platform != "emscripten":
+            raise TypeError
         st.html(_PUENTE_JS, unsafe_allow_javascript=True)
     except TypeError:
         import streamlit.components.v1 as components

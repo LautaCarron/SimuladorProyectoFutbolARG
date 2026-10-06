@@ -60,6 +60,13 @@ import streamlit as st
 st.set_page_config(page_title="Proyecto AFA · Simulador Fútbol Argentino", page_icon="⚽", layout="wide",
                    initial_sidebar_state="collapsed")
 
+import sys
+
+# Pantalla de inicio ("Elegí un modo"). En la web estática (stlite) la muestra index.html.
+if sys.platform != "emscripten":
+    from ui.inicio import mostrar_inicio
+    mostrar_inicio()
+
 import os
 import sys
 from types import SimpleNamespace
