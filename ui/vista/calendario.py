@@ -9,6 +9,7 @@ from ligas.primera import rotulo_p
 from ligas.regional import rotulo_reg
 from ui.vista.base import crest, esc
 from ui.vista.copas_int import _INT_CLAVE, _int_pendientes
+from ui.vista.mi_club import mi_club
 from ui.vista.partidos import (
     partidos_fecha_b,
     partidos_fecha_f,
@@ -82,28 +83,41 @@ def _cal_res(p):
     return f"{p['gl']}-{p['gv']}{pen}"
 
 
-def calendario_mes_html(S, eventos, mes, proximo):
-    """Días del mes con lo que se juega cada uno (cada competición se despliega)."""
+def calendario_mes_html(S, eventos, mes, proximo, solo_club=False):
+    """Días del mes con lo que se juega cada uno (cada competición se despliega).
+    Con `solo_club` (y un club dirigido por el manager) se ocultan los demás equipos: sólo quedan los
+    días, las competencias y los partidos de ese club. Los partidos de mi club siempre se marcan."""
+    club = mi_club()
+    filtrar = bool(solo_club and club)
     dias = {}
     for d, liga, n, jugada in eventos:
         if d.month == mes:
             dias.setdefault(d, []).append((liga, n, jugada))
     out = ""
     for d in sorted(dias):
-        clase = "hoy" if d == proximo else ("jugado" if all(j for _, _, j in dias[d]) else "")
-        comps = ""
+        comps, jugadas_dia = "", []
         for liga, n, jugada in dias[d]:
             partidos = _cal_partidos(S, liga, n)
+            if filtrar:
+                partidos = [p for p in partidos if club in (p["local"], p["visita"])]
+                if not partidos:                  # mi club no juega en esta competición ese día
+                    continue
+            jugadas_dia.append(jugada)
             filas = "".join(
-                f'<div class="cal-p"><span class="cl"><span class="cn">{esc(p["local"])}</span>{crest(p["local"], 16)}</span>'
+                f'<div class="cal-p{" mio" if club and club in (p["local"], p["visita"]) else ""}">'
+                f'<span class="cl"><span class="cn">{esc(p["local"])}</span>{crest(p["local"], 16)}</span>'
                 f'<span class="cs">{_cal_res(p)}'
                 f'{"<i>⚠</i>" if p.get("incidente") else ""}</span>'
                 f'<span class="cv">{crest(p["visita"], 16)}<span class="cn">{esc(p["visita"])}</span></span></div>'
                 for p in partidos) or '<div class="cal-vacio">Los cruces se conocen más adelante.</div>'
             estado = ('<span class="cal-est ok">Jugada</span>' if jugada else '<span class="cal-est">Por jugar</span>')
-            comps += (f'<details class="cal-comp"><summary>{logo_img(liga, 20)}<b>{esc(liga)}</b>'
+            abierto = " open" if filtrar else ""      # con "sólo mi club" el partido sale desplegado
+            comps += (f'<details class="cal-comp"{abierto}><summary>{logo_img(liga, 20)}<b>{esc(liga)}</b>'
                       f'<span class="cal-rot">{esc(_cal_rotulo(S, liga, n))}</span>{estado}</summary>'
                       f'<div class="cal-ps">{filas}</div></details>')
+        if not jugadas_dia:                       # ese día no queda nada para mostrar
+            continue
+        clase = "hoy" if d == proximo else ("jugado" if all(jugadas_dia) else "")
         out += (f'<div class="cal-dia {clase}"><div class="cal-num"><b>{d.day}</b>'
                 f'<span>{texto_dia(d, False)[:3]}</span></div><div class="cal-ev">{comps}</div></div>')
     return f'<div class="cal">{out}</div>'

@@ -42,7 +42,8 @@ from motor.ofertas import (
     renunciar,
 )
 from ui.vista import aviso, chip, crest, esc, eventos_calendario, fila_partido_html, norm, render_ficha, seccion
-from ui.vista.partidos import todos_los_partidos
+from ui.vista.calendario import _cal_partidos
+from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partidos
 
 # ---- Opciones ---------------------------------------------------------------
 NACIONALIDADES = ["Argentina", "Uruguay", "Chile", "Paraguay", "Bolivia", "Brasil", "Colombia", "Ecuador",
@@ -260,6 +261,49 @@ def sincronizar_manager(S, M):
     return [t for _, t in textos]
 
 
+def proximo_partido_club(S, club):
+    """Próximo partido sin jugar del club en cualquier competencia (liga, Copa Argentina, Supercopa,
+    copas CONMEBOL, Mundial), según el calendario. None si no hay ninguno programado todavía."""
+    for _d, liga, n, jugada in eventos_calendario(S):         # ya vienen ordenados por día
+        if jugada:
+            continue
+        try:
+            partidos = _cal_partidos(S, liga, n)
+        except Exception:
+            continue
+        for p in partidos:
+            if p["gl"] is None and club in (p["local"], p["visita"]):
+                return p
+    return None
+
+
+def _datos_rival(S, club, rival):
+    partes = []
+    cat = categoria_rival(rival)
+    if cat:
+        partes.append(cat)
+    if categoria_de(S, rival) and categoria_de(S, club):
+        partes.append(f"media {info_club(S, rival)[1]:.1f} (la tuya: {info_club(S, club)[1]:.1f})")
+    return " · ".join(partes)
+
+
+def _tarjeta_proximo(S, M):
+    """Contra quién juega el club en su próximo partido."""
+    club = M["club"]
+    st.markdown(f'<div class="mlab">Próximo partido de {esc(club)}</div>', unsafe_allow_html=True)
+    p = proximo_partido_club(S, club)
+    if p is None:
+        st.caption("No hay partidos programados para tu club por ahora: se conocen cuando termina "
+                   "la ronda anterior o cuando arranca la próxima temporada.")
+        return
+    rival = p["visita"] if p["local"] == club else p["local"]
+    cond = "en cancha neutral" if p["neutral"] else "de local" if p["local"] == club else "de visitante"
+    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+    st.markdown(f"Jugás contra **{esc(rival)}**, {cond}. " + esc(_datos_rival(S, club, rival)))
+    if M["rol"] == "reserva":
+        st.caption("Como DT de la Reserva no dirigís este partido: lo dirige el DT del primer equipo.")
+
+
 def _partidos_club(club):
     return [p for p in todos_los_partidos() if club in (p["local"], p["visita"])]
 
@@ -329,6 +373,8 @@ def panel_manager(S, P, acumular):
     if msg:
         aviso(msg)
     _controles(S, M, P, acumular)
+    if M["club"]:
+        _tarjeta_proximo(S, M)
     etiquetas = ["Oficina"] + (["Mi club"] if M["club"] else []) + ["Carrera"]
     tabs = dict(zip(etiquetas, st.tabs(etiquetas, key="tabs_mgr", on_change="rerun")))
     with tabs["Oficina"]:

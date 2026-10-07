@@ -10,6 +10,7 @@ from ligas.nacional import B_F1, B_F2, B_ZONAS2, rotulo_b
 from ligas.primera import FECHAS_F1, TOTAL_FECHAS, ZONAS, rotulo_p
 from ligas.regional import rotulo_reg
 from ui.vista.base import _estado, chip, crest, esc
+from ui.vista.mi_club import mi_club
 from datos.clubes_mundial import PAIS_MUNDIAL
 from copas.registro import REGISTRO
 from copas.conmebol import PAIS_EXT
@@ -82,12 +83,14 @@ def fila_partido_html(p, abierto=False):
     wl = " w" if p["gana"] == p["local"] else ""
     wv = " w" if p["gana"] == p["visita"] else ""
     dia = dia_partido(st.session_state.S, p)
+    club = mi_club()
+    mio = " mio" if club and club in (p["local"], p["visita"]) else ""     # partido de mi club (amarillo)
     meta = (chip(p["liga"]) + (chip(p["comp"]) if p["comp"] != p["liga"] else "")
             + f'<span style="opacity:.7;font-weight:600">{esc(p["rotulo"])}</span>'
             + (f'<span class="m-dia">{esc(texto_dia(dia, False))}</span>' if dia else "")
             + ('<span style="opacity:.6">· cancha neutral</span>' if p["neutral"] else "")
             + (f'<span class="inc-badge">⚠ {esc(p["incidente"])}</span>' if p.get("incidente") else ""))
-    return (f'<div class="mrow"><div class="meta">{meta}</div><div class="mline">'
+    return (f'<div class="mrow{mio}"><div class="meta">{meta}</div><div class="mline">'
             f'<div class="side l{wl}">{esc(p["local"])} {crest(p["local"], 26)}</div>'
             f'{marcador_html(p)}'
             f'<div class="side{wv}">{crest(p["visita"], 26)} {esc(p["visita"])}</div></div>'

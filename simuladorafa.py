@@ -253,6 +253,15 @@ if modo_mgr:
     for _txt in sincronizar_manager(S, st.session_state["manager"]):    # ofertas y ascensos de los días jugados
         st.toast(_txt)
 
+# Mi club (modo manager): se marca en amarillo y se señalan las competencias donde juega
+from ui.vista.mi_club import competencias_club, estilo_mi_club
+_club_mgr = st.session_state["manager"].get("club") if modo_mgr else None
+st.session_state["_mi_club"] = _club_mgr                     # lo leen fixture, partidos y calendario
+_mc = competencias_club(S, _club_mgr) if _club_mgr else set()
+_kclub = "_" + "".join(c if c.isalnum() else "_" for c in _club_mgr) if _club_mgr else ""
+if _club_mgr:
+    st.markdown(estilo_mi_club(_club_mgr), unsafe_allow_html=True)
+
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 SPD = S.get("pd", SPC)
 SS = S["supercopa"]
@@ -386,6 +395,16 @@ def _con_logo(liga, texto):
     return f"![]({LOGOS[liga]}) {texto}" if liga in LOGOS else texto
 
 
+def _et(liga, texto, clave):
+    """Etiqueta de pestaña; en modo manager marca con ⭐ las competencias donde juega mi club."""
+    return _con_logo(liga, texto) + (" ⭐" if clave in _mc else "")
+
+
+def _inicial(etiquetas, claves):
+    """Pestaña que se abre sola: la primera donde juega mi club (None si no hay)."""
+    return next((e for e, c in zip(etiquetas, claves) if c in _mc), None)
+
+
 # Sólo se dibuja la pestaña abierta (on_change="rerun" + .open): antes se armaban las 6 ligas y
 # todas las copas en cada clic, la página pesaba más de 1 MB y el navegador se quedaba trabado.
 with st.container(key="menu_top"):
@@ -402,23 +421,22 @@ if _sin_leer:                          # contador de avisos nuevos (globito rojo
                 f'font-weight:800;border-radius:9px;padding:1px 7px;line-height:1.4;}}</style>', unsafe_allow_html=True)
 with tab_ligas:
     with st.container(key="menu_ligas"):
-        tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_pd = st.tabs([
-            _con_logo("Primera División", "Primera"), _con_logo("Primera Nacional", "B Nacional"),
-            _con_logo("Federal A", "Federal A"), _con_logo("Regional Amateur", "Regional"),
-            _con_logo("Primera B", "Primera B"), _con_logo("Primera C", "Primera C"),
-            _con_logo("Promocional Amateur", "Promocional"),
-        ], key="tabs_ligas", on_change="rerun")
+        _claves_l = ["p", "b", "f", "reg", "pb", "pc", "pd"]
+        _etiq_l = [_et("Primera División", "Primera", "p"), _et("Primera Nacional", "B Nacional", "b"),
+                   _et("Federal A", "Federal A", "f"), _et("Regional Amateur", "Regional", "reg"),
+                   _et("Primera B", "Primera B", "pb"), _et("Primera C", "Primera C", "pc"),
+                   _et("Promocional Amateur", "Promocional", "pd")]
+        # la key lleva el club: si cambiás de club, la pestaña se vuelve a abrir en su competencia
+        tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_pd = st.tabs(
+            _etiq_l, default=_inicial(_etiq_l, _claves_l), key=f"tabs_ligas{_kclub}", on_change="rerun")
 with tab_copas:
     with st.container(key="menu_copas"):
-        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = st.tabs([
-            _con_logo("Copa Argentina", "Copa Argentina"), 
-            _con_logo("Supercopa Argentina", "Supercopa"),
-            _con_logo("Copa Libertadores", "Libertadores"),
-            _con_logo("Copa Sudamericana", "Sudamericana"), 
-            _con_logo("Recopa Sudamericana", "Recopa"),
-            _con_logo("Mundial de Clubes", "Mundial de Clubes")
-            ],
-            key="tabs_copas", on_change="rerun")
+        _claves_c = ["ca", "sup", "lib", "sud", "rec", "mun"]
+        _etiq_c = [_et("Copa Argentina", "Copa Argentina", "ca"), _et("Supercopa Argentina", "Supercopa", "sup"),
+                   _et("Copa Libertadores", "Libertadores", "lib"), _et("Copa Sudamericana", "Sudamericana", "sud"),
+                   _et("Recopa Sudamericana", "Recopa", "rec"), _et("Mundial de Clubes", "Mundial de Clubes", "mun")]
+        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = st.tabs(
+            _etiq_c, default=_inicial(_etiq_c, _claves_c), key=f"tabs_copas{_kclub}", on_change="rerun")
 
 
 _TODAS = os.environ.get("AFA_TODAS_LAS_PESTANAS") == "1"   # sólo para las pruebas automáticas

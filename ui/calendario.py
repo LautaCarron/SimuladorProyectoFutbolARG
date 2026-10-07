@@ -2,12 +2,14 @@
 
 El código es el de simuladorafa.py, movido acá tal cual. `ctx` trae el estado y los ayudantes
 compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.).
+Modo manager: si el manager dirige un club, se puede ocultar a los demás equipos y ver sólo sus partidos.
 """
 
 import streamlit as st
 from motor.calendario import anio, jugar_proximo_dia, nombre_mes, texto_dia
 from datos.logos import logo_img
 from ui.vista import calendario_mes_html, esc, eventos_calendario, seccion
+from ui.vista.mi_club import mi_club
 
 
 def render(ctx):
@@ -28,6 +30,10 @@ def render(ctx):
                          disabled=_hoy is None):
                 jugar_proximo_dia(S, P, acumular)
                 st.rerun()
+            club = mi_club()                     # modo manager: club que dirigís (None si no hay)
+            solo = False
+            if club:
+                solo = st.toggle(f"Mostrar sólo los partidos de {club}", value=True, key="cal_solo_mi_club")
             eventos = eventos_calendario(S)
             meses = sorted({d.month for d, *_ in eventos})
             mes_def = (_hoy or eventos[-1][0]).month
@@ -38,5 +44,10 @@ def render(ctx):
                 st.session_state[f"{clave_mes}_sigue"] = mes_def
             mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
                                        label_visibility="collapsed") or mes_def
-            st.markdown(calendario_mes_html(S, eventos, mes, _hoy), unsafe_allow_html=True)
-            st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos).")
+            html = calendario_mes_html(S, eventos, mes, _hoy, solo_club=solo)
+            if solo and "cal-dia" not in html:
+                st.info(f"{club} no tiene partidos programados este mes (o todavía no se conocen los cruces).")
+            else:
+                st.markdown(html, unsafe_allow_html=True)
+            st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos)."
+                       + (" Los partidos de tu club van en amarillo." if club else ""))

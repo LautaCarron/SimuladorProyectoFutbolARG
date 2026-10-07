@@ -1,6 +1,8 @@
 """Pantalla de fixture y resultados de cada liga.
 """
 
+from contextlib import nullcontext
+
 import streamlit as st
 
 from motor.calendario import dia_de, texto_dia
@@ -10,6 +12,7 @@ from ligas.primera import rotulo_p
 from ligas.regional import rotulo_reg
 from ui.vista.base import _estado, chip, esc, norm, seccion
 from ui.vista.ficha import ver_equipo
+from ui.vista.mi_club import mi_club
 from ui.vista.partidos import (
     fechas_conocidas_b,
     fechas_conocidas_f,
@@ -38,6 +41,7 @@ def render_fecha(partidos, clave):
         if not grupos or grupos[-1][0] != p["comp"]:
             grupos.append((p["comp"], []))
         grupos[-1][1].append(p)
+    club = mi_club()
     for g, (comp, lista) in enumerate(grupos):
         if len(grupos) > 1 or comp not in ("Fase 1",):
             st.markdown(chip(comp) + (' <span style="opacity:.6;font-size:.75rem">cancha neutral'
@@ -49,16 +53,19 @@ def render_fecha(partidos, clave):
             with c, st.container(key=f"fx_{clave}_{g}_{lado}"):
                 for i, p in enumerate(sub):
                     k = f"{clave}_{g}_{p['local']}_{p['visita']}"
-                    c1, c2, c3 = st.columns([5, 3.6, 5], vertical_alignment="center", gap="small")
-                    if c1.button(p["local"], key=f"{k}_l", help="Ver la ficha del club",
-                                 width="stretch"):
-                        ver_equipo(p["local"])
-                    c2.markdown(marcador_html(p, crests=True), unsafe_allow_html=True)
-                    if c3.button(p["visita"], key=f"{k}_v", help="Ver la ficha del club",
-                                 width="stretch"):
-                        ver_equipo(p["visita"])
-                    if p["tanda"]:
-                        st.markdown(tanda_html(p), unsafe_allow_html=True)
+                    es_mio = bool(club) and club in (p["local"], p["visita"])
+                    # el partido de mi club va en un contenedor con key mi_partido_* (ver estilo_mi_club)
+                    with (st.container(key=f"mi_partido_{clave}_{g}_{lado}_{i}") if es_mio else nullcontext()):
+                        c1, c2, c3 = st.columns([5, 3.6, 5], vertical_alignment="center", gap="small")
+                        if c1.button(p["local"], key=f"{k}_l", help="Ver la ficha del club",
+                                     width="stretch"):
+                            ver_equipo(p["local"])
+                        c2.markdown(marcador_html(p, crests=True), unsafe_allow_html=True)
+                        if c3.button(p["visita"], key=f"{k}_v", help="Ver la ficha del club",
+                                     width="stretch"):
+                            ver_equipo(p["visita"])
+                        if p["tanda"]:
+                            st.markdown(tanda_html(p), unsafe_allow_html=True)
 
 
 def _mover_fecha(key, delta, maximo):
