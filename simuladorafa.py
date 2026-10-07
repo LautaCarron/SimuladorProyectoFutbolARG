@@ -242,6 +242,12 @@ P = dict(sorpresa=sorpresa)
 if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_ESTADO:
     st.session_state.S = crear_estado()
 S = st.session_state.S
+
+if st.session_state.get("afa_pantalla") == "manager" or st.query_params.get("modo") == "manager":
+    from ui.manager import modo_manager
+    modo_manager(S, P, acumular, volatilidad)
+    st.stop()
+
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 SPD = S.get("pd", SPC)
 SS = S["supercopa"]

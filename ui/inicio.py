@@ -1,4 +1,4 @@
-"""Pantalla de inicio de Proyecto AFA ("Elegí un modo") para cuando la app corre con Streamlit
+"""Pantalla de inicio de Proyecto AFA ("Elegí un modo": Simulador o Manager Falopa) para cuando la app corre con Streamlit
 (Streamlit Community Cloud o `streamlit run` en la PC).
 
 En la web estática (stlite) la intro vive en index.html; acá es la misma pantalla, hecha en HTML y
@@ -26,7 +26,7 @@ _CSS = """
 /* Mientras está la intro, lo de Streamlit queda escondido detrás */
 header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
 [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
-.st-key-afa_entrar { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+.st-key-afa_entrar, .st-key-afa_ir_manager { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); opacity: 0; pointer-events: none; }
 
 #afa-intro {
@@ -242,13 +242,14 @@ _HTML = f"""
               <span class="estado" aria-live="polite"><i></i><span>Listo para jugar</span></span></span>
           </button>
         </li>
-        <li class="modo bloqueado" id="afa-manager">
-          <button class="modo-btn" type="button" aria-disabled="true">
+        <li class="modo" id="afa-manager">
+          <button class="modo-btn" id="afa-entrar-manager" type="button">
             <span class="num" aria-hidden="true">02</span>
             <span><span class="modo-nombre">Manager Falopa</span>
-              <span class="modo-desc">Agarrá un club y llevalo temporada tras temporada: plantel, objetivos y presión de la tribuna.</span></span>
-            <span class="ir"><span class="sello">Próximamente</span>
-              <span class="bloq"><span class="ico" data-sol="candado"></span>Todavía no disponible</span></span>
+              <span class="modo-desc">Agarrá un club y llevalo temporada tras temporada: plantel, objetivos y presión de la tribuna.</span>
+              <span class="modo-cats">Arrancá libre y recibí ofertas · o elegí tu equipo</span></span>
+            <span class="ir"><span class="accion">Crear manager <span class="ico" data-sol="flecha"></span></span>
+              <span class="estado" aria-live="polite"><i></i><span>Creá tu entrenador</span></span></span>
           </button>
         </li>
       </ol>
@@ -261,7 +262,7 @@ _HTML = f"""
 </main>
 """
 
-# "Entrar" aprieta el botón oculto de Streamlit; "Manager Falopa" se sacude (todavía no está).
+# "Entrar" y "Manager Falopa" aprietan su botón oculto de Streamlit (pasan al simulador o al manager).
 # Los soles y los íconos (SVG) se dibujan desde acá porque st.html no deja pasar SVG.
 _JS = """
 <script>
@@ -274,27 +275,22 @@ _JS = """
   }
   dibujar();
   new MutationObserver(dibujar).observe(document.body, { childList: true, subtree: true });
-  function boton() { return document.querySelector('.st-key-afa_entrar button'); }
+  function boton(clave) { return document.querySelector('.st-key-' + clave + ' button'); }
   if (window.__afaIntro) return;
   window.__afaIntro = true;
   document.addEventListener('click', function (e) {
-    const t = e.target.closest && e.target.closest('#afa-entrar, #afa-manager .modo-btn');
+    const t = e.target.closest && e.target.closest('#afa-entrar, #afa-entrar-manager');
     if (!t) return;
     e.preventDefault();
-    if (t.id === 'afa-entrar') {
-      const intro = document.getElementById('afa-intro');
-      if (intro) {
-        intro.classList.add('entrando');
-        const est = intro.querySelector('.estado span');
-        if (est) est.textContent = 'Abriendo el simulador…';
-      }
-      const b = boton();
-      if (b) b.click();
-    } else {
-      const li = document.getElementById('afa-manager');
-      li.classList.remove('sacudir'); void li.offsetWidth; li.classList.add('sacudir');
-      setTimeout(function () { li.classList.remove('sacudir'); }, 1600);
+    const esManager = t.id === 'afa-entrar-manager';
+    const intro = document.getElementById('afa-intro');
+    if (intro) {
+      intro.classList.add('entrando');
+      const est = t.querySelector('.estado span');
+      if (est) est.textContent = esManager ? 'Abriendo el manager…' : 'Abriendo el simulador…';
     }
+    const b = boton(esManager ? 'afa_ir_manager' : 'afa_entrar');
+    if (b) b.click();
   });
 })();
 </script>
@@ -303,6 +299,10 @@ _JS = """
 
 def _entrar():
     st.session_state["afa_pantalla"] = "simulador"
+
+
+def _entrar_manager():
+    st.session_state["afa_pantalla"] = "manager"
 
 
 def _correr_js(js):
@@ -317,9 +317,11 @@ def _correr_js(js):
 
 def mostrar_inicio():
     """Dibuja la pantalla de inicio y corta la ejecución mientras no se entre al simulador."""
-    if st.session_state.get("afa_pantalla") == "simulador" or st.query_params.get("modo") == "simulador":
+    if (st.session_state.get("afa_pantalla") in ("simulador", "manager")
+            or st.query_params.get("modo") in ("simulador", "manager")):
         return
     st.html(_CSS + _HTML)
     st.button("Entrar al simulador", key="afa_entrar", on_click=_entrar)
+    st.button("Crear manager", key="afa_ir_manager", on_click=_entrar_manager)
     _correr_js(_JS.replace("__SOLES__", json.dumps({"lleno": _SOL_LLENO, "linea": _SOL_LINEA, "flecha": _FLECHA, "candado": _CANDADO})))
     st.stop()
