@@ -1,21 +1,21 @@
-"""Motor de ofertas del Modo Manager (va en motor/ofertas.py). Sin Streamlit: sólo numpy.
+"""Motor de carrera y ofertas del Modo Manager (va en motor/ofertas.py). Sin Streamlit: sólo numpy.
 
-Idea: el manager tiene un GLOBAL (20-90, la misma escala que la media de los clubes). Cuando está
-libre, cada día que se juega puede llegarle una oferta en la oficina, y de qué club llega depende
-de su global: cuanto más global, más arriba vienen las ofertas.
+GLOBAL (20-90, la misma escala que la media de los clubes): define de qué clubes te llaman.
+    global ~ 28 -> Regional, Promocional y Primera C      global ~ 58 -> Primera Nacional y piso de Primera
+    global ~ 42 -> Primera B y Federal A                  global ~ 76 -> Primera División (los grandes)
 
-    global ~ 28  -> clubes del Regional, Promocional y Primera C
-    global ~ 42  -> Primera B y Federal A (alguna de Primera C o de B Nacional)
-    global ~ 58  -> Primera Nacional y el piso de Primera
-    global ~ 76  -> Primera División (los grandes)
+OFERTAS: llegan durante toda la carrera, tanto si estás libre como si ya dirigís un club
+(libre: P_OFERTA_DIA por día jugado; con club: P_OFERTA_EMPLEADO). Cada oferta trae un ROL:
+    "primer_equipo" -> te contratan como DT del primer equipo.
+    "reserva"       -> entrás como DT de la Reserva; el club suele ser más grande que tu global.
+                       Cuanto más grande el club respecto de tu global, más probable que sea reserva.
 
-El global se pone a mano o sale de la reputación (PRESETS). Cómo se elige el club de una oferta:
-primero una categoría (pesa por su club que mejor encaja con el global) y después un club de esa
-categoría (pesa por qué tan cerca está su media del global). Así una liga con muchos clubes
-(el Regional tiene 264) no se come todas las ofertas.
+ASCENSO A DT DEL PRIMER EQUIPO: si estás en la Reserva, pasados MIN_DIAS_RESERVA días jugados el club
+puede echar al DT y subirte. La chance diaria sube si al club le va mal en su liga (puntos por partido
+bajos) y a los MAX_DIAS_RESERVA días el ascenso está garantizado.
 
-Estado del manager (dict M, lo guarda la interfaz): global, club (None = libre), ofertas,
-rechazos {club: fecha hasta la que no vuelve a ofrecer}, historial_clubes, registro, hoy, sig_oferta.
+Estado del manager (dict M, lo guarda la interfaz): global, club (None = libre), rol, dias_en_rol,
+ofertas, rechazos {club: fecha hasta la que no vuelve a ofrecer}, historial_clubes, registro, hoy.
 """
 
 import datetime as dt
@@ -33,23 +33,50 @@ PRESETS = {
     "Ex estrella": 76,
 }
 
-P_OFERTA_DIA = 0.30        # probabilidad de que llegue una oferta nueva cada día que se juega
+ROLES = {"primer_equipo": "DT del primer equipo", "reserva": "DT de la Reserva"}
+
+P_OFERTA_DIA = 0.30        # chance de oferta nueva cada día jugado, estando libre
+P_OFERTA_EMPLEADO = 0.12   # ... y estando en un club
 MAX_OFERTAS = 3            # ofertas pendientes a la vez en la oficina
 VIGENCIA_DIAS = 21         # días corridos que dura una oferta
-RECHAZO_DIAS = 60          # un club al que le dijiste que no, no vuelve a llamar por un tiempo
+RECHAZO_DIAS = 60          # un club al que le dijiste que no (o que dejaste) no llama por un tiempo
 SIGMA = 5.0                # qué tan estricto es el encaje entre el global y la media del club
 VENTANA = 8                # "alcance" que se le muestra al usuario: clubes a ±8 de su global
+
+MIN_DIAS_RESERVA = 6       # días jugados mínimos en la Reserva antes de que puedan subirte
+MAX_DIAS_RESERVA = 30      # a estos días jugados el ascenso es seguro
+P_ASCENSO_BASE = 0.05      # chance diaria de que echen al DT (club que va bien)
+P_ASCENSO_MALA = 0.20      # ... que se suma, en escala, cuando al club le va mal
 
 CATEGORIAS = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
               "Promocional Amateur", "Regional Amateur"]
 
-MENSAJES = [
-    "La directiva de {club} quiere que seas su nuevo entrenador.",
-    "{club} necesita un cambio de rumbo y piensa en vos para el cargo.",
-    "El presidente de {club} te llamó personalmente para ofrecerte el banco.",
-    "{club} te sigue hace tiempo y te hace una propuesta formal.",
-    "Se cayó el contrato del técnico de {club} y te quieren a vos.",
-]
+MENSAJES = {
+    "primer_equipo": [
+        "La directiva de {club} quiere que seas su nuevo entrenador.",
+        "{club} necesita un cambio de rumbo y piensa en vos para el cargo.",
+        "El presidente de {club} te llamó personalmente para ofrecerte el banco.",
+        "{club} te sigue hace tiempo y te hace una propuesta formal.",
+        "Se cayó el contrato del técnico de {club} y te quieren a vos.",
+    ],
+    "reserva": [
+        "{club} te ofrece dirigir la Reserva: están armando un proyecto a largo plazo.",
+        "En {club} te quieren en el cuerpo técnico, a cargo de la Reserva, y ven que podés llegar más arriba.",
+        "{club} te propone dirigir la Reserva y trabajar pegado al primer equipo.",
+        "La dirigencia de {club} te ofrece la Reserva: es la puerta de entrada al club.",
+    ],
+}
+
+MENSAJES_ASCENSO = {
+    "mala": [
+        "{club} no levanta cabeza: la directiva echó al técnico y te subió a DT del primer equipo.",
+        "Tras la racha de malos resultados, {club} despidió a su técnico y te puso a vos al mando.",
+    ],
+    "normal": [
+        "En {club} hubo cambio de rumbo: echaron al técnico y la directiva te ascendió a DT del primer equipo.",
+        "{club} se separó de su técnico y confió en vos para dirigir al primer equipo.",
+    ],
+}
 
 
 def nivel_texto(g):
@@ -97,8 +124,10 @@ def perfil_club(puesto, total):
     return "Grande de la categoría" if q <= 0.25 else "Mitad de tabla" if q <= 0.65 else "Humilde de la categoría"
 
 
-def objetivo(cat, puesto, total):
+def objetivo(cat, puesto, total, rol="primer_equipo"):
     """Objetivo que le pone la directiva según qué tan grande es el club en su categoría."""
+    if rol == "reserva":
+        return "Trabajar con los juveniles y estar listo por si el club hace un cambio"
     q = puesto / max(total, 1)
     if q <= 0.25:
         return {"Primera División": "Pelear el título y clasificar a la Libertadores",
@@ -118,10 +147,35 @@ def alcance(S, g):
     return out
 
 
-# ---- Ofertas ----------------------------------------------------------------
+def rendimiento(S, club):
+    """Cómo le va al club en su liga: 0 = el peor (por puntos por partido), 1 = el mejor.
+    None si todavía no jugó o si la liga no expone sus estadísticas."""
+    cat = categoria_de(S, club)
+    if cat is None:
+        return None
+    L, nombres = ligas(S)[cat]
+    try:
+        pj, g, e = (np.asarray(L[k], float) for k in ("pj", "g", "e"))
+    except (KeyError, TypeError, ValueError):
+        return None
+    i = nombres.index(club)
+    if i >= len(pj) or pj[i] <= 0:
+        return None
+    jugaron = pj > 0
+    ppg = (3 * g + e) / np.maximum(pj, 1)
+    return float((ppg[jugaron] < ppg[i]).sum() / max(int(jugaron.sum()) - 1, 1))
+
+
+# ---- Estado y ofertas -------------------------------------------------------
 def nuevo_manager_estado(g):
-    return {"global": int(g), "club": None, "ofertas": [], "rechazos": {}, "historial_clubes": [],
-            "registro": [], "sig_oferta": 1, "hoy": None}
+    return {"global": int(g), "club": None, "rol": None, "dias_en_rol": 0, "ofertas": [], "rechazos": {},
+            "historial_clubes": [], "registro": [], "sig_oferta": 1, "hoy": None}
+
+
+def _rol_de_oferta(media, g, rng):
+    """Cuanto más grande es el club respecto del global, más probable que te lo ofrezcan para la Reserva."""
+    p_reserva = min(max((media - g + 2) / 10.0, 0.0), 1.0)
+    return "reserva" if rng.random() < p_reserva else "primer_equipo"
 
 
 def generar_oferta(S, M, rng, hoy):
@@ -131,8 +185,9 @@ def generar_oferta(S, M, rng, hoy):
     if M.get("club"):
         excluidos.add(M["club"])
     excluidos |= {c for c, hasta in M.get("rechazos", {}).items() if hasta >= hoy}
+    medias = medias_por_categoria(S)
     pesos = {}
-    for cat, meds in medias_por_categoria(S).items():
+    for cat, meds in medias.items():
         w = {n: math.exp(-0.5 * ((m - g) / SIGMA) ** 2) for n, m in meds.items() if n not in excluidos}
         if w:
             pesos[cat] = w
@@ -146,36 +201,75 @@ def generar_oferta(S, M, rng, hoy):
     clubes = list(pesos[cat])
     wk = np.array([pesos[cat][c] for c in clubes])
     club = clubes[int(rng.choice(len(clubes), p=wk / wk.sum()))]
-    oferta = {"id": M["sig_oferta"], "club": club, "recibida": hoy,
+    rol = _rol_de_oferta(medias[cat][club], g, rng)
+    oferta = {"id": M["sig_oferta"], "club": club, "rol": rol, "recibida": hoy,
               "vence": hoy + dt.timedelta(days=VIGENCIA_DIAS),
-              "mensaje": MENSAJES[int(rng.integers(len(MENSAJES)))].format(club=club)}
+              "mensaje": MENSAJES[rol][int(rng.integers(len(MENSAJES[rol])))].format(club=club)}
     M["sig_oferta"] += 1
     return oferta
 
 
+def _promover(S, M, rng):
+    """El club echa al DT y te sube a DT del primer equipo. Devuelve el texto del evento."""
+    club = M["club"]
+    r = rendimiento(S, club)
+    tono = "mala" if (r is not None and r < 0.35) else "normal"
+    M["rol"] = "primer_equipo"
+    M["dias_en_rol"] = 0
+    for h in reversed(M["historial_clubes"]):
+        if h["club"] == club and h["hasta"] is None:
+            h["ascendido"] = M["hoy"]
+            break
+    textos = MENSAJES_ASCENSO[tono]
+    return textos[int(rng.integers(len(textos)))].format(club=club)
+
+
 def nuevo_dia(S, M, hoy, rng):
-    """Después de jugar un día: vencen las ofertas viejas y puede llegar una nueva.
-    Devuelve (ofertas nuevas, ofertas vencidas). Sólo si el manager está libre."""
+    """Después de jugar un día: vencen las ofertas viejas, puede llegar una nueva (estés libre o en un
+    club) y, si estás en la Reserva, puede que te suban. Devuelve {"nuevas", "vencidas", "eventos"}."""
     M["hoy"] = hoy
-    if M.get("club"):
-        return [], []
-    vencidas = [o for o in M["ofertas"] if o["vence"] < hoy]
+    res = {"nuevas": [], "vencidas": [], "eventos": []}
+    res["vencidas"] = [o for o in M["ofertas"] if o["vence"] < hoy]
     M["ofertas"] = [o for o in M["ofertas"] if o["vence"] >= hoy]
-    nuevas = []
-    if len(M["ofertas"]) < MAX_OFERTAS and rng.random() < P_OFERTA_DIA:
+
+    if M.get("club") and M.get("rol") == "reserva":
+        M["dias_en_rol"] += 1
+        if M["dias_en_rol"] >= MIN_DIAS_RESERVA:
+            r = rendimiento(S, M["club"])
+            mala = 0.5 if r is None else 1.0 - r
+            p = P_ASCENSO_BASE + P_ASCENSO_MALA * mala
+            if M["dias_en_rol"] >= MAX_DIAS_RESERVA or rng.random() < p:
+                res["eventos"].append(_promover(S, M, rng))
+
+    p_oferta = P_OFERTA_EMPLEADO if M.get("club") else P_OFERTA_DIA
+    if len(M["ofertas"]) < MAX_OFERTAS and rng.random() < p_oferta:
         o = generar_oferta(S, M, rng, hoy)
         if o:
             M["ofertas"].append(o)
-            nuevas.append(o)
-    return nuevas, vencidas
+            res["nuevas"].append(o)
+    return res
+
+
+def _cerrar_club_actual(M):
+    club = M["club"]
+    for h in reversed(M["historial_clubes"]):
+        if h["club"] == club and h["hasta"] is None:
+            h["hasta"] = M["hoy"]
+            break
+    M["rechazos"][club] = M["hoy"] + dt.timedelta(days=RECHAZO_DIAS)
 
 
 def aceptar(S, M, oferta):
-    hoy = M["hoy"]
+    """Aceptás una oferta (si ya tenías club, lo dejás). Las demás ofertas se caen."""
+    if M.get("club"):
+        _cerrar_club_actual(M)
     M["club"] = oferta["club"]
+    M["rol"] = oferta["rol"]
+    M["dias_en_rol"] = 0
     M["ofertas"] = []
     M["historial_clubes"].append({"club": oferta["club"], "categoria": categoria_de(S, oferta["club"]),
-                                  "temporada": S["temp"], "desde": hoy, "hasta": None})
+                                  "rol": oferta["rol"], "temporada": S["temp"], "desde": M["hoy"],
+                                  "hasta": None, "ascendido": None})
 
 
 def rechazar(M, oferta):
@@ -184,11 +278,8 @@ def rechazar(M, oferta):
 
 
 def renunciar(M):
-    """Deja el club y queda libre otra vez (el club no vuelve a llamar por un tiempo)."""
-    club = M["club"]
-    for h in reversed(M["historial_clubes"]):
-        if h["club"] == club and h["hasta"] is None:
-            h["hasta"] = M["hoy"]
-            break
-    M["rechazos"][club] = M["hoy"] + dt.timedelta(days=RECHAZO_DIAS)
+    """Dejás el club y quedás libre otra vez."""
+    _cerrar_club_actual(M)
     M["club"] = None
+    M["rol"] = None
+    M["dias_en_rol"] = 0

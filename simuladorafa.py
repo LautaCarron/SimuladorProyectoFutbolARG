@@ -243,10 +243,15 @@ if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_E
     st.session_state.S = crear_estado()
 S = st.session_state.S
 
-if st.session_state.get("afa_pantalla") == "manager" or st.query_params.get("modo") == "manager":
-    from ui.manager import modo_manager
-    modo_manager(S, P, acumular, volatilidad)
-    st.stop()
+# Modo Manager: se muestra el simulador completo y se suma la pestaña "Manager" (oficina, mi club, carrera)
+modo_mgr = st.session_state.get("afa_pantalla") == "manager" or st.query_params.get("modo") == "manager"
+if modo_mgr:
+    from ui.manager import alta_manager, sincronizar_manager
+    if not st.session_state.get("manager"):
+        alta_manager(S)                          # primero se cargan los datos del manager
+        st.stop()
+    for _txt in sincronizar_manager(S, st.session_state["manager"]):    # ofertas y ascensos de los días jugados
+        st.toast(_txt)
 
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 SPD = S.get("pd", SPC)
@@ -384,10 +389,15 @@ def _con_logo(liga, texto):
 # Sólo se dibuja la pestaña abierta (on_change="rerun" + .open): antes se armaban las 6 ligas y
 # todas las copas en cada clic, la página pesaba más de 1 MB y el navegador se quedaba trabado.
 with st.container(key="menu_top"):
-    tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
-        ["Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"], key="tabs_top", on_change="rerun")
+    if modo_mgr:
+        tab_mgr, tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
+            ["Manager", "Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"],
+            key="tabs_top", on_change="rerun")
+    else:
+        tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
+            ["Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"], key="tabs_top", on_change="rerun")
 if _sin_leer:                          # contador de avisos nuevos (globito rojo en la pestaña)
-    st.markdown(f'<style>.st-key-menu_top>[data-testid="stTabs"]>div>[role="tablist"]>[role="tab"]:nth-child(5)'
+    st.markdown(f'<style>.st-key-menu_top>[data-testid="stTabs"]>div>[role="tablist"]>[role="tab"]:nth-child({6 if modo_mgr else 5})'
                 f'::after{{content:"{_sin_leer}";margin-left:6px;background:var(--lose);color:#fff;font-size:.66rem;'
                 f'font-weight:800;border-radius:9px;padding:1px 7px;line-height:1.4;}}</style>', unsafe_allow_html=True)
 with tab_ligas:
@@ -497,7 +507,8 @@ from ui import calendario as ui_calendario
 from ui import clubes as ui_clubes
 from ui import avisos as ui_avisos
 from ui import historial as ui_historial
+from ui import manager as ui_manager
 
 ctx = SimpleNamespace(**{k: v for k, v in globals().items() if not k.startswith("__")})
-for _modulo in (ui_primera, ui_nacional, ui_federal, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
+for _modulo in (ui_manager, ui_primera, ui_nacional, ui_federal, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
     _modulo.render(ctx)
