@@ -333,9 +333,7 @@
     }
   </style>
   <script>
-    // Interruptor del menú de modos. false = abre directo en el simulador (el modo Manager Falopa todavía no
-    // está implementado). Cuando esté listo, ponerlo en true y vuelve la pantalla "Elegí un modo".
-    window.MOSTRAR_INTRO = false;
+    window.MOSTRAR_INTRO = true;
     if (!window.MOSTRAR_INTRO) document.documentElement.classList.add("sin-intro");
   </script>
 </head>
@@ -387,15 +385,18 @@
               </span>
             </button>
           </li>
-          <li class="modo bloqueado" id="manager">
-            <button class="modo-btn" type="button" aria-disabled="true">
+          <li class="modo" id="manager">
+            <button class="modo-btn" type="button">
               <span class="num" aria-hidden="true">02</span>
               <span>
                 <span class="modo-nombre">Manager Falopa</span>
                 <span class="modo-desc">Agarrá un club y llevalo temporada tras temporada: plantel, objetivos y presión de la tribuna.</span>
+                <span class="modo-cats">Arrancá libre y recibí ofertas · O elegí tu equipo</span>
               </span>
-              <span class="ir"><span class="sello">Próximamente</span>
-                <span class="bloq"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="5.5" width="8" height="5.5" rx="1"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5"/></svg>Todavía no disponible</span></span>
+              <span class="ir">
+                <span class="accion">Crear manager <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8h11M9 4l4 4-4 4"/></svg></span>
+                <span class="estado"><i></i><span>Creá tu entrenador</span></span>
+              </span>
             </button>
           </li>
         </ol>
@@ -662,8 +663,10 @@
 
     $("#entrar").addEventListener("click", entrar);
     $("#manager .modo-btn").addEventListener("click", () => {
-      const m = $("#manager");
-      m.classList.remove("sacudir"); void m.offsetWidth; m.classList.add("sacudir");
+      const url = new URL(window.location);
+      url.searchParams.set("modo", "manager");
+      window.history.pushState({}, '', url);
+      entrar();
     });
     window.addEventListener("hashchange", () => {
       if (!MOSTRAR_INTRO && (location.hash === "#inicio" || location.hash === "")) {
