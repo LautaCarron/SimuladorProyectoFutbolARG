@@ -2,14 +2,23 @@
 
 El código es el de simuladorafa.py, movido acá tal cual. `ctx` trae el estado y los ayudantes
 compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.).
-Modo manager: si el manager dirige un club, se puede ocultar a los demás equipos y ver sólo sus partidos.
+Modo manager: si dirigís un club, el calendario se ve en grilla mensual con SUS partidos (escudo del
+rival, competencia y resultado). Con "Todos los equipos" se vuelve a la lista de siempre.
 """
 
 import streamlit as st
 from motor.calendario import anio, jugar_proximo_dia, nombre_mes, texto_dia
 from datos.logos import logo_img
 from ui.vista import calendario_mes_html, esc, eventos_calendario, seccion
+from ui.vista.calendario import calendario_grilla_html
 from ui.vista.mi_club import mi_club
+
+VISTA_MIS, VISTA_TODOS = "Mis partidos", "Todos los equipos"
+
+
+def _mover_mes(clave, meses, paso):
+    i = meses.index(st.session_state[clave]) + paso
+    st.session_state[clave] = meses[min(max(i, 0), len(meses) - 1)]
 
 
 def render(ctx):
@@ -31,23 +40,40 @@ def render(ctx):
                 jugar_proximo_dia(S, P, acumular)
                 st.rerun()
             club = mi_club()                     # modo manager: club que dirigís (None si no hay)
-            solo = False
+            vista = VISTA_TODOS
             if club:
-                solo = st.toggle(f"Mostrar sólo los partidos de {club}", value=True, key="cal_solo_mi_club")
+                vista = st.segmented_control("Vista", [VISTA_MIS, VISTA_TODOS], default=VISTA_MIS,
+                                             key="cal_vista", label_visibility="collapsed") or VISTA_MIS
             eventos = eventos_calendario(S)
             meses = sorted({d.month for d, *_ in eventos})
             mes_def = (_hoy or eventos[-1][0]).month
-            clave_mes = f"cal_mes_{S['temp']}"
-            # el mes elegido sigue al próximo día (cuando avanza el calendario, se mueve solo)
-            if st.session_state.get(f"{clave_mes}_sigue") != mes_def or clave_mes not in st.session_state:
-                st.session_state[clave_mes] = mes_def if mes_def in meses else meses[0]
-                st.session_state[f"{clave_mes}_sigue"] = mes_def
-            mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
-                                       label_visibility="collapsed") or mes_def
-            html = calendario_mes_html(S, eventos, mes, _hoy, solo_club=solo)
-            if solo and "cal-dia" not in html:
-                st.info(f"{club} no tiene partidos programados este mes (o todavía no se conocen los cruces).")
+
+            if club and vista == VISTA_MIS:
+                # ---- grilla mensual con los partidos de mi club, con flechas para cambiar de mes
+                kg = f"cal_grilla_{S['temp']}"
+                if st.session_state.get(f"{kg}_sigue") != mes_def or kg not in st.session_state:
+                    st.session_state[kg] = mes_def if mes_def in meses else meses[0]
+                    st.session_state[f"{kg}_sigue"] = mes_def           # el mes sigue al próximo día
+                n1, n2, n3 = st.columns([1, 4, 1], vertical_alignment="center")
+                n1.button(":material/chevron_left:", key="cal_mes_prev", width="stretch", on_click=_mover_mes,
+                          args=(kg, meses, -1), disabled=st.session_state[kg] == meses[0])
+                n3.button(":material/chevron_right:", key="cal_mes_next", width="stretch", on_click=_mover_mes,
+                          args=(kg, meses, 1), disabled=st.session_state[kg] == meses[-1])
+                mes = st.session_state[kg]
+                n2.markdown(f'<div style="text-align:center;font-weight:700;font-size:1.15rem">'
+                            f'{esc(nombre_mes(mes))} {anio(S)}</div>', unsafe_allow_html=True)
+                st.markdown(calendario_grilla_html(S, eventos, mes, _hoy, club), unsafe_allow_html=True)
+                st.caption(f"Partidos de {club}. Borde verde / gris / rojo: ganó / empató / perdió · "
+                           "fondo violeta: copas · contorno violeta: próximo día. Pasá el mouse (o tocá) "
+                           "un partido para ver el detalle. Los cruces de copa aparecen cuando se conocen.")
             else:
-                st.markdown(html, unsafe_allow_html=True)
-            st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos)."
-                       + (" Los partidos de tu club van en amarillo." if club else ""))
+                clave_mes = f"cal_mes_{S['temp']}"
+                # el mes elegido sigue al próximo día (cuando avanza el calendario, se mueve solo)
+                if st.session_state.get(f"{clave_mes}_sigue") != mes_def or clave_mes not in st.session_state:
+                    st.session_state[clave_mes] = mes_def if mes_def in meses else meses[0]
+                    st.session_state[f"{clave_mes}_sigue"] = mes_def
+                mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
+                                           label_visibility="collapsed") or mes_def
+                st.markdown(calendario_mes_html(S, eventos, mes, _hoy), unsafe_allow_html=True)
+                st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos)."
+                           + (" Los partidos de tu club van en amarillo." if club else ""))

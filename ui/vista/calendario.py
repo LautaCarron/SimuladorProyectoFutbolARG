@@ -1,7 +1,9 @@
 """Calendario del mes: partidos y eventos de cada día.
 """
 
-from motor.calendario import dia_de, texto_dia
+import calendar as _calendar
+
+from motor.calendario import anio, dia_de, texto_dia
 from datos.logos import logo_img
 from ligas.federal import rotulo_f
 from ligas.nacional import rotulo_b
@@ -19,6 +21,7 @@ from ui.vista.partidos import (
     partidos_fecha_pd,
     partidos_fecha_reg,
     pendiente,
+    resultado_para,
 )
 from motor.calendario import INICIO, total_liga
 from copas.registro import REGISTRO, por_nombre
@@ -121,3 +124,88 @@ def calendario_mes_html(S, eventos, mes, proximo, solo_club=False):
         out += (f'<div class="cal-dia {clase}"><div class="cal-num"><b>{d.day}</b>'
                 f'<span>{texto_dia(d, False)[:3]}</span></div><div class="cal-ev">{comps}</div></div>')
     return f'<div class="cal">{out}</div>'
+
+
+# ---- Calendario en grilla (modo manager): sólo los partidos de mi club -------------------------------
+_SEMANA = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
+
+CSS_GRILLA = """<style>
+.gm-sem, .gm-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.gm-sem span { text-align: center; opacity: .6; font-size: .8rem; padding: 6px 0; }
+.gm-c { position: relative; min-height: 96px; border-radius: 10px; padding: 6px 4px 6px; box-sizing: border-box;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        background: rgba(127,127,127,.07); border: 1px solid rgba(127,127,127,.14); }
+.gm-c.vacio { background: transparent; border-color: transparent; }
+.gm-c.hoy { outline: 2px solid #6366f1; outline-offset: -2px; }
+.gm-n { position: absolute; top: 5px; left: 8px; font-weight: 700; font-size: .78rem; opacity: .85; }
+.gm-c.tiene { background: rgba(127,127,127,.15); }
+.gm-c.copa { background: rgba(99,102,241,.18); }
+.gm-c.g { border-color: rgba(46,125,79,.85); }
+.gm-c.e { border-color: rgba(148,163,184,.8); }
+.gm-c.p { border-color: rgba(184,58,46,.85); }
+.gm-m { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; margin-top: 12px; }
+.gm-m + .gm-m { margin-top: 2px; padding-top: 4px; border-top: 1px dashed rgba(127,127,127,.3); }
+.gm-comp { position: absolute; top: 4px; right: 6px; line-height: 0; }
+.gm-txt { font-size: .78rem; font-weight: 700; }
+.gm-txt.g { color: #16a34a; } .gm-txt.p { color: #dc2626; } .gm-txt.e { color: #94a3b8; }
+.gm-tit { text-align: center; font-weight: 700; font-size: 1.15rem; }
+@media (max-width: 640px) {
+  .gm-sem, .gm-grid { gap: 3px; }
+  .gm-c { min-height: 70px; padding: 4px 2px; }
+  .gm-m img, .gm-m .crest { width: 24px !important; height: 26px !important; }
+  .gm-txt { font-size: .62rem; } .gm-n { font-size: .68rem; left: 5px; }
+  .gm-comp img { width: 12px !important; height: 12px !important; }
+}
+</style>"""
+
+
+def _celda_partido(liga, p, club):
+    """(clase del resultado o "", html) de un partido de `club`: escudo del rival, competencia y marcador
+    (o Local / Visita / Neutral si todavía no se jugó)."""
+    local = p["local"] == club
+    rival = p["visita"] if local else p["local"]
+    if p["gl"] is None:
+        res = ""
+        txt = "Neutral" if p.get("neutral") else ("Local" if local else "Visita")
+    else:
+        _, gf, gc, letra = resultado_para(p, club)
+        if letra == "E" and p.get("pen"):                 # empate definido por penales
+            letra = "G" if p["gana"] == club else "P"
+        res = {"G": "g", "E": "e", "P": "p"}[letra]
+        txt = f"{gf}-{gc}" + (" (pen.)" if p.get("pen") else "")
+    titulo = f"{liga} · {p['rotulo']} · {p['local']} vs {p['visita']}" + ("" if p["gl"] is None else f" · {txt}")
+    html = (f'<div class="gm-m" title="{esc(titulo)}"><span class="gm-comp">{logo_img(liga, 16)}</span>'
+            f'{crest(rival, 34)}<span class="gm-txt {res}">{esc(txt)}</span></div>')
+    return res, html
+
+
+def calendario_grilla_html(S, eventos, mes, proximo, club):
+    """Mes en grilla (lun-dom), como un calendario de partidos: en cada día que juega `club`, el escudo del
+    rival, el logo de la competencia y el marcador (o si es de local o de visitante). Los demás equipos no
+    aparecen. El borde marca el resultado (verde gana, gris empata, rojo pierde) y el día de hoy va con
+    un contorno violeta. Las copas se ven con un fondo más claro."""
+    por_dia = {}
+    for d, liga, n, _jugada in eventos:
+        if d.month != mes:
+            continue
+        for p in _cal_partidos(S, liga, n):
+            if club in (p["local"], p["visita"]):
+                por_dia.setdefault(d.day, []).append((liga, p))
+    celdas = ""
+    for semana in _calendar.Calendar(firstweekday=0).monthdayscalendar(anio(S), mes):
+        for dia in semana:
+            if dia == 0:
+                celdas += '<div class="gm-c vacio"></div>'
+                continue
+            hoy = " hoy" if proximo and proximo.month == mes and proximo.day == dia else ""
+            items = por_dia.get(dia, [])
+            if not items:
+                celdas += f'<div class="gm-c{hoy}"><span class="gm-n">{dia}</span></div>'
+                continue
+            partes = [_celda_partido(liga, p, club) for liga, p in items]
+            copa = " copa" if any(liga not in INICIO for liga, _ in items) else ""
+            res = partes[0][0] if len(partes) == 1 else ""
+            celdas += (f'<div class="gm-c tiene{copa} {res}{hoy}"><span class="gm-n">{dia}</span>'
+                       + "".join(h for _, h in partes) + '</div>')
+    cab = "".join(f"<span>{d}</span>" for d in _SEMANA)
+    return f'{CSS_GRILLA}<div class="gm-sem">{cab}</div><div class="gm-grid">{celdas}</div>'
