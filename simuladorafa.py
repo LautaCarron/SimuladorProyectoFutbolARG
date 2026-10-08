@@ -255,6 +255,9 @@ if modo_mgr:
 
 # Mi club (modo manager): se marca en amarillo y se señalan las competencias donde juega
 from ui.vista.mi_club import competencias_club, estilo_mi_club
+if not modo_mgr and getattr(S["rng"], "tacticas", None):      # modo simulación: nadie juega con táctica
+    from motor.nucleo import con_tacticas
+    S["rng"] = con_tacticas(S["rng"], {})
 _club_mgr = st.session_state["manager"].get("club") if modo_mgr else None
 st.session_state["_mi_club"] = _club_mgr                     # lo leen fixture, partidos y calendario
 _mc = competencias_club(S, _club_mgr) if _club_mgr else set()

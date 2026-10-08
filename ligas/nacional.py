@@ -18,6 +18,8 @@ from motor.nucleo import (
     jugar,
     jugar_ko,
     ko_jugar,
+    mods_ids,
+    mods_nombres,
     nuevo_partido,
     sumar_partidos,
     tanda_penales,
@@ -266,7 +268,7 @@ def simular_fecha_b(S, P):
                 etiqueta = lambda i: f"Zona {B_ZONAS2[SB['zona2_de'][i]]}"
             h = np.array([x[0] for x in pares])
             a = np.array([x[1] for x in pares])
-            gh, ga = jugar(rng, r[h], r[a], **P)
+            gh, ga = jugar(rng, r[h], r[a], **P, **mods_ids(rng, nom, h, a))
             sumar_partidos(SB, h, a, gh, ga)
             SB["historial"].append(_fila_historial(
                 SB, [etiqueta(i) for i in h], h, a, gh, ga, ""))
@@ -391,7 +393,7 @@ def simular_fecha_b(S, P):
                 return
             T = red["ganadores"]
         A, B = cruces_mejor_peor(T)
-        loc, vis, gl, gv, gan, per, pen = ko_jugar(rng, r, A, B, P["sorpresa"])
+        loc, vis, gl, gv, gan, per, pen = ko_jugar(rng, r, A, B, P["sorpresa"], nombres=nom)
         red["ganadores"] = gan
         ronda = []
         for li, vi, g1, g2, wi, p in zip(loc["id"][0], vis["id"][0], gl[0], gv[0], gan["id"][0], pen[0]):
@@ -414,7 +416,8 @@ def simular_fecha_b(S, P):
         p_id, p_nom = int(fila["id"]), fila["Equipo"]
         b_id = SB["perdedor_final"]
         gl, gv, gana_b, pen = jugar_ko(rng, np.array([r[b_id]]), np.array([S["r"][p_id]]),
-                                       P["sorpresa"], localia=0.0)
+                                       P["sorpresa"], localia=0.0,
+                                       **mods_nombres(rng, [nom[b_id]], [p_nom]))
         tanda = tanda_penales(rng, gana_b[0]) if pen[0] else None
         partido = nuevo_partido("Promoción", f + 1, "Promoción", "Promoción", nom[b_id], p_nom,
                                 gl[0], gv[0], tanda=tanda,

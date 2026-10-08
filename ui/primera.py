@@ -2,6 +2,7 @@
 
 El código es el de simuladorafa.py, movido acá tal cual. `ctx` trae el estado y los ayudantes
 compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.).
+Modo manager: en la fase 2 se abre sola (y se marca con ⭐) la zona donde juega el club que dirigís.
 """
 
 import streamlit as st
@@ -33,6 +34,7 @@ from ui.vista import (
     seccion,
     vista_fixture,
 )
+from ui.vista.mi_club import marcar, mi_club, zona_primera
 
 
 def render(ctx):
@@ -90,7 +92,9 @@ def render(ctx):
                     leyenda(LEY_ZONAS)
                 else:
                     seccion("Fase 2 · Zonas", "9 fechas dentro de cada zona, localía invertida", "#16a34a")
-                    tabs = st.tabs([f"Zona {n}" for n in ZONAS] + ["Tabla fase 1"])
+                    # modo manager: se abre sola la zona de mi club
+                    etiq, ini = marcar([f"Zona {n}" for n in ZONAS] + ["Tabla fase 1"], zona_primera(S, mi_club()))
+                    tabs = st.tabs(etiq, default=ini)
                     for z, tab in enumerate(tabs[:3]):
                         with tab:
                             mostrar_tabla(tabla_zona(S, z), colorear_destino, S["pos_hist"])

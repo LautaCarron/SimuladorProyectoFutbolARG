@@ -14,6 +14,7 @@ from motor.nucleo import (
     generar_fixture,
     jugar,
     jugar_reducido_federal,
+    mods_ids,
     nuevo_partido,
     sumar_partidos,
     tanda_penales,
@@ -299,7 +300,7 @@ def simular_fecha_f(SF, P, rng):
         if pares:
             h = np.array([x[0] for x in pares])
             a = np.array([x[1] for x in pares])
-            gh, ga = jugar(rng, r[h], r[a], **P)
+            gh, ga = jugar(rng, r[h], r[a], **P, **mods_ids(rng, nom, h, a))
             sumar_partidos(SF, h, a, gh, ga)
             SF["historial"].append(_fila_historial(SF, [etiqueta(i) for i in h], h, a, gh, ga, ""))
             for x, y, g1, g2 in zip(h, a, gh, ga):
@@ -333,7 +334,7 @@ def simular_fecha_f(SF, P, rng):
             
         A, B = cruces_mejor_peor(T)
         final = etapa == F_RED - 1
-        loc, vis, gl, gv, gan, per, pen = jugar_reducido_federal(rng, r, A, B, P["sorpresa"], final)
+        loc, vis, gl, gv, gan, per, pen = jugar_reducido_federal(rng, r, A, B, P["sorpresa"], final, nombres=nom)
         SF["ganadores"] = gan
         ronda = []
         for li, vi, g1, g2, wi, p in zip(loc["id"][0], vis["id"][0], gl[0], gv[0],

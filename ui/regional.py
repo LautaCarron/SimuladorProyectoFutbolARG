@@ -2,6 +2,7 @@
 
 El código es el de simuladorafa.py, movido acá tal cual. `ctx` trae el estado y los ayudantes
 compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.).
+Modo manager: se abre sola (y se marca con ⭐) la región donde juega el club que dirigís.
 """
 
 import streamlit as st
@@ -23,6 +24,7 @@ from ui.vista import (
     seccion,
     vista_fixture,
 )
+from ui.vista.mi_club import mi_club, region_de_club
 
 
 def render(ctx):
@@ -53,6 +55,13 @@ def render(ctx):
             barra_estado([("Fase", fase_reg), ("Fecha", f"{SR['fecha']} / {SR['total']}"),
                           ("Partidos jugados", len(SR["log"]))], pct_reg)
 
+            # modo manager: región del club que dirigís (None si no juega el Regional). La key lleva el
+            # club, así al cambiar de club la región se vuelve a abrir en la nueva.
+            club_mgr = mi_club()
+            mi_reg = region_de_club(SR, club_mgr)
+            _k = "_" + "".join(c if c.isalnum() else "_" for c in club_mgr) if mi_reg else ""
+            _fmt = lambda r: r + " ⭐" if r == mi_reg else r
+
             desempates_r = [p for p in SR["log"] if p["rotulo"] == "Desempate"]
             titulos_r = ["Regiones", "Fixture y resultados"]
             if SR["desempate_pendiente"] or desempates_r:
@@ -63,8 +72,9 @@ def render(ctx):
             with tab_r["Regiones"]:
                 seccion("Regiones", "Cada región es una liga de todos contra todos a una sola vuelta · "
                         "el 1° es el campeón regional", "#0e7490")
-                region = st.pills("Región", REGIONES_REG, default=REGIONES_REG[0], key="reg_region",
-                                  label_visibility="collapsed") or REGIONES_REG[0]
+                region = st.pills("Región", REGIONES_REG, default=mi_reg or REGIONES_REG[0],
+                                  key=f"reg_region{_k}", format_func=_fmt,
+                                  label_visibility="collapsed") or (mi_reg or REGIONES_REG[0])
                 n_final, rival = next((k + 1, b if a == region else a) for k, (a, b) in enumerate(FINALES_REG)
                                       if region in (a, b))
                 st.markdown(chip(f"{len(SR['grupos'][region])} clubes", "#0e7490") + " "
@@ -108,7 +118,9 @@ def render(ctx):
                                     st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
 
             with tab_r["Fixture y resultados"]:
-                region_fx = st.selectbox(":material/map: Región", REGIONES_REG, key="reg_fx_region")
+                region_fx = st.selectbox(":material/map: Región", REGIONES_REG,
+                                         index=REGIONES_REG.index(mi_reg) if mi_reg else 0,
+                                         format_func=_fmt, key=f"reg_fx_region{_k}")
                 vista_fixture("reg", region_fx)
 
             with tab_r["Final por el ascenso"]:

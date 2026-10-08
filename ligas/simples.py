@@ -10,6 +10,7 @@ from motor.nucleo import (
     df_stats,
     generar_fixture,
     jugar,
+    mods_ids,
     nuevo_partido,
     sumar_partidos,
 )
@@ -129,7 +130,7 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     a = np.array([x[1] for x in pares])
     
     if not es_desempate:
-        gh, ga = jugar(rng, r[h], r[a], **P)
+        gh, ga = jugar(rng, r[h], r[a], **P, **mods_ids(rng, nom, h, a))
         sumar_partidos(S_LIGA, h, a, gh, ga)
         S_LIGA["historial"].append(_fila_historial(S_LIGA, [nombre_liga] * len(h), h, a, gh, ga, ""))
         for x, y, g1, g2 in zip(h, a, gh, ga):

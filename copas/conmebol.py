@@ -27,7 +27,7 @@ import numpy as np
 from datos.clubes_int import CLUBES_INT, PAISES
 from copas.argentina import categoria_actual
 from ligas.primera import tabla_final
-from motor.nucleo import jugar, jugar_ko, nuevo_partido, tanda_penales
+from motor.nucleo import jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_penales
 
 LIB, SUD, REC = "Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana"
 
@@ -263,12 +263,13 @@ def _sumar(C, n, gf, gc):
 def _partido(C, k, rng, P, local, visita, comp, neutral=False):
     rl, rv = np.array([C["r"][local]]), np.array([C["r"][visita]])
     if neutral:
-        gl, gv, gana_l, pen = jugar_ko(rng, rl, rv, P["sorpresa"], localia=0.0)
+        gl, gv, gana_l, pen = jugar_ko(rng, rl, rv, P["sorpresa"], localia=0.0,
+                                       **mods_nombres(rng, [local], [visita]))
         tanda = tanda_penales(rng, bool(gana_l[0])) if pen[0] else None
         p = nuevo_partido(C["nombre"], k + 1, C["rondas"][k], comp, local, visita, gl[0], gv[0],
                           tanda=tanda, gana=local if gana_l[0] else visita, neutral=True)
     else:
-        gl, gv = jugar(rng, rl, rv, **P)
+        gl, gv = jugar(rng, rl, rv, **P, **mods_nombres(rng, [local], [visita]))
         p = nuevo_partido(C["nombre"], k + 1, C["rondas"][k], comp, local, visita, gl[0], gv[0])
     C["log"].append(p)
     return p

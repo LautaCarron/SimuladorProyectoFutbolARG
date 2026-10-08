@@ -13,6 +13,8 @@ from motor.nucleo import (
     generar_fixture,
     jugar,
     jugar_ko,
+    mods_ids,
+    mods_nombres,
     nuevo_partido,
     sumar_partidos,
     tanda_penales,
@@ -88,7 +90,8 @@ def definir_bloque(rng, r, bloque, sorpresa, registrar, comp_duelo, comp_liguill
     suf = "" if ronda == 1 else " · definición" if ronda == 2 else f" · definición {ronda - 1}"
     if len(bloque) == 2:
         a, b = bloque
-        gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[a]]), np.array([r[b]]), sorpresa, localia=0.0)
+        gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[a]]), np.array([r[b]]), sorpresa, localia=0.0,
+                                       **mods_nombres(rng, [nom[a]], [nom[b]]))
         tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
         gana = a if gana_l[0] else b
         registrar(a, b, gl[0], gv[0], tanda, gana, comp_duelo + suf)
@@ -98,7 +101,8 @@ def definir_bloque(rng, r, bloque, sorpresa, registrar, comp_duelo, comp_liguill
     for i in range(len(bloque)):
         for j in range(i + 1, len(bloque)):
             a, b = bloque[i], bloque[j]
-            gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[a]]), np.array([r[b]]), sorpresa, localia=0.0)
+            gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[a]]), np.array([r[b]]), sorpresa, localia=0.0,
+                                           **mods_nombres(rng, [nom[a]], [nom[b]]))
             tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
             gana = a if gana_l[0] else b
             puntos[gana] += 3
@@ -232,7 +236,7 @@ def simular_fecha(S, P, acumular=True):
         pares = S["fechas"][f]
         h = np.array([x[0] for x in pares])
         a = np.array([x[1] for x in pares])
-        gh, ga = jugar(S["rng"], S["r"][h], S["r"][a], **P)
+        gh, ga = jugar(S["rng"], S["r"][h], S["r"][a], **P, **mods_ids(S["rng"], nom, h, a))
         sumar_partidos(S, h, a, gh, ga)
 
         d = S["r"][h] - S["r"][a]

@@ -10,6 +10,7 @@ from motor.nucleo import (
     df_stats,
     generar_fixture,
     jugar,
+    mods_ids,
     nuevo_partido,
     sumar_partidos,
     tanda_penales,
@@ -18,16 +19,6 @@ from datos.regional import FINALES_REG, REGIONES_REG
 from ligas.primera import definir_bloque
 
 
-# ----------------------------------------------------------------------------
-# MOTOR TORNEO REGIONAL AMATEUR
-# ----------------------------------------------------------------------------
-# 12 regiones -> 12 campeones -> 6 cruces -> 6 ascensos al Federal A.
-# 1) Cada región es una liga única (sin zonas): todos contra todos a una sola vuelta.
-#    Campeón: el 1°. Si dos o más igualan en puntos en el 1° puesto, desempate (partido
-#    único o liguilla, cancha neutral, penales si empatan): nunca por diferencia de gol.
-# 2) Final por el ascenso: los 12 campeones se cruzan de a pares según el JSON, a ida y
-#    vuelta (cierra de local el de mejor campaña; si el global empata, penales). Los 6
-#    ganadores ascienden al Federal A.
 REG_LIGA = "Regional Amateur"
 
 
@@ -157,7 +148,7 @@ def _jugar_pierna_reg(SR, P, rng, series, vuelta, n_fecha):
     a = np.array([x["a"] for x in series])
     b = np.array([x["b"] for x in series])
     loc, vis = (a, b) if vuelta else (b, a)             # el mejor ubicado cierra de local
-    gl, gv = jugar(rng, r[loc], r[vis], **P)
+    gl, gv = jugar(rng, r[loc], r[vis], **P, **mods_ids(rng, nom, loc, vis))
     for x, l, v, g1, g2 in zip(series, loc, vis, gl, gv):
         g1, g2 = int(g1), int(g2)
         if vuelta:
@@ -204,7 +195,7 @@ def simular_fecha_reg(SR, P, rng):
         if pares:
             h = np.array([x[0] for x in pares])
             a = np.array([x[1] for x in pares])
-            gh, ga = jugar(rng, SR["r"][h], SR["r"][a], **P)
+            gh, ga = jugar(rng, SR["r"][h], SR["r"][a], **P, **mods_ids(rng, SR["nombres"], h, a))
             sumar_partidos(SR, h, a, gh, ga)
             nom = SR["nombres"]
             for x, y, g1, g2 in zip(h, a, gh, ga):

@@ -29,7 +29,7 @@ equipos: el ganador de cada llave juega los cuartos.
 import numpy as np
 
 from motor.incidentes import revisar_copa
-from motor.nucleo import jugar_ko, nuevo_partido, tanda_penales
+from motor.nucleo import jugar_ko, mods_ids, mods_nombres, nuevo_partido, tanda_penales
 from datos.regional import REGIONES_REG
 from ligas.federal import tabla_f_f2
 from ligas.nacional import total_b
@@ -172,7 +172,7 @@ def simular_ronda_copa(SC, P, rng):
     llaves = SC["cuadro"][k]
     a = np.array([m["a"] for m in llaves])
     b = np.array([m["b"] for m in llaves])
-    gl, gv, gana_l, pen = jugar_ko(rng, r[a], r[b], P["sorpresa"], localia=0.0)
+    gl, gv, gana_l, pen = jugar_ko(rng, r[a], r[b], P["sorpresa"], localia=0.0, **mods_ids(rng, nom, a, b))
     for m, g1, g2, gl_, pe in zip(llaves, gl, gv, gana_l, pen):
         tanda = tanda_penales(rng, bool(gl_)) if pe else None
         m["gana"] = m["a"] if gl_ else m["b"]
@@ -239,7 +239,8 @@ def simular_supercopa(S, P, rng):
         return
     SS = S["supercopa"]
     a, ra, crit_a, b, rb, crit_b = rivales_supercopa(S)
-    gl, gv, gana_l, pen = jugar_ko(rng, np.array([ra]), np.array([rb]), P["sorpresa"], localia=0.0)
+    gl, gv, gana_l, pen = jugar_ko(rng, np.array([ra]), np.array([rb]), P["sorpresa"], localia=0.0,
+                                   **mods_nombres(rng, [a], [b]))
     g1, g2, gana_local, hubo_pen = int(gl[0]), int(gv[0]), bool(gana_l[0]), bool(pen[0])
     tanda = tanda_penales(rng, gana_local) if hubo_pen else None
     gana = a if gana_local else b

@@ -41,6 +41,7 @@ from motor.ofertas import (
     rechazar,
     renunciar,
 )
+from motor.nucleo import TACTICAS, con_tacticas
 from ui.vista import aviso, chip, crest, esc, eventos_calendario, fila_partido_html, norm, render_ficha, seccion
 from ui.vista.calendario import _cal_partidos
 from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partidos
@@ -49,7 +50,7 @@ from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partido
 NACIONALIDADES = ["Argentina", "Uruguay", "Chile", "Paraguay", "Bolivia", "Brasil", "Colombia", "Ecuador",
                   "Perú", "Venezuela", "México", "España", "Italia", "Otra"]
 
-FORMACIONES = ["4-4-2", "4-3-3", "4-2-3-1", "3-5-2", "5-3-2", "4-1-4-1", "3-4-3"]
+FORMACIONES = list(TACTICAS)          # cada formación es una táctica que cambia cómo se juega (motor/nucleo.py)
 
 ESTILOS = {
     "Equilibrado": "Sin extremos: se adapta al rival.",
@@ -79,6 +80,27 @@ TOPE_DIAS = 60                    # "Hasta la próxima novedad" / "hasta mi pró
 def _primer_dia(S):
     prox = proximos(S)
     return min((d for d, _ in prox.values()), default=dt.date.today())
+
+
+def _pct(x):
+    return f"{(x - 1) * 100:+.0f}%"
+
+
+def efectos_tactica(nombre):
+    """Resumen legible de lo que hace una táctica."""
+    atk, dfn, ctl, _ = TACTICAS[nombre]
+    return (f"Goles a favor {_pct(atk)} · Goles en contra {_pct(dfn)} · "
+            f"Mediocampo {'+' if ctl > 0 else ''}{ctl:g}" if ctl else
+            f"Goles a favor {_pct(atk)} · Goles en contra {_pct(dfn)} · Mediocampo neutro")
+
+
+def aplicar_tactica(S, M):
+    """Carga en el generador de azar del simulador la táctica del club del manager. Sólo juega con
+    táctica si dirige al primer equipo (en la Reserva no define cómo juega el primer equipo)."""
+    tab = {}
+    if M.get("club") and M.get("rol") == "primer_equipo" and M.get("formacion") in TACTICAS:
+        tab = {M["club"]: TACTICAS[M["formacion"]]}
+    S["rng"] = con_tacticas(S["rng"], tab)
 
 
 def _volver_al_inicio():
@@ -150,9 +172,10 @@ def alta_manager(S):
     st.markdown('<div class="mlab" style="margin-top:14px">Perfil de entrenador</div>',
                 unsafe_allow_html=True)
     c5, c6 = st.columns(2)
-    formacion = c5.selectbox("Formación preferida", FORMACIONES, index=1, key="mgr_form")
+    formacion = c5.selectbox("Formación (táctica)", FORMACIONES, index=0, key="mgr_form")
     estilo = c6.selectbox("Estilo de juego", list(ESTILOS), index=0, key="mgr_estilo")
-    st.caption(ESTILOS[estilo])
+    st.caption(f"{formacion}: {TACTICAS[formacion][3]} ({efectos_tactica(formacion)}). "
+               "La podés cambiar cuando quieras desde la pestaña Mi club. " + ESTILOS[estilo])
     dificultad = st.segmented_control("Dificultad", list(DIFICULTADES), default="Normal",
                                       key="mgr_dif") or "Normal"
     st.caption(DIFICULTADES[dificultad])
@@ -236,6 +259,7 @@ def sincronizar_manager(S, M):
     """Corre el motor de ofertas por cada día que se jugó por completo desde la última vez.
     Sirve para cualquier forma de jugar. Devuelve los textos de las novedades (ofertas nuevas que
     siguen vigentes y ascensos) y los deja anotados en M["novedades"]."""
+    aplicar_tactica(S, M)                                   # la táctica viaja en el generador de azar
     uid = S.setdefault("_mgr_uid", uuid.uuid4().hex)       # cambia si se reinicia el simulador
     jugados = _dias_jugados(S)
     sync = M.get("sync")
@@ -345,10 +369,34 @@ def _controles(S, M, P, acumular):
         st.rerun()
 
 
+def _selector_tactica(S, M):
+    st.markdown('<div class="mlab">Táctica</div>', unsafe_allow_html=True)
+    if M["rol"] != "primer_equipo":
+        st.caption("Como DT de la Reserva no definís la táctica del primer equipo: la define su DT.")
+        return
+    actual = M["formacion"] if M["formacion"] in TACTICAS else FORMACIONES[0]
+    nueva = st.selectbox("Formación", FORMACIONES, index=FORMACIONES.index(actual), key="mgr_tactica",
+                         label_visibility="collapsed")
+    if nueva != M["formacion"]:
+        M["formacion"] = nueva
+        aplicar_tactica(S, M)
+    st.caption(f"{TACTICAS[nueva][3]} ({efectos_tactica(nueva)}). Vale para todos los partidos de tu club "
+               "(liga y copas) desde el próximo.")
+    with st.expander("Comparar todas las tácticas"):
+        filas = ["| Táctica | Goles a favor | Goles en contra | Mediocampo | Perfil |", "|---|---|---|---|---|"]
+        for n, (atk, dfn, ctl, nota) in TACTICAS.items():
+            filas.append(f"| {'**' + n + '**' if n == nueva else n} | {_pct(atk)} | {_pct(dfn)} | "
+                         f"{ctl:+g} | {nota} |")
+        st.markdown("\n".join(filas))
+        st.caption("Entre equipos parejos todas rinden casi igual en puntos: cambia cómo se gana. Las "
+                   "ofensivas ayudan un poco más al favorito; las defensivas, al más débil.")
+
+
 def _mi_club(S, M, P, acumular, abierta):
     club = M["club"]
     st.markdown(f"Dirigís a **{esc(club)}** como {ROLES[M['rol']]}. Los partidos se simulan con los botones "
                 "de arriba o de cada liga; este botón avanza hasta que juegue tu club.")
+    _selector_tactica(S, M)
     if st.button(":material/sports_soccer: Simular hasta el próximo partido de mi club", key="mgr_prox_partido",
                  type="primary", width="stretch", disabled=not proximos(S)):
         jugados, textos, nuevos = _jugar_dias(S, M, P, acumular, lambda t, n: bool(n))

@@ -24,6 +24,79 @@ STATS = ("pj", "g", "e", "p", "gf", "gc")
 
 
 # ----------------------------------------------------------------------------
+# TÁCTICAS (modo manager)
+# ----------------------------------------------------------------------------
+# Cada táctica: (ataque, defensa, control, descripción).
+#   ataque   multiplica los goles esperados del propio equipo.
+#   defensa  multiplica los goles esperados del RIVAL (menos de 1 = aguanta más el arco en cero).
+#   control  puntos de media que suma (o resta) al balance del partido: dominio del mediocampo.
+# Sólo el club que dirige el manager usa una táctica; los demás juegan "neutros" (1.0, 1.0, 0.0).
+# Están balanceadas: entre equipos parejos todas rinden casi igual en puntos (~1.35 por partido);
+# cambia CÓMO se gana: las ofensivas ayudan un poco más al favorito, las defensivas al más débil.
+TACTICAS = {
+    "4-4-2": (1.00, 1.00, 0.0, "Equilibrada: ni arriesga ni se expone."),
+    "4-3-3": (1.14, 1.08, -1.5, "Más goles a favor y en contra, pero pierde el control del mediocampo."),
+    "4-2-3-1": (1.04, 1.02, 0.0, "Equilibrada con un enlace: algo más de ataque."),
+    "3-5-2": (1.04, 1.10, 1.0, "Domina el mediocampo, pero deja espacios atrás y recibe más goles."),
+    "5-3-2": (0.92, 0.88, -0.5, "Sólida atrás; sale de contra con dos puntas."),
+    "5-4-1": (0.84, 0.78, -0.3, "Cierra el arco y gana en cero más seguido, pero mete pocos goles."),
+    "4-1-4-1": (0.96, 0.96, 0.3, "Ordenada: un ancla protege a la defensa."),
+    "3-4-3": (1.22, 1.18, -1.0, "Muy ofensiva y muy expuesta."),
+}
+_NEUTRA = np.array([1.0, 1.0, 0.0])
+
+
+class RngTacticas(np.random.Generator):
+    """Generador común que además lleva el cuadro de tácticas de la partida: {club: (ataque, defensa,
+    control)}. Como `rng` llega a todos los lugares donde se juega un partido, así cada partida (cada
+    sesión) tiene sus tácticas sin variables globales."""
+    tacticas = None
+
+
+def con_tacticas(rng, tacticas):
+    """Devuelve un generador con el mismo flujo de azar que `rng` y el cuadro `tacticas` cargado
+    ({} = nadie usa táctica). Hay que guardarlo: S["rng"] = con_tacticas(S["rng"], {...})."""
+    if not isinstance(rng, RngTacticas):
+        rng = RngTacticas(rng.bit_generator)
+    rng.tacticas = {club: tuple(t[:3]) for club, t in tacticas.items()}
+    return rng
+
+
+def _mods(rng, nl, nv):
+    tab = getattr(rng, "tacticas", None)
+    if not tab:
+        return {}
+    nl, nv = np.asarray(nl, dtype=object), np.asarray(nv, dtype=object)
+
+    def lado(n):
+        out = np.tile(_NEUTRA, n.shape + (1,))
+        for club, t in tab.items():
+            m = n == club
+            if m.any():
+                out[m] = t
+        return out
+
+    ml, mv = lado(nl), lado(nv)
+    if (ml == _NEUTRA).all() and (mv == _NEUTRA).all():
+        return {}
+    return {"mod_local": ml, "mod_visita": mv}
+
+
+def mods_ids(rng, nombres, ids_l, ids_v):
+    """Modificadores de táctica (para jugar) de los equipos `ids_l` / `ids_v` de la lista `nombres`.
+    Devuelve {} si nadie de esos partidos usa táctica."""
+    if not getattr(rng, "tacticas", None):
+        return {}
+    nombres = np.asarray(nombres, dtype=object)
+    return _mods(rng, nombres[np.asarray(ids_l)], nombres[np.asarray(ids_v)])
+
+
+def mods_nombres(rng, nombres_l, nombres_v):
+    """Lo mismo, pero con los nombres de los clubes (copas, que no trabajan con ids)."""
+    return _mods(rng, nombres_l, nombres_v)
+
+
+# ----------------------------------------------------------------------------
 # MOTOR COMÚN
 # ----------------------------------------------------------------------------
 def generar_fixture(n):
@@ -135,7 +208,7 @@ def fixture_revancha(rng, ids, H, previas, balance=None, intentos=300):
     return mejor[1]
 
 
-def jugar(rng, r_local, r_visita, sorpresa, escala=ESCALA, localia=LOCALIA):
+def jugar(rng, r_local, r_visita, sorpresa, escala=ESCALA, localia=LOCALIA, mod_local=None, mod_visita=None):
     """Simula partidos (vectorizado). Devuelve goles local y visitante.
 
     sorpresa = desvío (en puntos de media) de la "forma del día": en cada
@@ -145,12 +218,20 @@ def jugar(rng, r_local, r_visita, sorpresa, escala=ESCALA, localia=LOCALIA):
     r_visita = np.asarray(r_visita, float)
     forma = rng.normal(0.0, sorpresa, r_local.shape) - rng.normal(0.0, sorpresa, r_local.shape)
     d_ef = (r_local - r_visita) + forma + localia
+    # Tácticas (modo manager): (ataque, defensa, control) de cada lado, con forma (..., 3)
+    atk_l = dfn_l = atk_v = dfn_v = 1.0
+    if mod_local is not None:
+        ml = np.asarray(mod_local, float)
+        atk_l, dfn_l, d_ef = ml[..., 0], ml[..., 1], d_ef + ml[..., 2]
+    if mod_visita is not None:
+        mv = np.asarray(mod_visita, float)
+        atk_v, dfn_v, d_ef = mv[..., 0], mv[..., 1], d_ef - mv[..., 2]
     d_ef = 28.0 * np.tanh(d_ef / 28.0)          # las diferencias enormes no se disparan
     # "Ritmo" del partido (media 1): hay partidos cerrados (0-0, 1-0) y otros
     # abiertos (3-2). Los resultados muy abultados quedan como rareza.
     ritmo = rng.gamma(DISPERSION, 1.0 / DISPERSION, size=d_ef.shape)
-    lam_l = GOLES_BASE * ritmo * np.exp(d_ef / (2 * escala))
-    lam_v = GOLES_BASE * ritmo * np.exp(-d_ef / (2 * escala))
+    lam_l = GOLES_BASE * ritmo * np.exp(d_ef / (2 * escala)) * atk_l * dfn_v
+    lam_v = GOLES_BASE * ritmo * np.exp(-d_ef / (2 * escala)) * atk_v * dfn_l
     # Matriz de probabilidades de cada marcador: Poisson + Dixon-Coles + amortiguación
     k = np.arange(TOPE_GOLES)
     pl = np.exp(k * np.log(lam_l[..., None]) - lam_l[..., None] - _LOG_FACT)
@@ -202,35 +283,36 @@ def nuevo_partido(liga, fecha, rotulo, comp, local, visita, gl, gv,
     }
 
 
-def jugar_ko(rng, r_loc, r_vis, sorpresa, localia=LOCALIA, escala=ESCALA):
+def jugar_ko(rng, r_loc, r_vis, sorpresa, localia=LOCALIA, escala=ESCALA, **mods):
     """Partido único eliminatorio SIN alargue: si empatan, penales directos.
 
     Devuelve goles local, goles visitante, si ganó el local y si hubo penales.
     """
-    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, escala=escala, localia=localia)
+    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, escala=escala, localia=localia, **mods)
     p_loc = np.clip(0.5 + (np.asarray(r_loc, float) - np.asarray(r_vis, float)) / 400, 0.35, 0.65)
     pen_local = rng.random(np.shape(gl)) < p_loc
     gana_local = np.where(gl != gv, gl > gv, pen_local)
     return gl, gv, gana_local, gl == gv
 
 
-def jugar_ko_posicion(rng, r_loc, r_vis, sorpresa, localia=LOCALIA):
+def jugar_ko_posicion(rng, r_loc, r_vis, sorpresa, localia=LOCALIA, **mods):
     """Partido único del reducido del Federal A (menos la final): el local ya es el
     mejor ubicado en la tabla, y si empatan gana directamente el local (sin penales;
     es decir, gana el que quedó mejor en la tabla)."""
-    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, localia=localia)
+    gl, gv = jugar(rng, r_loc, r_vis, sorpresa, localia=localia, **mods)
     gana_local = gl >= gv
     return gl, gv, gana_local, gl == gv
 
 
-def jugar_reducido_federal(rng, r, A, B, sorpresa, final):
+def jugar_reducido_federal(rng, r, A, B, sorpresa, final, nombres=None):
     """Cruce del reducido del Federal A: A siempre es el mejor ubicado (cruces_mejor_peor
     ya lo deja así). En cuartos y semis juega de local y el empate lo gana él; la final
     es en cancha neutral y el empate se define por penales."""
+    mods = mods_ids(rng, nombres, A["id"], B["id"]) if nombres is not None else {}
     if final:
-        gl, gv, gana_local, pen = jugar_ko(rng, r[A["id"]], r[B["id"]], sorpresa, localia=0.0)
+        gl, gv, gana_local, pen = jugar_ko(rng, r[A["id"]], r[B["id"]], sorpresa, localia=0.0, **mods)
     else:
-        gl, gv, gana_local, pen = jugar_ko_posicion(rng, r[A["id"]], r[B["id"]], sorpresa)
+        gl, gv, gana_local, pen = jugar_ko_posicion(rng, r[A["id"]], r[B["id"]], sorpresa, **mods)
     gan = {k: np.where(gana_local, A[k], B[k]) for k in A}
     per = {k: np.where(gana_local, B[k], A[k]) for k in A}
     return A, B, gl, gv, gan, per, pen
@@ -302,12 +384,13 @@ def a_es_local(A, B):
     return np.where(A["zona"] != B["zona"], a_camp, a_mas_pts)
 
 
-def ko_jugar(rng, r, A, B, sorpresa):
+def ko_jugar(rng, r, A, B, sorpresa, nombres=None):
     """Juega los cruces A vs B (partido único, penales directos si empatan)."""
     a_loc = a_es_local(A, B)
     loc = {k: np.where(a_loc, A[k], B[k]) for k in A}
     vis = {k: np.where(a_loc, B[k], A[k]) for k in A}
-    gl, gv, gana_local, pen = jugar_ko(rng, r[loc["id"]], r[vis["id"]], sorpresa)
+    mods = mods_ids(rng, nombres, loc["id"], vis["id"]) if nombres is not None else {}
+    gl, gv, gana_local, pen = jugar_ko(rng, r[loc["id"]], r[vis["id"]], sorpresa, **mods)
     gan = {k: np.where(gana_local, loc[k], vis[k]) for k in A}
     per = {k: np.where(gana_local, vis[k], loc[k]) for k in A}
     return loc, vis, gl, gv, gan, per, pen
@@ -319,4 +402,4 @@ def _fila_historial(SB, instancia, loc, vis, gl, gv, definicion):
         "Instancia": instancia,
         "Local": [nom[i] for i in loc], "GL": gl, "GV": gv,
         "Visitante": [nom[i] for i in vis], "Definición": definicion,
-    })
+    })

@@ -2,6 +2,8 @@
 
 El código es el de simuladorafa.py, movido acá tal cual. `ctx` trae el estado y los ayudantes
 compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.).
+Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que dirigís
+(su grupo por cercanía en la fase 1; Campeonato o Descenso en la fase 2).
 """
 
 import streamlit as st
@@ -26,6 +28,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
+from ui.vista.mi_club import marcar, mi_club, zona_federal
 
 
 def render(ctx):
@@ -80,17 +83,20 @@ def render(ctx):
             tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
                        
             with tab_f["Posiciones"]:
+                mi_zona = zona_federal(SF, mi_club())          # modo manager: zona de mi club (o None)
                 if ff < SF["f1_rondas"]:
                     seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
                             "cada grupo", "#4f46e5")
-                    tabs_f = st.tabs(F_GRUPOS_NOMBRES)
+                    etiq, ini = marcar(list(F_GRUPOS_NOMBRES), mi_zona)
+                    tabs_f = st.tabs(etiq, default=ini)
                     for g, tab in enumerate(tabs_f):
                         with tab:
                             mostrar_tabla(tabla_f_grupo(SF, g), colorear_f, SF["pos_hist"])
                     leyenda([("1°-4° → Zona Campeonato", COLORES_F["→ Zona Campeonato"])])
                 else:
                     seccion("Fase 2 · Zonas", "Puntos reiniciados a 0 · una rueda por zona", "#16a34a")
-                    tabs_f = st.tabs(["Campeonato", "Descenso", "Fase 1"])
+                    etiq, ini = marcar(["Campeonato", "Descenso", "Fase 1"], mi_zona)
+                    tabs_f = st.tabs(etiq, default=ini)
                     with tabs_f[0]:
                         mostrar_tabla(tabla_f_f2(SF, 0), colorear_f, SF["pos_hist"])
                     with tabs_f[1]:

@@ -26,7 +26,7 @@ import numpy as np
 
 from datos.clubes_mundial import CUPOS_2029, MEDIA_MUNDIAL, PAIS_MUNDIAL, clubes_de
 from copas.conmebol import _medias, pais_de
-from motor.nucleo import MAX_R, MIN_R, jugar, jugar_ko, nuevo_partido, tanda_penales
+from motor.nucleo import MAX_R, MIN_R, jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_penales
 
 MUNDIAL = "Mundial de Clubes"
 CADA = 4                      # se juega cada 4 temporadas (temporada 4 = 2029)
@@ -380,7 +380,8 @@ def simular_ronda_mundial(S, P, rng):
     if k < 3:
         pares = [(g, M["grupos"][g][i], M["grupos"][g][j]) for g in range(8) for i, j in _FIX3[k]]
         gl, gv = jugar(rng, np.array([r[a] for _, a, _ in pares]), np.array([r[b] for _, _, b in pares]),
-                       P["sorpresa"], escala=ESCALA_MUNDIAL, localia=0.0)
+                       P["sorpresa"], escala=ESCALA_MUNDIAL, localia=0.0,
+                       **mods_nombres(rng, [a for _, a, _ in pares], [b for _, _, b in pares]))
         for (g, a, b), x, y in zip(pares, gl, gv):
             x, y = int(x), int(y)
             M["log"].append(nuevo_partido(MUNDIAL, k + 1, RONDAS[k], f"Grupo {GRUPOS[g]}", a, b, x, y,
@@ -393,7 +394,8 @@ def simular_ronda_mundial(S, P, rng):
         llaves = M["cuadro"][k - 3]
         gl, gv, gana_l, pen = jugar_ko(rng, np.array([r[m["a"]] for m in llaves]),
                                        np.array([r[m["b"]] for m in llaves]), P["sorpresa"], localia=0.0,
-                                       escala=ESCALA_MUNDIAL)
+                                       escala=ESCALA_MUNDIAL,
+                                       **mods_nombres(rng, [m["a"] for m in llaves], [m["b"] for m in llaves]))
         for m, g1, g2, gl_, pe in zip(llaves, gl, gv, gana_l, pen):
             tanda = tanda_penales(rng, bool(gl_)) if pe else None
             m["gana"] = m["a"] if gl_ else m["b"]
