@@ -21,7 +21,7 @@ import uuid
 
 import streamlit as st
 
-from motor.calendario import jugar_proximo_dia, proximos, texto_dia
+from motor.calendario import dia_partido, jugar_proximo_dia, proximos, texto_dia
 from motor.ofertas import (
     GLOBAL_MAX,
     GLOBAL_MIN,
@@ -42,6 +42,28 @@ from motor.ofertas import (
     renunciar,
 )
 from motor.nucleo import TACTICAS, con_tacticas
+from motor.relaciones import (
+    CAMA_ATAQUE,
+    CAMA_CONTROL,
+    CAMA_DEFENSA,
+    DE_CLUB,
+    ETIQUETAS,
+    GLOBALES,
+    KARMA_DEJAR_CLUB,
+    KARMA_RENUNCIAR,
+    UMBRAL_CAMA,
+    aplicar_partido,
+    asegurar,
+    cambiar,
+    clave_partido,
+    con_cama,
+    descripcion,
+    efecto_cama,
+    entrar_club,
+    revisar_despido,
+    salir_club,
+    umbral_despido,
+)
 from ui.vista import aviso, chip, crest, esc, eventos_calendario, fila_partido_html, norm, render_ficha, seccion
 from ui.vista.calendario import _cal_partidos
 from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partidos
@@ -99,7 +121,7 @@ def aplicar_tactica(S, M):
     táctica si dirige al primer equipo (en la Reserva no define cómo juega el primer equipo)."""
     tab = {}
     if M.get("club") and M.get("rol") == "primer_equipo" and M.get("formacion") in TACTICAS:
-        tab = {M["club"]: TACTICAS[M["formacion"]]}
+        tab = {M["club"]: con_cama(TACTICAS[M["formacion"]], efecto_cama(M))}   # el plantel puede hacerte la cama
     S["rng"] = con_tacticas(S["rng"], tab)
 
 
@@ -229,8 +251,10 @@ def alta_manager(S):
         M.update(nombre=nombre.strip(), apellido=apellido.strip(), edad=int(edad), nacionalidad=nacionalidad,
                  formacion=formacion, estilo=estilo, reputacion=reputacion, dificultad=dificultad,
                  global_a_mano=(modo_g == "A mano"), hoy=_primer_dia(S))
+        asegurar(M)                                   # relaciones iniciales (según la reputación)
         if club:                                      # arranca dirigiendo el primer equipo
             M["club"], M["rol"] = club, "primer_equipo"
+            entrar_club(S, M, club)
             M["historial_clubes"].append({"club": club, "categoria": categoria_de(S, club),
                                           "rol": "primer_equipo", "temporada": S["temp"], "desde": M["hoy"],
                                           "hasta": None, "ascendido": None})
@@ -260,21 +284,29 @@ def sincronizar_manager(S, M):
     Sirve para cualquier forma de jugar. Devuelve los textos de las novedades (ofertas nuevas que
     siguen vigentes y ascensos) y los deja anotados en M["novedades"]."""
     aplicar_tactica(S, M)                                   # la táctica viaja en el generador de azar
+    asegurar(M)
+    if M["club"] and M["rel"]["dirigencia"] is None:        # carrera empezada antes de que existieran las relaciones
+        entrar_club(S, M, M["club"])
     uid = S.setdefault("_mgr_uid", uuid.uuid4().hex)       # cambia si se reinicia el simulador
     jugados = _dias_jugados(S)
     sync = M.get("sync")
     if not sync or sync["uid"] != uid:
         M["sync"] = {"uid": uid, "dias": set(jugados)}     # lo ya jugado antes no genera ofertas
+        M["partidos_vistos"] = {clave_partido(p) for p in _partidos_club(M["club"])} if M["club"] else set()
         return []
     textos = []
     pendientes = []
     for d in sorted(x for x in jugados if x not in sync["dias"]):
         sync["dias"].add(d)
         M["registro"].append({"dia": d, "comps": sorted(set(jugados[d]))})
-        pendientes.append((d, nuevo_dia(S, M, d, S["rng"])))
+        r = nuevo_dia(S, M, d, S["rng"])
+        r["relaciones"] = _relaciones_dia(S, M, d)         # partidos del día: hinchada, dirigencia, plantel...
+        pendientes.append((d, r))
     del M["registro"][:-40]
     vigentes = {o["id"] for o in M["ofertas"]}
     for d, r in pendientes:
+        for t in r["relaciones"]:
+            textos.append((d, t))
         for t in r["eventos"]:
             textos.append((d, f"📣 {t}"))
         for o in r["nuevas"]:
@@ -328,6 +360,37 @@ def _tarjeta_proximo(S, M):
         st.caption("Como DT de la Reserva no dirigís este partido: lo dirige el DT del primer equipo.")
 
 
+def _relaciones_dia(S, M, d):
+    """Mueve las relaciones con los partidos de mi club que ya se jugaron hasta el día `d` (sólo cuentan
+    cuando sos DT del primer equipo) y revisa si te echan. Devuelve los textos de lo que pasó."""
+    avisos = []
+    if not M["club"]:
+        return avisos
+    nuevos = sorted((p for p in _partidos_club(M["club"])
+                     if clave_partido(p) not in M["partidos_vistos"] and (dia_partido(S, p) or d) <= d),
+                    key=lambda p: dia_partido(S, p) or d)
+    for p in nuevos:
+        M["partidos_vistos"].add(clave_partido(p))
+        if M["rol"] == "primer_equipo":
+            M["rel_log"].append({"dia": dia_partido(S, p) or d, "texto": aplicar_partido(S, M, p)})
+    del M["rel_log"][:-12]
+    if M["rol"] != "primer_equipo":
+        return avisos
+    M["dias_dt"] += 1
+    plantel = M["rel"]["plantel"]
+    if efecto_cama(M) > 0 and not M.get("cama_avisada"):
+        M["cama_avisada"] = True
+        avisos.append(f"🛏️ El plantel te está haciendo la cama: el equipo rinde peor ({plantel:.0f}% de relación).")
+    elif M.get("cama_avisada") and plantel >= UMBRAL_CAMA + 10:
+        M["cama_avisada"] = False
+        avisos.append("🤝 El plantel volvió a bancarte.")
+    despido = revisar_despido(S, M, S["rng"])
+    if despido:
+        M["cama_avisada"] = False
+        avisos.append(f"🚨 {despido}")
+    return avisos
+
+
 def _partidos_club(club):
     return [p for p in todos_los_partidos() if club in (p["local"], p["visita"])]
 
@@ -349,6 +412,54 @@ def _jugar_dias(S, M, P, acumular, hasta):
 
 
 # ---- Panel de la pestaña Manager ----------------------------------------------
+def _msg_dias(jugados, textos, vacio=""):
+    return (f"Pasaron {jugados} día{'s' if jugados != 1 else ''}. "
+            + (" ".join(esc(t) for t in textos) if textos else vacio))
+
+
+def _cb_hasta_novedad(S, M, P, acumular):
+    jugados, textos, _ = _jugar_dias(S, M, P, acumular, lambda t, n: bool(t))
+    st.session_state["mgr_msg"] = _msg_dias(jugados, textos, "Sin novedades.")
+
+
+def _cb_prox_partido(S, M, P, acumular):
+    jugados, textos, nuevos = _jugar_dias(S, M, P, acumular, lambda t, n: bool(n))
+    st.session_state["mgr_ultimo"] = list(nuevos)
+    st.session_state["mgr_msg"] = _msg_dias(jugados, textos)
+
+
+def _cb_aceptar(S, M, o):
+    if M["club"]:
+        cambiar(M, "karma", KARMA_DEJAR_CLUB)               # dejás un club por otro
+    aceptar(S, M, o)
+    entrar_club(S, M, o["club"])
+    M["partidos_vistos"] = set(M.get("partidos_vistos", ())) | {clave_partido(p) for p in _partidos_club(o["club"])}
+    M["cama_avisada"] = False
+    st.session_state["mgr_msg"] = f"Aceptaste: {ROLES[o['rol']]} en <b>{esc(o['club'])}</b>."
+
+
+def _cb_rechazar(M, o):
+    rechazar(M, o)
+
+
+def _cb_renunciar(M):
+    renunciar(M)
+    salir_club(M)
+    cambiar(M, "karma", KARMA_RENUNCIAR)
+    M["cama_avisada"] = False
+    st.session_state["mgr_msg"] = "Renunciaste: volvés a estar libre."
+
+
+def _cb_editar():
+    st.session_state.pop("manager", None)
+
+
+def _cb_volver_inicio():
+    st.session_state.pop("afa_pantalla", None)
+    if "modo" in st.query_params:
+        del st.query_params["modo"]
+
+
 def _controles(S, M, P, acumular):
     prox = proximos(S)
     hoy = min((d for d, _ in prox.values()), default=None)
@@ -359,14 +470,10 @@ def _controles(S, M, P, acumular):
     m4.metric("Global", f"{M['global']} · {nivel_texto(M['global'])}")
     if hoy is None:
         aviso("Terminó la temporada. Pasá a la siguiente con <b>Nueva temporada</b> (arriba).")
-    if st.button(":material/mark_email_unread: Simular hasta la próxima novedad", key="mgr_hasta_oferta",
-                 width="stretch", disabled=hoy is None,
-                 help="Juega días hasta que llegue una oferta nueva o pase algo en tu club "
-                      "(o termine la temporada). Los partidos se simulan igual que en el simulador."):
-        jugados, textos, _ = _jugar_dias(S, M, P, acumular, lambda t, n: bool(t))
-        st.session_state["mgr_msg"] = (f"Pasaron {jugados} día{'s' if jugados != 1 else ''}. "
-                                       + (" ".join(esc(t) for t in textos) if textos else "Sin novedades."))
-        st.rerun()
+    st.button(":material/mark_email_unread: Simular hasta la próxima novedad", key="mgr_hasta_oferta",
+              width="stretch", disabled=hoy is None, on_click=_cb_hasta_novedad, args=(S, M, P, acumular),
+              help="Juega días hasta que llegue una oferta nueva o pase algo en tu club "
+                   "(o termine la temporada). Los partidos se simulan igual que en el simulador.")
 
 
 def _selector_tactica(S, M):
@@ -397,13 +504,9 @@ def _mi_club(S, M, P, acumular, abierta):
     st.markdown(f"Dirigís a **{esc(club)}** como {ROLES[M['rol']]}. Los partidos se simulan con los botones "
                 "de arriba o de cada liga; este botón avanza hasta que juegue tu club.")
     _selector_tactica(S, M)
-    if st.button(":material/sports_soccer: Simular hasta el próximo partido de mi club", key="mgr_prox_partido",
-                 type="primary", width="stretch", disabled=not proximos(S)):
-        jugados, textos, nuevos = _jugar_dias(S, M, P, acumular, lambda t, n: bool(n))
-        st.session_state["mgr_ultimo"] = [p for p in nuevos]
-        st.session_state["mgr_msg"] = (f"Pasaron {jugados} día{'s' if jugados != 1 else ''}. "
-                                       + " ".join(esc(t) for t in textos))
-        st.rerun()
+    st.button(":material/sports_soccer: Simular hasta el próximo partido de mi club", key="mgr_prox_partido",
+              type="primary", width="stretch", disabled=not proximos(S), on_click=_cb_prox_partido,
+              args=(S, M, P, acumular))
     ultimo = st.session_state.get("mgr_ultimo")
     if ultimo:
         st.markdown('<div class="mlab">Último partido de tu club</div>', unsafe_allow_html=True)
@@ -414,22 +517,95 @@ def _mi_club(S, M, P, acumular, abierta):
             render_ficha(club, "mgr")
 
 
+CSS_REL = """<style>
+.rel-f { margin: 10px 0 14px; }
+.rel-h { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; }
+.rel-h small { font-weight: 500; opacity: .65; }
+.rel-b { height: 10px; border-radius: 6px; background: rgba(127,127,127,.22); overflow: hidden; margin: 5px 0 2px; }
+.rel-b i { display: block; height: 100%; border-radius: 6px; }
+</style>"""
+
+
+def _barra_rel(clave, valor):
+    """Una relación de 0 a 100 %: nombre, porcentaje, barra de color y cómo está (Pésima ... Excelente)."""
+    if valor is None:
+        return (f'<div class="rel-f"><div class="rel-h"><span>{ETIQUETAS[clave]}</span><b>—</b></div>'
+                f'<div class="rel-b"></div></div>')
+    color = "#dc2626" if valor < 30 else "#f59e0b" if valor < 50 else "#84cc16" if valor < 70 else "#16a34a"
+    return (f'<div class="rel-f"><div class="rel-h"><span>{ETIQUETAS[clave]}</span>'
+            f'<span><b>{valor:.0f}%</b> <small>{descripcion(valor)}</small></span></div>'
+            f'<div class="rel-b"><i style="width:{valor:.0f}%;background:{color}"></i></div></div>')
+
+
+def _relaciones(S, M):
+    rel = asegurar(M)
+    st.markdown(CSS_REL, unsafe_allow_html=True)
+    c1, c2 = st.columns(2, gap="large")
+    with c1:
+        st.markdown('<div class="mlab">Poder en el fútbol</div>', unsafe_allow_html=True)
+        st.markdown("".join(_barra_rel(k, rel[k]) for k in GLOBALES), unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="mlab">{esc(M["club"]) if M["club"] else "Tu club"}</div>', unsafe_allow_html=True)
+        if M["club"]:
+            st.markdown("".join(_barra_rel(k, rel[k]) for k in DE_CLUB), unsafe_allow_html=True)
+        else:
+            st.caption("Estás libre: las relaciones con el club (hinchada, dirigencia, plantel y economía) "
+                       "arrancan cuando aceptás una oferta.")
+
+    if M["club"] and M["rol"] == "primer_equipo" and rel["dirigencia"] is not None:
+        u = umbral_despido(M)
+        if rel["dirigencia"] < u + 12:
+            aviso(f"⚠ <b>La dirigencia está perdiendo la paciencia.</b> Si la relación baja de {u}% "
+                  f"(dificultad {esc(M.get('dificultad', 'Normal'))}), cada día jugado hay chance de que te echen.")
+        k = efecto_cama(M)
+        if k > 0:
+            aviso(f"🛏️ <b>El plantel te está haciendo la cama.</b> El equipo rinde peor: "
+                  f"{CAMA_ATAQUE * k * 100:.0f}% menos de goles a favor, {CAMA_DEFENSA * k * 100:.0f}% más en contra "
+                  f"y {CAMA_CONTROL * k:.1f} puntos menos de mediocampo. Si los resultados no mejoran, la relación "
+                  "sigue cayendo.")
+    elif M["club"]:
+        st.caption("Como DT de la Reserva todavía no te evalúan: las relaciones del club se mueven cuando "
+                   "dirigís al primer equipo.")
+
+    if M.get("rel_log"):
+        st.markdown('<div class="mlab" style="margin-top:6px">Últimos partidos</div>', unsafe_allow_html=True)
+        for x in reversed(M["rel_log"][-6:]):
+            st.caption(f"{texto_dia(x['dia'], False)} · {x['texto']}")
+    with st.expander("Cómo funcionan las relaciones"):
+        st.markdown(
+            "- Van de 0 a 100 %. Después de cada partido de tu club (como DT del primer equipo) se compara el "
+            "resultado con lo esperable según las medias y la localía: ganar un partido difícil sube mucho; "
+            "perder uno que parecía ganado baja mucho; lo esperable casi no mueve nada.\n"
+            "- **Dirigencia**: si baja del umbral de tu dificultad, te pueden echar.\n"
+            "- **Plantel**: por debajo de " + str(UMBRAL_CAMA) + "% te hacen la cama: el equipo rinde peor.\n"
+            "- **Karma**: baja si renunciás, dejás un club por otra oferta o te echan.\n"
+            "- Hinchada, Economía, Tapia, Beligoy y Toviggino se mueven pero todavía no tienen consecuencias.\n"
+            "- Si simulás muchos días de golpe, la relación con el plantel se actualiza al final: el efecto "
+            "de la cama se nota mejor yendo día por día.")
+
+
 def panel_manager(S, P, acumular):
     M = st.session_state["manager"]
     seccion("Manager Falopa", f"{M['nombre']} {M['apellido']}", "#b7860b")
+    lugar_msg = st.container()                       # lugar fijo del aviso: si aparece o no, nada se corre
     msg = st.session_state.pop("mgr_msg", None)
     if msg:
-        aviso(msg)
+        with lugar_msg:
+            aviso(msg)
     _controles(S, M, P, acumular)
+    lugar_prox = st.container()                      # lugar fijo del próximo partido
     if M["club"]:
-        _tarjeta_proximo(S, M)
-    etiquetas = ["Oficina"] + (["Mi club"] if M["club"] else []) + ["Carrera"]
+        with lugar_prox:
+            _tarjeta_proximo(S, M)
+    etiquetas = ["Oficina"] + (["Mi club"] if M["club"] else []) + ["Relaciones", "Carrera"]
     tabs = dict(zip(etiquetas, st.tabs(etiquetas, key="tabs_mgr", on_change="rerun")))
     with tabs["Oficina"]:
         _oficina(S, M)
     if "Mi club" in tabs:
         with tabs["Mi club"]:
             _mi_club(S, M, P, acumular, tabs["Mi club"].open is not False)
+    with tabs["Relaciones"]:
+        _relaciones(S, M)
     with tabs["Carrera"]:
         _carrera(S, M)
 
@@ -462,13 +638,10 @@ def _tarjeta_oferta(S, M, o):
         st.caption(f"Objetivo: {objetivo(cat, puesto, total, o['rol'])} · "
                    f"Vence el {texto_dia(o['vence']).lower()}")
         b1, b2 = st.columns(2)
-        if b1.button(":material/check: Aceptar", key=f"of_ok_{o['id']}", type="primary", width="stretch"):
-            aceptar(S, M, o)
-            st.session_state["mgr_msg"] = f"Aceptaste: {ROLES[o['rol']]} en <b>{esc(club)}</b>."
-            st.rerun()
-        if b2.button(":material/close: Rechazar", key=f"of_no_{o['id']}", width="stretch"):
-            rechazar(M, o)
-            st.rerun()
+        b1.button(":material/check: Aceptar", key=f"of_ok_{o['id']}", type="primary", width="stretch",
+                  on_click=_cb_aceptar, args=(S, M, o))
+        b2.button(":material/close: Rechazar", key=f"of_no_{o['id']}", width="stretch",
+                  on_click=_cb_rechazar, args=(M, o))
 
 
 def _oficina(S, M):
@@ -478,10 +651,8 @@ def _oficina(S, M):
         if M["rol"] == "reserva":
             st.caption(f"Llevás {M['dias_en_rol']} días en la Reserva. Si el club hace un cambio de técnico, "
                        "te suben al primer equipo (antes, si le va mal en la liga).")
-        if st.button(":material/logout: Renunciar al club", key="mgr_renunciar", width="stretch"):
-            renunciar(M)
-            st.session_state["mgr_msg"] = "Renunciaste: volvés a estar libre."
-            st.rerun()
+        st.button(":material/logout: Renunciar al club", key="mgr_renunciar", width="stretch",
+                  on_click=_cb_renunciar, args=(M,))
     ofertas = sorted(M["ofertas"], key=lambda o: o["vence"])
     titulo = "Ofertas de otros clubes" if M["club"] else "Ofertas recibidas"
     st.markdown(f'<div class="mlab" style="margin-top:14px">{titulo} · {len(ofertas)}</div>',
@@ -516,7 +687,7 @@ def _carrera(S, M):
     for h in reversed(M["historial_clubes"]):
         hasta = texto_dia(h["hasta"], False) if h["hasta"] else "hoy"
         sube = (f' · subió a DT del primer equipo el {texto_dia(h["ascendido"], False)}'
-                if h.get("ascendido") else "")
+                if h.get("ascendido") else "") + (" · despedido" if h.get("despedido") else "")
         st.markdown(f'{crest(h["club"], 22)} **{esc(h["club"])}** · {esc(h["categoria"] or "")} · '
                     f'{ROLES[h.get("rol", "primer_equipo")]} · temporada {h["temporada"]} · '
                     f'desde {texto_dia(h["desde"], False)} hasta {hasta}{sube}', unsafe_allow_html=True)
@@ -528,11 +699,8 @@ def _carrera(S, M):
         st.caption(f"{texto_dia(x['dia'])}: {', '.join(x['comps'])}")
 
     b1, b2 = st.columns(2)
-    if b1.button(":material/edit: Editar datos", key="mgr_editar", width="stretch"):
-        del st.session_state["manager"]
-        st.rerun()
-    if b2.button(":material/home: Volver al inicio", key="mgr_inicio_btn", width="stretch"):
-        _volver_al_inicio()
+    b1.button(":material/edit: Editar datos", key="mgr_editar", width="stretch", on_click=_cb_editar)
+    b2.button(":material/home: Volver al inicio", key="mgr_inicio_btn", width="stretch", on_click=_cb_volver_inicio)
 
 
 # ---- Cómo engancharlo en simuladorafa.py -------------------------------------------

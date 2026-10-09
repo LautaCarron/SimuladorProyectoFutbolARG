@@ -2,6 +2,7 @@
 """
 
 import calendar as _calendar
+import datetime as _dt
 
 from motor.calendario import anio, dia_de, texto_dia
 from datos.logos import logo_img
@@ -86,7 +87,16 @@ def _cal_res(p):
     return f"{p['gl']}-{p['gv']}{pen}"
 
 
-def calendario_mes_html(S, eventos, mes, proximo, solo_club=False):
+def _dia_tocable(d, proximo):
+    """Se puede elegir como destino de "simular hasta esa fecha" cualquier día desde el próximo."""
+    return proximo is not None and d >= proximo
+
+
+CSS_SELECCION = ("<style>.cal-num[data-dia]{cursor:pointer}"
+                 ".cal-dia.sel{outline:2px solid #eab308;outline-offset:-2px;border-radius:10px}</style>")
+
+
+def calendario_mes_html(S, eventos, mes, proximo, solo_club=False, seleccion=None):
     """Días del mes con lo que se juega cada uno (cada competición se despliega).
     Con `solo_club` (y un club dirigido por el manager) se ocultan los demás equipos: sólo quedan los
     días, las competencias y los partidos de ese club. Los partidos de mi club siempre se marcan."""
@@ -121,9 +131,13 @@ def calendario_mes_html(S, eventos, mes, proximo, solo_club=False):
         if not jugadas_dia:                       # ese día no queda nada para mostrar
             continue
         clase = "hoy" if d == proximo else ("jugado" if all(jugadas_dia) else "")
-        out += (f'<div class="cal-dia {clase}"><div class="cal-num"><b>{d.day}</b>'
+        if seleccion == d:
+            clase += " sel"
+        tocable = (f' data-dia="{d.isoformat()}" role="button" tabindex="0" title="Tocá para simular hasta este día"'
+                   if _dia_tocable(d, proximo) else "")
+        out += (f'<div class="cal-dia {clase}"><div class="cal-num"{tocable}><b>{d.day}</b>'
                 f'<span>{texto_dia(d, False)[:3]}</span></div><div class="cal-ev">{comps}</div></div>')
-    return f'<div class="cal">{out}</div>'
+    return f'{CSS_SELECCION}<div class="cal">{out}</div>'
 
 
 # ---- Calendario en grilla (modo manager): sólo los partidos de mi club -------------------------------
@@ -149,6 +163,9 @@ CSS_GRILLA = """<style>
 .gm-txt { font-size: .78rem; font-weight: 700; }
 .gm-txt.g { color: #16a34a; } .gm-txt.p { color: #dc2626; } .gm-txt.e { color: #94a3b8; }
 .gm-tit { text-align: center; font-weight: 700; font-size: 1.15rem; }
+.gm-c[data-dia] { cursor: pointer; }
+.gm-c[data-dia]:hover { outline: 1px solid rgba(250,204,21,.7); outline-offset: -1px; }
+.gm-c.sel { outline: 2px solid #eab308; outline-offset: -2px; background: rgba(250,204,21,.16); }
 @media (max-width: 640px) {
   .gm-sem, .gm-grid { gap: 3px; }
   .gm-c { min-height: 70px; padding: 4px 2px; }
@@ -179,11 +196,12 @@ def _celda_partido(liga, p, club):
     return res, html
 
 
-def calendario_grilla_html(S, eventos, mes, proximo, club):
+def calendario_grilla_html(S, eventos, mes, proximo, club, seleccion=None):
     """Mes en grilla (lun-dom), como un calendario de partidos: en cada día que juega `club`, el escudo del
     rival, el logo de la competencia y el marcador (o si es de local o de visitante). Los demás equipos no
     aparecen. El borde marca el resultado (verde gana, gris empata, rojo pierde) y el día de hoy va con
-    un contorno violeta. Las copas se ven con un fondo más claro."""
+    un contorno violeta. Las copas se ven con un fondo más claro. Se puede tocar cualquier día desde el
+    próximo: queda elegido (contorno amarillo) como destino de "simular hasta esa fecha"."""
     por_dia = {}
     for d, liga, n, _jugada in eventos:
         if d.month != mes:
@@ -197,15 +215,19 @@ def calendario_grilla_html(S, eventos, mes, proximo, club):
             if dia == 0:
                 celdas += '<div class="gm-c vacio"></div>'
                 continue
-            hoy = " hoy" if proximo and proximo.month == mes and proximo.day == dia else ""
+            fecha = _dt.date(anio(S), mes, dia)
+            hoy = " hoy" if proximo and fecha == proximo else ""
+            sel = " sel" if seleccion == fecha else ""
+            toc = (f' data-dia="{fecha.isoformat()}" role="button" tabindex="0" title="Tocá para simular hasta este día"'
+                   if _dia_tocable(fecha, proximo) else "")
             items = por_dia.get(dia, [])
             if not items:
-                celdas += f'<div class="gm-c{hoy}"><span class="gm-n">{dia}</span></div>'
+                celdas += f'<div class="gm-c{hoy}{sel}"{toc}><span class="gm-n">{dia}</span></div>'
                 continue
             partes = [_celda_partido(liga, p, club) for liga, p in items]
             copa = " copa" if any(liga not in INICIO for liga, _ in items) else ""
             res = partes[0][0] if len(partes) == 1 else ""
-            celdas += (f'<div class="gm-c tiene{copa} {res}{hoy}"><span class="gm-n">{dia}</span>'
+            celdas += (f'<div class="gm-c tiene{copa} {res}{hoy}{sel}"{toc}><span class="gm-n">{dia}</span>'
                        + "".join(h for _, h in partes) + '</div>')
     cab = "".join(f"<span>{d}</span>" for d in _SEMANA)
     return f'{CSS_GRILLA}<div class="gm-sem">{cab}</div><div class="gm-grid">{celdas}</div>'
