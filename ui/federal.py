@@ -28,7 +28,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, zona_federal
+from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_federal
 
 
 def render(ctx):
@@ -108,7 +108,7 @@ def render(ctx):
                         st.caption("Posiciones finales de la fase 1 (sus puntos ya no cuentan).")
                     leyenda(LEY_F)
             
-                if ff == 0:
+                if ff == 0 and not modo_manager():               # en modo manager no se tocan las medias
                     with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
                         SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
                 

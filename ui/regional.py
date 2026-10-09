@@ -24,7 +24,7 @@ from ui.vista import (
     seccion,
     vista_fixture,
 )
-from ui.vista.mi_club import mi_club, region_de_club
+from ui.vista.mi_club import mi_club, modo_manager, region_de_club
 
 
 def render(ctx):
@@ -84,7 +84,7 @@ def render(ctx):
                         "con un desempate (nunca por diferencia de gol)", "#16a34a")
                 mostrar_tabla(tabla_reg_region(SR, region), colorear_reg)
                 leyenda([("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
-                if SR["fecha"] == 0:
+                if SR["fecha"] == 0 and not modo_manager():      # en modo manager no se tocan las medias
                     nom_reg_ed = [f"{n} · {rg}" for n, rg in zip(SR["nombres"], SR["region_de"])]
                     with st.expander(":material/tune: Editar medias internas de esta temporada (Regional Amateur)"):
                         SR["r"] = editar_medias(nom_reg_ed, SR["r"], f"editor_reg_{S['temp']}")

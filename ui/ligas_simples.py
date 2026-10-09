@@ -9,6 +9,7 @@ liga solo declara lo que cambia (nombre, estado, tabla, leyenda y textos) en LIG
 import streamlit as st
 
 from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from ui.vista.mi_club import modo_manager
 from ui.vista import (
     COLORES_B,
     aviso,
@@ -101,7 +102,7 @@ def _render_liga(ctx, cfg):
             seccion("Tabla de posiciones", cfg["sub_posiciones"], "#4f46e5")
             mostrar_tabla(tabla(L), colorear, L["pos_hist"])
             leyenda(cfg["leyenda"])
-            if L["fecha"] == 0:
+            if L["fecha"] == 0 and not modo_manager():      # en modo manager no se tocan las medias
                 with st.expander(f":material/tune: Editar medias internas de esta temporada ({nombre})"):
                     L["r"] = ctx.editar_medias(L["nombres"], L["r"], f"editor_{k}_{S['temp']}")
         idx += 1

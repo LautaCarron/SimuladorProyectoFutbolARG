@@ -39,7 +39,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, zona_nacional
+from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_nacional
 
 
 def render(ctx):
@@ -148,7 +148,7 @@ def render(ctx):
                         "Reducido a partido único con penales directos; el campeón asciende y el perdedor "
                         "de la final juega la promoción contra el 27° de Primera.")
                 
-                if fb == 0:
+                if fb == 0 and not modo_manager():               # en modo manager no se tocan las medias
                     with st.expander(":material/tune: Editar medias internas de esta temporada (Primera Nacional)"):
                         SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
             idx_b += 1

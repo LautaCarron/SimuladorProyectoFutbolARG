@@ -34,7 +34,7 @@ from ui.vista import (
     seccion,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, zona_primera
+from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_primera
 
 
 def render(ctx):
@@ -103,7 +103,7 @@ def render(ctx):
                         st.caption("Tabla final de las 29 fechas de la fase 1.")
                     leyenda(LEY_DESTINOS + [("Desempate Campeonato", "rgba(249, 115, 22, 0.3)"), ("Desempate Permanencia/Promoción", "rgba(147, 51, 234, 0.3)")])
             
-                if S["fecha"] == 0:
+                if S["fecha"] == 0 and not modo_manager():       # en modo manager no se tocan las medias
                     with st.expander(":material/tune: Editar medias internas de esta temporada"):
                         S["r"] = editar_medias(S["nombres"], S["r"], f"editor_p_{S['temp']}")
             idx_p += 1

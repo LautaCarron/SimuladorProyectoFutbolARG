@@ -5,7 +5,7 @@ Cada relación va de 0 a 100 %:
   Del club que dirigís:                  hinchada, dirigencia, plantel, economia
 
 Consecuencias (por ahora sólo estas dos; el resto se muestra pero todavía no cambia nada):
-  * DIRIGENCIA baja de un umbral (según la dificultad): cada día jugado hay chance de que te echen.
+  * DIRIGENCIA baja de UMBRAL_DESPIDO: cada día jugado hay chance de que te echen.
   * PLANTEL por debajo de UMBRAL_CAMA: "te hacen la cama": el equipo rinde peor (menos goles a favor,
     más en contra y menos control del mediocampo), y eso empeora los resultados y la relación.
 
@@ -29,7 +29,7 @@ DE_CLUB = ("hinchada", "dirigencia", "plantel", "economia")
 INICIAL_AFA = {"Desconocido": 30, "Ex jugador de ascenso": 40, "Ex jugador profesional": 50, "Ex estrella": 65}
 KARMA_INICIAL = 50
 
-UMBRAL_DESPIDO = {"Fácil": 22, "Normal": 30, "Difícil": 40}   # dirigencia por debajo de esto: te pueden echar
+UMBRAL_DESPIDO = 30        # dirigencia por debajo de esto: te pueden echar
 MIN_DIAS_DT = 8            # días jugados como DT del primer equipo antes de que puedan echarte
 UMBRAL_CAMA = 35           # plantel por debajo de esto: te hacen la cama (más fuerte cuanto más abajo)
 CAMA_ATAQUE, CAMA_DEFENSA, CAMA_CONTROL = 0.18, 0.18, 4.0   # efecto máximo (plantel en 0 %)
@@ -188,8 +188,8 @@ def con_cama(tactica, k):
     return (atk * (1 - CAMA_ATAQUE * k), dfn * (1 + CAMA_DEFENSA * k), ctl - CAMA_CONTROL * k)
 
 
-def umbral_despido(M):
-    return UMBRAL_DESPIDO.get(M.get("dificultad"), UMBRAL_DESPIDO["Normal"])
+def umbral_despido(M=None):
+    return UMBRAL_DESPIDO
 
 
 def despedir(S, M):

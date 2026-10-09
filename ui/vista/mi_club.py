@@ -26,6 +26,11 @@ def mi_club():
     return st.session_state.get("_mi_club")
 
 
+def modo_manager():
+    """True si se está jugando en modo manager (con o sin club). simuladorafa.py lo deja en cada ejecución."""
+    return bool(st.session_state.get("_modo_manager"))
+
+
 # ---- En qué zona / región juega mi club dentro de su liga --------------------------------------
 # Devuelven la MISMA etiqueta que usa la pestaña de esa zona (o None si el club no juega esa liga), para
 # abrirla sola y marcarla con ⭐. Usan la misma condición de fase que cada pestaña.

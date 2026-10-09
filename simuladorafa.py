@@ -260,6 +260,7 @@ if not modo_mgr and getattr(S["rng"], "tacticas", None):      # modo simulación
     S["rng"] = con_tacticas(S["rng"], {})
 _club_mgr = st.session_state["manager"].get("club") if modo_mgr else None
 st.session_state["_mi_club"] = _club_mgr                     # lo leen fixture, partidos y calendario
+st.session_state["_modo_manager"] = bool(modo_mgr)          # en modo manager no se editan las medias
 _mc = competencias_club(S, _club_mgr) if _club_mgr else set()
 _kclub = "_" + "".join(c if c.isalnum() else "_" for c in _club_mgr) if _club_mgr else ""
 if _club_mgr:

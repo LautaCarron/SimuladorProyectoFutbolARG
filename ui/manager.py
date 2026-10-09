@@ -89,12 +89,6 @@ REPUTACIONES = {
     "Ex estrella": "Fuiste figura: te llaman los grandes.",
 }
 
-DIFICULTADES = {
-    "Fácil": "La directiva tiene paciencia: casi no te echan.",
-    "Normal": "Te evalúan por objetivos de la temporada.",
-    "Difícil": "Mala racha y te echan: la directiva no perdona.",
-}
-
 TOPE_DIAS = 60                    # "Hasta la próxima novedad" / "hasta mi próximo partido": máximo de días
 
 
@@ -198,9 +192,6 @@ def alta_manager(S):
     estilo = c6.selectbox("Estilo de juego", list(ESTILOS), index=0, key="mgr_estilo")
     st.caption(f"{formacion}: {TACTICAS[formacion][3]} ({efectos_tactica(formacion)}). "
                "La podés cambiar cuando quieras desde la pestaña Mi club. " + ESTILOS[estilo])
-    dificultad = st.segmented_control("Dificultad", list(DIFICULTADES), default="Normal",
-                                      key="mgr_dif") or "Normal"
-    st.caption(DIFICULTADES[dificultad])
 
     # ---- Global: por reputación o a mano
     st.markdown('<div class="mlab" style="margin-top:14px">Global del manager</div>', unsafe_allow_html=True)
@@ -249,7 +240,7 @@ def alta_manager(S):
                  disabled=bool(errores)):
         M = nuevo_manager_estado(glob)
         M.update(nombre=nombre.strip(), apellido=apellido.strip(), edad=int(edad), nacionalidad=nacionalidad,
-                 formacion=formacion, estilo=estilo, reputacion=reputacion, dificultad=dificultad,
+                 formacion=formacion, estilo=estilo, reputacion=reputacion,
                  global_a_mano=(modo_g == "A mano"), hoy=_primer_dia(S))
         asegurar(M)                                   # relaciones iniciales (según la reputación)
         if club:                                      # arranca dirigiendo el primer equipo
@@ -556,7 +547,7 @@ def _relaciones(S, M):
         u = umbral_despido(M)
         if rel["dirigencia"] < u + 12:
             aviso(f"⚠ <b>La dirigencia está perdiendo la paciencia.</b> Si la relación baja de {u}% "
-                  f"(dificultad {esc(M.get('dificultad', 'Normal'))}), cada día jugado hay chance de que te echen.")
+                  f"cada día jugado hay chance de que te echen.")
         k = efecto_cama(M)
         if k > 0:
             aviso(f"🛏️ <b>El plantel te está haciendo la cama.</b> El equipo rinde peor: "
@@ -576,7 +567,7 @@ def _relaciones(S, M):
             "- Van de 0 a 100 %. Después de cada partido de tu club (como DT del primer equipo) se compara el "
             "resultado con lo esperable según las medias y la localía: ganar un partido difícil sube mucho; "
             "perder uno que parecía ganado baja mucho; lo esperable casi no mueve nada.\n"
-            "- **Dirigencia**: si baja del umbral de tu dificultad, te pueden echar.\n"
+            "- **Dirigencia**: si baja de " + str(umbral_despido(M)) + "%, te pueden echar.\n"
             "- **Plantel**: por debajo de " + str(UMBRAL_CAMA) + "% te hacen la cama: el equipo rinde peor.\n"
             "- **Karma**: baja si renunciás, dejás un club por otra oferta o te echan.\n"
             "- Hinchada, Economía, Tapia, Beligoy y Toviggino se mueven pero todavía no tienen consecuencias.\n"
@@ -677,7 +668,7 @@ def _carrera(S, M):
     st.markdown(
         chip(f"{M['nombre']} {M['apellido']} · {M['edad']} años · {M['nacionalidad']}", "#b7860b") + " "
         + chip(f"Formación {M['formacion']}", "#475569") + " " + chip(f"Estilo {M['estilo']}", "#475569") + " "
-        + chip(f"Reputación: {M['reputacion']}", "#475569") + " " + chip(f"Dificultad {M['dificultad']}", "#475569")
+        + chip(f"Reputación: {M['reputacion']}", "#475569")
         + (" " + chip("Global puesto a mano", "#475569") if M.get("global_a_mano") else ""),
         unsafe_allow_html=True)
 
