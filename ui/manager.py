@@ -41,8 +41,8 @@ from motor.ofertas import (
     rechazar,
     renunciar,
 )
-from motor.eventos import EVENTOS, resolver, sortear, texto_efectos
-from motor.nucleo import TACTICAS, con_tacticas
+from motor.eventos import EVENTOS, descripcion_opcion, resolver, sortear
+from motor.nucleo import ESTILOS_JUEGO, TACTICAS, con_tacticas, tactica_total
 from motor.relaciones import (
     CAMA_ATAQUE,
     CAMA_CONTROL,
@@ -75,13 +75,7 @@ NACIONALIDADES = ["Argentina", "Uruguay", "Chile", "Paraguay", "Bolivia", "Brasi
 
 FORMACIONES = list(TACTICAS)          # cada formación es una táctica que cambia cómo se juega (motor/nucleo.py)
 
-ESTILOS = {
-    "Equilibrado": "Sin extremos: se adapta al rival.",
-    "Ofensivo": "Presión alta y muchos hombres arriba.",
-    "Defensivo": "Bloque bajo y orden atrás.",
-    "Contraataque": "Transiciones rápidas y espacios a la espalda.",
-    "Posesión": "Pelota al piso y control del partido.",
-}
+ESTILOS = {n: v[3] for n, v in ESTILOS_JUEGO.items()}      # estilo -> descripción (efectos en motor/nucleo.py)
 
 REPUTACIONES = {
     "Desconocido": "Sin antecedentes: arrancás desde abajo.",
@@ -103,6 +97,16 @@ def _pct(x):
     return f"{(x - 1) * 100:+.0f}%"
 
 
+def _efectos(atk, dfn, ctl):
+    mid = f"Mediocampo {ctl:+.1f}" if abs(ctl) >= 0.05 else "Mediocampo neutro"
+    return f"Goles a favor {_pct(atk)} · Goles en contra {_pct(dfn)} · {mid}"
+
+
+def efectos_estilo(nombre):
+    atk, dfn, ctl, _ = ESTILOS_JUEGO[nombre]
+    return _efectos(atk, dfn, ctl)
+
+
 def efectos_tactica(nombre):
     """Resumen legible de lo que hace una táctica."""
     atk, dfn, ctl, _ = TACTICAS[nombre]
@@ -116,7 +120,8 @@ def aplicar_tactica(S, M):
     táctica si dirige al primer equipo (en la Reserva no define cómo juega el primer equipo)."""
     tab = {}
     if M.get("club") and M.get("rol") == "primer_equipo" and M.get("formacion") in TACTICAS:
-        tab = {M["club"]: con_cama(TACTICAS[M["formacion"]], efecto_cama(M))}   # el plantel puede hacerte la cama
+        base = tactica_total(M["formacion"], M.get("estilo"))                # formación + estilo de juego
+        tab = {M["club"]: con_cama(base, efecto_cama(M))}                    # el plantel puede hacerte la cama
     S["rng"] = con_tacticas(S["rng"], tab)
 
 
@@ -192,7 +197,8 @@ def alta_manager(S):
     formacion = c5.selectbox("Formación (táctica)", FORMACIONES, index=0, key="mgr_form")
     estilo = c6.selectbox("Estilo de juego", list(ESTILOS), index=0, key="mgr_estilo")
     st.caption(f"{formacion}: {TACTICAS[formacion][3]} ({efectos_tactica(formacion)}). "
-               "La podés cambiar cuando quieras desde la pestaña Mi club. " + ESTILOS[estilo])
+               f"{estilo}: {ESTILOS[estilo]} ({efectos_estilo(estilo)}). "
+               "Las dos se pueden cambiar cuando quieras desde la pestaña Mi club.")
 
     # ---- Global: por reputación o a mano
     st.markdown('<div class="mlab" style="margin-top:14px">Global del manager</div>', unsafe_allow_html=True)
@@ -450,7 +456,7 @@ def pantalla_evento(S, M):
     for i, op in enumerate(ev["opciones"]):
         with st.container(border=True):
             st.markdown(f"**{op['texto']}**")
-            st.caption(texto_efectos(op["efectos"]))
+            st.caption(descripcion_opcion(op))
             st.button("Elegir esta opción", key=f"ev_op_{pend['id']}_{i}", width="stretch",
                       type="primary" if i == 0 else "secondary", on_click=_cb_evento, args=(S, M, i))
     st.caption("⏸ La simulación está en pausa hasta que decidas.")
@@ -519,26 +525,37 @@ def _controles(S, M, P, acumular):
 
 
 def _selector_tactica(S, M):
-    st.markdown('<div class="mlab">Táctica</div>', unsafe_allow_html=True)
+    st.markdown('<div class="mlab">Táctica y estilo de juego</div>', unsafe_allow_html=True)
     if M["rol"] != "primer_equipo":
         st.caption("Como DT de la Reserva no definís la táctica del primer equipo: la define su DT.")
         return
     actual = M["formacion"] if M["formacion"] in TACTICAS else FORMACIONES[0]
-    nueva = st.selectbox("Formación", FORMACIONES, index=FORMACIONES.index(actual), key="mgr_tactica",
-                         label_visibility="collapsed")
-    if nueva != M["formacion"]:
-        M["formacion"] = nueva
+    estilos = list(ESTILOS)
+    actual_e = M.get("estilo") if M.get("estilo") in ESTILOS else estilos[0]
+    c1, c2 = st.columns(2)
+    nueva = c1.selectbox("Formación", FORMACIONES, index=FORMACIONES.index(actual), key="mgr_tactica")
+    nuevo_e = c2.selectbox("Estilo de juego", estilos, index=estilos.index(actual_e), key="mgr_estilo_sel")
+    if nueva != M["formacion"] or nuevo_e != M.get("estilo"):
+        M["formacion"], M["estilo"] = nueva, nuevo_e
         aplicar_tactica(S, M)
-    st.caption(f"{TACTICAS[nueva][3]} ({efectos_tactica(nueva)}). Vale para todos los partidos de tu club "
-               "(liga y copas) desde el próximo.")
-    with st.expander("Comparar todas las tácticas"):
-        filas = ["| Táctica | Goles a favor | Goles en contra | Mediocampo | Perfil |", "|---|---|---|---|---|"]
-        for n, (atk, dfn, ctl, nota) in TACTICAS.items():
-            filas.append(f"| {'**' + n + '**' if n == nueva else n} | {_pct(atk)} | {_pct(dfn)} | "
-                         f"{ctl:+g} | {nota} |")
+    atk, dfn, ctl = tactica_total(nueva, nuevo_e)
+    st.caption(f"{nueva}: {TACTICAS[nueva][3]}  \n{nuevo_e}: {ESTILOS[nuevo_e]}  \n"
+               f"**Juntas:** {_efectos(atk, dfn, ctl)}. Vale para todos los partidos de tu club (liga y copas) "
+               "desde el próximo.")
+    with st.expander("Comparar formaciones y estilos"):
+        filas = ["| Formación | Goles a favor | Goles en contra | Mediocampo | Perfil |", "|---|---|---|---|---|"]
+        for n, (a, d, c, nota) in TACTICAS.items():
+            filas.append(f"| {'**' + n + '**' if n == nueva else n} | {_pct(a)} | {_pct(d)} | {c:+g} | {nota} |")
+        filas += ["", "| Estilo | Goles a favor | Goles en contra | Mediocampo | Perfil |", "|---|---|---|---|---|"]
+        for n, (a, d, c, nota) in ESTILOS_JUEGO.items():
+            filas.append(f"| {'**' + n + '**' if n == nuevo_e else n} | {_pct(a)} | {_pct(d)} | {c:+g} | {nota} |")
         st.markdown("\n".join(filas))
-        st.caption("Entre equipos parejos todas rinden casi igual en puntos: cambia cómo se gana. Las "
-                   "ofensivas ayudan un poco más al favorito; las defensivas, al más débil.")
+        st.caption("El mediocampo es el dominio del medio: cada punto de más (o de menos) mueve el balance del "
+                   "partido como si tu equipo tuviera 1 punto más (o menos) de media: alrededor de 0,04 puntos "
+                   "por partido, unos 1,5 puntos en una temporada de 42 fechas, y un poco más de goles a favor "
+                   "y menos en contra. Entre equipos parejos, ninguna formación ni estilo rinde más que otro "
+                   "en puntos: cambia cómo se gana. Las ofensivas ayudan un poco más al favorito; las "
+                   "defensivas, al más débil.")
 
 
 def _mi_club(S, M, P, acumular, abierta):
