@@ -154,6 +154,9 @@ CSS_GRILLA = """<style>
 .gm-n { position: absolute; top: 5px; left: 8px; font-weight: 700; font-size: .78rem; opacity: .85; }
 .gm-c.tiene { background: rgba(127,127,127,.15); }
 .gm-c.copa { background: rgba(99,102,241,.18); }
+.gm-c.pasado { background: rgba(100,116,139,.30); border-color: rgba(100,116,139,.40); }
+.gm-c.pasado .gm-n { opacity: .5; }
+.gm-c.pasado.copa { background: rgba(99,102,241,.30); }
 .gm-c.g { border-color: rgba(46,125,79,.85); }
 .gm-c.e { border-color: rgba(148,163,184,.8); }
 .gm-c.p { border-color: rgba(184,58,46,.85); }
@@ -199,7 +202,7 @@ def _celda_partido(liga, p, club):
 def calendario_grilla_html(S, eventos, mes, proximo, club, seleccion=None):
     """Mes en grilla (lun-dom), como un calendario de partidos: en cada día que juega `club`, el escudo del
     rival, el logo de la competencia y el marcador (o si es de local o de visitante). Los demás equipos no
-    aparecen. El borde marca el resultado (verde gana, gris empata, rojo pierde) y el día de hoy va con
+    aparecen. Los días que ya pasaron van en gris azulado. El borde marca el resultado (verde gana, gris empata, rojo pierde) y el día de hoy va con
     un contorno violeta. Las copas se ven con un fondo más claro. Se puede tocar cualquier día desde el
     próximo: queda elegido (contorno amarillo) como destino de "simular hasta esa fecha"."""
     por_dia = {}
@@ -217,6 +220,8 @@ def calendario_grilla_html(S, eventos, mes, proximo, club, seleccion=None):
                 continue
             fecha = _dt.date(anio(S), mes, dia)
             hoy = " hoy" if proximo and fecha == proximo else ""
+            if proximo is None or fecha < proximo:             # día que ya pasó: se pinta de otro color
+                hoy += " pasado"
             sel = " sel" if seleccion == fecha else ""
             toc = (f' data-dia="{fecha.isoformat()}" role="button" tabindex="0" title="Tocá para simular hasta este día"'
                    if _dia_tocable(fecha, proximo) else "")

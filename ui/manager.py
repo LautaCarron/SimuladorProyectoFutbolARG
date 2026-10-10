@@ -41,6 +41,7 @@ from motor.ofertas import (
     rechazar,
     renunciar,
 )
+from motor.eventos import EVENTOS, resolver, sortear, texto_efectos
 from motor.nucleo import TACTICAS, con_tacticas
 from motor.relaciones import (
     CAMA_ATAQUE,
@@ -285,6 +286,10 @@ def sincronizar_manager(S, M):
         M["sync"] = {"uid": uid, "dias": set(jugados)}     # lo ya jugado antes no genera ofertas
         M["partidos_vistos"] = {clave_partido(p) for p in _partidos_club(M["club"])} if M["club"] else set()
         return []
+    if M.get("evento") and not M["club"]:                  # el evento era de un club que ya no dirigís
+        M["evento"] = None
+    if M.get("evento"):                                    # evento pendiente: los días siguientes esperan
+        return []
     textos = []
     pendientes = []
     for d in sorted(x for x in jugados if x not in sync["dias"]):
@@ -293,6 +298,8 @@ def sincronizar_manager(S, M):
         r = nuevo_dia(S, M, d, S["rng"])
         r["relaciones"] = _relaciones_dia(S, M, d)         # partidos del día: hinchada, dirigencia, plantel...
         pendientes.append((d, r))
+        if M.get("evento"):                                # salió un evento: se frena acá; el resto espera
+            break
     del M["registro"][:-40]
     vigentes = {o["id"] for o in M["ofertas"]}
     for d, r in pendientes:
@@ -379,6 +386,11 @@ def _relaciones_dia(S, M, d):
     if despido:
         M["cama_avisada"] = False
         avisos.append(f"🚨 {despido}")
+    else:
+        evento = sortear(S, M, S["rng"], bool(nuevos))      # a veces pasa algo que hay que decidir
+        if evento:
+            M["evento"] = evento
+            avisos.append(f"⏸ Evento para resolver: {EVENTOS[evento['id']]['titulo']}.")
     return avisos
 
 
@@ -397,7 +409,7 @@ def _jugar_dias(S, M, P, acumular, hasta):
         textos += sincronizar_manager(S, M)
         if M["club"]:
             nuevos = [p for p in _partidos_club(M["club"]) if id(p) not in antes]
-        if hasta(textos, nuevos):
+        if M.get("evento") or hasta(textos, nuevos):       # un evento pausa la simulación
             break
     return jugados, textos, nuevos
 
@@ -416,6 +428,45 @@ def _cb_hasta_novedad(S, M, P, acumular):
 def _cb_prox_partido(S, M, P, acumular):
     jugados, textos, nuevos = _jugar_dias(S, M, P, acumular, lambda t, n: bool(n))
     st.session_state["mgr_ultimo"] = list(nuevos)
+    st.session_state["mgr_msg"] = _msg_dias(jugados, textos)
+
+
+def _cb_evento(S, M, indice):
+    st.session_state["mgr_msg"] = "Decidiste: " + esc(resolver(S, M, indice))
+
+
+def pantalla_evento(S, M):
+    """Pantalla que reemplaza a toda la app mientras hay un evento sin resolver (la simulación queda en pausa)."""
+    pend = M["evento"]
+    ev = EVENTOS[pend["id"]]
+    rel = M["rel"]
+    seccion("Evento", ev["titulo"], "#b7860b")
+    st.markdown(f'<div class="mlab">{esc(texto_dia(pend["dia"]))} · {esc(M["club"])}</div>', unsafe_allow_html=True)
+    st.markdown(ev["texto"](S, M))
+    m = st.columns(5)
+    for col, clave in zip(m, ("hinchada", "dirigencia", "plantel", "economia", "tapia")):
+        col.metric(ETIQUETAS[clave], f"{rel[clave]:.0f}%")
+    st.markdown('<div class="mlab" style="margin-top:12px">¿Qué hacés?</div>', unsafe_allow_html=True)
+    for i, op in enumerate(ev["opciones"]):
+        with st.container(border=True):
+            st.markdown(f"**{op['texto']}**")
+            st.caption(texto_efectos(op["efectos"]))
+            st.button("Elegir esta opción", key=f"ev_op_{pend['id']}_{i}", width="stretch",
+                      type="primary" if i == 0 else "secondary", on_click=_cb_evento, args=(S, M, i))
+    st.caption("⏸ La simulación está en pausa hasta que decidas.")
+
+
+def simular_hasta_pausa(S, P, acumular):
+    """"Simular todo" del modo manager: juega día por día hasta que termina la temporada o aparece un evento
+    (que hay que resolver antes de seguir)."""
+    M = st.session_state["manager"]
+    jugados, textos = 0, []
+    while proximos(S) and jugados < 400:
+        jugar_proximo_dia(S, P, acumular)
+        jugados += 1
+        textos += sincronizar_manager(S, M)
+        if M.get("evento"):
+            break
     st.session_state["mgr_msg"] = _msg_dias(jugados, textos)
 
 
@@ -562,6 +613,10 @@ def _relaciones(S, M):
         st.markdown('<div class="mlab" style="margin-top:6px">Últimos partidos</div>', unsafe_allow_html=True)
         for x in reversed(M["rel_log"][-6:]):
             st.caption(f"{texto_dia(x['dia'], False)} · {x['texto']}")
+    if M.get("eventos_hist"):
+        st.markdown('<div class="mlab" style="margin-top:6px">Decisiones recientes</div>', unsafe_allow_html=True)
+        for x in reversed(M["eventos_hist"][-6:]):
+            st.caption(f"{texto_dia(x['dia'], False)} · {x['texto']}")
     with st.expander("Cómo funcionan las relaciones"):
         st.markdown(
             "- Van de 0 a 100 %. Después de cada partido de tu club (como DT del primer equipo) se compara el "
@@ -571,6 +626,8 @@ def _relaciones(S, M):
             "- **Plantel**: por debajo de " + str(UMBRAL_CAMA) + "% te hacen la cama: el equipo rinde peor.\n"
             "- **Karma**: baja si renunciás, dejás un club por otra oferta o te echan.\n"
             "- Hinchada, Economía, Tapia, Beligoy y Toviggino se mueven pero todavía no tienen consecuencias.\n"
+            "- De vez en cuando pasa un **evento** (un club te pide un jugador, la hinchada pide a un juvenil...): "
+            "tenés que decidir y cada opción mueve relaciones y, a veces, la media del club.\n"
             "- Si simulás muchos días de golpe, la relación con el plantel se actualiza al final: el efecto "
             "de la cama se nota mejor yendo día por día.")
 

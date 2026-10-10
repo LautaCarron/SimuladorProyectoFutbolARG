@@ -25,16 +25,25 @@ def _mover_mes(clave, meses, paso):
 
 
 def _cb_simular(S, P, acumular, hasta):
-    """Sin día elegido juega el próximo día; con día elegido juega todos los días hasta esa fecha (inclusive)."""
-    if hasta is None:
+    """Sin día elegido juega el próximo día; con día elegido juega todos los días hasta esa fecha (inclusive).
+    En modo manager, si aparece un evento se frena ahí (hay que resolverlo antes de seguir)."""
+    M = st.session_state.get("manager") if st.session_state.get("_modo_manager") else None
+    if M:
+        from ui.manager import sincronizar_manager
+    interrumpido = False
+    for _ in range(1 if hasta is None else 400):          # tope de seguridad: más que una temporada
+        prox = proximos(S)
+        if not prox or (hasta is not None and min(d for d, _ in prox.values()) > hasta):
+            break
         jugar_proximo_dia(S, P, acumular)
-    else:
-        for _ in range(400):                              # tope de seguridad: más que una temporada
-            prox = proximos(S)
-            if not prox or min(d for d, _ in prox.values()) > hasta:
+        if M:
+            for texto in sincronizar_manager(S, M):         # ofertas, ascensos, avisos de los días que pasan
+                st.toast(texto)
+            if M.get("evento"):
+                interrumpido = True
                 break
-            jugar_proximo_dia(S, P, acumular)
-    st.session_state.pop("cal_dia_sel", None)
+    if not interrumpido:
+        st.session_state.pop("cal_dia_sel", None)         # si lo interrumpió un evento, el día elegido sigue
 
 
 def render(ctx):
@@ -98,7 +107,8 @@ def render(ctx):
                             f'{esc(nombre_mes(mes))} {anio(S)}</div>', unsafe_allow_html=True)
                 st.markdown(calendario_grilla_html(S, eventos, mes, _hoy, club, seleccion=sel), unsafe_allow_html=True)
                 st.caption(f"Partidos de {club}. Borde verde / gris / rojo: ganó / empató / perdió · "
-                           "fondo violeta: copas · contorno violeta: próximo día. Pasá el mouse (o tocá) "
+                           "fondo violeta: copas · gris azulado: días que ya pasaron · contorno violeta: próximo día. "
+                           "Tocá un día futuro para elegirlo y simular hasta esa fecha. Pasá el mouse "
                            "un partido para ver el detalle. Los cruces de copa aparecen cuando se conocen.")
             else:
                 clave_mes = f"cal_mes_{S['temp']}"

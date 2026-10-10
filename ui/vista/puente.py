@@ -1,4 +1,4 @@
-"""Puente: tocar un club en cualquier tabla abre su ficha.
+"""Puente: tocar un club en cualquier tabla abre su ficha; tocar un día del calendario lo elige.
 """
 
 import json
@@ -14,7 +14,9 @@ from ui.vista.ficha import ver_equipo
 # ficha (ver_equipo) que usa la sección Clubes.
 _PUENTE_JS = """
 <script>
-(function () {
+// Dos bloques con guardas separadas: si la página ya tenía instalada una versión vieja del puente (sólo
+// clubes), el bloque de los días igual se instala sin tener que recargar ni duplicar el de los clubes.
+(function () {                                     // ---- clubes y "Simular todo"
   if (window.__afaPuenteClubes) return;
   window.__afaPuenteClubes = true;
   function abrir(nombre) {
@@ -55,6 +57,31 @@ _PUENTE_JS = """
     }
   });
 })();
+(function () {                                     // ---- días del calendario (elegir el destino de "simular hasta esa fecha")
+  if (window.__afaPuenteDias) return;
+  window.__afaPuenteDias = true;
+  function abrirDia(iso) {
+    const inp = document.querySelector('.st-key-puente_dia input');
+    if (!inp) return;
+    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+    set.call(inp, iso);
+    inp.dispatchEvent(new Event('input', { bubbles: true }));
+    inp.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
+  }
+  document.addEventListener('click', function (e) {
+    const d = e.target.closest && e.target.closest('[data-dia]');
+    if (!d) return;
+    e.preventDefault();
+    abrirDia(d.dataset.dia);
+  });
+  document.addEventListener('keydown', function (e) {
+    const t = e.target;
+    if ((e.key === 'Enter' || e.key === ' ') && t && t.matches && t.matches('[data-dia]')) {
+      e.preventDefault();
+      abrirDia(t.dataset.dia);
+    }
+  });
+})();
 </script>
 """
 
@@ -80,10 +107,19 @@ def _club_elegido():
     st.session_state["puente_club"] = ""
 
 
+def _dia_elegido():
+    """Llega un día del calendario ("2026-03-04"); lo lee la pestaña Calendario."""
+    st.session_state["_dia_a_elegir"] = st.session_state.get("puente_dia", "")
+    st.session_state["puente_dia"] = ""
+
+
 def puente_clubes():
-    """Campo oculto + script que conectan los clubes de las tablas con su ficha."""
+    """Campos ocultos + script que conectan los clubes de las tablas con su ficha y los días del calendario
+    con su selección."""
     with st.container(key="puente"):
         st.text_input("club", key="puente_club", on_change=_club_elegido,
+                      label_visibility="collapsed")
+        st.text_input("dia", key="puente_dia", on_change=_dia_elegido,
                       label_visibility="collapsed")
         _instalar_puente_js()
     nombre = st.session_state.pop("_club_a_abrir", "")

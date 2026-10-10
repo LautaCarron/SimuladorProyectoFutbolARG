@@ -252,6 +252,10 @@ if modo_mgr:
         st.stop()
     for _txt in sincronizar_manager(S, st.session_state["manager"]):    # ofertas y ascensos de los días jugados
         st.toast(_txt)
+    if st.session_state["manager"].get("evento"):          # evento por resolver: todo queda en pausa
+        from ui.manager import pantalla_evento
+        pantalla_evento(S, st.session_state["manager"])
+        st.stop()
 
 # Mi club (modo manager): se marca en amarillo y se señalan las competencias donde juega
 from ui.vista.mi_club import competencias_club, estilo_mi_club
@@ -350,6 +354,10 @@ if gd.button(":material/calendar_today: Próximo día", disabled=_hoy is None, w
     jugar_proximo_dia(S, P, acumular)
     st.rerun()
 if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stretch", type="primary"):
+    if modo_mgr:                                           # modo manager: día por día, con pausa en los eventos
+        from ui.manager import simular_hasta_pausa
+        simular_hasta_pausa(S, P, acumular)
+        st.rerun()
     # 1. Primero terminar Primera División, desempates incluidos
     #    (la B necesita saber el 27° definitivo para la Promoción)
     while not primera_terminada(S):
