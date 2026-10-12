@@ -34,7 +34,7 @@ from ui.vista import (
     seccion,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_primera
+from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zona_primera
 
 
 def render(ctx):
@@ -94,7 +94,7 @@ def render(ctx):
                     seccion("Fase 2 · Zonas", "9 fechas dentro de cada zona, localía invertida", "#16a34a")
                     # modo manager: se abre sola la zona de mi club
                     etiq, ini = marcar([f"Zona {n}" for n in ZONAS] + ["Tabla fase 1"], zona_primera(S, mi_club()))
-                    tabs = st.tabs(etiq, default=ini)
+                    tabs = tabs_con_default(etiq, ini)
                     for z, tab in enumerate(tabs[:3]):
                         with tab:
                             mostrar_tabla(tabla_zona(S, z), colorear_destino, S["pos_hist"])

@@ -354,7 +354,7 @@ REGION = {
     "San Martín (Formosa)": "Norte", "Sarmiento (La Banda)": "Norte",
     "Sarmiento (Resistencia)": "Norte", "Sol de América (Formosa)": "Norte",
     "Tucumán Central": "Norte", "Argentino (Monte Maíz)": "Centro",
-    "Atenas (Río Cuarto)": "Centro", "Cipolletti": "Cuyo",
+    "Atenas (Río Cuarto)": "Centro", "Cipolletti": "Patagonia",
     "Costa Brava": "Patagonia", "Deportivo Rincón": "Patagonia",
     "FADEP": "Cuyo", "Huracán Las Heras": "Cuyo",
     "Juventud Unida Universitario": "Cuyo",

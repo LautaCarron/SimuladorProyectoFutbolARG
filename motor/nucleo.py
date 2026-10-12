@@ -45,6 +45,26 @@ TACTICAS = {
 }
 _NEUTRA = np.array([1.0, 1.0, 0.0])
 
+# Estilos de juego: se COMBINAN con la formación (ataque y defensa se multiplican, el control se suma).
+# Están ajustados para que, entre equipos parejos, ninguno rinda más que otro en puntos: cambia cómo se gana.
+#   Contraataque: cede el mediocampo (-1) pero compensa con filo arriba.
+#   Posesión:     domina el mediocampo (+1) y recibe menos goles, pero genera menos.
+ESTILOS_JUEGO = {
+    "Equilibrado": (1.00, 1.00, 0.0, "Sin extremos: se adapta al rival."),
+    "Ofensivo": (1.08, 1.09, 0.0, "Presión alta y muchos hombres arriba: más goles, a favor y en contra."),
+    "Defensivo": (0.92, 0.91, 0.0, "Bloque bajo y orden atrás: menos goles, a favor y en contra."),
+    "Contraataque": (1.05, 1.00, -1.0, "Cede el mediocampo, pero es filoso al salir: más goles a favor."),
+    "Posesión": (0.93, 0.97, +1.0, "Domina el mediocampo y recibe menos goles, pero genera menos."),
+}
+
+
+def tactica_total(formacion, estilo=None):
+    """(ataque, defensa, control) de una formación con un estilo de juego. Nombres desconocidos cuentan como
+    neutros."""
+    f = TACTICAS.get(formacion, (1.0, 1.0, 0.0))
+    s = ESTILOS_JUEGO.get(estilo, (1.0, 1.0, 0.0))
+    return (f[0] * s[0], f[1] * s[1], f[2] + s[2])
+
 
 class RngTacticas(np.random.Generator):
     """Generador común que además lleva el cuadro de tácticas de la partida: {club: (ataque, defensa,

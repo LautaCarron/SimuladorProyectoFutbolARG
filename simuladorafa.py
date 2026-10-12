@@ -258,7 +258,7 @@ if modo_mgr:
         st.stop()
 
 # Mi club (modo manager): se marca en amarillo y se señalan las competencias donde juega
-from ui.vista.mi_club import competencias_club, estilo_mi_club
+from ui.vista.mi_club import competencias_club, estilo_mi_club, tabs_con_default
 if not modo_mgr and getattr(S["rng"], "tacticas", None):      # modo simulación: nadie juega con táctica
     from motor.nucleo import con_tacticas
     S["rng"] = con_tacticas(S["rng"], {})
@@ -439,16 +439,16 @@ with tab_ligas:
                    _et("Primera B", "Primera B", "pb"), _et("Primera C", "Primera C", "pc"),
                    _et("Promocional Amateur", "Promocional", "pd")]
         # la key lleva el club: si cambiás de club, la pestaña se vuelve a abrir en su competencia
-        tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_pd = st.tabs(
-            _etiq_l, default=_inicial(_etiq_l, _claves_l), key=f"tabs_ligas{_kclub}", on_change="rerun")
+        tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_pd = tabs_con_default(
+            _etiq_l, _inicial(_etiq_l, _claves_l), key=f"tabs_ligas{_kclub}", on_change="rerun")
 with tab_copas:
     with st.container(key="menu_copas"):
         _claves_c = ["ca", "sup", "lib", "sud", "rec", "mun"]
         _etiq_c = [_et("Copa Argentina", "Copa Argentina", "ca"), _et("Supercopa Argentina", "Supercopa", "sup"),
                    _et("Copa Libertadores", "Libertadores", "lib"), _et("Copa Sudamericana", "Sudamericana", "sud"),
                    _et("Recopa Sudamericana", "Recopa", "rec"), _et("Mundial de Clubes", "Mundial de Clubes", "mun")]
-        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = st.tabs(
-            _etiq_c, default=_inicial(_etiq_c, _claves_c), key=f"tabs_copas{_kclub}", on_change="rerun")
+        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = tabs_con_default(
+            _etiq_c, _inicial(_etiq_c, _claves_c), key=f"tabs_copas{_kclub}", on_change="rerun")
 
 
 _TODAS = os.environ.get("AFA_TODAS_LAS_PESTANAS") == "1"   # sólo para las pruebas automáticas

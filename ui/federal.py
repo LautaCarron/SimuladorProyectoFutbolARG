@@ -28,7 +28,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_federal
+from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zona_federal
 
 
 def render(ctx):
@@ -88,7 +88,7 @@ def render(ctx):
                     seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
                             "cada grupo", "#4f46e5")
                     etiq, ini = marcar(list(F_GRUPOS_NOMBRES), mi_zona)
-                    tabs_f = st.tabs(etiq, default=ini)
+                    tabs_f = tabs_con_default(etiq, ini)
                     for g, tab in enumerate(tabs_f):
                         with tab:
                             mostrar_tabla(tabla_f_grupo(SF, g), colorear_f, SF["pos_hist"])
@@ -96,7 +96,7 @@ def render(ctx):
                 else:
                     seccion("Fase 2 · Zonas", "Puntos reiniciados a 0 · una rueda por zona", "#16a34a")
                     etiq, ini = marcar(["Campeonato", "Descenso", "Fase 1"], mi_zona)
-                    tabs_f = st.tabs(etiq, default=ini)
+                    tabs_f = tabs_con_default(etiq, ini)
                     with tabs_f[0]:
                         mostrar_tabla(tabla_f_f2(SF, 0), colorear_f, SF["pos_hist"])
                     with tabs_f[1]:

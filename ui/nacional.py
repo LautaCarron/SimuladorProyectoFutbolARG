@@ -39,7 +39,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
-from ui.vista.mi_club import marcar, mi_club, modo_manager, zona_nacional
+from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zona_nacional
 
 
 def render(ctx):
@@ -115,7 +115,7 @@ def render(ctx):
                 if fb < B_F1:
                     seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 18 equipos por zona", "#4f46e5")
                     etiq, ini = marcar(["Zona A", "Zona B"], mi_zona)
-                    tabs_b = st.tabs(etiq, default=ini)
+                    tabs_b = tabs_con_default(etiq, ini)
                     for z, tab in enumerate(tabs_b):
                         with tab:
                             mostrar_tabla(tabla_b_f1(SB, z), colorear_b, SB["pos_hist"])
@@ -125,7 +125,7 @@ def render(ctx):
                 else:
                     seccion("Fase 2 · Zonas", "Arrastran los puntos de la Fase 1 · una rueda por zona", "#16a34a")
                     etiq, ini = marcar([f"Zona {n}" for n in B_ZONAS2] + ["Fase 1"], mi_zona)
-                    tabs_b = st.tabs(etiq, default=ini)
+                    tabs_b = tabs_con_default(etiq, ini)
                     for z in range(3):
                         with tabs_b[z]:
                             mostrar_tabla(tabla_b_f2(SB, z), colorear_b, SB["pos_hist"])

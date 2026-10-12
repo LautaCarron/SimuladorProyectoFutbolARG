@@ -34,6 +34,17 @@ def modo_manager():
 # ---- En qué zona / región juega mi club dentro de su liga --------------------------------------
 # Devuelven la MISMA etiqueta que usa la pestaña de esa zona (o None si el club no juega esa liga), para
 # abrirla sola y marcarla con ⭐. Usan la misma condición de fase que cada pestaña.
+def tabs_con_default(etiquetas, default=None, **kw):
+    """st.tabs que abre sola la pestaña `default`. Sin pestaña para abrir (sin club) no se le pasa `default` y
+    se comporta exactamente como siempre; y si esta versión de Streamlit no lo soporta, abre la primera."""
+    if default is None:
+        return st.tabs(etiquetas, **kw)
+    try:
+        return st.tabs(etiquetas, default=default, **kw)
+    except TypeError:
+        return st.tabs(etiquetas, **kw)
+
+
 def marcar(etiquetas, mia):
     """Agrega ⭐ a la etiqueta `mia`. Devuelve (etiquetas nuevas, etiqueta a abrir por defecto o None)."""
     return [e + " ⭐" if e == mia else e for e in etiquetas], (mia + " ⭐" if mia in etiquetas else None)
