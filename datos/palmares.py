@@ -1,11 +1,6 @@
 """Palmarés histórico oficial de cada liga y copa, hasta 2025 inclusive (la temporada 1 del
 simulador es 2026, así que lo que se gana desde ahí lo suman las temporadas simuladas).
-
-Fuente: Wikipedia en español (tablas de palmarés de cada torneo, con datos de la AFA y la CONMEBOL),
-contado temporada por temporada. Los nombres están adaptados a los del simulador (p. ej. Vélez,
-Ferro, Talleres (RE)); los clubes históricos que ya no juegan (Alumni, Lomas Athletic, etc.)
-figuran igual. Nombres anteriores sumados al club actual: Deportivo Italiano = Sportivo Italiano,
-Atlético Campana = Villa Dálmine."""
+"""
 
 import copy
 
@@ -30,30 +25,47 @@ PALMARES = {
     },
     # Torneo Federal A · desde 2014 (en 2014, los 5 ganadores de zona; 2019-20 sin campeón).
     "hist_federal": {
-        "Central Córdoba (SdE)": 2, "Agropecuario": 1, "Central Norte": 1, "Ciudad de Bolívar": 1,
+        "Central Córdoba (SdE)": 1, "Agropecuario": 1, "Central Norte": 1, "Ciudad de Bolívar": 1,
         "Deportivo Madryn": 1, "Estudiantes (Río Cuarto)": 1, "Gimnasia y Tiro": 1, "Guillermo Brown": 1,
-        "Güemes": 1, "Juventud Unida (Gualeguaychú)": 1, "Racing (Córdoba)": 1, "San Martín (Tucumán)": 1,
-        "Sportivo Estudiantes (San Luis)": 1, "Talleres": 1, "Unión (Mar del Plata)": 1,
+        "Güemes": 1, "Juventud Unida (Gualeguaychú)": 1, "Racing (Córdoba)": 3, "San Martín (Tucumán)": 1,
+        "Sportivo Estudiantes (San Luis)": 1, "Talleres": 2, "Independiente Rivadavia": 2, "Juventud Antoniana": 2,
+        "Atlético Tucumán": 1, "Ramón Santamarina": 1, "Almirante Brown (Arrecifes)": 1, "Douglas Haig": 1,
+        "Ben Hur (Rafaela)": 1, "Villa Mitre": 1, "San Martín (Mendoza)": 1, "CAI (Comodoro Rivadavia)": 1, "Patronato": 1,
+        "General Paz Juniors": 1, "Tiro Federal (Rosario)": 1, "Huracán (Tres Arroyos)": 1,
     },
-    # Primera B Metropolitana · desde 1986-87, como tercera categoría (2014 y 2019-20 sin campeón).
+    # Primera B Metropolitana · todos los campeones desde 1934 (era amateur/segunda categoría hasta 1985 y tercera desde 1986-87),
+    # incluidos los equipos reserva (2014 y 2019-20 sin campeón). Fuente: Promiedos.
     "hist_pb": {
-        "Almirante Brown": 3, "All Boys": 2, "Atlanta": 2, "Deportivo Morón": 2, "Flandria": 2, "Platense": 2,
-        "Sarmiento (Junín)": 2, "Sportivo Italiano": 2, "Talleres (RE)": 2, "Argentinos de Rosario": 1,
-        "Barracas Central": 1, "Brown de Adrogué": 1, "Central Cordoba de Rosario": 1, "Chacarita": 1,
-        "Colegiales": 1, "Defensa y Justicia": 1, "Defensores Unidos": 1, "Defensores de Belgrano": 1,
-        "Deportivo Español": 1, "El Porvenir": 1, "Estudiantes (BA)": 1, "Ferro": 1, "Ituzaingó": 1,
-        "Midland": 1, "Nueva Chicago": 1, "Quilmes": 1, "Tigre": 1, "Villa Dálmine": 1, "Villa San Carlos": 1,
+        "Ferro": 6, "Lanús": 4, "Banfield": 4, "Tigre": 4, "Atlanta": 4, "Quilmes": 4,
+        "Rosario Central": 3, "Gimnasia (LP)": 3, "Platense": 3, "Almirante Brown": 3, "Sarmiento (Junín)": 3,
+        "All Boys": 3, "Chacarita": 3, "Defensores de Belgrano": 2, "Argentinos Juniors": 2, "Talleres (RE)": 2,
+        "Nueva Chicago": 2, "Deportivo Español": 2, "Almagro": 2, "Deportivo Morón": 2, "Flandria": 2,
+        "Central Cordoba de Rosario": 2, "Estudiantes (BA)": 2, "Sportivo Italiano": 2,
+        "San Lorenzo": 1, "Estudiantes (LP)": 1, "Colón": 1, "Vélez": 1, "Unión": 1, "Temperley": 1,
+        "Colegiales": 1, "Villa San Carlos": 1, "Los Andes": 1, "Defensa y Justicia": 1, "Midland": 1,
+        "Defensores Unidos": 1, "Ituzaingó": 1, "Brown de Adrogué": 1, "Argentino (Q)": 1,
+        "Argentinos de Rosario": 1, "Barracas Central": 1, "El Porvenir": 1, "Villa Dálmine": 1,
+        "Estudiantes (LP) (Reserva)": 1, "River Plate (Reserva)": 1, "Boca Juniors (Reserva)": 1,
     },
-    # Primera C Metropolitana · desde 1986-87, como cuarta categoría (2014 y 2019-20 sin campeón).
+    # Primera C Metropolitana · todos los campeones desde 1935 (2019-20 sin campeón). Fuente: Promiedos.
     "hist_pc": {
-        "Colegiales": 3, "Argentino (Q)": 2, "Berazategui": 2, "Cambaceres": 2, "Defensores Unidos": 2,
-        "Deportivo Laferrere": 2, "Deportivo Merlo": 2, "Excursionistas": 2, "Villa Dálmine": 2,
-        "Acassuso": 1, "Argentino de Merlo": 1, "Argentinos de Rosario": 1, "Barracas Central": 1,
-        "Camioneros": 1, "Cañuelas": 1, "Central Cordoba de Rosario": 1, "Comunicaciones": 1,
-        "Defensores de Belgrano": 1, "Dock Sud": 1, "Flandria": 1, "General Lamadrid": 1, "Ituzaingó": 1,
-        "Real Pilar": 1, "Sacachispas": 1, "San Telmo": 1, "Sportivo Italiano": 1, "Temperley": 1,
-        "UAI Urquiza": 1, "Villa San Carlos": 1,
+        "Colegiales": 5, "Villa Dálmine": 5, "San Telmo": 4, "Defensores de Belgrano": 4,
+        "Barracas Central": 3, "Argentino (Q)": 3, "Sportivo Italiano": 3, "Central Cordoba de Rosario": 3,
+        "Comunicaciones": 3, "Excursionistas": 2, "Sportivo Alsina": 2, "Defensores Unidos": 2,
+        "Deportivo Merlo": 2, "Argentinos de Rosario": 2, "El Porvenir": 2, "Deportivo Español": 2,
+        "Los Andes": 2, "Deportivo Morón": 2, "Estudiantes (BA)": 2, "Acassuso": 2, "All Boys": 2,
+        "Berazategui": 2, "Deportivo Laferrere": 2, "Cambaceres": 2, "Talleres (RE)": 2,
+        "Progresista": 1, "Tiro Federal (Rosario)": 1, "Boulogne": 1, "Defensa y Justicia": 1, "Ituzaingó": 1,
+        "General Lamadrid": 1, "Arsenal": 1, "Cañuelas": 1, "Temperley": 1, "Nueva Chicago": 1,
+        "Almagro": 1, "Villa San Carlos": 1, "Deportivo Armenio": 1, "Almirante Brown": 1, "Flandria": 1,
+        "Sarmiento (Junín)": 1, "Argentino de Merlo": 1, "Real Pilar": 1, "Lanús": 1, "Sacachispas": 1,
+        "Dock Sud": 1, "UAI Urquiza": 1, "San Miguel": 1, "Camioneros": 1,
     },
+    # Ex torneo Argentinos B (Cuarta categoria del interior del futbol argentino).
+    "hist_federalB": {
+        
+    },
+
     # Copa Argentina · 1969 y desde 2011-12.
     "hist_copa": {
         "Boca Juniors": 4, "River Plate": 3, "Arsenal": 1, "Central Córdoba (SdE)": 1, "Estudiantes (LP)": 1,
