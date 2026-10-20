@@ -23,8 +23,8 @@ from copas.argentina import clasificados_copa, sortear_copa
 from copas.conmebol import MEDIA_EXT, fin_de_temporada, nuevas_internacionales
 from datos.palmares import palmares_inicial
 from ligas.federal import F_MIN, nueva_estructura_f
-from ligas.nacional import nueva_estructura_b
-from ligas.primera import nueva_estructura, tabla_final
+from ligas.nacional import ascensos_a_primera, nueva_estructura_b
+from ligas.primera import descensos, nueva_estructura, tabla_final
 from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
 
@@ -52,7 +52,7 @@ def crear_estado():
     }
     nueva_estructura(S)
     SB = {"nombres": list(EQUIPOS_B), "r": np.array(list(EQUIPOS_B.values()), dtype=float)}
-    nueva_estructura_b(SB, rng)
+    nueva_estructura_b(SB, rng, S)
     S["b"] = SB
     SF = {"nombres": list(EQUIPOS_FEDERAL), "r": np.array(list(EQUIPOS_FEDERAL.values()), dtype=float)}
     nueva_estructura_f(SF, rng)
@@ -143,10 +143,11 @@ def nueva_temporada(S, volatilidad):
         comp.cerrar(S, rng)
 
     p27 = promo["p_nombre"]
-    directos = [SB["nombres"][i] for i in SB["asc_directo"]]
-    reducido = SB["nombres"][SB["asc_reducido"]]
-    suben = directos + [reducido]
-    bajan_p = list(final[final["Pos"] >= N - 2]["Equipo"])
+    reducido = SB["nombres"][SB["asc_reducido"]] if SB["asc_reducido"] is not None else None   # sin reducido en el torneo anual
+    k_desc = descensos(S)                                         # Modo dios: cuántos bajan directo (suben tantos de la B)
+    suben = ascensos_a_primera(S)
+    directos = [n for n in suben if n != reducido]
+    bajan_p = list(final[final["Pos"] > N - k_desc]["Equipo"])
     if promo["gana_b"]:
         suben.append(SB["nombres"][promo["b_id"]])
         bajan_p.append(p27)
@@ -195,7 +196,7 @@ def nueva_temporada(S, volatilidad):
     SB["nombres"] = base_b + entran
 
     S["movimientos"] = {
-        "directos": directos, "reducido": reducido,
+        "directos": directos, "reducido": reducido if reducido in suben else None,
         "bajan_p": bajan_p, 
         "bajan_b_fed": bajan_b_fed, 
         "bajan_b_pb": bajan_b_pb,
@@ -284,7 +285,7 @@ def nueva_temporada(S, volatilidad):
     # ------------------------------------------------------
 
     nueva_estructura(S)
-    nueva_estructura_b(SB, rng)
+    nueva_estructura_b(SB, rng, S)
     nueva_estructura_f(SF, rng)
     
     S["pb"]["nombres"] = list(S["primera_b"])

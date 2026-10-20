@@ -26,7 +26,7 @@ from motor.nucleo import (
     ultimas_localias,
     unir,
 )
-from ligas.primera import definir_bloque, primera_terminada, tabla_final
+from ligas.primera import definir_bloque, descensos, primera_terminada, tabla_final
 
 
 # Primera Nacional
@@ -60,6 +60,52 @@ B_ETAPAS = ["Octavos del reducido", "Cuartos del reducido", "Semifinales del red
 
 B_ZONAS2 = ["Campeonato", "Intermedia", "Descenso"]
 
+FORMATOS_B = {
+    "actual": "Formato actual (zonas + reducido)",
+    "anual_ida": "Torneo anual · una rueda",
+    "anual_ida_vuelta": "Torneo anual · ida y vuelta",
+}
+B_DESCIENDEN = 6                  # cuántos bajan de la B (por ahora fijo)
+
+
+def cfg_b(S):
+    """Lo que se eligió en el Modo dios para la Primera Nacional (se aplica al armar cada temporada)."""
+    c = S.setdefault("cfg", {}).setdefault("b", {})
+    c.setdefault("formato", "actual")
+    return c
+
+
+def formato_b(SB):
+    """Formato con el que se está jugando esta temporada la Primera Nacional."""
+    return SB.get("formato", "actual")
+
+
+def es_anual_b(SB):
+    return formato_b(SB) != "actual"
+
+
+def total_base_b(SB):
+    """Fechas de la liga sin contar promoción ni desempates (en el formato actual: fase 1 + fase 2)."""
+    f = formato_b(SB)
+    if f == "anual_ida":
+        return NB - 1
+    if f == "anual_ida_vuelta":
+        return 2 * (NB - 1)
+    return B_F1 + B_F2
+
+
+def destino_b_anual(pos, k):
+    """Torneo anual de la B: destino según la posición (k = cuántos suben)."""
+    if pos == 1 and k >= 1:
+        return "Campeón · Ascenso"
+    if pos <= k:
+        return "Ascenso directo"
+    if pos == k + 1:
+        return "Promoción"
+    if pos > NB - B_DESCIENDEN:
+        return "Desciende"
+    return "Permanece"
+
 
 def destino_b1(pos):
     """Fase 1 de la B: a qué zona de la fase 2 pasa según la posición en la zona A/B."""
@@ -84,11 +130,17 @@ def destino_b2(z, pos):
 
 
 def total_b(SB):
-    """Fechas de la Primera Nacional contando las de desempate (si las hubo)."""
+    """Fechas de la Primera Nacional contando las de desempate (si las hubo) y la promoción."""
+    if es_anual_b(SB):
+        return total_base_b(SB) + 1
     return B_TOTAL + SB.get("extra_f2", 0)
 
 
 def rotulo_b(SB, n):
+    if es_anual_b(SB):
+        if n <= total_base_b(SB):
+            return f"Fecha {n}" + (" · Vuelta" if formato_b(SB) == "anual_ida_vuelta" and n > NB - 1 else "")
+        return f"Fecha {n} · Promoción"
     extra = SB.get("extra_f2", 0)
     if n <= B_F1:
         return f"Fecha {n} · Fase 1"
@@ -102,20 +154,32 @@ def rotulo_b(SB, n):
     return f"Fecha {n} · Promoción"
 
 
-def nueva_estructura_b(SB, rng):
-    """Sortea las zonas A y B (18 c/u) y arma el fixture de la fase 1."""
+def nueva_estructura_b(SB, rng, S=None):
+    """Arma la temporada de la B según el formato elegido en el Modo dios (si se pasa S; si no, mantiene el actual).
+    Formato actual: sortea las zonas A y B (18 c/u) y arma el fixture de la fase 1.
+    Torneo anual: todos contra todos (ida o ida y vuelta) en una sola tabla."""
+    if S is not None:
+        SB["formato"] = cfg_b(S)["formato"]
     n = len(SB["nombres"])
     perm = rng.permutation(n)
-    SB["zonas"] = [perm[:B_ZONA_TAM], perm[B_ZONA_TAM:]]
-    SB["zona_de"] = np.zeros(n, dtype=int)
-    SB["zona_de"][SB["zonas"][1]] = 1
-    base = generar_fixture(B_ZONA_TAM)
-    fechas_zonal = [
-        [(int(ids[a]), int(ids[b])) for ids in SB["zonas"] for a, b in base[k]]
-        for k in range(B_F1_ZONAL)
-    ]
-    fechas_inter = generar_fixture_interzonal(rng, SB["zonas"][0], SB["zonas"][1], B_F1_INTER)
-    SB["fechas"] = fechas_zonal + fechas_inter
+    if es_anual_b(SB):
+        SB["zonas"] = [np.arange(n)]
+        SB["zona_de"] = np.zeros(n, dtype=int)
+        fechas = [[(int(perm[a]), int(perm[b])) for a, b in par] for par in generar_fixture(n)]
+        if formato_b(SB) == "anual_ida_vuelta":                    # la vuelta: mismas fechas con las localías al revés
+            fechas += [[(v, l) for l, v in fecha] for fecha in fechas]
+        SB["fechas"] = fechas
+    else:
+        SB["zonas"] = [perm[:B_ZONA_TAM], perm[B_ZONA_TAM:]]
+        SB["zona_de"] = np.zeros(n, dtype=int)
+        SB["zona_de"][SB["zonas"][1]] = 1
+        base = generar_fixture(B_ZONA_TAM)
+        fechas_zonal = [
+            [(int(ids[a]), int(ids[b])) for ids in SB["zonas"] for a, b in base[k]]
+            for k in range(B_F1_ZONAL)
+        ]
+        fechas_inter = generar_fixture_interzonal(rng, SB["zonas"][0], SB["zonas"][1], B_F1_INTER)
+        SB["fechas"] = fechas_zonal + fechas_inter
     SB["fecha"] = 0
     for k in STATS:
         SB[k] = np.zeros(n, dtype=int)
@@ -181,6 +245,27 @@ def tabla_b_f2(SB, z):
     return df
 
 
+def tabla_b_anual(SB, k=3):
+    """Torneo anual de la B: tabla única (k = cuántos suben; el siguiente juega la promoción)."""
+    df = df_stats(SB["nombres"], SB["r"], SB, SB["zonas"][0])
+    df.insert(0, "Pos", df.index + 1)
+    df["Destino"] = [destino_b_anual(p, k) for p in df["Pos"]]
+    return df
+
+
+def cerrar_anual_b(S):
+    """Fin del torneo anual de la B: campeón, ascensos, descensos y quién juega la promoción."""
+    SB = S["b"]
+    k = descensos(S)
+    ids = [int(i) for i in tabla_b_anual(SB, k)["id"]]
+    SB["ord2"] = [np.array(ids)]                      # orden final: ascensos_a_primera toma los k primeros
+    SB["campeon"] = ids[0]
+    SB["asc_directo"] = [ids[0], ids[1]]
+    SB["asc_reducido"] = None                         # no hay reducido
+    SB["desc_b"] = ids[-B_DESCIENDEN:]
+    SB["perdedor_final"] = ids[min(k, len(ids) - 1)]  # el que sigue a los ascendidos juega la promoción
+
+
 def iniciar_fase2_b(SB, rng):
     """Fin de la fase 1: reparte en 3 zonas conservando los puntos acumulados."""
     SB["tablas_f1"] = [tabla_b_f1(SB, z) for z in range(2)]
@@ -243,6 +328,8 @@ def iniciar_reducido(SB):
 def simular_fecha_b(S, P):
     """Simula la próxima fecha de la B. La promoción espera a que termine la Primera."""
     SB, rng = S["b"], S["rng"]
+    if es_anual_b(SB):
+        return _simular_fecha_b_anual(S, P)
     f = SB["fecha"]
     extra = SB.get("extra_f2", 0)
     B_TOTAL_DYN = B_TOTAL + extra  # Alarga el campeonato dinámicamente si hay desempate
@@ -411,25 +498,81 @@ def simular_fecha_b(S, P):
         SB["fecha"] += 1
 
     else:                                                 # ---- promoción
-        final_p = tabla_final(S)
-        fila = final_p[final_p["Pos"] == N - 3].iloc[0]
-        p_id, p_nom = int(fila["id"]), fila["Equipo"]
-        b_id = SB["perdedor_final"]
-        gl, gv, gana_b, pen = jugar_ko(rng, np.array([r[b_id]]), np.array([S["r"][p_id]]),
-                                       P["sorpresa"], localia=0.0,
-                                       **mods_nombres(rng, [nom[b_id]], [p_nom]))
-        tanda = tanda_penales(rng, gana_b[0]) if pen[0] else None
-        partido = nuevo_partido("Promoción", f + 1, "Promoción", "Promoción", nom[b_id], p_nom,
-                                gl[0], gv[0], tanda=tanda,
-                                gana=nom[b_id] if gana_b[0] else p_nom, neutral=True)
-        SB["log"].append(partido)
-        SB["promo_partido"] = partido
-        partes = ["Cancha neutral"]
-        if pen[0]:
-            partes.append(f"Penales {partido['pen'][0]}-{partido['pen'][1]}: {partido['gana']}")
-        SB["historial"].append(pd.DataFrame({
-            "Instancia": "Promoción", "Local": [nom[b_id]], "GL": gl, "GV": gv,
-            "Visitante": [p_nom], "Definición": " · ".join(partes),
-        }))
-        SB["promo"] = {"b_id": b_id, "p_id": p_id, "p_nombre": p_nom, "gana_b": bool(gana_b[0])}
-        SB["fecha"] += 1
+        _promocion_b(S, P, f)
+
+
+def _promocion_b(S, P, f):
+    """Promoción: el elegido de la B contra el que queda en el puesto N-k de Primera (cancha neutral)."""
+    SB, rng = S["b"], S["rng"]
+    r, nom = SB["r"], SB["nombres"]
+    final_p = tabla_final(S)
+    fila = final_p[final_p["Pos"] == N - descensos(S)].iloc[0]       # el último que se salva: juega la promoción
+    p_id, p_nom = int(fila["id"]), fila["Equipo"]
+    b_id = SB["perdedor_final"]
+    gl, gv, gana_b, pen = jugar_ko(rng, np.array([r[b_id]]), np.array([S["r"][p_id]]),
+                                   P["sorpresa"], localia=0.0,
+                                   **mods_nombres(rng, [nom[b_id]], [p_nom]))
+    tanda = tanda_penales(rng, gana_b[0]) if pen[0] else None
+    partido = nuevo_partido("Promoción", f + 1, "Promoción", "Promoción", nom[b_id], p_nom,
+                            gl[0], gv[0], tanda=tanda,
+                            gana=nom[b_id] if gana_b[0] else p_nom, neutral=True)
+    SB["log"].append(partido)
+    SB["promo_partido"] = partido
+    partes = ["Cancha neutral"]
+    if pen[0]:
+        partes.append(f"Penales {partido['pen'][0]}-{partido['pen'][1]}: {partido['gana']}")
+    SB["historial"].append(pd.DataFrame({
+        "Instancia": "Promoción", "Local": [nom[b_id]], "GL": gl, "GV": gv,
+        "Visitante": [p_nom], "Definición": " · ".join(partes),
+    }))
+    SB["promo"] = {"b_id": b_id, "p_id": p_id, "p_nombre": p_nom, "gana_b": bool(gana_b[0])}
+    SB["fecha"] += 1
+
+
+
+def _simular_fecha_b_anual(S, P):
+    """Torneo anual de la B: una sola tabla (ida o ida y vuelta) y después la promoción contra el de Primera."""
+    SB, rng = S["b"], S["rng"]
+    f, base = SB["fecha"], total_base_b(SB)
+    if f > base or (f == base and not primera_terminada(S)):
+        return
+    if f == base:
+        _promocion_b(S, P, f)
+        return
+    r, nom = SB["r"], SB["nombres"]
+    pares = SB["fechas"][f]
+    h = np.array([x[0] for x in pares])
+    a = np.array([x[1] for x in pares])
+    gh, ga = jugar(rng, r[h], r[a], **P, **mods_ids(rng, nom, h, a))
+    sumar_partidos(SB, h, a, gh, ga)
+    SB["historial"].append(_fila_historial(SB, ["Liga"] * len(h), h, a, gh, ga, ""))
+    for x, y, g1, g2 in zip(h, a, gh, ga):
+        SB["log"].append(nuevo_partido("Primera Nacional", f + 1, rotulo_b(SB, f + 1), "Liga",
+                                       nom[x], nom[y], g1, g2))
+    revisar_liga(SB, SB["log"][-len(h):], rng)
+    df = tabla_b_anual(SB, descensos(S))
+    pos = np.zeros(len(nom), dtype=int)
+    pos[df["id"].to_numpy()] = df["Pos"].to_numpy()
+    SB["pos_hist"].append((1, pos))
+    SB["fecha"] += 1
+    if SB["fecha"] == base:
+        cerrar_anual_b(S)
+
+
+def ascensos_a_primera(S):
+    """Nombres de los de la B que suben a Primera por los cupos de descenso (sin contar la promoción), en orden:
+    campeón, 2°, ganador del reducido y, si la cantidad de descensos pide más, los siguientes de la Zona Campeonato.
+    Sólo tiene sentido cuando la B terminó. El perdedor de la final del reducido queda afuera: juega la promoción."""
+    SB = S["b"]
+    k = descensos(S)
+    nom = SB["nombres"]
+    if es_anual_b(SB):                                # torneo anual: suben los k primeros de la tabla
+        return [nom[int(i)] for i in SB["ord2"][0][:k]]
+    prioridad = [nom[i] for i in SB["asc_directo"]] + [nom[SB["asc_reducido"]]]
+    if k > len(prioridad):
+        excluidos = set(prioridad)
+        if SB.get("perdedor_final") is not None:
+            excluidos.add(nom[SB["perdedor_final"]])
+        extras = [nom[int(i)] for i in SB["ord2"][0] if nom[int(i)] not in excluidos]
+        prioridad += extras[:k - len(prioridad)]
+    return prioridad[:k]

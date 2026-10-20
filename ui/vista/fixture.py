@@ -7,8 +7,8 @@ import streamlit as st
 
 from motor.calendario import dia_de, texto_dia
 from ligas.federal import rotulo_f
-from ligas.nacional import rotulo_b
-from ligas.primera import rotulo_p
+from ligas.nacional import es_anual_b, rotulo_b
+from ligas.primera import formato, rotulo_p
 from ligas.regional import rotulo_reg
 from ui.vista.base import _estado, chip, esc, norm, seccion
 from ui.vista.ficha import ver_equipo
@@ -79,11 +79,14 @@ def vista_fixture(liga, region=None):
         # Lo separamos en dos líneas para que sea más claro
         total, jugadas, obtener = fechas_conocidas_p(), S["fecha"], partidos_fecha_p
         rotulo = lambda n: rotulo_p(S, n)
-        extra = "" if S["fase"] == 2 else " · las 9 fechas de la fase 2 se arman al terminar la fase 1"
+        f_p = formato(S)
+        extra = (" · las llaves se arman al terminar la etapa regular de cada torneo" if f_p == "apertura_clausura"
+                 else "" if (f_p != "actual" or S["fase"] == 2)
+                 else " · las 9 fechas de la fase 2 se arman al terminar la fase 1")
     elif liga == "b":
         total, jugadas, obtener = fechas_conocidas_b(), SB["fecha"], partidos_fecha_b
         rotulo = lambda n: rotulo_b(SB, n)
-        extra = ("" if SB["fechas2"] is not None else
+        extra = ("" if (es_anual_b(SB) or SB["fechas2"] is not None) else
                  " · la fase 2 se arma al terminar la fase 1")
     elif liga == "pb":
         total, jugadas = fechas_conocidas_pb(), SPB["fecha"]

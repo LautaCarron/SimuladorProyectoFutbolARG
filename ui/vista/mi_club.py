@@ -52,16 +52,21 @@ def marcar(etiquetas, mia):
 
 def zona_primera(S, club):
     """Primera: en la fase 2, "Zona Campeonato / Intermedia / Descenso". En la fase 1 hay una sola tabla."""
-    from ligas.primera import ZONAS
-    if S["fase"] != 2 or S.get("zona_de") is None or club not in S["nombres"]:
+    from ligas.primera import ZONAS, formato
+    if club not in S["nombres"]:
         return None
-    return f"Zona {ZONAS[S['zona_de'][S['nombres'].index(club)]]}"
+    i = S["nombres"].index(club)
+    if formato(S) == "apertura_clausura":                      # zona A o B del Apertura y Clausura
+        return f"Zona {'AB'[S['ac']['zona_de'][i]]}" if S.get("ac") else None
+    if S["fase"] != 2 or S.get("zona_de") is None:
+        return None
+    return f"Zona {ZONAS[S['zona_de'][i]]}"
 
 
 def zona_nacional(SB, club):
     """Primera Nacional: fase 1 "Zona A / Zona B"; fase 2 "Zona Campeonato / Intermedia / Descenso"."""
-    from ligas.nacional import B_F1, B_ZONAS2
-    if club not in SB["nombres"]:
+    from ligas.nacional import B_F1, B_ZONAS2, es_anual_b
+    if club not in SB["nombres"] or es_anual_b(SB):     # el torneo anual no tiene zonas
         return None
     i = SB["nombres"].index(club)
     if SB["fecha"] < B_F1:
@@ -176,6 +181,8 @@ def mi_zona(S, liga, fase1=False):
         if liga == "p":
             z = L.get("zona_de")                              # sólo existe desde la fase 2
         elif liga == "b":
+            if L.get("formato", "actual") != "actual":
+                return None
             z = L.get("zona_de") if fase1 else L.get("zona2_de")
         else:
             z = L.get("grupo_de") if fase1 else L.get("zona2_de")

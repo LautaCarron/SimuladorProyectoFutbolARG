@@ -257,6 +257,11 @@ if modo_mgr:
         pantalla_evento(S, st.session_state["manager"])
         st.stop()
 
+# Modo dios (sólo modo simulación): formato y descensos de Primera, desde la barra lateral
+if not modo_mgr:
+    from ui.dios import panel_dios
+    panel_dios(S)
+
 # Mi club (modo manager): se marca en amarillo y se señalan las competencias donde juega
 from ui.vista.mi_club import competencias_club, estilo_mi_club, tabs_con_default
 if not modo_mgr and getattr(S["rng"], "tacticas", None):      # modo simulación: nadie juega con táctica

@@ -167,7 +167,7 @@ def colorear_destino(fila):
             c = "rgba(147, 51, 234, 0.3)"
         return [f"background-color: {c}"] * len(fila)
         
-    c = COLOR_ORO if pos == 1 else COLORES_DESTINO.get(destino(pos), "")
+    c = COLOR_ORO if pos == 1 else COLORES_DESTINO.get(d, "")
     return [f"background-color: {c}" if c else ""] * len(fila)
 
 

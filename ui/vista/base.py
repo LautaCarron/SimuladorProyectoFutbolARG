@@ -37,6 +37,7 @@ COLORES_B = {
     "Cuartos del reducido": "rgba(116, 172, 223, 0.36)",
     "Octavos del reducido": "rgba(116, 172, 223, 0.18)",
     "Desciende": "rgba(184, 58, 46, 0.17)",
+    "Promoción": "rgba(245, 158, 11, 0.22)",
     "→ Zona Campeonato": COLORES_ZONA[0],
     "→ Zona Intermedia": COLORES_ZONA[1],
     "→ Zona Descenso": COLORES_ZONA[2],

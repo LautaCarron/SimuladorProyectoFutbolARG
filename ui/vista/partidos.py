@@ -6,8 +6,9 @@ import streamlit as st
 from motor.calendario import dia_partido, texto_dia
 from datos.equipos import F_GRUPOS_NOMBRES
 from ligas.federal import rotulo_f
-from ligas.nacional import B_F1, B_F2, B_ZONAS2, rotulo_b
-from ligas.primera import FECHAS_F1, TOTAL_FECHAS, ZONAS, rotulo_p
+from ligas.nacional import B_F1, B_F2, B_ZONAS2, es_anual_b, rotulo_b, total_base_b
+from ligas.apertura_clausura import competencia as ac_competencia
+from ligas.primera import FECHAS_F1, ZONAS, formato, rotulo_p, total_base
 from ligas.regional import rotulo_reg
 from ui.vista.base import _estado, chip, crest, esc
 from ui.vista.mi_club import mi_club
@@ -131,20 +132,28 @@ def partidos_fecha_p(n):
         return [p for p in S["log"] if p["fecha"] == n]
     nom = S["nombres"]
 
-    def competencia(x):
-        """Fase 1, zona del club x en la fase 2 o desempate (después de la última fecha regular)."""
+    f = formato(S)
+
+    def competencia(x, y):
+        """Según el formato: fase 1, zona de la fase 2, zona del Apertura/Clausura, llaves o desempate."""
+        if f == "apertura_clausura":
+            return ac_competencia(S, n, x, y)
+        if n > total_base(S):
+            return "Desempate"
+        if f != "actual":
+            return "Liga"
         if n <= FECHAS_F1:
             return "Fase 1"
-        if n <= TOTAL_FECHAS:
-            return f"Zona {ZONAS[S['zona_de'][x]]}"
-        return "Desempate"
+        return f"Zona {ZONAS[S['zona_de'][x]]}"
 
-    return [pendiente("Primera División", n, rotulo_p(S, n), competencia(x), nom[x], nom[y])
+    return [pendiente("Primera División", n, rotulo_p(S, n), competencia(x, y), nom[x], nom[y])
             for x, y in S["fechas"][n - 1]]
 
 
 def fechas_conocidas_b():
     S, SB, SF, SPB, SPC = _estado()
+    if es_anual_b(SB):
+        return max(SB["fecha"], total_base_b(SB))
     return max(SB["fecha"], B_F1 if SB["fechas2"] is None else B_F1 + len(SB["fechas2"]))
 
 
@@ -153,6 +162,9 @@ def partidos_fecha_b(n):
     if n <= SB["fecha"]:
         return [p for p in SB["log"] if p["fecha"] == n]
     nom = SB["nombres"]
+    if es_anual_b(SB):
+        return [pendiente("Primera Nacional", n, rotulo_b(SB, n), "Liga", nom[x], nom[y])
+                for x, y in SB["fechas"][n - 1]] if n <= total_base_b(SB) else []
     if n <= B_F1:
         return [pendiente("Primera Nacional", n, rotulo_b(SB, n), f"Zona {'AB'[SB['zona_de'][x]]}",
                           nom[x], nom[y]) for x, y in SB["fechas"][n - 1]]

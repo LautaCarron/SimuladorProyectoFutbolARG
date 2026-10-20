@@ -7,19 +7,24 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 """
 
 import streamlit as st
-from datos.equipos import origen
+from datos.equipos import NB, origen
 from ligas.nacional import (
     B_F1,
     B_F2,
     B_RED,
     B_TOTAL,
     B_ZONAS2,
+    ascensos_a_primera,
+    es_anual_b,
+    formato_b,
     simular_fecha_b,
+    tabla_b_anual,
     tabla_b_f1,
     tabla_b_f2,
     total_b,
+    total_base_b,
 )
-from ligas.primera import primera_terminada
+from ligas.primera import descensos, primera_terminada
 from ui.vista import (
     COLORES_ZONA,
     LEY_B,
@@ -39,6 +44,7 @@ from ui.vista import (
     tabla_html,
     vista_fixture,
 )
+from ui.vista.base import COLORES_B
 from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zona_nacional
 
 
@@ -56,7 +62,12 @@ def render(ctx):
             nom_b = SB["nombres"]
             extra = SB.get("extra_f2", 0)  # Offset dinámico por si se alarga con un desempate
     
-            if fb < B_F1:
+            anual = es_anual_b(SB)                         # torneo anual (Modo dios): una sola tabla
+            base_b = total_base_b(SB)
+            if anual:
+                fase_txt = ("Terminada" if fb > base_b else "Promoción" if fb == base_b
+                            else "Todos contra todos")
+            elif fb < B_F1:
                 fase_txt = "1 · Zonas A y B"
             elif fb < B_F1 + B_F2 + extra:
                 if fb < B_F1 + B_F2:
@@ -85,17 +96,23 @@ def render(ctx):
                     simular_fecha_b(S, P)
                 st.rerun()
 
-            pct_b_dyn = 100 * fb / (B_TOTAL + extra) if (B_TOTAL + extra) else 0
-            barra_estado([("Fase", fase_txt), ("Fecha", f"{fb} / {B_TOTAL + extra}"),
+            pct_b_dyn = 100 * fb / total_b(SB) if total_b(SB) else 0
+            barra_estado([("Fase", fase_txt), ("Fecha", f"{fb} / {total_b(SB)}"),
                           ("Partidos jugados", len(SB["log"]))], pct_b_dyn)
                   
+            if anual:
+                aviso(f"<b>Modo dios:</b> torneo anual ({'ida y vuelta' if formato_b(SB) == 'anual_ida_vuelta' else 'una rueda'}). "
+                      f"Suben los {descensos(S)} primeros de la tabla, el siguiente juega la promoción y bajan los 6 últimos.")
+            elif descensos(S) != 3:
+                aviso(f"<b>Modo dios:</b> bajan {descensos(S)} de Primera, así que suben {descensos(S)} de esta categoría "
+                      "(campeón, 2°, ganador del reducido y, si hacen falta más, los siguientes de la Zona Campeonato).")
             if b_espera_primera:
                 aviso("La Promoción se juega contra el 27° de Primera: terminá primero la temporada "
                       "de Primera División.")
-            if fb == B_F1:
+            if not anual and fb == B_F1:
                 aviso("Terminó la fase 1: se repartieron los equipos en las zonas Campeonato, "
                       "Intermedia y Descenso y <b>se conservan todos los puntos acumulados</b>.")
-            if fb == B_F1 + B_F2 + extra:
+            if not anual and fb == B_F1 + B_F2 + extra:
                 aviso("Terminó la fase 2 y sus definiciones: quedaron definidos los 12 clasificados al reducido. "
                       "Mirá el cuadro en la pestaña <b>Reducido</b>.")
 
@@ -105,14 +122,20 @@ def render(ctx):
     
             titulos_b = ["Posiciones", "Fixture y resultados"]
             if mostrar_desempate_b: titulos_b.append("Desempate")
-            titulos_b.extend(["Reducido", "Movimientos", "Definiciones"])
+            titulos_b.extend(["Movimientos", "Definiciones"] if anual else ["Reducido", "Movimientos", "Definiciones"])
     
             sb = st.tabs(titulos_b)
             idx_b = 0
     
             with sb[idx_b]:
                 mi_zona = zona_nacional(SB, mi_club())        # modo manager: zona de mi club (o None)
-                if fb < B_F1:
+                if anual:
+                    seccion("Torneo anual · " + ("ida y vuelta" if formato_b(SB) == "anual_ida_vuelta" else "una rueda"),
+                            f"{NB} equipos · {base_b} fechas · una sola tabla", "#4f46e5")
+                    mostrar_tabla(tabla_b_anual(SB, descensos(S)), colorear_b, SB["pos_hist"])
+                    leyenda([("Ascienden", COLORES_B["Ascenso directo"]), ("Juega la promoción", COLORES_B["Promoción"]),
+                             ("Descienden (6 últimos)", COLORES_B["Desciende"])])
+                elif fb < B_F1:
                     seccion("Fase 1 · Zonas A y B", "Una rueda + 8 fechas interzonales · 18 equipos por zona", "#4f46e5")
                     etiq, ini = marcar(["Zona A", "Zona B"], mi_zona)
                     tabs_b = tabs_con_default(etiq, ini)
@@ -138,6 +161,9 @@ def render(ctx):
             
                 with st.expander(":material/info: Formato de la Primera Nacional"):
                     st.markdown(
+                        f"Torneo anual de 36 equipos, todos contra todos ({'ida y vuelta, 70 fechas' if formato_b(SB) == 'anual_ida_vuelta' else 'una rueda, 35 fechas'}) "
+                        "en una sola tabla. El campeón es el 1° y asciende; suben tantos como bajan de Primera, el siguiente "
+                        "juega la promoción contra el 27° de Primera y descienden los 6 últimos." if anual else
                         "Fase 1: dos zonas de 18, una rueda, más 8 fechas interzonales (localía fija "
                         "4 y 4) cruzando ambas zonas. "
                         "Después, conservando los puntos acumulados, se arman "
@@ -186,18 +212,19 @@ def render(ctx):
                                     st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
                 idx_b += 1
 
-            with sb[idx_b]:
-                seccion("Reducido por el tercer ascenso",
-                        "Octavos → Cuartos → Semifinal → Final · partido único, penales si empatan · "
-                        "L = local, V = visitante, N = neutral", "#2563eb")
-                if fb < B_F1 + B_F2 + extra:
-                    aviso("El cuadro se completa al terminar la fase 2 y sus posibles desempates. Entran 3°-4° de Zona Campeonato "
-                          "(directo a cuartos), 5°-12° de Campeonato y 1°-4° de Intermedia (octavos).")
-                st.markdown(bracket_html(SB), unsafe_allow_html=True)
-                if SB["entrantes"] is not None:
-                    with st.expander("Clasificados al reducido (orden de mérito)"):
-                        st.markdown(tabla_html(SB["entrantes"]), unsafe_allow_html=True)
-            idx_b += 1
+            if not anual:
+                with sb[idx_b]:
+                    seccion("Reducido por el tercer ascenso",
+                            "Octavos → Cuartos → Semifinal → Final · partido único, penales si empatan · "
+                            "L = local, V = visitante, N = neutral", "#2563eb")
+                    if fb < B_F1 + B_F2 + extra:
+                        aviso("El cuadro se completa al terminar la fase 2 y sus posibles desempates. Entran 3°-4° de Zona Campeonato "
+                              "(directo a cuartos), 5°-12° de Campeonato y 1°-4° de Intermedia (octavos).")
+                    st.markdown(bracket_html(SB), unsafe_allow_html=True)
+                    if SB["entrantes"] is not None:
+                        with st.expander("Clasificados al reducido (orden de mérito)"):
+                            st.markdown(tabla_html(SB["entrantes"]), unsafe_allow_html=True)
+                idx_b += 1
     
             with sb[idx_b]:
                 render_movimientos(SB["log"], SB["pos_hist"], nom_b, "#0f766e")
@@ -207,7 +234,8 @@ def render(ctx):
                 seccion("Definiciones de la temporada", "Campeón, ascensos, promoción y descensos",
                         "#b7860b")
                 if SB["campeon"] is None:
-                    aviso("Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
+                    aviso("Las definiciones aparecen acá cuando termina el torneo." if anual else
+                          "Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
                 else:
                     st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
                     e1, e2 = st.columns(2)
@@ -219,13 +247,16 @@ def render(ctx):
                                         f'<div class="nm">{esc(cb)}</div><div class="s">Asciende a Primera'
                                         f'</div></div>', unsafe_allow_html=True)
                         with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
-                            asc = [(nom_b[SB["asc_directo"][0]], "campeón"), (nom_b[SB["asc_directo"][1]], "2°")]
+                            rotulos = {nom_b[SB["asc_directo"][0]]: "campeón", nom_b[SB["asc_directo"][1]]: "2°"}
                             if SB["asc_reducido"] is not None:
-                                asc.append((nom_b[SB["asc_reducido"]], "reducido"))
+                                rotulos[nom_b[SB["asc_reducido"]]] = "reducido"
+                            asc = [(n, rotulos.get(n, "por cupo")) for n in ascensos_a_primera(S)]
+                            if anual:
+                                asc = [(n, "campeón" if i == 0 else f"{i + 1}°") for i, (n, _) in enumerate(asc)]
                             if SB["promo"] and SB["promo"]["gana_b"]:
                                 asc.append((nom_b[SB["promo"]["b_id"]], "promoción"))
                             st.markdown(lista_equipos_html(asc) + (
-                                '' if SB["asc_reducido"] is not None else
+                                '' if (anual or SB["asc_reducido"] is not None) else
                                 '<div style="font-size:.8rem;opacity:.65">El tercer ascenso sale del '
                                 'reducido.</div>'), unsafe_allow_html=True)
                     with e2:
@@ -234,15 +265,16 @@ def render(ctx):
                                 st.markdown(fila_partido_html(SB["promo_partido"], abierto=True),
                                             unsafe_allow_html=True)
                             elif SB["perdedor_final"] is not None:
-                                st.markdown('<div class="mlab">Juega la promoción (perdedor de la final)</div>'
+                                st.markdown('<div class="mlab">' + ("Juega la promoción" if anual else "Juega la promoción (perdedor de la final)") + '</div>'
                                             + lista_equipos_html([(nom_b[SB["perdedor_final"]], "")]),
                                             unsafe_allow_html=True)
                             else:
-                                st.caption("La juega el perdedor de la final del reducido contra el 27° "
-                                           "de Primera.")
+                                st.caption("La juega el que queda justo después de los ascendidos contra el 27° de Primera."
+                                           if anual else
+                                           "La juega el perdedor de la final del reducido contra el 27° de Primera.")
                         with st.expander(":material/south: Descensos", expanded=False):
                             st.markdown(
-                                '<div class="mlab">Descienden (7° al 12° de Zona Descenso): al Federal '
+                                '<div class="mlab">Descienden (' + ("los 6 últimos de la tabla" if anual else "7° al 12° de Zona Descenso") + '): al Federal '
                                 'A los del interior, a la Primera B los metropolitanos</div>'
                                 + lista_equipos_html([
                                     (nom_b[i], "Federal A" if origen(nom_b[i]) == "Interior" else "Primera B")
