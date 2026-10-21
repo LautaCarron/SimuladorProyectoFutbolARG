@@ -8,11 +8,11 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 """
 
 import streamlit as st
-from datos.equipos import N
 from ligas import apertura_clausura as ac
+from ligas.primera import promos
 from ligas.primera import (
-    FECHAS_F1,
-    TOTAL_FECHAS,
+    fechas_f1,
+    fechas_f2,
     ZONAS,
     descensos,
     formato,
@@ -88,7 +88,7 @@ def render(ctx):
                          "anual_ida": chip("Torneo anual · una rueda", "#475569"),
                          "anual_ida_vuelta": chip("Torneo anual · ida y vuelta", "#475569"),
                          "apertura_clausura": chip("Apertura y Clausura con llaves", "#475569")}[fmt]
-            c1.markdown(chip("Liga Profesional · 30 equipos", "#1e5aa8") + " " + chip(f"Descienden {k}", "#b83a2e")
+            c1.markdown(chip(f"Liga Profesional · {len(S['nombres'])} equipos", "#1e5aa8") + " " + chip(f"Descienden {k}", "#b83a2e")
                         + " " + chip_fase, unsafe_allow_html=True)
 
             extra_p = S.get("extra_f2", 0)
@@ -116,9 +116,9 @@ def render(ctx):
             barra_estado([("Fase", fase_txt), ("Fecha", f"{S['fecha']} / {total_p}"),
                           ("Sorpresas", f"{S['sorpresas']} ({pct:.0f}%)")], pct_p)
 
-            if fmt == "actual" and S["fase"] == 2 and S["fecha"] == FECHAS_F1:
+            if fmt == "actual" and S["fase"] == 2 and S["fecha"] == fechas_f1(S):
                 aviso("Terminó la fase 1: se armaron las zonas Campeonato, Intermedia y Descenso. "
-                      "Las 9 fechas siguientes se juegan dentro de cada zona, con la localía invertida.")
+                      f"Las {fechas_f2(S)} fechas siguientes se juegan dentro de cada zona, con la localía invertida.")
 
             desempates_p = [p for p in S["log"] if p["rotulo"] == "Desempate"]
             mostrar_desempate_p = S.get("desempate_pendiente") or len(desempates_p) > 0
@@ -222,11 +222,16 @@ def render(ctx):
             # ------------------------------------------------------------ DEFINICIONES
             with sp["Definiciones"]:
                 seccion("Definiciones de la temporada", "Campeón, copas, promoción y descensos", "#b7860b")
+                N = len(S["nombres"])                     # equipos de Primera esta temporada
                 prom = N - k
                 if not terminada_p_dyn:
                     aviso("Las definiciones aparecen acá cuando termina la temporada de Primera. "
-                          "Destinos: 1°-5° Libertadores · 6°-8° y 12°-13° Sudamericana · 11° fase previa "
-                          f"de Libertadores · {prom}° Promoción · "
+                          + ("Destinos: 1°-5° Libertadores · 6°-8° y 12°-13° Sudamericana · 11° fase previa "
+                             "de Libertadores · "
+                             if fmt == "actual" else
+                             "Destinos: 1°-5° Libertadores · 6° fase previa de Libertadores · 7°-11° Sudamericana · ")
+                          + (f"{prom - promos(S) + 1}°-{prom}° Promoción · " if promos(S) > 1 else
+                             f"{prom}° Promoción · " if promos(S) == 1 else "")
                           + (f"{prom + 1}°-{N}° descienden." if k else "no desciende nadie directo."))
                 else:
                     final = tabla_final(S)
@@ -263,11 +268,16 @@ def render(ctx):
                                         + equipos(list(range(6, 9)) + [12, 13]), unsafe_allow_html=True)
                     with e2:
                         with st.expander(":material/swap_vert: Promoción", expanded=False):
-                            txt = ('<div class="mlab">Juega la Promoción contra el perdedor de la final '
-                                   f'del reducido ({prom}°)</div>' + equipos([prom]))
-                            if SB["promo_partido"]:
-                                txt += fila_partido_html(SB["promo_partido"])
-                            st.markdown(txt, unsafe_allow_html=True)
+                            pp = promos(S)
+                            if pp == 0:
+                                st.caption("Esta temporada no hay promoción.")
+                            else:
+                                pos_p = list(range(prom - pp + 1, prom + 1))
+                                txt = ('<div class="mlab">Juegan la Promoción contra equipos de la B ('
+                                       + ", ".join(f"{p}°" for p in pos_p) + ')</div>' + equipos(pos_p))
+                                for pm in SB.get("promo_partidos") or []:
+                                    txt += fila_partido_html(pm)
+                                st.markdown(txt, unsafe_allow_html=True)
                         with st.expander(":material/south: Descensos", expanded=False):
                             if k:
                                 st.markdown(f'<div class="mlab">Descienden a la Primera Nacional ({prom + 1}° al {N}°)</div>'

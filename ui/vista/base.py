@@ -33,11 +33,13 @@ COLORES_ZONA = ["rgba(46, 125, 79, 0.15)", "rgba(227, 162, 26, 0.15)", "rgba(184
 
 COLORES_B = {
     "Campeón · Ascenso": COLOR_ORO,
+    "Campeón": COLOR_ORO,
     "Ascenso directo": "rgba(46, 125, 79, 0.22)",
     "Cuartos del reducido": "rgba(116, 172, 223, 0.36)",
     "Octavos del reducido": "rgba(116, 172, 223, 0.18)",
     "Desciende": "rgba(184, 58, 46, 0.17)",
     "Promoción": "rgba(245, 158, 11, 0.22)",
+    "Reducido": "rgba(116, 172, 223, 0.28)",
     "→ Zona Campeonato": COLORES_ZONA[0],
     "→ Zona Intermedia": COLORES_ZONA[1],
     "→ Zona Descenso": COLORES_ZONA[2],
@@ -152,8 +154,7 @@ LEY_DESTINOS = [("Líder", COLOR_ORO), ("Libertadores", COLORES_DESTINO["Liberta
 
 
 LEY_B = [("Campeón", COLOR_ORO), ("Ascenso directo", COLORES_B["Ascenso directo"]),
-         ("Cuartos del reducido", COLORES_B["Cuartos del reducido"]),
-         ("Octavos del reducido", COLORES_B["Octavos del reducido"]),
+         ("Reducido", COLORES_B["Reducido"]), ("Promoción", COLORES_B["Promoción"]),
          ("Desciende", COLORES_B["Desciende"])]
 
 

@@ -65,11 +65,11 @@ def zona_primera(S, club):
 
 def zona_nacional(SB, club):
     """Primera Nacional: fase 1 "Zona A / Zona B"; fase 2 "Zona Campeonato / Intermedia / Descenso"."""
-    from ligas.nacional import B_F1, B_ZONAS2, es_anual_b
+    from ligas.nacional import B_ZONAS2, b_f1, es_anual_b
     if club not in SB["nombres"] or es_anual_b(SB):     # el torneo anual no tiene zonas
         return None
     i = SB["nombres"].index(club)
-    if SB["fecha"] < B_F1:
+    if SB["fecha"] < b_f1(SB):
         return f"Zona {'AB'[SB['zona_de'][i]]}"
     if SB.get("zona2_de") is None:
         return None

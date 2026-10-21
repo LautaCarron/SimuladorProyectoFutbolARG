@@ -396,10 +396,10 @@ def cruces_mejor_peor(T):
 def a_es_local(A, B):
     """Localía del reducido.
 
-    1) Campeonato vs Intermedia: siempre local el de Campeonato.
+    1) De zonas distintas (Campeonato vs Intermedia...): siempre local el de la zona de arriba.
     2) Misma zona: local el que sumó más puntos en esa zona (empate: mejor posición).
     """
-    a_camp = A["zona"] == 0
+    a_camp = A["zona"] < B["zona"]            # el de la zona de arriba (Campeonato, Intermedia...) es local
     a_mas_pts = (A["pts"] > B["pts"]) | ((A["pts"] == B["pts"]) & (A["seed"] < B["seed"]))
     return np.where(A["zona"] != B["zona"], a_camp, a_mas_pts)
 
@@ -422,4 +422,4 @@ def _fila_historial(SB, instancia, loc, vis, gl, gv, definicion):
         "Instancia": instancia,
         "Local": [nom[i] for i in loc], "GL": gl, "GV": gv,
         "Visitante": [nom[i] for i in vis], "Definición": definicion,
-    })
+    })

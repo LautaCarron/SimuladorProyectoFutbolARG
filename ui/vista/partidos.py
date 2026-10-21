@@ -6,9 +6,9 @@ import streamlit as st
 from motor.calendario import dia_partido, texto_dia
 from datos.equipos import F_GRUPOS_NOMBRES
 from ligas.federal import rotulo_f
-from ligas.nacional import B_F1, B_F2, B_ZONAS2, es_anual_b, rotulo_b, total_base_b
+from ligas.nacional import B_ZONAS2, b_f1, b_f2, es_anual_b, rotulo_b, total_base_b
 from ligas.apertura_clausura import competencia as ac_competencia
-from ligas.primera import FECHAS_F1, ZONAS, formato, rotulo_p, total_base
+from ligas.primera import ZONAS, fechas_f1, formato, rotulo_p, total_base
 from ligas.regional import rotulo_reg
 from ui.vista.base import _estado, chip, crest, esc
 from ui.vista.mi_club import mi_club
@@ -142,7 +142,7 @@ def partidos_fecha_p(n):
             return "Desempate"
         if f != "actual":
             return "Liga"
-        if n <= FECHAS_F1:
+        if n <= fechas_f1(S):
             return "Fase 1"
         return f"Zona {ZONAS[S['zona_de'][x]]}"
 
@@ -154,7 +154,7 @@ def fechas_conocidas_b():
     S, SB, SF, SPB, SPC = _estado()
     if es_anual_b(SB):
         return max(SB["fecha"], total_base_b(SB))
-    return max(SB["fecha"], B_F1 if SB["fechas2"] is None else B_F1 + len(SB["fechas2"]))
+    return max(SB["fecha"], b_f1(SB) if SB["fechas2"] is None else b_f1(SB) + len(SB["fechas2"]))
 
 
 def partidos_fecha_b(n):
@@ -165,12 +165,13 @@ def partidos_fecha_b(n):
     if es_anual_b(SB):
         return [pendiente("Primera Nacional", n, rotulo_b(SB, n), "Liga", nom[x], nom[y])
                 for x, y in SB["fechas"][n - 1]] if n <= total_base_b(SB) else []
-    if n <= B_F1:
+    f1, f2 = b_f1(SB), b_f2(SB)
+    if n <= f1:
         return [pendiente("Primera Nacional", n, rotulo_b(SB, n), f"Zona {'AB'[SB['zona_de'][x]]}",
                           nom[x], nom[y]) for x, y in SB["fechas"][n - 1]]
     return [pendiente("Primera Nacional", n, rotulo_b(SB, n),
-                      f"Zona {B_ZONAS2[SB['zona2_de'][x]]}" if n <= B_F1 + B_F2 else "Desempate Permanencia", nom[x], nom[y])
-            for x, y in SB["fechas2"][n - 1 - B_F1]]
+                      f"Zona {B_ZONAS2[SB['zona2_de'][x]]}" if n <= f1 + f2 else "Desempate Permanencia", nom[x], nom[y])
+            for x, y in SB["fechas2"][n - 1 - f1]]
 
 
 def fechas_conocidas_f():

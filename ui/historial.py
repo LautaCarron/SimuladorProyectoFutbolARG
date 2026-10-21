@@ -91,7 +91,7 @@ def render(ctx):
 
             if S["campeones"]:
                 ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                           "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
+                           "Promocional Amateur", "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
                 with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                     df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
                     st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
@@ -112,7 +112,8 @@ def render(ctx):
                                             ("Primera Nacional", "Primera Nacional", "hist_nacional"),
                                             ("Federal A", "Federal A", "hist_federal"),
                                             ("Primera B Metropolitana", "Primera B", "hist_pb"),
-                                            ("Primera C Metropolitana", "Primera C", "hist_pc"))) + '</div>',
+                                            ("Primera C Metropolitana", "Primera C", "hist_pc"),
+                                            ("Promocional Amateur", "Promocional Amateur", "hist_pd"))) + '</div>',
                         unsafe_allow_html=True)
             st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas</div>', unsafe_allow_html=True)
             st.markdown('<div class="pal-grid">' + "".join(

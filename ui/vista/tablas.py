@@ -4,7 +4,7 @@
 import numpy as np
 import streamlit as st
 
-from ligas.primera import ZONA_TAM, destino
+from ligas.primera import destino, zona_de_pos
 from ui.vista.base import (
     COLORES_B,
     COLORES_DESTINO,
@@ -152,7 +152,7 @@ def mostrar_tabla(df, fn_color, hist=None):
 
 def colorear_fase1(fila):
     """Pinta según la zona a la que pasa (o pasaría) cada equipo de Primera."""
-    c = COLORES_ZONA[(fila["Pos"] - 1) // ZONA_TAM]
+    c = COLORES_ZONA[zona_de_pos(fila["Pos"], len(st.session_state.S["nombres"]))]
     return [f"background-color: {c}"] * len(fila)
 
 
@@ -174,6 +174,8 @@ def colorear_destino(fila):
 def colorear_b(fila):
     d = fila["Destino"]
     c = COLORES_B.get(d, "")
+    if not c and ("reducido" in d.lower() or d.startswith("Eliminatoria")):
+        c = COLORES_B["Reducido"]                  # cualquier etapa del reducido (según cuántos lo jueguen)
     if "Desempate" in d:
         c = "rgba(147, 51, 234, 0.3)"
     return [f"background-color: {c}" if c else ""] * len(fila)
@@ -186,7 +188,7 @@ def colorear_f(fila):
 
 def colorear_pb(fila):
     d = fila["Destino"]
-    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
+    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else COLORES_B["Reducido"] if d == "Reducido" else (
         COLORES_B["Desciende"] if d == "Desciende" else (
         "rgba(147, 51, 234, 0.3)" if d == "Desempate Permanencia" else (
         "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
@@ -203,7 +205,7 @@ def colorear_reg(fila):
 
 def colorear_pc(fila):
     d = fila["Destino"]
-    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
+    c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else COLORES_B["Reducido"] if d == "Reducido" else (
         COLORES_B["Desciende"] if d == "Desciende" else (
         "rgba(147, 51, 234, 0.3)" if d == "Desempate Permanencia" else (
         "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""

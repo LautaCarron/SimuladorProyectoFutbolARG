@@ -8,8 +8,9 @@ liga solo declara lo que cambia (nombre, estado, tabla, leyenda y textos) en LIG
 
 import streamlit as st
 
-from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from ligas.simples import plan_de, simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
 from ui.vista.mi_club import modo_manager
+from ui.vista.cuadros import bracket_html_simple
 from ui.vista import (
     COLORES_B,
     aviso,
@@ -56,6 +57,26 @@ LIGAS = [
 ]
 
 
+SUBE_A = {"pb": "Primera Nacional", "pc": "Primera B", "pd": "Primera C"}
+BAJA_A = {"pb": "Primera C", "pc": "el Promocional"}
+
+
+def _textos(k, plan, n):
+    """Subtítulo y leyenda de la tabla según lo elegido en el Modo dios (ascensos, reducido y descensos)."""
+    d, ds, m = plan["directos"], plan["desc"], plan["equipos"]
+    partes = [f"ascienden {d} directo" + ("s" if d != 1 else "") if d else "no hay ascensos directos"]
+    ley = [(f"1°-{d}° Ascenso a {SUBE_A[k]}" if d > 1 else f"1° Ascenso a {SUBE_A[k]}", COLORES_B["Ascenso directo"])] if d else []
+    if plan["reducido"]:
+        partes.append(f"reducido por un ascenso más ({d + 1}° al {d + m}°)")
+        ley.append((f"{d + 1}°-{d + m}° Reducido por un ascenso más", COLORES_B["Reducido"]))
+    ley.append(("Desempate Campeonato / Ascenso", _NARANJA))
+    if ds and k in BAJA_A:
+        partes.append(f"del {n - ds + 1}° para abajo descienden")
+        ley += [("Desempate Permanencia", _VIOLETA),
+                (f"{n - ds + 1}° o peor Descenso a {BAJA_A[k]}", COLORES_B["Desciende"])]
+    return "Ida y vuelta · " + ", ".join(partes), ley
+
+
 def render(ctx):
     for cfg in LIGAS:
         _render_liga(ctx, cfg)
@@ -99,9 +120,10 @@ def _render_liga(ctx, cfg):
         idx = 0
 
         with tabs[idx]:
-            seccion("Tabla de posiciones", cfg["sub_posiciones"], "#4f46e5")
+            sub, ley = _textos(k, plan_de(L, k), len(L["nombres"]))
+            seccion("Tabla de posiciones", sub, "#4f46e5")
             mostrar_tabla(tabla(L), colorear, L["pos_hist"])
-            leyenda(cfg["leyenda"])
+            leyenda(ley)
             if L["fecha"] == 0 and not modo_manager():      # en modo manager no se tocan las medias
                 with st.expander(f":material/tune: Editar medias internas de esta temporada ({nombre})"):
                     L["r"] = ctx.editar_medias(L["nombres"], L["r"], f"editor_{k}_{S['temp']}")
@@ -151,3 +173,6 @@ def _render_liga(ctx, cfg):
                     st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">'
                                 f'{crest(campeon, 64)}</div><div class="nm">{esc(campeon)}</div></div>',
                                 unsafe_allow_html=True)
+                if L.get("bracket"):
+                    with st.expander(":material/account_tree: Reducido por el ascenso", expanded=False):
+                        st.markdown(bracket_html_simple(L, SUBE_A[k]), unsafe_allow_html=True)

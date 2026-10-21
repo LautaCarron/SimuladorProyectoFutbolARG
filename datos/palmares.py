@@ -104,6 +104,8 @@ PALMARES = {
         "Fluminense": 1, "Independiente": 1, "Independiente del Valle": 1, "Nacional": 1, "Palmeiras": 1,
         "Racing": 1, "Santos": 1, "Vélez": 1,
     },
+    # Promocional Amateur (Nueva Primera D) · arranca vacío: lo suman las temporadas simuladas.
+    "hist_pd": {},
 }
 
 

@@ -2,7 +2,8 @@
 
 Clasifican por la temporada anterior (como en la vida real):
   * Argentina, por la tabla final de Primera: 1°-5° a la fase de grupos de la Libertadores,
-    11° a la fase previa de la Libertadores, 6°-8° y 12°-13° a la Sudamericana. El campeón de
+    11° a la fase previa de la Libertadores, 6°-8° y 12°-13° a la Sudamericana (con los formatos que no son el
+    actual: 6° a la fase previa y 7°-11° a la Sudamericana). El campeón de
     la Copa Argentina también va a los grupos de la Libertadores (si ya estaba clasificado, el
     lugar pasa al mejor ubicado que todavía no entró). Los campeones de la Libertadores y la
     Sudamericana van a los grupos de la Libertadores siguiente.
@@ -26,7 +27,7 @@ import numpy as np
 
 from datos.clubes_int import CLUBES_INT, PAISES
 from copas.argentina import categoria_actual
-from ligas.primera import tabla_final
+from ligas.primera import formato, tabla_final
 from motor.nucleo import jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_penales
 
 LIB, SUD, REC = "Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana"
@@ -68,10 +69,10 @@ def clasif_argentina(S):
     orden = list(tabla["Equipo"])
     SC = S.get("copa", {})
     copa = SC["nombres"][SC["campeon"]] if SC.get("campeon") is not None else None
-    return _reparto_argentino(orden, copa, S["temp"])
+    return _reparto_argentino(orden, copa, S["temp"], corrido=formato(S) != "actual")
 
 
-def _reparto_argentino(orden, copa, temp):
+def _reparto_argentino(orden, copa, temp, corrido=False):
     pos = {n: k + 1 for k, n in enumerate(orden)}
     grupos = [(n, f"Primera {temp}: {pos[n]}°") for n in orden[:5]]
     ya = {n for n, _ in grupos}
@@ -81,10 +82,13 @@ def _reparto_argentino(orden, copa, temp):
         n = next(x for x in orden if x not in ya)
         grupos.append((n, f"Primera {temp}: {pos[n]}° (cupo de la Copa Argentina)"))
     ya |= {n for n, _ in grupos}
-    previa = [(n, f"Primera {temp}: {pos[n]}°") for n in orden[10:11] if n not in ya]
+    if corrido:                          # formatos que no son el actual: grupos, después fase previa, después Sudamericana
+        previa = [(n, f"Primera {temp}: {pos[n]}°") for n in orden[5:7] if n not in ya][:1]
+    else:
+        previa = [(n, f"Primera {temp}: {pos[n]}°") for n in orden[10:11] if n not in ya]
     ya |= {n for n, _ in previa}
     sud = []
-    for k in (5, 6, 7, 11, 12, 8, 9, 13, 14, 15):   # 6°-8° y 12°-13° (si alguno ya entró, el que sigue)
+    for k in ((5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15) if corrido else (5, 6, 7, 11, 12, 8, 9, 13, 14, 15)):   # 6°-8° y 12°-13° (si alguno ya entró, el que sigue)
         if len(sud) == 5:
             break
         n = orden[k]

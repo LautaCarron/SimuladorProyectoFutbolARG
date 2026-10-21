@@ -32,6 +32,12 @@ def bracket_card(m, final=False):
 
 
 def bracket_html(SB):
+    """Cuadro del reducido de la B: las rondas salen del plan de la temporada (Modo dios), de la primera ronda a la
+    final. Sólo juegan la primera ronda los peor ubicados; los mejores entran en la siguiente."""
+    from ligas.nacional import promo_cands, red_b
+    pr = red_b(SB)
+    etapas = [e.replace(" del reducido", "") for e in pr["etapas"]]
+    R = max(1, len(etapas))
     rondas = [list(r) for r in SB["bracket"]]
     # Ordena cada ronda según la siguiente para que el cuadro se lea de izquierda a derecha
     for k in range(len(rondas) - 1, 0, -1):
@@ -43,16 +49,18 @@ def bracket_html(SB):
                         nuevo.append(pm)
         nuevo += [pm for pm in rondas[k - 1] if all(pm is not x for x in nuevo)]
         rondas[k - 1] = nuevo
-    titulos = ["Octavos", "Cuartos", "Semifinal", "Final"]
-    tam = [4, 4, 2, 1]
+    # partidos de cada ronda: la primera juega `juegan` equipos; las demás, los que esperan + ganadores
+    tam = [max(1, pr["juegan"] // 2)] if pr["reducido"] else [1]
+    for k in range(1, R):
+        tam.append(2 ** (R - 1 - k))
     cols = ""
-    for r in range(4):
+    for r in range(R):
         ms = rondas[r] if r < len(rondas) else [None] * tam[r]
-        cards = "".join(bracket_card(m, final=(r == 3)) for m in ms)
-        cols += (f'<div class="round"><div class="round-h">{chip(titulos[r])}</div>'
+        cards = "".join(bracket_card(m, final=(r == R - 1)) for m in ms)
+        cols += (f'<div class="round"><div class="round-h">{chip(etapas[r] if etapas else "Final")}</div>'
                  f'<div class="round-b">{cards}</div></div>')
-    if len(rondas) == 4:
-        c = rondas[3][0]["gana"]
+    if len(rondas) == R:
+        c = rondas[R - 1][0]["gana"]
         champ = (f'<div class="champ"><div class="t">Campeón del reducido</div>'
                  f'<div style="margin-top:10px">{crest(c, 56)}</div><div class="nm">{esc(c)}</div>'
                  f'<div class="s">Asciende a Primera División</div></div>')
@@ -60,18 +68,21 @@ def bracket_html(SB):
         champ = ('<div class="champ" style="opacity:.55"><div class="t">Campeón del reducido</div>'
                  '<div class="nm">Por definir</div><div class="s">Asciende a Primera</div></div>')
     promo = ""
-    if SB["promo_partido"]:
+    if SB.get("promo_partidos"):
         promo = (f'<div class="promo"><div class="round-h">{chip("Promoción")}</div>'
-                 f'{bracket_card(SB["promo_partido"])}</div>')
-    elif len(rondas) == 4:
-        perd = SB["nombres"][SB["perdedor_final"]]
-        promo = (f'<div class="promo"><div class="round-h">{chip("Promoción")}</div>'
-                 f'<div class="bm"><div class="bt">{crest(perd, 24)}<span class="nm">{esc(perd)}'
-                 f'</span></div><div class="bt tbd"><span class="nm">27° de Primera</span></div>'
-                 f'</div></div>')
+                 + "".join(bracket_card(pm) for pm in SB["promo_partidos"]) + '</div>')
+    elif len(rondas) == R and SB.get("promo_orden"):
+        cards = ""
+        for j, b_id in enumerate(promo_cands(SB)):
+            perd = SB["nombres"][b_id]
+            pos = SB["promo_pos"][j] if j < len(SB.get("promo_pos", [])) else "?"
+            cards += (f'<div class="bm"><div class="bt">{crest(perd, 24)}<span class="nm">{esc(perd)}'
+                      f'</span></div><div class="bt tbd"><span class="nm">{pos}° de Primera</span></div></div>')
+        if cards:
+            promo = f'<div class="promo"><div class="round-h">{chip("Promoción")}</div>{cards}</div>'
     cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
              f'<div class="round-b" style="justify-content:center">{champ}{promo}</div></div>')
-    return f'<div class="bracket">{cols}</div>'
+    return f'<div class="bracket" style="grid-template-columns:repeat({R + 1},minmax(205px,1fr))">{cols}</div>'
 
 
 def bracket_html_f(SF):
@@ -85,16 +96,19 @@ def bracket_html_f(SF):
                         nuevo.append(pm)
         nuevo += [pm for pm in rondas[k - 1] if all(pm is not x for x in nuevo)]
         rondas[k - 1] = nuevo
-    titulos = ["Eliminatoria", "Semifinal", "Final"]
-    tam = [1, 2, 1]
+    from ligas.federal import plan_de_f
+    pr = plan_de_f(SF)
+    R = max(1, pr["rondas"])
+    titulos = [e.replace(" del reducido", "").replace("Eliminatoria preliminar", "Eliminatoria") for e in pr["etapas"]]
+    tam = [pr["juegan"] // 2] + [2 ** (R - 1 - k) for k in range(1, R)]
     cols = ""
-    for r in range(3):
+    for r in range(R):
         ms = rondas[r] if r < len(rondas) else [None] * tam[r]
-        cards = "".join(bracket_card(m, final=(r == 2)) for m in ms)
+        cards = "".join(bracket_card(m, final=(r == R - 1)) for m in ms)
         cols += (f'<div class="round"><div class="round-h">{chip(titulos[r])}</div>'
                  f'<div class="round-b">{cards}</div></div>')
-    if len(rondas) == 3:
-        c = rondas[2][0]["gana"]
+    if len(rondas) == R:
+        c = rondas[R - 1][0]["gana"]
         champ = (f'<div class="champ"><div class="t">Campeón del reducido</div>'
                  f'<div style="margin-top:10px">{crest(c, 56)}</div><div class="nm">{esc(c)}</div>'
                  f'<div class="s">Asciende a la Primera Nacional</div></div>')
@@ -102,6 +116,23 @@ def bracket_html_f(SF):
         champ = ('<div class="champ" style="opacity:.55"><div class="t">Campeón del reducido</div>'
                  '<div class="nm">Por definir</div><div class="s">Asciende a la Primera Nacional'
                  '</div></div>')
+    cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
+             f'<div class="round-b" style="justify-content:center">{champ}</div></div>')
+    return f'<div class="bracket">{cols}</div>'
+
+
+def bracket_html_simple(L, destino):
+    """Cuadro del reducido de la Primera B / Primera C (se juega entero al cerrar la liga)."""
+    pl, rondas = L["plan"], L["bracket"]
+    titulos = [e.replace(" del reducido", "").replace("Eliminatoria preliminar", "Eliminatoria") for e in pl["etapas"]]
+    cols = ""
+    for r, ms in enumerate(rondas):
+        cards = "".join(bracket_card(m, final=(r == len(rondas) - 1)) for m in ms)
+        cols += (f'<div class="round"><div class="round-h">{chip(titulos[r])}</div>'
+                 f'<div class="round-b">{cards}</div></div>')
+    c = rondas[-1][0]["gana"]
+    champ = (f'<div class="champ"><div class="t">Campeón del reducido</div><div style="margin-top:10px">'
+             f'{crest(c, 56)}</div><div class="nm">{esc(c)}</div><div class="s">Asciende a {esc(destino)}</div></div>')
     cols += (f'<div class="round last"><div class="round-h">{chip("Campeón", "#b7860b")}</div>'
              f'<div class="round-b" style="justify-content:center">{champ}</div></div>')
     return f'<div class="bracket">{cols}</div>'

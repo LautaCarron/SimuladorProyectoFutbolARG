@@ -44,6 +44,49 @@ FECHAS_F2 = ZONA_TAM - 1          # 9 fechas por zona
 TOTAL_FECHAS = FECHAS_F1 + FECHAS_F2
 
 
+# Los valores de arriba son los de los 30 equipos de siempre. La cantidad de equipos de Primera puede cambiar
+# (Modo dios): lo que se usa en cada temporada sale de len(S["nombres"]) con estos ayudantes.
+PRIMERA_MIN, PRIMERA_MAX = 20, 48
+IDA_VUELTA_MAX = 24               # el torneo anual ida y vuelta sólo se puede jugar con 24 equipos o menos
+
+
+def _rondas_p(m):
+    return m - 1 if m % 2 == 0 else m
+
+
+def tam_zonas_p(n):
+    """Zonas de la fase 2 (Campeonato, Intermedia, Descenso): con más de 30 equipos, 10/10/X; si no, parejas."""
+    if n > N:
+        return [ZONA_TAM, ZONA_TAM, n - 2 * ZONA_TAM]
+    base, resto = divmod(n, 3)
+    return [base + (1 if k < resto else 0) for k in range(3)]
+
+
+def zona_de_pos(pos, n):
+    """Zona de la fase 2 (0, 1 o 2) que corresponde al puesto `pos` (1...n) de la fase 1."""
+    c, i, _ = tam_zonas_p(n)
+    return 0 if pos <= c else 1 if pos <= c + i else 2
+
+
+def fechas_f1(S):
+    return _rondas_p(len(S["nombres"]))
+
+
+def fechas_f2(S):
+    return max(_rondas_p(z) for z in tam_zonas_p(len(S["nombres"])))
+
+
+def equipos_objetivo_p(S, auto=None):
+    """Cuántos equipos tendrá Primera la temporada que viene. Si en el Modo dios no se fijó una cantidad, es la
+    automática (`auto`, o los que tiene ahora): cambia con los ascensos de la B y los descensos de Primera."""
+    n = cfg_primera(S).get("equipos")
+    if n is None:
+        n = auto if auto is not None else len(S["nombres"])
+        return max(PRIMERA_MIN, min(PRIMERA_MAX, int(n)))
+    n = max(PRIMERA_MIN, min(PRIMERA_MAX, int(n)))
+    return n - n % 2
+
+
 ZONAS = ["Campeonato", "Intermedia", "Descenso"]
 
 
@@ -55,6 +98,13 @@ FORMATOS = {
 }
 DESCENSOS_DEF = 3
 DESCENSOS_MAX = 6
+PROMOS_DEF = 1                    # series de promoción contra la B (0, 1 o 2)
+PROMOS_MAX = 2
+
+
+def promos(S):
+    """Cuántas promociones se juegan esta temporada (Modo dios)."""
+    return int(S.get("p_prom", PROMOS_DEF))
 
 
 def cfg_primera(S):
@@ -62,7 +112,26 @@ def cfg_primera(S):
     c = S.setdefault("cfg", {}).setdefault("primera", {})
     c.setdefault("formato", "actual")
     c.setdefault("descensos", DESCENSOS_DEF)
+    c.setdefault("promociones", PROMOS_DEF)
     return c
+
+
+ACTUAL_MIN, ANUAL_IDA_MIN = 27, 25      # equipos mínimos: formato actual 27, anual una vuelta 25
+
+
+def formatos_posibles(n):
+    """Formatos que se pueden elegir con `n` equipos: actual con 27 o más, anual una rueda con 25 o más y anual
+    ida y vuelta con 24 o menos (Apertura y Clausura no se restringe por ahora)."""
+    return [f for f in FORMATOS if f == "apertura_clausura"
+            or (f == "actual" and n >= ACTUAL_MIN) or (f == "anual_ida" and n >= ANUAL_IDA_MIN)
+            or (f == "anual_ida_vuelta" and n <= IDA_VUELTA_MAX)]
+
+
+def formato_posible(f, n):
+    """`f` si se puede con `n` equipos; si no, el que corresponde: 24 o menos ida y vuelta, 25-26 una rueda."""
+    if f in formatos_posibles(n):
+        return f
+    return "anual_ida_vuelta" if n <= IDA_VUELTA_MAX else "anual_ida"
 
 
 def formato(S):
@@ -75,19 +144,27 @@ def descensos(S):
     return int(S.get("k_desc", DESCENSOS_DEF))
 
 
-def destino(pos, k=DESCENSOS_DEF):
-    """Destino en Primera según la posición final (1-30) y la cantidad de descensos k."""
+def destino(pos, k=DESCENSOS_DEF, n=N, corrido=False, proms=PROMOS_DEF):
+    """Destino en Primera según la posición final (1-n) y la cantidad de descensos k.
+    Con el formato actual: 1°-5° Libertadores, 6°-8° y 12°-13° Sudamericana, 11° fase previa. Con los otros
+    formatos (corrido=True) van en orden: 1°-5° Libertadores, 6° fase previa y 7°-11° Sudamericana."""
     if 1 <= pos <= 5:
         return "Libertadores"
-    if 6 <= pos <= 8:
-        return "Sudamericana"
-    if pos == 11:
-        return "Fase previa Libertadores"
-    if pos in (12, 13):
-        return "Sudamericana"
-    if pos == N - k:
+    if corrido:
+        if pos == 6:
+            return "Fase previa Libertadores"
+        if 7 <= pos <= 11:
+            return "Sudamericana"
+    else:
+        if 6 <= pos <= 8:
+            return "Sudamericana"
+        if pos == 11:
+            return "Fase previa Libertadores"
+        if pos in (12, 13):
+            return "Sudamericana"
+    if proms > 0 and n - k - proms < pos <= n - k:
         return "Promoción"
-    if pos > N - k:
+    if pos > n - k:
         return "Desciende"
     return ""
 
@@ -96,12 +173,12 @@ def total_base(S):
     """Fechas del formato sin contar desempates."""
     f = formato(S)
     if f == "anual_ida":
-        return N - 1
+        return fechas_f1(S)
     if f == "anual_ida_vuelta":
-        return 2 * (N - 1)
+        return 2 * fechas_f1(S)
     if f == "apertura_clausura":
         return ac.TOTAL
-    return TOTAL_FECHAS
+    return fechas_f1(S) + fechas_f2(S)
 
 
 def total_primera(S):
@@ -119,13 +196,13 @@ def rotulo_p(S, n):
     if f == "apertura_clausura":
         return ac.rotulo(n)
     if f == "actual":
-        if n <= FECHAS_F1:
+        if n <= fechas_f1(S):
             return f"Fecha {n}"
-        if n <= TOTAL_FECHAS:
+        if n <= fechas_f1(S) + fechas_f2(S):
             return f"Fecha {n} · Fase 2"
         return f"Fecha {n} · Desempate"
     if n <= total_base(S):
-        return f"Fecha {n}" + (" · Vuelta" if f == "anual_ida_vuelta" and n > N - 1 else "")
+        return f"Fecha {n}" + (" · Vuelta" if f == "anual_ida_vuelta" and n > fechas_f1(S) else "")
     return f"Fecha {n} · Desempate"
 
 
@@ -152,6 +229,8 @@ def definir_bloque(rng, r, bloque, sorpresa, registrar, comp_duelo, comp_liguill
         registrar(a, b, gl[0], gv[0], tanda, gana, comp_duelo + suf)
         return [gana, b if gana == a else a]
     puntos = {e: 0 for e in bloque}
+    gf = {e: 0 for e in bloque}
+    gc = {e: 0 for e in bloque}
     partidos = []
     for i in range(len(bloque)):
         for j in range(i + 1, len(bloque)):
@@ -161,9 +240,16 @@ def definir_bloque(rng, r, bloque, sorpresa, registrar, comp_duelo, comp_liguill
             tanda = tanda_penales(rng, gana_l[0]) if pen[0] else None
             gana = a if gana_l[0] else b
             puntos[gana] += 3
+            gf[a] += int(gl[0]); gc[a] += int(gv[0])
+            gf[b] += int(gv[0]); gc[b] += int(gl[0])
             partidos.append(registrar(a, b, gl[0], gv[0], tanda, gana, comp_liguilla + suf))
-    orden = sorted(bloque, key=lambda e: -puntos[e])
+    # Orden de la liguilla: puntos, diferencia de gol, goles a favor y, si siguen igualados, sorteo.
+    # (Sin esto los equipos igualados en puntos quedaban en un orden arbitrario, ignorando el gol.)
+    sorteo = {e: float(rng.random()) for e in bloque}
+    orden = sorted(bloque, key=lambda e: (-puntos[e], -(gf[e] - gc[e]), -gf[e], sorteo[e]))
     if campeonato:
+        # El título nunca se decide por diferencia de gol: si el 1° puesto queda igualado en
+        # puntos, esos equipos juegan otra definición.
         arriba = [e for e in orden if puntos[e] == puntos[orden[0]]]
         if len(arriba) > 1:
             sub = definir_bloque(rng, r, arriba, sorpresa, registrar, comp_duelo, comp_liguilla, nom,
@@ -179,11 +265,17 @@ def nueva_estructura(S):
     """Reinicia stats y fixture de la Primera para la temporada actual, según el formato elegido en el Modo dios."""
     cfg = cfg_primera(S)
     S["formato"], S["k_desc"] = cfg["formato"], int(cfg["descensos"])
-    perm = S["rng"].permutation(N)
+    S["p_prom"] = int(cfg["promociones"])
+    n_eq = len(S["nombres"])
+    if S["formato"] == "apertura_clausura" and n_eq != N:      # Apertura y Clausura está armado para 30 equipos
+        S["formato"] = "actual"
+    if S["formato"] != "apertura_clausura":                    # los demás formatos dependen de la cantidad de equipos
+        S["formato"] = formato_posible(S["formato"], n_eq)
+    perm = S["rng"].permutation(n_eq)
     if S["formato"] == "apertura_clausura":
         ac.nueva(S, perm)
     else:
-        fechas = generar_fixture(N)
+        fechas = generar_fixture(n_eq)
         S["fechas"] = [[(int(perm[a]), int(perm[b])) for a, b in p] for p in fechas]
         if S["formato"] == "anual_ida_vuelta":                       # la vuelta: mismas fechas con las localías al revés
             S["fechas"] += [[(v, l) for l, v in fecha] for fecha in S["fechas"]]
@@ -196,7 +288,7 @@ def nueva_estructura(S):
     S["tabla_f1"] = None
     S["acumular"] = True
     for k in STATS:
-        S[k] = np.zeros(N, dtype=int)
+        S[k] = np.zeros(n_eq, dtype=int)
     S["historial"] = []
     S["log"] = []
     S["pos_hist"] = []
@@ -226,13 +318,13 @@ def df_base(S, ids):
 
 def tabla_general(S):
     """Tabla de los 30 equipos (fase 1 del formato actual, o la tabla anual de los otros formatos)."""
-    df = df_base(S, np.arange(N))
+    df = df_base(S, np.arange(len(S["nombres"])))
     if S.get("orden_final_general") is not None:
         df = df.set_index("id").loc[S["orden_final_general"]].reset_index()
     df.insert(0, "Pos", df.index + 1)
     if formato(S) != "actual":                                       # tabla anual: con destino por posición
         k = descensos(S)
-        df["Destino"] = [destino(p, k) for p in df["Pos"]]
+        df["Destino"] = [destino(p, k, len(df), corrido=True, proms=promos(S)) for p in df["Pos"]]
         for motivo in S.get("motivos_desempate", []):
             partes = motivo.split()
             if int(partes[1]) == 9:
@@ -250,9 +342,10 @@ def tabla_zona(S, z):
     elif z == 2 and S.get("orden_final_descenso") is not None:
         df = df.set_index("id").loc[S["orden_final_descenso"]].reset_index()
 
-    df.insert(0, "Pos", z * ZONA_TAM + df.index + 1)
+    tam = tam_zonas_p(len(S["nombres"]))
+    df.insert(0, "Pos", sum(tam[:z]) + df.index + 1)
     k = descensos(S)
-    df["Destino"] = [destino(p, k) for p in df["Pos"]]
+    df["Destino"] = [destino(p, k, len(S["nombres"]), proms=promos(S)) for p in df["Pos"]]
 
     # Pintar fronteras empatadas
     if S.get("motivos_desempate"):
@@ -280,23 +373,27 @@ def iniciar_fase2(S, acumular):
     """Arma las zonas según la tabla de la fase 1 y agrega las 9 fechas."""
     S["tabla_f1"] = tabla_general(S)          # queda guardada para consultarla después
     orden = S["tabla_f1"]["id"].to_numpy()
-    S["zonas"] = [orden[z * ZONA_TAM:(z + 1) * ZONA_TAM] for z in range(3)]
-    S["zona_de"] = np.zeros(N, dtype=int)
+    n_eq = len(S["nombres"])
+    tam = tam_zonas_p(n_eq)
+    corte = [0, tam[0], tam[0] + tam[1], n_eq]
+    S["zonas"] = [orden[corte[z]:corte[z + 1]] for z in range(3)]
+    S["zona_de"] = np.zeros(n_eq, dtype=int)
     for z, ids in enumerate(S["zonas"]):
         S["zona_de"][ids] = z
     S["snap"] = {k: S[k].copy() for k in STATS}
     S["acumular"] = acumular
 
     # H[x, y] = True si x fue local contra y en la fase 1
-    H = np.zeros((N, N), dtype=bool)
-    for pares in S["fechas"][:FECHAS_F1]:
+    f1 = fechas_f1(S)
+    H = np.zeros((n_eq, n_eq), dtype=bool)
+    for pares in S["fechas"][:f1]:
         for a, b in pares:
             H[a, b] = True
 
-    previas = ultimas_localias(S["fechas"][:FECHAS_F1])
+    previas = ultimas_localias(S["fechas"][:f1])
     por_zona = [fixture_revancha(S["rng"], S["zonas"][z], H, previas) for z in range(3)]
-    for k in range(FECHAS_F2):
-        S["fechas"].append([p for z in range(3) for p in por_zona[z][k]])
+    for k in range(fechas_f2(S)):
+        S["fechas"].append([p for z in range(3) if k < len(por_zona[z]) for p in por_zona[z][k]])
     S["fase"] = 2
 
 
@@ -339,12 +436,14 @@ def _detectar_empates(S, extra):
     if formato(S) == "actual":
         # --- Zona Campeonato (1° puesto) y Zona Descenso (permanencia y promoción)
         revisar(tabla_zona(S, 0), 0, [(0, "Campeonato")])
-        # el puesto N-k es el índice 9-k de la zona Descenso (puestos 21 a 30)
-        revisar(tabla_zona(S, 2), 2, ([(9 - k, "Permanencia")] if k > 0 else []) + [(8 - k, "Promocion")])
+        # el puesto N-k es el índice d-1-k de la zona Descenso (9-k con 30 equipos: puestos 21 a 30)
+        d = tam_zonas_p(len(S["nombres"]))[2]
+        revisar(tabla_zona(S, 2), 2, ([(d - 1 - k, "Permanencia")] if k > 0 else []) + ([(d - 1 - k - promos(S), "Promocion")] if promos(S) > 0 else []))
     else:
         # --- Tabla anual (código de zona 9): título, permanencia (N-k / N-k+1) y promoción (N-k-1 / N-k)
-        revisar(tabla_general(S), 9, [(0, "Campeonato")] + ([(N - k - 1, "Permanencia")] if k > 0 else [])
-                + [(N - k - 2, "Promocion")])
+        n_eq = len(S["nombres"])
+        revisar(tabla_general(S), 9, [(0, "Campeonato")] + ([(n_eq - k - 1, "Permanencia")] if k > 0 else [])
+                + ([(n_eq - k - promos(S) - 1, "Promocion")] if promos(S) > 0 else []))
     if not partidos_desempate:
         return False
     S["desempate_pendiente"] = True
@@ -418,9 +517,9 @@ def simular_fecha(S, P, acumular=True):
 
             # cupos: cuántos del bloque logran el objetivo (título / permanencia / evitar promoción)
             if zona == 9:                                    # tabla anual: puestos 1-30 del bloque
-                cupos = {"Campeonato": 1, "Permanencia": N - k - inicio, "Promocion": N - k - 1 - inicio}.get(nombre_frontera, 1)
+                cupos = {"Campeonato": 1, "Permanencia": len(S["nombres"]) - k - inicio, "Promocion": len(S["nombres"]) - k - promos(S) - inicio}.get(nombre_frontera, 1)
             else:                                            # zona Descenso: puestos 21-30
-                cupos = {"Campeonato": 1, "Permanencia": 10 - k - inicio, "Promocion": 9 - k - inicio}.get(nombre_frontera, 1)
+                cupos = {"Campeonato": 1, "Permanencia": tam_zonas_p(len(S["nombres"]))[2] - k - inicio, "Promocion": tam_zonas_p(len(S["nombres"]))[2] - k - promos(S) - inicio}.get(nombre_frontera, 1)
             ids_finales[inicio:fin] = definir_bloque(
                 S["rng"], r, bloque, P["sorpresa"], registrar, nombre_frontera,
                 f"Liguilla {nombre_frontera}", nom, campeonato=nombre_frontera == "Campeonato", cupos=cupos)
@@ -435,12 +534,12 @@ def simular_fecha(S, P, acumular=True):
         S["desempate_pendiente"] = False
 
     tabla = tabla_general(S) if S["fase"] == 1 else tabla_final(S)
-    pos = np.zeros(N, dtype=int)
+    pos = np.zeros(len(S["nombres"]), dtype=int)
     pos[tabla["id"].to_numpy()] = tabla["Pos"].to_numpy()
     S["pos_hist"].append((S["fase"], pos))
     S["fecha"] += 1
 
-    if formato(S) == "actual" and S["fase"] == 1 and S["fecha"] == FECHAS_F1:
+    if formato(S) == "actual" and S["fase"] == 1 and S["fecha"] == fechas_f1(S):
         iniciar_fase2(S, acumular)
 
     # ---------------- DETECCIÓN DE EMPATES ----------------

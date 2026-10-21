@@ -7,7 +7,7 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 import numpy as np
 import pandas as pd
 import streamlit as st
-from copas.argentina import COPA_LLAVES, COPA_RONDAS, simular_ronda_copa
+from copas.argentina import COPA_LLAVES, COPA_RONDAS, clasificados_inicial, cupos_copa, simular_ronda_copa
 from datos.logos import logo_img
 from ui.vista import (
     aviso,
@@ -21,6 +21,19 @@ from ui.vista import (
     seccion,
     tabla_html,
 )
+
+
+def _tabla_cupos(lista):
+    """Tabla de cupos de la Copa: se arma con los clasificados reales, así que cambia si cambian los cupos."""
+    filas, (total, total_def) = cupos_copa(lista)
+    df = pd.DataFrame(filas + [("Total", "", total, total_def)],
+                      columns=["Liga", "Clasifican", "Cupos", "Por defecto"])
+    st.markdown(tabla_html(df, clubes=()), unsafe_allow_html=True)
+    if any(c != d for _, _, c, d in filas) or total != total_def:
+        st.caption("Los cupos de esta temporada no son los de siempre (por ejemplo, porque se cambió la cantidad de "
+                   "equipos de Primera o de la B en el Modo dios).")
+    else:
+        st.caption("Si se cambia la cantidad de equipos de las ligas, esta tabla se actualiza.")
 
 
 def render(ctx):
@@ -56,19 +69,13 @@ def render(ctx):
                 seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
                         "neutral, penales si empatan", "#1e5aa8")
                 aviso("La Copa se sortea al empezar la temporada.")
-                cupos = pd.DataFrame([
-                    ("Primera División", "Los 30 equipos", 30), ("Primera Nacional", "Los 36 equipos", 36),
-                    ("Federal A", "Los 20 de Zona Campeonato y los 8 mejores de Zona Descenso", 28),
-                    ("Primera B", "Los 12 primeros", 12), ("Primera C", "Los 10 primeros", 10),
-                    ("Regional Amateur", "El campeón de cada una de las 12 regiones", 12)],
-                    columns=["Liga", "Clasifican", "Cupos"])
-                st.markdown(tabla_html(cupos, clubes=()), unsafe_allow_html=True)
+                _tabla_cupos(S.get("copa_clasif") or clasificados_inicial(S))
                 pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
                                              ("Federal A", terminada_f), ("Primera B", terminada_pb),
                                              ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
                 st.caption("Faltan terminar: " + ", ".join(pendientes))
             else:
-                titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Definiciones"]
+                titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Cupos", "Definiciones"]
                 tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
                 with tab_ca_t["Cuadro"]:
                     seccion("Cuadro de la Copa Argentina", "8 llaves de 16 equipos (64avos a octavos) · el ganador "
@@ -103,6 +110,9 @@ def render(ctx):
                          "Regional Amateur"])})
                     df_cl = df_cl.sort_values(["_o", "Media"], ascending=[True, False]).drop(columns="_o")
                     st.markdown(tabla_html(df_cl, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
+                with tab_ca_t["Cupos"]:
+                    seccion("Cupos", "Cuántos equipos de cada liga clasificaron a la Copa de esta temporada", "#1e5aa8")
+                    _tabla_cupos(list(zip(SC["nombres"], SC["criterio"])))
                 with tab_ca_t["Definiciones"]:
                     seccion("Definiciones", "Campeón y finalista de la Copa Argentina", "#b7860b")
                     if SC["campeon"] is None:

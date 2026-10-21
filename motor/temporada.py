@@ -22,14 +22,14 @@ from copas.registro import REGISTRO
 from copas.argentina import clasificados_copa, sortear_copa
 from copas.conmebol import MEDIA_EXT, fin_de_temporada, nuevas_internacionales
 from datos.palmares import palmares_inicial
-from ligas.federal import F_MIN, nueva_estructura_f
-from ligas.nacional import ascensos_a_primera, nueva_estructura_b
-from ligas.primera import descensos, nueva_estructura, tabla_final
+from ligas.federal import nueva_estructura_f
+from ligas.nacional import ascensos_a_primera, equipos_objetivo_b, nueva_estructura_b, orden_final_b
+from ligas.primera import equipos_objetivo_p, descensos, nueva_estructura, tabla_final
 from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
 
 
-VERSION_ESTADO = 15       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 16       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():
@@ -55,16 +55,16 @@ def crear_estado():
     nueva_estructura_b(SB, rng, S)
     S["b"] = SB
     SF = {"nombres": list(EQUIPOS_FEDERAL), "r": np.array(list(EQUIPOS_FEDERAL.values()), dtype=float)}
-    nueva_estructura_f(SF, rng)
+    nueva_estructura_f(SF, rng, S)
     S["f"] = SF
     SPB = {"nombres": list(EQUIPOS_PRIMERA_B), "r": np.array(list(EQUIPOS_PRIMERA_B.values()), dtype=float)}
-    nueva_estructura_liga(SPB, rng)
+    nueva_estructura_liga(SPB, rng, S, "pb")
     S["pb"] = SPB
     SPC = {"nombres": list(EQUIPOS_PRIMERA_C), "r": np.array(list(EQUIPOS_PRIMERA_C.values()), dtype=float)}
-    nueva_estructura_liga(SPC, rng)
+    nueva_estructura_liga(SPC, rng, S, "pc")
     S["pc"] = SPC
     SPD = {"nombres": list(EQUIPOS_PRIMERA_D), "r": np.array(list(EQUIPOS_PRIMERA_D.values()), dtype=float)}
-    nueva_estructura_liga(SPD, rng)
+    nueva_estructura_liga(SPD, rng, S, "pd")
     S["pd"] = SPD
     S["promocional"] = list(EQUIPOS_PRIMERA_D)
     SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
@@ -92,7 +92,7 @@ def nueva_temporada(S, volatilidad):
             S["rating"][nom] = float(x)
 
     final = tabla_final(S)
-    promo = SB["promo"]
+    promos_b = SB.get("promos") or []
     # Copa Argentina de la temporada que viene: clasifican por lo hecho en esta
     S["copa_clasif"] = [(x[0], x[3]) for x in clasificados_copa(S)]
     # copas CONMEBOL de la temporada que viene (tabla de Primera, Copa Argentina y campeones)
@@ -104,7 +104,7 @@ def nueva_temporada(S, volatilidad):
     S["campeones"].append({
         "Temporada": S["temp"], "Primera División": final.iloc[0]["Equipo"],
         "Primera Nacional": _campeon(SB), "Federal A": _campeon(SF), "Primera B": _campeon(SPB),
-        "Primera C": _campeon(SPC),
+        "Primera C": _campeon(SPC), "Promocional Amateur": _campeon(SPD),
         "Copa Argentina": (S["copa"]["nombres"][S["copa"]["campeon"]]
                            if S.get("copa", {}).get("campeon") is not None else ""),
         "Libertadores": S.get("int", {}).get("lib", {}).get("campeon") or "",
@@ -117,7 +117,8 @@ def nueva_temporada(S, volatilidad):
     # Sumar +1 al palmarés histórico de cada liga (campeón de la temporada que termina)
     ultimo = S["campeones"][-1]
     for clave_h, liga_h in (("hist_primera", "Primera División"), ("hist_nacional", "Primera Nacional"),
-                            ("hist_federal", "Federal A"), ("hist_pb", "Primera B"), ("hist_pc", "Primera C")):
+                            ("hist_federal", "Federal A"), ("hist_pb", "Primera B"), ("hist_pc", "Primera C"),
+                            ("hist_pd", "Promocional Amateur")):
         camp_h = ultimo.get(liga_h)
         if camp_h:
             S.setdefault(clave_h, {})[camp_h] = S.get(clave_h, {}).get(camp_h, 0) + 1
@@ -142,17 +143,46 @@ def nueva_temporada(S, volatilidad):
             S[comp.hist][camp] = S[comp.hist].get(camp, 0) + 1
         comp.cerrar(S, rng)
 
-    p27 = promo["p_nombre"]
     reducido = SB["nombres"][SB["asc_reducido"]] if SB["asc_reducido"] is not None else None   # sin reducido en el torneo anual
     k_desc = descensos(S)                                         # Modo dios: cuántos bajan directo (suben tantos de la B)
     suben = ascensos_a_primera(S)
     directos = [n for n in suben if n != reducido]
-    bajan_p = list(final[final["Pos"] > N - k_desc]["Equipo"])
-    if promo["gana_b"]:
-        suben.append(SB["nombres"][promo["b_id"]])
-        bajan_p.append(p27)
+    bajan_p = list(final[final["Pos"] > len(S["nombres"]) - k_desc]["Equipo"])
+    for pr in promos_b:                                           # cada promoción ganada por la B es un ascenso más
+        if pr["gana_b"]:
+            suben.append(SB["nombres"][pr["b_id"]])
+            bajan_p.append(pr["p_nombre"])
         
     bajan_b = [SB["nombres"][i] for i in SB["desc_b"]]
+
+    # Modo dios: Primera puede tener más o menos equipos. Si faltan, suben de más los mejor ubicados de la B que
+    # no ascendían; si sobran, bajan de más los peor ubicados de Primera.
+    # Primera cambia de tamaño si suben más (o menos) de los que bajan; sólo se corrige si pasa los límites o si en
+    # el Modo dios se fijó una cantidad de equipos.
+    dif_p = equipos_objetivo_p(S, len(S["nombres"]) - len(bajan_p) + len(suben)) - (
+        len(S["nombres"]) - len(bajan_p) + len(suben))
+    if dif_p > 0:
+        mejores = [SB["nombres"][i] for i in orden_final_b(SB)
+                   if SB["nombres"][i] not in suben and SB["nombres"][i] not in bajan_b]
+        extra_suben = mejores[:dif_p]
+        suben += extra_suben
+        directos += extra_suben
+    elif dif_p < 0:
+        peores_p = [n for n in reversed(list(final["Equipo"])) if n not in bajan_p]
+        bajan_p += peores_p[:-dif_p]
+
+    # Modo dios: la B puede tener menos equipos. Si con los ascendidos y los que bajan de Primera sobran, bajan
+    # de más los peor ubicados de la tabla final (de los que se quedaban en la B).
+    objetivo_b = equipos_objetivo_b(S, len(SB["nombres"]) + len(bajan_p) - len(suben))   # automático: la B recibe a los
+    # que bajan de Primera y pierde a los que suben, así que cambia de tamaño igual que Primera (en sentido contrario)
+    n_asc_f = len(SF["ascendidos"]) + len(SPB.get("ascendidos") or SPB["asc_directo"])         # los que suben del Federal A y de la Primera B
+    se_quedan = [n for n in SB["nombres"] if n not in suben and n not in bajan_b]
+    sobran = len(se_quedan) + len(bajan_p) + n_asc_f - objetivo_b
+    bajan_b_extra = []
+    if sobran > 0:
+        peores = [SB["nombres"][i] for i in reversed(orden_final_b(SB)) if SB["nombres"][i] in se_quedan]
+        bajan_b_extra = peores[:sobran]
+        bajan_b = bajan_b + bajan_b_extra
     bajan_b_fed = [n for n in bajan_b if origen(n) == "Interior"]
     bajan_b_pb = [n for n in bajan_b if origen(n) == "Metropolitana"]
 
@@ -161,18 +191,19 @@ def nueva_temporada(S, volatilidad):
 
     # Ascensos y descensos internos
     ascendidos_f = [SF["nombres"][i] for i in SF["ascendidos"]]
-    ascendidos_pb = [SPB["nombres"][i] for i in SPB["asc_directo"]]
+    ascendidos_pb = [SPB["nombres"][i] for i in (SPB.get("ascendidos") or SPB["asc_directo"])]
     descendidos_pb = [SPB["nombres"][i] for i in SPB["desc_directo"]]
-    ascendidos_pc = [SPC["nombres"][i] for i in SPC["asc_directo"]]
+    ascendidos_pc = [SPC["nombres"][i] for i in (SPC.get("ascendidos") or SPC["asc_directo"])]
     descendidos_pc = [SPC["nombres"][i] for i in SPC.get("desc_directo", [])]
-    ascendidos_pd = [SPD["nombres"][i] for i in SPD["asc_directo"]]
+    ascendidos_pd = [SPD["nombres"][i] for i in (SPD.get("ascendidos") or SPD["asc_directo"])]
     garantizados = list(ascendidos_f) + list(ascendidos_pb)
     
-    faltan = max(0, NB - len(base_b) - len(garantizados))
+    faltan = max(0, objetivo_b - len(base_b) - len(garantizados))
     descendidos_f = [SF["nombres"][i] for i in SF.get("descendidos", [])]
     pool_fed = [n for n in S["federal"] if n not in garantizados and n not in descendidos_f]
     pool_pb = [n for n in SPB["nombres"] if n not in garantizados and n not in descendidos_pb]
     pool = pool_fed + pool_pb
+    faltan = min(faltan, len(pool))                          # si no alcanzan los clubes de abajo, la B queda más chica
     
     if faltan > 0:
         w = np.exp((np.array([S["rating"][n] for n in pool]) - 50.0) / 6.0)
@@ -199,6 +230,7 @@ def nueva_temporada(S, volatilidad):
         "directos": directos, "reducido": reducido if reducido in suben else None,
         "bajan_p": bajan_p, 
         "bajan_b_fed": bajan_b_fed, 
+        "bajan_b_extra": bajan_b_extra,
         "bajan_b_pb": bajan_b_pb,
         "suben_f_b": ascendidos_f,
         "suben_pb_b": ascendidos_pb,
@@ -211,8 +243,10 @@ def nueva_temporada(S, volatilidad):
         "entran_fed": [n for n in entran if origen(n) == "Interior" and n not in ascendidos_f],
         "entran_pb": [n for n in entran if origen(n) == "Metropolitana" and n not in ascendidos_pb],
         "campeon_federal": SF["nombres"][SF["campeon"]] if SF["campeon"] is not None else None,
-        "promo_texto": (f"La promoción la ganó {'el equipo de la B' if promo['gana_b'] else p27}"
-                        + (f": asciende {suben[-1]} y baja {p27}." if promo["gana_b"] else f", que se mantiene en Primera.")),
+        "promo_texto": (" ".join(
+            (f"Promoción: {SB['nombres'][pr['b_id']]} (B) le ganó a {pr['p_nombre']}: asciende y baja {pr['p_nombre']}."
+             if pr["gana_b"] else f"Promoción: {pr['p_nombre']} se mantiene en Primera.") for pr in promos_b)
+            or "Esta temporada no hubo promoción."),
     }
 
     # ---- Tribunal de Disciplina: avisos de la temporada al historial, descensos
@@ -245,24 +279,7 @@ def nueva_temporada(S, volatilidad):
             continue
         bajan_adm.append(club)
     S["movimientos"]["descenso_adm"] = bajan_adm
-    # Plazas vacantes del Federal A (reubicación): si queda con menos de F_MIN equipos, las
-    # completan los perdedores de las finales del Regional (y después los mejores campeones y
-    # clubes del Regional). Así siempre alcanza para 20 en Zona Campeonato y 6 descensos.
-    extra_reg = []
-    if len(S["federal"]) < F_MIN:
-        SRg = S["reg"]
-        perdedores = [SRg["nombres"][x["b"] if x["gana"] == x["a"] else x["a"]] for x in SRg["finales"]
-                      if x.get("b") is not None and x.get("gana") is not None]
-        campeones = sorted((SRg["nombres"][c] for c in SRg["campeones"].values() if c is not None),
-                           key=lambda n: -S["rating"][n])
-        for n in dict.fromkeys(perdedores + campeones + sorted(S["regional"], key=lambda n: -S["rating"][n])):
-            if len(S["federal"]) >= F_MIN:
-                break
-            if n in S["regional"]:
-                S["regional"].remove(n)
-                S["federal"].append(n)
-                extra_reg.append(n)
-    S["movimientos"]["suben_reg_fed_extra"] = extra_reg
+    S["movimientos"]["suben_reg_fed_extra"] = []          # sin reubicación: el Federal A cambia de tamaño
     for L in ligas_t[:-1]:
         L["alertas"], L["quita"], L["desc_adm"] = [], {}, []
 
@@ -286,19 +303,19 @@ def nueva_temporada(S, volatilidad):
 
     nueva_estructura(S)
     nueva_estructura_b(SB, rng, S)
-    nueva_estructura_f(SF, rng)
+    nueva_estructura_f(SF, rng, S)
     
     S["pb"]["nombres"] = list(S["primera_b"])
     S["pb"]["r"] = np.array([S["rating"][n] for n in S["pb"]["nombres"]])
-    nueva_estructura_liga(S["pb"], rng)
+    nueva_estructura_liga(S["pb"], rng, S, "pb")
     
     S["pc"]["nombres"] = list(S["primera_c"])
     S["pc"]["r"] = np.array([S["rating"][n] for n in S["pc"]["nombres"]])
-    nueva_estructura_liga(S["pc"], rng)
+    nueva_estructura_liga(S["pc"], rng, S, "pc")
 
     S["pd"]["nombres"] = list(S["promocional"])
     S["pd"]["r"] = np.array([S["rating"][n] for n in S["pd"]["nombres"]])
-    nueva_estructura_liga(S["pd"], rng)
+    nueva_estructura_liga(S["pd"], rng, S, "pd")
 
     # Regional: los clubes del JSON que siguen en el torneo (en el orden del JSON) y después
     # los que bajaron del Federal A (cada uno juega en la región de su provincia)

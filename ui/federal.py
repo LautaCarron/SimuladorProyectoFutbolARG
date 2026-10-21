@@ -8,7 +8,7 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 
 import streamlit as st
 from datos.equipos import F_GRUPOS_NOMBRES, region_regional
-from ligas.federal import simular_fecha_f, tabla_f_f2, tabla_f_grupo
+from ligas.federal import plan_de_f, simular_fecha_f, tabla_f_f2, tabla_f_grupo
 from ui.vista import (
     COLORES_F,
     LEY_F,
@@ -67,12 +67,17 @@ def render(ctx):
                           ("Partidos jugados", len(SF["log"]))], pct_f)
                   
             if ff == SF["f1_rondas"]:
-                aviso("Terminó la fase 1: clasificaron los 4 primeros de cada grupo (20 equipos) a Zona Campeonato, "
+                aviso("Terminó la fase 1: clasificaron los mejores de cada grupo (" + str(len(SF["zonas2"][0])) + " equipos) a Zona Campeonato, "
                       "el resto a Zona Descenso, y <b>todos los puntos se reiniciaron a 0</b>.")
             if ff == SF["f1_rondas"] + SF.get("f2_rondas", 0):
-                aviso("Terminó la fase 2: 1°, 2° y 3° ascendieron directo a la B Nacional y los 6 últimos "
+                pr = plan_de_f(SF)
+                d_f = pr["directos"]
+                directos_txt = (f"los primeros {d_f} ascendieron directo" if d_f > 1 else
+                                "el campeón ascendió directo" if d_f == 1 else "nadie asciende directo")
+                aviso(f"Terminó la fase 2: {directos_txt} a la B Nacional y los 6 últimos "
                       "de Zona Descenso bajan al Regional Amateur. "
-                      "El reducido arranca con el 7° y 8°. Mirá el cuadro en la pestaña <b>Reducido</b>.")
+                      + ("Mirá el cuadro del reducido en la pestaña <b>Reducido</b>." if pr["reducido"] else
+                         "No hay reducido: no hay más ascensos."))
 
             # ------------------ SISTEMA DE PESTAÑAS DINÁMICAS ------------------
             desempate_f = SF.get("desempate_camp")
@@ -153,14 +158,19 @@ def render(ctx):
                                    "al Regional Amateur.")
 
             with tab_f["Reducido"]:
-                seccion("Reducido por el cuarto ascenso",
-                        "Eliminatoria → Semifinal → Final · partido único · gana el mejor ubicado si "
+                pr = plan_de_f(SF)
+                seccion("Reducido por el último ascenso",
+                        " → ".join(e.replace(" del reducido", "") for e in pr["etapas"]) + " · partido único · gana el mejor ubicado si "
                         "empatan, menos en la final (cancha neutral, penales) · L = local, V = "
                         "visitante, N = neutral", "#2563eb")
-                if ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
-                    aviso("El cuadro se completa al terminar la fase 2. Entran del 4° al 8° de Zona "
-                          "Campeonato.")
-                st.markdown(bracket_html_f(SF), unsafe_allow_html=True)
+                if not pr["reducido"]:
+                    aviso("Esta temporada no hay reducido: ascienden solo los que terminan en los primeros puestos "
+                          "de la zona Campeonato.")
+                elif ff < SF["f1_rondas"] + SF.get("f2_rondas", 0):
+                    aviso(f"El cuadro se completa al terminar la fase 2. Entran del {pr['directos'] + 1}° al "
+                          f"{pr['directos'] + pr['equipos']}° de Zona Campeonato.")
+                if pr["reducido"]:
+                    st.markdown(bracket_html_f(SF), unsafe_allow_html=True)
                 if SF["entrantes"] is not None:
                     with st.expander("Clasificados al reducido (orden de mérito)"):
                         st.markdown(tabla_html(SF["entrantes"]), unsafe_allow_html=True)
@@ -188,14 +198,12 @@ def render(ctx):
                                         f'</div>' + "".join(fila_partido_html(p) for p in dc["partidos"]),
                                         unsafe_allow_html=True)
                     with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
-                        asc_f = [(nom_f[SF["asc_directo"][0]], "campeón"), 
-                                 (nom_f[SF["asc_directo"][1]], "2°"), 
-                                 (nom_f[SF["asc_directo"][2]], "3°")]
+                        asc_f = [(nom_f[i], "campeón" if k == 0 else f"{k + 1}°") for k, i in enumerate(SF["asc_directo"])]
                         if SF["asc_reducido"] is not None:
                             asc_f.append((nom_f[SF["asc_reducido"]], "reducido"))
                         st.markdown(lista_equipos_html(asc_f) + (
-                            '' if SF["asc_reducido"] is not None else
-                            '<div style="font-size:.8rem;opacity:.65">El cuarto ascenso sale del '
+                            '' if SF["asc_reducido"] is not None or not plan_de_f(SF)["reducido"] else
+                            '<div style="font-size:.8rem;opacity:.65">El último ascenso sale del '
                             'reducido.</div>'), unsafe_allow_html=True)
                     with st.expander(":material/south: Descensos al Regional Amateur", expanded=False):
                         st.markdown('<div class="mlab">Descienden los 6 últimos de Zona Descenso (a la región '

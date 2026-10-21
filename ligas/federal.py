@@ -1,6 +1,8 @@
 """Federal A: grupos, zonas Campeonato y Descenso, desempates, reducido y cómo se juega cada fecha.
 """
 
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -32,10 +34,54 @@ F_ZONA_TAM = 10                   # Campeonato y Descenso en la fase 2 (10 y 10)
 F_F2_RONDAS = F_ZONA_TAM - 1       # 9 fechas, una rueda
 
 
-F_RED = 3                          # eliminatoria, semifinales, final
+F_RED = 3                          # rondas del reducido con el formato de siempre (5 equipos); ver plan_reducido_f
 
 
 F_ETAPAS = ["Eliminatoria preliminar", "Semifinales del reducido", "Final del reducido"]
+
+F_DIRECTOS_DEF, F_RED_EQUIPOS_DEF = 3, 5     # por defecto: 3 ascienden directo y 5 (4°-8°) juegan el reducido
+F_DIRECTOS_MAX, F_RED_EQUIPOS_MAX = 8, 12
+
+
+def cfg_federal(S):
+    """Lo que se eligió en el Modo dios para el Federal A: cuántos ascienden directo, si hay reducido por el
+    último ascenso y cuántos equipos lo juegan (los que siguen a los directos en la zona Campeonato)."""
+    c = S.setdefault("cfg", {}).setdefault("federal", {})
+    c.setdefault("directos", F_DIRECTOS_DEF)
+    c.setdefault("reducido", True)
+    c.setdefault("red_equipos", F_RED_EQUIPOS_DEF)
+    return c
+
+
+def zonas_iguales(n, tam_grupos):
+    """Fase 2 con zonas iguales: Campeonato tiene la mitad de los equipos (si n es impar, uno más). Devuelve cuántos\n    clasifican de cada grupo, en proporción a su tamaño (resto mayor)."""
+    n_camp = (n + 1) // 2
+    cuota = [n_camp * t / n for t in tam_grupos]
+    q = [int(c) for c in cuota]
+    for i in sorted(range(len(q)), key=lambda i: (-(cuota[i] - q[i]), -tam_grupos[i], i))[:n_camp - sum(q)]:
+        q[i] += 1
+    return q
+
+
+def plan_reducido_f(directos, hay_reducido, equipos, zona=20):
+    """Reducido por el último ascenso con `equipos` clasificados (puestos directos+1...). Los peor ubicados juegan
+    una primera ronda y los mejores esperan (con 5: 7° y 8° juegan y 4°-6° esperan, como siempre).
+    Devuelve rondas, cuántos juegan la primera ronda y los nombres de las etapas."""
+    equipos = max(2, min(F_RED_EQUIPOS_MAX, equipos, zona - directos))
+    if not hay_reducido or zona - directos < 2:
+        return {"directos": directos, "reducido": False, "equipos": 0, "rondas": 0, "juegan": 0, "etapas": []}
+    rondas = math.ceil(math.log2(equipos))
+    juegan = 2 * (equipos - 2 ** (rondas - 1))              # equipos de la primera ronda
+    etapas = []
+    for k in range(rondas):
+        quedan = 2 ** (rondas - k)                          # equipos que juegan esta ronda (con byes, la primera tiene menos)
+        if k == 0 and juegan < 2 ** rondas and rondas > 1:
+            etapas.append("Eliminatoria preliminar")
+        else:
+            etapas.append({2: "Final del reducido", 4: "Semifinales del reducido",
+                           8: "Cuartos de final del reducido", 16: "Octavos de final del reducido"}[quedan])
+    return {"directos": directos, "reducido": True, "equipos": equipos, "rondas": rondas, "juegan": juegan,
+            "etapas": etapas}
 
 
 F_MIN = 36                         # mínimo de equipos del Federal A (si falta, reubicación)
@@ -44,15 +90,15 @@ F_MIN = 36                         # mínimo de equipos del Federal A (si falta,
 F_DESC = 6                         # los 6 últimos de la zona Descenso bajan al Regional Amateur
 
 
-def destino_f1(pos):
-    return "→ Zona Campeonato" if pos <= 4 else "→ Zona Descenso"
+def destino_f1(pos, cuota=4):
+    return "→ Zona Campeonato" if pos <= cuota else "→ Zona Descenso"
 
 
-def destino_f2(z, pos, n=0):
+def destino_f2(z, pos, n=0, directos=F_DIRECTOS_DEF, red_equipos=F_RED_EQUIPOS_DEF):
     if z == 0:
-        if pos <= 3:
+        if pos <= directos:
             return "Ascenso directo"
-        return "Reducido" if pos <= 8 else ""
+        return "Reducido" if pos <= directos + red_equipos else ""
     return "Desciende" if pos > n - F_DESC else ""
 
 
@@ -62,14 +108,21 @@ def rotulo_f(SF, n):
         return f"Fecha {n} · Fase 1"
     if n <= f1 + SF.get("f2_rondas", 0):
         return f"Fecha {n} · Fase 2 (fecha {n - f1})"
-    return f"Fecha {n} · {F_ETAPAS[n - f1 - SF['f2_rondas'] - 1]}"
+    return f"Fecha {n} · {SF['plan_red']['etapas'][n - f1 - SF['f2_rondas'] - 1]}"
 
 
 # ----------------------------------------------------------------------------
 # MOTOR FEDERAL A
 # ----------------------------------------------------------------------------
-def nueva_estructura_f(SF, rng):
+def nueva_estructura_f(SF, rng, S=None):
     n = len(SF["nombres"])
+    SF["cuota"] = zonas_iguales(n, [n // 5 + (1 if x < n % 5 else 0) for x in range(5)])   # clasifican de cada grupo
+    zona = sum(SF["cuota"])                               # equipos de la zona Campeonato (la mitad del torneo)
+    if S is not None:                                     # Modo dios: ascensos directos y reducido de esta temporada
+        c = cfg_federal(S)
+        SF["plan_red"] = plan_reducido_f(int(c["directos"]), bool(c["reducido"]), int(c["red_equipos"]), zona)
+    elif "plan_red" not in SF:
+        SF["plan_red"] = plan_reducido_f(F_DIRECTOS_DEF, True, F_RED_EQUIPOS_DEF, zona)
     
     # Agrupar inicialmente por la región ideal
     por_region = {g: [] for g in F_GRUPOS_NOMBRES}
@@ -107,7 +160,7 @@ def nueva_estructura_f(SF, rng):
     SF["f1_rondas"] = rondas_ida * 2
     
     # Precalculamos las fechas de la fase 2 dinámicamente
-    n_campeonato = len(SF["grupos"]) * 4
+    n_campeonato = zona
     n_descenso = n - n_campeonato
     
     # Si la cantidad de equipos es par, las fechas son N-1. Si es impar, son N.
@@ -115,7 +168,7 @@ def nueva_estructura_f(SF, rng):
     rondas_desc = n_descenso - 1 if n_descenso % 2 == 0 else n_descenso
     
     SF["f2_rondas"] = max(rondas_camp, rondas_desc)
-    SF["total"] = SF["f1_rondas"] + SF["f2_rondas"] + F_RED 
+    SF["total"] = SF["f1_rondas"] + SF["f2_rondas"] + SF["plan_red"]["rondas"]
 
     SF["fecha"] = 0
     for k in STATS:
@@ -146,8 +199,15 @@ def tabla_f_grupo(SF, g):
     """Tabla del grupo `g` (0-4, por cercanía) de la fase 1."""
     df = df_stats(SF["nombres"], SF["r"], SF, SF["grupos"][g])
     df.insert(0, "Pos", df.index + 1)
-    df["Destino"] = [destino_f1(p) for p in df["Pos"]]
+    df["Destino"] = [destino_f1(p, SF["cuota"][g] if SF.get("cuota") else 4) for p in df["Pos"]]
     return df
+
+
+def plan_de_f(SF):
+    """Plan del reducido de la temporada (las partidas viejas usan el de siempre)."""
+    if "plan_red" not in SF:
+        SF["plan_red"] = plan_reducido_f(F_DIRECTOS_DEF, True, F_RED_EQUIPOS_DEF)
+    return SF["plan_red"]
 
 
 def tabla_f_f2(SF, z):
@@ -157,7 +217,8 @@ def tabla_f_f2(SF, z):
     if orden is not None:
         df = df.set_index("id").loc[orden].reset_index()
     df.insert(0, "Pos", df.index + 1)
-    df["Destino"] = [destino_f2(z, p, len(df)) for p in df["Pos"]]
+    pr = plan_de_f(SF)
+    df["Destino"] = [destino_f2(z, p, len(df), pr["directos"], pr["equipos"]) for p in df["Pos"]]
     return df
 
 
@@ -234,9 +295,10 @@ def desempate_descenso_f(SF, P, rng, n_fecha):
 
 def iniciar_fase2_f(SF, rng):
     SF["tablas_f1"] = [tabla_f_grupo(SF, g) for g in range(len(SF["grupos"]))]
-    # Los 4 mejores de cada una de las 5 zonas = 20 a Campeonato
-    campeonato = pd.concat([df.head(4) for df in SF["tablas_f1"]])
-    descenso = pd.concat([df.tail(len(df) - 4) for df in SF["tablas_f1"]])
+    # Zonas iguales: de cada grupo clasifican a Campeonato los de su cuota (la mitad de los equipos en total)
+    cuota = SF.get("cuota") or [4] * len(SF["tablas_f1"])
+    campeonato = pd.concat([df.head(q) for df, q in zip(SF["tablas_f1"], cuota)])
+    descenso = pd.concat([df.tail(len(df) - q) for df, q in zip(SF["tablas_f1"], cuota)])
 
     campeonato = campeonato.sort_values(["Pts", "DG", "GF"], ascending=False).reset_index(drop=True)
     descenso = descenso.sort_values(["Pts", "DG", "GF"], ascending=False).reset_index(drop=True)
@@ -252,7 +314,7 @@ def iniciar_fase2_f(SF, rng):
     base = [generar_fixture(len(SF["zonas2"][0])), generar_fixture(len(SF["zonas2"][1]))]
     f2_rondas = max(len(base[0]), len(base[1]))
     SF["f2_rondas"] = f2_rondas
-    SF["total"] = SF["f1_rondas"] + f2_rondas + F_RED
+    SF["total"] = SF["f1_rondas"] + f2_rondas + plan_de_f(SF)["rondas"]
 
     SF["fechas2"] = []
     for k in range(f2_rondas):
@@ -267,19 +329,26 @@ def iniciar_reducido_f(SF):
     ids = tabla_f_f2(SF, 0)["id"].to_numpy()
     SF["ord2"] = ids
     SF["campeon"] = int(ids[0])
-    SF["asc_directo"] = [int(ids[0]), int(ids[1]), int(ids[2])]
+    pr = plan_de_f(SF)
+    d = pr["directos"]
+    SF["asc_directo"] = [int(i) for i in ids[:d]]
+    if not pr["reducido"]:                                   # sin reducido: suben solo los directos
+        SF["red"], SF["entrantes"] = None, None
+        SF["ascendidos"] = list(SF["asc_directo"])
+        return
 
     pts = 3 * SF["g"] + SF["e"]
     def bloque(idx, seed0):
         idx = np.asarray(idx)[None, :]
         return {"id": idx, "pts": pts[idx], "seed": np.arange(seed0, seed0 + idx.shape[1])[None, :]}
 
+    m, juegan = pr["equipos"], pr["juegan"]
     SF["red"] = {
-        "esperan_semis": bloque(ids[3:6], 4), # 4°, 5°, 6°
-        "prelim": bloque(ids[6:8], 7)         # 7°, 8°
+        "esperan_semis": bloque(ids[d:d + m - juegan], d + 1),          # esperan (con 5: 4°, 5°, 6°)
+        "prelim": bloque(ids[d + m - juegan:d + m], d + 1 + m - juegan)  # primera ronda (con 5: 7°, 8°)
     }
     SF["entrantes"] = pd.DataFrame(
-        [(i + 1, SF["nombres"][ids[3 + i]], f"{4 + i}° Campeonato") for i in range(5)],
+        [(i + 1, SF["nombres"][ids[d + i]], f"{d + 1 + i}° Campeonato") for i in range(m)],
         columns=["Mérito", "Equipo", "Origen"],
     )
 
@@ -325,22 +394,24 @@ def simular_fecha_f(SF, P, rng):
 
     else:                                                  # ---- reducido
         etapa = f - SF["f1_rondas"] - SF["f2_rondas"]
+        pr = plan_de_f(SF)
+        etapas = pr["etapas"]
         if etapa == 0:
             T = SF["red"]["prelim"]
-        elif etapa == 1:
+        elif etapa == 1 and SF["red"]["esperan_semis"]["id"].shape[1] > 0:
             T = unir(SF["red"]["esperan_semis"], SF["ganadores"])
         else:
             T = SF["ganadores"]
             
         A, B = cruces_mejor_peor(T)
-        final = etapa == F_RED - 1
+        final = etapa == pr["rondas"] - 1
         loc, vis, gl, gv, gan, per, pen = jugar_reducido_federal(rng, r, A, B, P["sorpresa"], final, nombres=nom)
         SF["ganadores"] = gan
         ronda = []
         for li, vi, g1, g2, wi, p in zip(loc["id"][0], vis["id"][0], gl[0], gv[0],
                                           gan["id"][0], pen[0]):
             tanda = tanda_penales(rng, wi == li) if (p and final) else None
-            partido = nuevo_partido("Federal A", f + 1, rotulo_f(SF, f + 1), F_ETAPAS[etapa],
+            partido = nuevo_partido("Federal A", f + 1, rotulo_f(SF, f + 1), etapas[etapa],
                                     nom[li], nom[vi], g1, g2, tanda=tanda, gana=nom[wi],
                                     neutral=final)
             ronda.append(partido)
@@ -354,7 +425,7 @@ def simular_fecha_f(SF, P, rng):
                 definicion.append(f"Ganó {m['gana']} por mejor posición en la tabla")
             else:
                 definicion.append("")
-        SF["historial"].append(_fila_historial(SF, F_ETAPAS[etapa], loc["id"][0], vis["id"][0],
+        SF["historial"].append(_fila_historial(SF, etapas[etapa], loc["id"][0], vis["id"][0],
                                                gl[0], gv[0], definicion))
         if final:
             SF["asc_reducido"] = int(gan["id"][0, 0])

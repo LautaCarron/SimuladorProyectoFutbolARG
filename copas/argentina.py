@@ -85,6 +85,21 @@ def clasificados_copa(S):
     while len(lista) < COPA_EQUIPOS and extra < len(desc):      # cupos vacantes
         sumar(SF, desc[extra:extra + 1], "Federal A", lambda k, e=extra: f"Federal A · {e + 1}° Zona Descenso")
         extra += 1
+    # Si todavía faltan (p. ej. la Primera Nacional achicada en el Modo dios): los que siguen en la Primera B
+    # y en la Primera C
+    pb, pc = tabla_pb(SPB)["id"].to_numpy(), tabla_pc(SPC)["id"].to_numpy()
+    i_pb, i_pc = 12, 10
+    while len(lista) < COPA_EQUIPOS and (i_pb < len(pb) or i_pc < len(pc)):
+        if i_pb < len(pb):
+            sumar(SPB, pb[i_pb:i_pb + 1], "Primera B", lambda k, e=i_pb: f"Primera B · {e + 1}°")
+            i_pb += 1
+        if len(lista) < COPA_EQUIPOS and i_pc < len(pc):
+            sumar(SPC, pc[i_pc:i_pc + 1], "Primera C", lambda k, e=i_pc: f"Primera C · {e + 1}°")
+            i_pc += 1
+    # Si sobran (Primera o la B agrandadas en el Modo dios), se achica desde abajo: Federal A, Primera B y Primera C
+    for cat in ("Federal A", "Primera B", "Primera C"):
+        while len(lista) > COPA_EQUIPOS and any(e[2] == cat for e in lista):
+            lista.pop(max(i for i, e in enumerate(lista) if e[2] == cat))
     return lista[:COPA_EQUIPOS]
 
 
@@ -110,6 +125,41 @@ def clasificados_inicial(S):
     while len(lista) < COPA_EQUIPOS and extra:
         lista.append((extra.pop(0), "Federal A (por media)"))
     return lista[:COPA_EQUIPOS]
+
+
+CUPOS_DEFECTO = {"Primera División": 30, "Primera Nacional": 36, "Federal A": 28, "Primera B": 12, "Primera C": 10,
+                 "Regional Amateur": 12}
+
+
+def _liga_de_criterio(criterio):
+    for liga in ("Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C"):
+        if criterio.startswith(liga):
+            return liga
+    return "Regional Amateur"
+
+
+def cupos_copa(lista):
+    """Cupos de la Copa Argentina de la temporada según los clasificados reales `lista` [(club, cómo clasificó)]:
+    [(liga, quiénes clasifican, cupos, cupos por defecto)] y el total. Cambia solo si cambian los cupos
+    (p. ej. cuando se modifica la cantidad de equipos de Primera o de la B en el Modo dios)."""
+    por_liga = {liga: [c for _, c in lista if _liga_de_criterio(c) == liga] for liga in CUPOS_DEFECTO}
+    n = {liga: len(v) for liga, v in por_liga.items()}
+    media = lambda liga: any("por media" in c for c in por_liga[liga])      # temporada 1: sin temporada anterior
+    zc = sum("Zona Campeonato" in c for c in por_liga["Federal A"])
+    zd = sum("Zona Descenso" in c for c in por_liga["Federal A"])
+    desc = {
+        "Primera División": f"Los {n['Primera División']} equipos",
+        "Primera Nacional": f"Los {n['Primera Nacional']} equipos",
+        "Federal A": (f"Los {n['Federal A']} de mejor media" if media("Federal A") else
+                      f"Los {zc} de Zona Campeonato y los {zd} mejores de Zona Descenso"),
+        "Primera B": f"Los {n['Primera B']} " + ("de mejor media" if media("Primera B") else "primeros"),
+        "Primera C": f"Los {n['Primera C']} " + ("de mejor media" if media("Primera C") else "primeros"),
+        "Regional Amateur": (f"El de mejor media de cada una de las {n['Regional Amateur']} regiones"
+                             if media("Regional Amateur") else
+                             f"El campeón de cada una de las {n['Regional Amateur']} regiones"),
+    }
+    filas = [(liga, desc[liga], n[liga], CUPOS_DEFECTO[liga]) for liga in CUPOS_DEFECTO]
+    return filas, (sum(n.values()), sum(CUPOS_DEFECTO.values()))
 
 
 def categoria_actual(S):

@@ -104,8 +104,6 @@ from ligas.nacional import (
     total_b,
 )
 from ligas.primera import (
-    FECHAS_F1,
-    TOTAL_FECHAS,
     ZONAS,
     primera_terminada,
     simular_fecha,
@@ -221,20 +219,10 @@ st.markdown(CSS, unsafe_allow_html=True)
 st.markdown(LOGOS_CSS, unsafe_allow_html=True)   # logos de ligas y copas (una sola vez)
 puente_clubes()     # tocar un club en cualquier tabla abre su ficha
 
-with st.sidebar:
-    st.header("Parámetros de simulación")
-    sorpresa = st.slider("Nivel de sorpresas", 0.0, 15.0, 6.0, 0.5,
-                         help="Qué tanto varía la 'forma del día' de cada equipo. "
-                              "Más alto = más partidos donde gana el que tiene menos media.")
-    volatilidad = st.slider("Volatilidad entre temporadas", 0.0, 10.0, 2.5, 0.5,
-                            help="Qué tanto cambia la media de cada equipo al pasar de temporada.")
-    acumular = st.checkbox("Arrastrar puntos de la fase 1 a las zonas (Primera)", value=True,
-                           help="Solo Primera. Si está activado, las zonas parten con lo sumado en "
-                                "las 29 fechas. Si no, cada zona arranca de cero. Se fija al "
-                                "terminar la fase 1. (En la B Nacional ahora los puntos se conservan siempre).")
-    st.caption("En cada partido, cada equipo rinde un poco mejor o peor que su "
-               "media habitual. Los partidos del reducido y la promoción son a un solo "
-               "partido y, si empatan, se definen por penales.")
+# Parámetros fijos (ya no se editan desde la barra lateral: ahí sólo queda el Modo dios)
+sorpresa = 6.0        # nivel de sorpresas de los partidos
+volatilidad = 2.5     # cuánto cambia la media de cada equipo al pasar de temporada
+acumular = True       # Primera arrastra los puntos de la fase 1 a las zonas
 
 P = dict(sorpresa=sorpresa)
 
