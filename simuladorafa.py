@@ -78,6 +78,7 @@ import pandas as pd
 from datos.equipos import (
     ERROR_DATOS,
     ESCUDOS,
+    ESCUDOS_CSS,
     F_GRUPOS_NOMBRES,
     N,
     origen,
@@ -217,6 +218,7 @@ def editar_medias(nombres, r, clave):
 # ----------------------------------------------------------------------------
 st.markdown(CSS, unsafe_allow_html=True)
 st.markdown(LOGOS_CSS, unsafe_allow_html=True)   # logos de ligas y copas (una sola vez)
+st.markdown(ESCUDOS_CSS, unsafe_allow_html=True)  # escudos a los que se les sacó el fondo (una sola vez)
 puente_clubes()     # tocar un club en cualquier tabla abre su ficha
 
 # Parámetros fijos (ya no se editan desde la barra lateral: ahí sólo queda el Modo dios)

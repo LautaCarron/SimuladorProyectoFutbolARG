@@ -286,6 +286,16 @@ ESCUDOS_OSCUROS = {
 }
 ESCUDOS_OSCUROS |= set(OSCUROS_INT)
 
+# Escudos que vienen con fondo blanco: se les saca el fondo (ver imagenes.py). Si otro escudo se ve con fondo, sumá
+# acá su nombre; si querés usar un PNG transparente propio, copialo en datos/escudos_sin_fondo/ con el nombre del
+# club en minúsculas y con guiones (por ejemplo sarmiento-leones.png).
+from datos.imagenes import escudos_sin_fondo, slug
+ESCUDOS_SIN_FONDO = escudos_sin_fondo(ESCUDOS, [
+    "Acción Juvenil (General Deheza)", "Argentino Peñarol", "Sarmiento (Leones)",
+])
+ESCUDOS_CSS = "<style>" + "".join(
+    f".cr-{slug(n)}{{background-image:url({u});}}" for n, u in ESCUDOS_SIN_FONDO.items()) + "</style>"
+
 # Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
 # Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
 # Primera B) el día que descienda del todo. Los del Federal A ya son todos del

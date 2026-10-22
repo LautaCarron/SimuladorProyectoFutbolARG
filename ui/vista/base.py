@@ -7,7 +7,8 @@ import re
 import streamlit as st
 import unicodedata
 
-from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS
+from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS, ESCUDOS_SIN_FONDO
+from datos.imagenes import slug
 
 
 def _estado():
@@ -107,6 +108,9 @@ def iniciales(nombre):
 def crest(nombre, size=26):
     """Escudo real del club (o un distintivo con sus iniciales si no hay imagen)."""
     url = ESCUDOS.get(nombre)
+    if nombre in ESCUDOS_SIN_FONDO:           # PNG transparente, definido una sola vez en el CSS (ESCUDOS_CSS)
+        return (f'<span class="lg crest-img cr-{slug(nombre)}" style="width:{size}px;height:{size}px" '
+                f'role="img" aria-label="{esc(nombre)}" title="{esc(nombre)}"></span>')
     if url:
         osc = " crest-osc" if nombre in ESCUDOS_OSCUROS else ""
         return (f'<img class="crest-img{osc}" src="{esc(url)}" width="{size}" height="{size}" '
