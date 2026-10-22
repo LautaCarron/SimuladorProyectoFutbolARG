@@ -16,6 +16,7 @@ from ui.vista.mi_club import mi_club
 from ui.vista.partidos import (
     partidos_fecha_b,
     partidos_fecha_f,
+    partidos_fecha_fb,
     partidos_fecha_p,
     partidos_fecha_pb,
     partidos_fecha_pc,
@@ -24,7 +25,7 @@ from ui.vista.partidos import (
     pendiente,
     resultado_para,
 )
-from motor.calendario import INICIO, total_liga
+from motor.calendario import INICIO, ligas_de, total_liga
 from copas.registro import REGISTRO, por_nombre
 
 
@@ -39,7 +40,8 @@ def _cal_partidos(S, liga, n):
         hechos = [p for p in comp.log(S) if p["fecha"] == n]
         return hechos or [pendiente(liga, n, rot, cmp_, a, b) for a, b, rot, cmp_ in comp.cruces(S, n)]
     obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
-               "Federal A": partidos_fecha_f, "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
+               "Federal A": partidos_fecha_f, "Federal B": partidos_fecha_fb,
+               "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
                "Promocional Amateur": partidos_fecha_pd,
                "Regional Amateur": partidos_fecha_reg}[liga]
     try:
@@ -54,7 +56,8 @@ def _cal_rotulo(S, liga, n):
     if por_nombre(liga):
         return por_nombre(liga).rotulo(S, n)
     return {"Primera División": lambda: rotulo_p(S, n), "Primera Nacional": lambda: rotulo_b(S["b"], n),
-            "Federal A": lambda: rotulo_f(S["f"], n), "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
+            "Federal A": lambda: rotulo_f(S["f"], n), "Federal B": lambda: rotulo_f(S["fb"], n),
+            "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
             }.get(liga, lambda: f"Fecha {n}")()
 
 
@@ -63,7 +66,9 @@ def eventos_calendario(S):
     ev = []
     jugadas = {"Primera División": S["fecha"], "Primera Nacional": S["b"]["fecha"], "Federal A": S["f"]["fecha"],
                "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Promocional Amateur": S["pd"]["fecha"], "Regional Amateur": S["reg"]["fecha"]}
-    for liga in INICIO:
+    if S.get("fb") is not None:
+        jugadas["Federal B"] = S["fb"]["fecha"]
+    for liga in ligas_de(S):
         for n in range(1, total_liga(S, liga) + 1):
             ev.append((dia_de(S, liga, n), liga, n, n <= jugadas[liga]))
     for comp in REGISTRO:                      # Copa Argentina, Supercopa y Mundial de Clubes
@@ -75,7 +80,7 @@ def eventos_calendario(S):
         if C:
             for n in range(1, C["total"] + 1):
                 ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
-    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", *[comp.nombre for comp in REGISTRO], "Primera División", "Primera Nacional", "Federal A", "Regional Amateur",
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", *[comp.nombre for comp in REGISTRO], "Primera División", "Primera Nacional", "Federal A", "Federal B", "Regional Amateur",
              "Primera B", "Primera C", "Promocional Amateur"]
     return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 

@@ -182,7 +182,8 @@ def colorear_b(fila):
 
 
 def colorear_f(fila):
-    c = COLORES_F.get(fila["Destino"], "")
+    d = fila["Destino"]
+    c = COLORES_F.get(d, "") or (COLORES_F["→ Zona Campeonato"] if d.startswith("→ Zona Campeonato") else "")
     return [f"background-color: {c}" if c else ""] * len(fila)
 
 

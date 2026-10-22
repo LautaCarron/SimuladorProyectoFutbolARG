@@ -265,12 +265,14 @@ if _club_mgr:
 
 SB, SF, SPB, SPC, SR, SC = S["b"], S["f"], S["pb"], S["pc"], S["reg"], S["copa"]
 SPD = S.get("pd", SPC)
+SFB = S.get("fb")                           # Federal B: None hasta que se crea desde el Modo dios
 SS = S["supercopa"]
 SM = S["mundial"]
 
 terminada = primera_terminada(S)            # incluye las fechas de desempate
 terminada_b = SB["fecha"] >= total_b(SB)
 terminada_f = SF["fecha"] >= SF["total"]
+terminada_fb = SFB is None or SFB["fecha"] >= SFB["total"]          # sin Federal B no hay nada que esperar
 terminada_pb = SPB["fecha"] >= SPB["total"]
 terminada_pc = SPC["fecha"] >= SPC["total"]
 terminada_pd = SPD["fecha"] >= SPD["total"]
@@ -278,13 +280,14 @@ terminada_reg = SR["fecha"] >= SR["total"]
 terminada_copa = SC["sorteada"] and SC["ronda"] >= SC["total"]
 terminadas_extra = all(comp.terminada(S) for comp in REGISTRO)       # Copa, Supercopa y Mundial (si hay)
 terminadas_int = terminadas(S)
-ambas = (terminada and terminada_b and terminada_f and terminada_pb and terminada_pc and terminada_reg
+ambas = (terminada and terminada_b and terminada_f and terminada_fb and terminada_pb and terminada_pc and terminada_reg
          and terminada_copa and terminadas_extra and terminadas_int)
 b_espera_primera = SB["fecha"] == total_b(SB) - 1 and not terminada
 
 pct_p = 100 * S["fecha"] / total_primera(S)
 pct_b = 100 * SB["fecha"] / total_b(SB)
 pct_f = 100 * SF["fecha"] / SF["total"]
+pct_fb = 100 * SFB["fecha"] / SFB["total"] if SFB and SFB["total"] else 0
 pct_pb = 100 * SPB["fecha"] / SPB["total"] if SPB["total"] else 0
 pct_pc = 100 * SPC["fecha"] / SPC["total"] if SPC["total"] else 0
 pct_reg = 100 * SR["fecha"] / SR["total"] if SR["total"] else 0
@@ -318,7 +321,8 @@ _BOTON_TEMA = (
 _web = sys.platform == "emscripten"
 _marca_tag = ('a class="mh-marca" href="#inicio" title="Volver al inicio de Proyecto AFA"'
               if _web else 'div class="mh-marca"')
-_jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + len(SPB["log"]) + len(SPC["log"])
+_jugados = (len(S["log"]) + len(SB["log"]) + len(SF["log"]) + (len(SFB["log"]) if SFB else 0)
+            + len(SPB["log"]) + len(SPC["log"])
             + len(SR["log"]) + sum(len(comp.log(S)) for comp in REGISTRO))
 _prox = proximos(S)
 _hoy = min((d for d, _ in _prox.values()), default=None)       # próximo día con partidos
@@ -330,6 +334,7 @@ st.markdown(
     + _celda("Primera", S["fecha"], total_primera(S), pct_p)
     + _celda("B Nacional", SB["fecha"], total_b(SB), pct_b)
     + _celda("Federal A", SF["fecha"], SF["total"], pct_f)
+    + (_celda("Federal B", SFB["fecha"], SFB["total"], pct_fb) if SFB else "")
     + _celda("Primera B", SPB["fecha"], SPB["total"], pct_pb)
     + _celda("Primera C", SPC["fecha"], SPC["total"], pct_pc)
     + _celda("Regional", SR["fecha"], SR["total"], pct_reg)
@@ -363,6 +368,8 @@ if g1.button(":material/fast_forward: Simular todo", disabled=ambas, width="stre
     # 3. Resto de las categorías
     while SF["fecha"] < SF["total"]: 
         simular_fecha_f(SF, P, S["rng"])
+    while SFB is not None and SFB["fecha"] < SFB["total"]:
+        simular_fecha_f(SFB, P, S["rng"])
     while SPB["fecha"] < SPB["total"]: 
         simular_fecha_liga(SPB, P, S["rng"], "Primera B", tabla_pb)
     while SPC["fecha"] < SPC["total"]: 
@@ -391,7 +398,7 @@ if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
 
 # Avisos (suspensiones y sanciones): los de esta temporada y los anteriores. Los nuevos (sin leer)
 # se cuentan en la pestaña Avisos.
-_avisos = [a for L in (S, SB, SF, SPB, SPC, SR, SC) for a in L.get("alertas", [])]
+_avisos = [a for L in (S, SB, SF, *([SFB] if SFB else []), SPB, SPC, SR, SC) for a in L.get("alertas", [])]
 _total_avisos = len(S.get("alertas_hist", [])) + len(_avisos)
 _sin_leer = max(0, _total_avisos - S.get("avisos_leidos", 0))
 
@@ -426,14 +433,22 @@ if _sin_leer:                          # contador de avisos nuevos (globito rojo
                 f'font-weight:800;border-radius:9px;padding:1px 7px;line-height:1.4;}}</style>', unsafe_allow_html=True)
 with tab_ligas:
     with st.container(key="menu_ligas"):
-        _claves_l = ["p", "b", "f", "reg", "pb", "pc", "pd"]
+        # El Federal B (se crea desde el Modo dios) va entre el Federal A y el Regional; hasta entonces no hay pestaña
+        _claves_l = ["p", "b", "f"] + (["fb"] if SFB else []) + ["reg", "pb", "pc", "pd"]
         _etiq_l = [_et("Primera División", "Primera", "p"), _et("Primera Nacional", "B Nacional", "b"),
-                   _et("Federal A", "Federal A", "f"), _et("Regional Amateur", "Regional", "reg"),
-                   _et("Primera B", "Primera B", "pb"), _et("Primera C", "Primera C", "pc"),
-                   _et("Promocional Amateur", "Promocional", "pd")]
+                   _et("Federal A", "Federal A", "f")]
+        if SFB:
+            _etiq_l.append(_et("Federal B", "Federal B", "fb"))
+        _etiq_l += [_et("Regional Amateur", "Regional", "reg"),
+                    _et("Primera B", "Primera B", "pb"), _et("Primera C", "Primera C", "pc"),
+                    _et("Promocional Amateur", "Promocional", "pd")]
         # la key lleva el club: si cambiás de club, la pestaña se vuelve a abrir en su competencia
-        tab_p, tab_b, tab_f, tab_reg, tab_pb, tab_pc, tab_pd = tabs_con_default(
-            _etiq_l, _inicial(_etiq_l, _claves_l), key=f"tabs_ligas{_kclub}", on_change="rerun")
+        _tabs_l = dict(zip(_claves_l, tabs_con_default(
+            _etiq_l, _inicial(_etiq_l, _claves_l), key=f"tabs_ligas{_kclub}{'_fb' if SFB else ''}",
+            on_change="rerun")))
+        tab_p, tab_b, tab_f, tab_fb, tab_reg, tab_pb, tab_pc, tab_pd = (
+            _tabs_l["p"], _tabs_l["b"], _tabs_l["f"], _tabs_l.get("fb"), _tabs_l["reg"], _tabs_l["pb"],
+            _tabs_l["pc"], _tabs_l["pd"])
 with tab_copas:
     with st.container(key="menu_copas"):
         _claves_c = ["ca", "sup", "lib", "sud", "rec", "mun"]
@@ -520,6 +535,7 @@ def html_tabla_liguilla(partidos):
 from ui import primera as ui_primera
 from ui import nacional as ui_nacional
 from ui import federal as ui_federal
+from ui import federal_b as ui_federal_b
 from ui import ligas_simples as ui_ligas_simples
 from ui import regional as ui_regional
 from ui import copa_argentina as ui_copa_argentina
@@ -533,5 +549,5 @@ from ui import historial as ui_historial
 from ui import manager as ui_manager
 
 ctx = SimpleNamespace(**{k: v for k, v in globals().items() if not k.startswith("__")})
-for _modulo in (ui_manager, ui_primera, ui_nacional, ui_federal, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
+for _modulo in (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
     _modulo.render(ctx)

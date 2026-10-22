@@ -19,7 +19,8 @@ from copas.conmebol import PAIS_EXT
 
 def todos_los_partidos():
     S, SB, SF, SPB, SPC = _estado()
-    return (S["log"] + S["b"]["log"] + S["f"]["log"] + S["pb"]["log"] + S["pc"]["log"] + S["pd"]["log"] + S["reg"]["log"]
+    return (S["log"] + S["b"]["log"] + S["f"]["log"] + (S["fb"]["log"] if S.get("fb") else [])
+            + S["pb"]["log"] + S["pc"]["log"] + S["pd"]["log"] + S["reg"]["log"]
             + [p for comp in REGISTRO for p in comp.log(S)]
             + [p for C in S.get("int", {}).values() for p in C["log"]])
 
@@ -32,6 +33,8 @@ def _categoria_arg(nombre):
         return "Primera Nacional"
     if nombre in S["federal"]:
         return "Federal A"
+    if nombre in st.session_state.S.get("federal_b", []):
+        return "Federal B"
     if nombre in S["primera_b"]:
         return "Primera B"
     if nombre in S["primera_c"]:
@@ -174,22 +177,35 @@ def partidos_fecha_b(n):
             for x, y in SB["fechas2"][n - 1 - f1]]
 
 
-def fechas_conocidas_f():
-    S, SB, SF, SPB, SPC = _estado()
+def _liga_f(SF=None):
+    """La liga con formato Federal que se pide: el Federal A por defecto, o la que se pase (el Federal B)."""
+    return SF if SF is not None else _estado()[2]
+
+
+def fechas_conocidas_f(SF=None):
+    SF = _liga_f(SF)
     return max(SF["fecha"], SF["f1_rondas"] if SF["fechas2"] is None else SF["f1_rondas"] + SF.get("f2_rondas", 0))
 
 
-def partidos_fecha_f(n):
-    S, SB, SF, SPB, SPC = _estado()
+def partidos_fecha_f(n, SF=None):
+    SF = _liga_f(SF)
     if n <= SF["fecha"]:
         return [p for p in SF["log"] if p["fecha"] == n]
-    nom = SF["nombres"]
+    nom, liga = SF["nombres"], SF.get("liga", "Federal A")
     if n <= SF["f1_rondas"]:
-        return [pendiente("Federal A", n, rotulo_f(SF, n), f"Zona {F_GRUPOS_NOMBRES[SF['grupo_de'][x]]}",
+        return [pendiente(liga, n, rotulo_f(SF, n), f"Zona {F_GRUPOS_NOMBRES[SF['grupo_de'][x]]}",
                           nom[x], nom[y]) for x, y in SF["fechas"][n - 1]]
-    return [pendiente("Federal A", n, rotulo_f(SF, n),
+    return [pendiente(liga, n, rotulo_f(SF, n),
                       "Campeonato" if SF["zona2_de"][x] == 0 else "Descenso", nom[x], nom[y])
             for x, y in SF["fechas2"][n - 1 - SF["f1_rondas"]]]
+
+
+def fechas_conocidas_fb():
+    return fechas_conocidas_f(st.session_state.S["fb"])
+
+
+def partidos_fecha_fb(n):
+    return partidos_fecha_f(n, st.session_state.S["fb"])
 
 
 def fechas_conocidas_pb():
@@ -278,6 +294,12 @@ def proximo_partido(nombre):
     elif nombre in SF["nombres"]:
         for n in range(SF["fecha"] + 1, fechas_conocidas_f() + 1):
             for p in partidos_fecha_f(n):
+                if nombre in (p["local"], p["visita"]):
+                    return p
+    elif nombre in (st.session_state.S.get("fb") or {}).get("nombres", []):
+        SFB = st.session_state.S["fb"]
+        for n in range(SFB["fecha"] + 1, fechas_conocidas_fb() + 1):
+            for p in partidos_fecha_fb(n):
                 if nombre in (p["local"], p["visita"]):
                     return p
     elif nombre in SPB["nombres"]:

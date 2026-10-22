@@ -163,7 +163,9 @@ def _fila_final(SR, i, reg, goles, clase, pen=None):
 
 def finales_reg_html(SR):
     """Las 6 finales por el ascenso (de a pares de regiones, según el JSON): cada tarjeta
-    muestra ida, vuelta y global de cada campeón y quién asciende al Federal A."""
+    muestra ida, vuelta y global de cada campeón y quién asciende (al Federal A, o al B si existe)."""
+    from ligas.federal_b import destino_ascenso_regional
+    sube = destino_ascenso_regional(st.session_state.S)
     tarjetas = ""
     for k, (ra, rb) in enumerate(FINALES_REG):
         x = SR["finales"][k] if k < len(SR["finales"]) else None
@@ -196,7 +198,7 @@ def finales_reg_html(SR):
                 filas += _fila_final(SR, i, SR["region_de"][i], g, clase,
                                      x["pen"][k2] if x["pen"] else None)
             if x["gana"] is not None:
-                pie = (f'<span class="rf-sube">▲ Asciende al Federal A</span> '
+                pie = (f'<span class="rf-sube">▲ Asciende al {sube}</span> '
                        f'{_nm_club(SR["nombres"][x["gana"]])}'
                        + (f' · penales {x["pen"][0]}-{x["pen"][1]}' if x["pen"] else ""))
                 tanda = tanda_html(vta) if vta is not None else ""

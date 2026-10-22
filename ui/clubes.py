@@ -20,7 +20,8 @@ def render(ctx):
             seccion("Clubes", "Elegí un club para ver su ficha y buscar sus partidos", "#1e5aa8")
             cat = st.segmented_control("Categoría",
                                        ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                                        "Promocional Amateur", "Regional Amateur"],
+                                        "Promocional Amateur", *(["Federal B"] if S.get("fb") is not None else []),
+                                        "Regional Amateur"],
                                        default="Primera División", key="cat_clubes")
             cat = cat or "Primera División"
             if cat == "Regional Amateur":            # 245 clubes: se elige la región
@@ -32,7 +33,8 @@ def render(ctx):
             else:
                 lista = sorted({"Primera División": S["nombres"], "Primera Nacional": SB["nombres"],
                                 "Federal A": S["federal"], "Primera B": S["primera_b"], "Primera C": S["primera_c"],
-                                "Promocional Amateur": S["promocional"]}[cat],
+                                "Promocional Amateur": S["promocional"],
+                                "Federal B": S.get("federal_b", [])}[cat],
                                key=norm)
                 buscables = lista
             elegido = st.selectbox(":material/search: Buscar club", buscables, index=None,

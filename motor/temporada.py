@@ -23,13 +23,15 @@ from copas.argentina import clasificados_copa, sortear_copa
 from copas.conmebol import MEDIA_EXT, fin_de_temporada, nuevas_internacionales
 from datos.palmares import palmares_inicial
 from ligas.federal import nueva_estructura_f
+from ligas.federal_b import (CREACION_MANTIENE_FEDERAL_A, FB_EQUIPOS, elegir_del_regional, nueva_liga_fb,
+                             pendiente as fb_pendiente)
 from ligas.nacional import ascensos_a_primera, equipos_objetivo_b, nueva_estructura_b, orden_final_b
 from ligas.primera import equipos_objetivo_p, descensos, nueva_estructura, tabla_final
 from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
 
 
-VERSION_ESTADO = 16       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 17       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():
@@ -48,6 +50,7 @@ def crear_estado():
         "primera_b": list(EQUIPOS_PRIMERA_B),
         "primera_c": list(EQUIPOS_PRIMERA_C),
         "regional": list(EQUIPOS_REGIONAL),
+        "federal_b": [], "fb": None,          # Federal B: se crea desde el Modo dios (ver ligas/federal_b.py)
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
     nueva_estructura(S)
@@ -87,7 +90,9 @@ def crear_estado():
 
 def nueva_temporada(S, volatilidad):
     SB, SF, SPB, SPC, SPD, rng = S["b"], S["f"], S["pb"], S["pc"], S["pd"], S["rng"]
-    for lig in (S, SB, SF, SPB, SPC, SPD, S["reg"]):
+    SFB = S.get("fb")                                   # Federal B (None mientras no se crea en el Modo dios)
+    S.setdefault("federal_b", [])
+    for lig in (S, SB, SF, SPB, SPC, SPD, S["reg"], *([SFB] if SFB else [])):
         for nom, x in zip(lig["nombres"], lig["r"]):
             S["rating"][nom] = float(x)
 
@@ -103,7 +108,9 @@ def nueva_temporada(S, volatilidad):
         return L["nombres"][L["campeon"]] if L.get("campeon") is not None else ""
     S["campeones"].append({
         "Temporada": S["temp"], "Primera División": final.iloc[0]["Equipo"],
-        "Primera Nacional": _campeon(SB), "Federal A": _campeon(SF), "Primera B": _campeon(SPB),
+        "Primera Nacional": _campeon(SB), "Federal A": _campeon(SF),
+        **({"Federal B": _campeon(SFB)} if SFB else {}),
+        "Primera B": _campeon(SPB),
         "Primera C": _campeon(SPC), "Promocional Amateur": _campeon(SPD),
         "Copa Argentina": (S["copa"]["nombres"][S["copa"]["campeon"]]
                            if S.get("copa", {}).get("campeon") is not None else ""),
@@ -117,7 +124,8 @@ def nueva_temporada(S, volatilidad):
     # Sumar +1 al palmarés histórico de cada liga (campeón de la temporada que termina)
     ultimo = S["campeones"][-1]
     for clave_h, liga_h in (("hist_primera", "Primera División"), ("hist_nacional", "Primera Nacional"),
-                            ("hist_federal", "Federal A"), ("hist_pb", "Primera B"), ("hist_pc", "Primera C"),
+                            ("hist_federal", "Federal A"), ("hist_federalB", "Federal B"),
+                            ("hist_pb", "Primera B"), ("hist_pc", "Primera C"),
                             ("hist_pd", "Promocional Amateur")):
         camp_h = ultimo.get(liga_h)
         if camp_h:
@@ -173,10 +181,12 @@ def nueva_temporada(S, volatilidad):
 
     # Modo dios: la B puede tener menos equipos. Si con los ascendidos y los que bajan de Primera sobran, bajan
     # de más los peor ubicados de la tabla final (de los que se quedaban en la B).
-    objetivo_b = equipos_objetivo_b(S, len(SB["nombres"]) + len(bajan_p) - len(suben))   # automático: la B recibe a los
-    # que bajan de Primera y pierde a los que suben, así que cambia de tamaño igual que Primera (en sentido contrario)
     n_asc_f = len(SF["ascendidos"]) + len(SPB.get("ascendidos") or SPB["asc_directo"])         # los que suben del Federal A y de la Primera B
     se_quedan = [n for n in SB["nombres"] if n not in suben and n not in bajan_b]
+    # Automático: la B queda con los que se quedan, los que bajan de Primera y los que suben de verdad del Federal A y la
+    # Primera B (si bajan más de los que suben, se achica; sin rellenar con clubes elegidos al azar). Si en el Modo dios
+    # se fijó una cantidad de equipos, se completa o se recorta hasta llegar a ella.
+    objetivo_b = equipos_objetivo_b(S, len(se_quedan) + len(bajan_p) + n_asc_f)
     sobran = len(se_quedan) + len(bajan_p) + n_asc_f - objetivo_b
     bajan_b_extra = []
     if sobran > 0:
@@ -219,10 +229,31 @@ def nueva_temporada(S, volatilidad):
     S["primera_c"] = [n for n in SPC["nombres"] if n not in ascendidos_pc and n not in descendidos_pc] + descendidos_pb + ascendidos_pd
     S["promocional"] = [n for n in SPD["nombres"] if n not in ascendidos_pd] + descendidos_pc
 
-    # Regional Amateur: los 6 ganadores de las finales ascienden al Federal A
+    # Regional Amateur: los 6 ganadores de las finales ascienden (al Federal A, o al Federal B si existe)
     ascendidos_reg = [S["reg"]["nombres"][i] for i in S["reg"]["ascendidos"]]
-    S["federal"] = S["federal"] + ascendidos_reg
-    S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg] + descendidos_f
+    suben_reg_a, suben_reg_b, extra_reg = ascendidos_reg, [], []
+    asc_fb, desc_fb = [], []
+    creando_fb = fb_pendiente(S)
+    if SFB is not None:                                  # Federal B en marcha
+        asc_fb = [SFB["nombres"][i] for i in SFB["ascendidos"]]          # suben al Federal A
+        desc_fb = [SFB["nombres"][i] for i in SFB.get("descendidos", [])]  # bajan al Regional
+        suben_reg_a, suben_reg_b = [], ascendidos_reg
+        S["federal"] = S["federal"] + asc_fb
+        S["federal_b"] = ([n for n in SFB["nombres"] if n not in asc_fb and n not in desc_fb]
+                          + descendidos_f + ascendidos_reg)
+        S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg] + desc_fb
+    elif creando_fb:                                     # se crea ahora: bajan los del Federal A y suben los mejores del Regional
+        if not CREACION_MANTIENE_FEDERAL_A:
+            suben_reg_a, suben_reg_b = [], ascendidos_reg
+        faltan_fb = max(0, FB_EQUIPOS - len(descendidos_f) - len(suben_reg_b))
+        extra_reg = elegir_del_regional(S["reg"], ascendidos_reg, faltan_fb)
+        S["federal"] = S["federal"] + suben_reg_a
+        S["federal_b"] = list(descendidos_f) + suben_reg_b + extra_reg
+        S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg and n not in extra_reg]
+    else:                                                # sin Federal B: como siempre
+        S["federal"] = S["federal"] + ascendidos_reg
+        S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg] + descendidos_f
+    hay_fb = SFB is not None or creando_fb
     
     SB["nombres"] = base_b + entran
 
@@ -235,8 +266,15 @@ def nueva_temporada(S, volatilidad):
         "suben_f_b": ascendidos_f,
         "suben_pb_b": ascendidos_pb,
         "suben_pc_pb": ascendidos_pc,
-        "suben_reg_fed": ascendidos_reg,
-        "bajan_fed_reg": descendidos_f,
+        "suben_reg_fed": suben_reg_a,
+        "bajan_fed_reg": [] if hay_fb else descendidos_f,
+        "bajan_fed_fb": descendidos_f if hay_fb else [],
+        "suben_reg_fb": suben_reg_b,
+        "suben_reg_fb_extra": extra_reg,
+        "suben_fb_f": asc_fb,
+        "bajan_fb_reg": desc_fb,
+        "fb_activa": hay_fb,
+        "fb_nueva": creando_fb,
         "bajan_pb_pc": descendidos_pb,
         "suben_pd_pc": ascendidos_pd,
         "bajan_pc_pd": descendidos_pc,
@@ -251,7 +289,7 @@ def nueva_temporada(S, volatilidad):
 
     # ---- Tribunal de Disciplina: avisos de la temporada al historial, descensos
     # administrativos (lo gravísimo: baja una categoría más) y quitas de puntos a cero
-    ligas_t = (S, SB, SF, SPB, SPC, S["reg"], S.get("copa", {}))
+    ligas_t = (S, SB, SF, *([SFB] if SFB else []), SPB, SPC, S["reg"], S.get("copa", {}))
     S.setdefault("alertas_hist", [])
     for L in ligas_t:
         S["alertas_hist"] += [dict(a, temp=S["temp"]) for a in L.get("alertas", [])]
@@ -269,8 +307,11 @@ def nueva_temporada(S, volatilidad):
             sube = max((n for n in S["federal"] + S["primera_b"] if n != club), key=lambda n: S["rating"][n])
             (S["federal"] if sube in S["federal"] else S["primera_b"]).remove(sube)
             SB["nombres"].append(sube)
-        elif club in S["federal"]:                       # Federal A -> Regional
+        elif club in S["federal"]:                       # Federal A -> Federal B (o Regional si no hay Federal B)
             S["federal"].remove(club)
+            (S["federal_b"] if hay_fb else S["regional"]).append(club)
+        elif club in S["federal_b"]:                     # Federal B -> Regional
+            S["federal_b"].remove(club)
             S["regional"].append(club)
         elif club in S["primera_b"]:                     # Primera B -> Primera C
             S["primera_b"].remove(club)
@@ -284,7 +325,7 @@ def nueva_temporada(S, volatilidad):
         L["alertas"], L["quita"], L["desc_adm"] = [], {}, []
 
     for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"], S["primera_c"],
-                    S["regional"]):
+                    S["regional"], *([S["federal_b"]] if S["federal_b"] else [])):
         arr = np.array([S["rating"][n] for n in nombres])
         arr = arr + REVERSION * (arr.mean() - arr) + rng.normal(0, volatilidad, len(arr))
         arr = np.clip(arr, MIN_R, MAX_R)
@@ -304,7 +345,9 @@ def nueva_temporada(S, volatilidad):
     nueva_estructura(S)
     nueva_estructura_b(SB, rng, S)
     nueva_estructura_f(SF, rng, S)
-    
+    if S["federal_b"]:                                   # Federal B: se crea (la primera vez) o se renueva
+        nueva_liga_fb(S, rng)
+
     S["pb"]["nombres"] = list(S["primera_b"])
     S["pb"]["r"] = np.array([S["rating"][n] for n in S["pb"]["nombres"]])
     nueva_estructura_liga(S["pb"], rng, S, "pb")

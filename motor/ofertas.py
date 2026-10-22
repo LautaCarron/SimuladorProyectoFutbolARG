@@ -49,7 +49,7 @@ P_ASCENSO_BASE = 0.05      # chance diaria de que echen al DT (club que va bien)
 P_ASCENSO_MALA = 0.20      # ... que se suma, en escala, cuando al club le va mal
 
 CATEGORIAS = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-              "Promocional Amateur", "Regional Amateur"]
+              "Promocional Amateur", "Federal B", "Regional Amateur"]
 
 MENSAJES = {
     "primer_equipo": [
@@ -96,6 +96,8 @@ def ligas(S):
     }
     if S.get("pd"):
         out["Promocional Amateur"] = (S["pd"], S["pd"]["nombres"])
+    if S.get("fb") is not None:                      # Federal B (si se creó en el Modo dios)
+        out["Federal B"] = (S["fb"], S["fb"]["nombres"])
     out["Regional Amateur"] = (S["reg"], S["reg"]["nombres"])
     return out
 
@@ -131,7 +133,7 @@ def objetivo(cat, puesto, total, rol="primer_equipo"):
     q = puesto / max(total, 1)
     if q <= 0.25:
         return {"Primera División": "Pelear el título y clasificar a la Libertadores",
-                "Regional Amateur": "Ganar la región y subir al Federal A"}.get(cat, "Pelear el ascenso")
+                "Regional Amateur": "Ganar la región y ascender"}.get(cat, "Pelear el ascenso")
     if q <= 0.65:
         return "Terminar en mitad de tabla"
     return "Hacer una campaña digna" if cat in ("Promocional Amateur", "Regional Amateur") else "Evitar el descenso"

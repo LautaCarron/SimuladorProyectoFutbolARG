@@ -17,6 +17,7 @@ from ui.vista.mi_club import mi_club
 from ui.vista.partidos import (
     fechas_conocidas_b,
     fechas_conocidas_f,
+    fechas_conocidas_fb,
     fechas_conocidas_p,
     fechas_conocidas_pb,
     fechas_conocidas_pc,
@@ -25,6 +26,7 @@ from ui.vista.partidos import (
     marcador_html,
     partidos_fecha_b,
     partidos_fecha_f,
+    partidos_fecha_fb,
     partidos_fecha_p,
     partidos_fecha_pb,
     partidos_fecha_pc,
@@ -102,6 +104,12 @@ def vista_fixture(liga, region=None):
         total, jugadas = fechas_conocidas_pd(), SPD["fecha"]
         obtener, rotulo = partidos_fecha_pd, lambda n: f"Fecha {n}"
         extra = ""
+    elif liga == "fb":
+        SFB = st.session_state.S["fb"]
+        total, jugadas = fechas_conocidas_fb(), SFB["fecha"]
+        obtener, rotulo = partidos_fecha_fb, lambda n: rotulo_f(SFB, n)
+        extra = ("" if SFB["zonas2"] is not None else
+                 " · la fase 2 se arma al terminar la fase 1")
     elif liga == "reg":
         SREG = st.session_state.S["reg"]
         total, jugadas = fechas_conocidas_reg(), SREG["fecha"]
@@ -129,8 +137,8 @@ def vista_fixture(liga, region=None):
               args=(key, 1, total), disabled=elegida >= total)
     estado = chip("Jugada", "#16a34a") if elegida <= jugadas else (
         chip("Próxima fecha", "#2f7fd0") if elegida == jugadas + 1 else chip("Por jugar", "#64748b"))
-    liga_cal = {"p": "Primera División", "b": "Primera Nacional", "f": "Federal A", "pb": "Primera B",
-                "pc": "Primera C", "reg": "Regional Amateur"}.get(liga)
+    liga_cal = {"p": "Primera División", "b": "Primera Nacional", "f": "Federal A", "fb": "Federal B",
+                "pb": "Primera B", "pc": "Primera C", "reg": "Regional Amateur"}.get(liga)
     dia = dia_de(S, liga_cal, elegida) if liga_cal else None
     st.markdown(f'<div class="fx-head"><b style="font-size:1.05rem">{esc(rotulo(elegida))}</b>'
                 f'{estado}<span class="m-dia">{esc(texto_dia(dia)) if dia else ""}</span></div>',

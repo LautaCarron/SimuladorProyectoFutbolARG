@@ -10,7 +10,10 @@ Clasifican, como en la vida real, por lo hecho en la temporada anterior:
   * Federal A: los 20 de la Zona Campeonato y los 8 mejores de la Zona Descenso.
   * Primera B: los 12 primeros.
   * Primera C: los 10 primeros.
-  * Regional Amateur: los campeones de las 12 regiones.
+  * Regional Amateur: los campeones de las 12 regiones (si existe el Federal B, esos 12 cupos son de los 12 primeros
+    del Federal B).
+  * Cupos vacantes: los llenan los que siguen en el Federal A y la Primera B Metropolitana y, si no alcanzan, los de las
+    categorías inferiores.
 En la temporada 1 (no hay anterior) entran los de mejor media de cada liga. Si alguna liga no
 llega a su cupo (p. ej. una región sin campeón), el lugar lo ocupa el siguiente mejor de la
 Zona Descenso del Federal A.
@@ -44,7 +47,7 @@ COPA_CORTO = ["64avos", "32avos", "16avos", "Octavos", "Cuartos", "Semifinal", "
 COPA_LLAVES = "ABCDEFGH"
 COPA_EQUIPOS = 128
 _CATEGORIAS = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-               "Regional Amateur"]
+               "Federal B", "Regional Amateur"]
 
 
 def nueva_copa():
@@ -57,7 +60,15 @@ def ligas_terminadas(S):
     SB, SF, SPB, SPC, SR = S["b"], S["f"], S["pb"], S["pc"], S["reg"]
     return (primera_terminada(S) and SB["fecha"] >= total_b(SB) and SF["fecha"] >= SF["total"]
             and SPB["fecha"] >= SPB["total"] and SPC["fecha"] >= SPC["total"]
-            and SR["fecha"] >= SR["total"])
+            and SR["fecha"] >= SR["total"] and (S.get("fb") is None or S["fb"]["fecha"] >= S["fb"]["total"]))
+
+
+def _intercalar(colas):
+    """Mezcla las listas de a una: primero de cada una, después el segundo de cada una, etc."""
+    out = []
+    for k in range(max((len(c) for c in colas), default=0)):
+        out += [c[k] for c in colas if k < len(c)]
+    return out
 
 
 def clasificados_copa(S):
@@ -77,25 +88,32 @@ def clasificados_copa(S):
     sumar(SF, desc[:8], "Federal A", lambda k: f"Federal A · {k + 1}° Zona Descenso")
     sumar(SPB, tabla_pb(SPB)["id"].to_numpy()[:12], "Primera B", lambda k: f"Primera B · {k + 1}°")
     sumar(SPC, tabla_pc(SPC)["id"].to_numpy()[:10], "Primera C", lambda k: f"Primera C · {k + 1}°")
-    campeones = [(reg, SR["campeones"].get(reg)) for reg in REGIONES_REG]
-    for reg, c in campeones:
-        if c is not None:
-            lista.append((SR["nombres"][c], float(SR["r"][c]), "Regional Amateur", f"Campeón Regional {reg}"))
-    extra = 8
-    while len(lista) < COPA_EQUIPOS and extra < len(desc):      # cupos vacantes
-        sumar(SF, desc[extra:extra + 1], "Federal A", lambda k, e=extra: f"Federal A · {e + 1}° Zona Descenso")
-        extra += 1
-    # Si todavía faltan (p. ej. la Primera Nacional achicada en el Modo dios): los que siguen en la Primera B
-    # y en la Primera C
+    SFB = S.get("fb")
+    if SFB is not None and SFB.get("zonas2") is not None:     # con Federal B, los cupos del Regional pasan a ser suyos
+        orden_fb = [int(i) for z in range(2) for i in tabla_f_f2(SFB, z)["id"].to_numpy()]
+        for k, i in enumerate(orden_fb[:len(REGIONES_REG)]):
+            lista.append((SFB["nombres"][i], float(SFB["r"][i]), "Federal B", f"Federal B · {k + 1}°"))
+    else:
+        for reg in REGIONES_REG:
+            c = SR["campeones"].get(reg)
+            if c is not None:
+                lista.append((SR["nombres"][c], float(SR["r"][c]), "Regional Amateur", f"Campeón Regional {reg}"))
+    # Cupos vacantes (ligas achicadas en el Modo dios, regiones sin campeón): los llenan los que siguen en el Federal A y
+    # en la Primera B Metropolitana (uno de cada uno) y, si no alcanzan, los de las categorías inferiores
+    desc = tabla_f_f2(SF, 1)["id"].to_numpy()
     pb, pc = tabla_pb(SPB)["id"].to_numpy(), tabla_pc(SPC)["id"].to_numpy()
-    i_pb, i_pc = 12, 10
-    while len(lista) < COPA_EQUIPOS and (i_pb < len(pb) or i_pc < len(pc)):
-        if i_pb < len(pb):
-            sumar(SPB, pb[i_pb:i_pb + 1], "Primera B", lambda k, e=i_pb: f"Primera B · {e + 1}°")
-            i_pb += 1
-        if len(lista) < COPA_EQUIPOS and i_pc < len(pc):
-            sumar(SPC, pc[i_pc:i_pc + 1], "Primera C", lambda k, e=i_pc: f"Primera C · {e + 1}°")
-            i_pc += 1
+    colas = [
+        [(SF, desc[e:e + 1], "Federal A", f"Federal A · {e + 1}° Zona Descenso") for e in range(8, len(desc))],
+        [(SPB, pb[e:e + 1], "Primera B", f"Primera B · {e + 1}°") for e in range(12, len(pb))],
+    ]
+    inferiores = [(SPC, pc[e:e + 1], "Primera C", f"Primera C · {e + 1}°") for e in range(10, len(pc))]
+    if SFB is not None and SFB.get("zonas2") is not None:
+        inferiores += [(SFB, np.array([i]), "Federal B", f"Federal B · {k + 1}°")
+                       for k, i in enumerate(orden_fb) if k >= len(REGIONES_REG)]
+    for L, ids, cat, crit in _intercalar(colas) + inferiores:
+        if len(lista) >= COPA_EQUIPOS:
+            break
+        sumar(L, ids, cat, lambda k, c=crit: c)
     # Si sobran (Primera o la B agrandadas en el Modo dios), se achica desde abajo: Federal A, Primera B y Primera C
     for cat in ("Federal A", "Primera B", "Primera C"):
         while len(lista) > COPA_EQUIPOS and any(e[2] == cat for e in lista):
@@ -132,7 +150,7 @@ CUPOS_DEFECTO = {"Primera División": 30, "Primera Nacional": 36, "Federal A": 2
 
 
 def _liga_de_criterio(criterio):
-    for liga in ("Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C"):
+    for liga in ("Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C", "Federal B"):
         if criterio.startswith(liga):
             return liga
     return "Regional Amateur"
@@ -142,7 +160,11 @@ def cupos_copa(lista):
     """Cupos de la Copa Argentina de la temporada según los clasificados reales `lista` [(club, cómo clasificó)]:
     [(liga, quiénes clasifican, cupos, cupos por defecto)] y el total. Cambia solo si cambian los cupos
     (p. ej. cuando se modifica la cantidad de equipos de Primera o de la B en el Modo dios)."""
-    por_liga = {liga: [c for _, c in lista if _liga_de_criterio(c) == liga] for liga in CUPOS_DEFECTO}
+    # Con Federal B, sus 12 cupos reemplazan a los del Regional Amateur
+    cupos = dict(CUPOS_DEFECTO)
+    if any(_liga_de_criterio(c) == "Federal B" for _, c in lista):
+        cupos = {("Federal B" if liga == "Regional Amateur" else liga): v for liga, v in cupos.items()}
+    por_liga = {liga: [c for _, c in lista if _liga_de_criterio(c) == liga] for liga in (*CUPOS_DEFECTO, "Federal B")}
     n = {liga: len(v) for liga, v in por_liga.items()}
     media = lambda liga: any("por media" in c for c in por_liga[liga])      # temporada 1: sin temporada anterior
     zc = sum("Zona Campeonato" in c for c in por_liga["Federal A"])
@@ -154,12 +176,13 @@ def cupos_copa(lista):
                       f"Los {zc} de Zona Campeonato y los {zd} mejores de Zona Descenso"),
         "Primera B": f"Los {n['Primera B']} " + ("de mejor media" if media("Primera B") else "primeros"),
         "Primera C": f"Los {n['Primera C']} " + ("de mejor media" if media("Primera C") else "primeros"),
+        "Federal B": f"Los {n['Federal B']} " + ("de mejor media" if media("Federal B") else "primeros"),
         "Regional Amateur": (f"El de mejor media de cada una de las {n['Regional Amateur']} regiones"
                              if media("Regional Amateur") else
                              f"El campeón de cada una de las {n['Regional Amateur']} regiones"),
     }
-    filas = [(liga, desc[liga], n[liga], CUPOS_DEFECTO[liga]) for liga in CUPOS_DEFECTO]
-    return filas, (sum(n.values()), sum(CUPOS_DEFECTO.values()))
+    filas = [(liga, desc[liga], n[liga], cupos[liga]) for liga in cupos]
+    return filas, (sum(n.values()), sum(cupos.values()))
 
 
 def categoria_actual(S):
@@ -169,6 +192,9 @@ def categoria_actual(S):
                    (S["pb"], "Primera B"), (S["pc"], "Primera C"), (S["reg"], "Regional Amateur")):
         for n, x in zip(L["nombres"], L["r"]):
             out[n] = (cat, float(x))
+    if S.get("fb") is not None:                          # Federal B (si se creó en el Modo dios)
+        for n, x in zip(S["fb"]["nombres"], S["fb"]["r"]):
+            out[n] = ("Federal B", float(x))
     return out
 
 
@@ -198,6 +224,12 @@ def sortear_copa(S, rng, lista=None):
     lista = lista or S.get("copa_clasif") or clasificados_inicial(S)
     actual = categoria_actual(S)
     lista = [(n, c) for n, c in lista if n in actual][:COPA_EQUIPOS]
+    # La llave necesita exactamente 128 clubes (64 cruces): si faltan (ligas achicadas en el Modo dios), entran los de
+    # mejor media que no clasificaron
+    if len(lista) < COPA_EQUIPOS:
+        ya = {n for n, _ in lista}
+        resto = sorted((x for x in actual.items() if x[0] not in ya), key=lambda x: -x[1][1])
+        lista += [(n, f"{cat} · por media") for n, (cat, _) in resto[:COPA_EQUIPOS - len(lista)]]
     SC["nombres"] = [n for n, _ in lista]
     SC["criterio"] = [c for _, c in lista]
     SC["origen"] = [actual[n][0] for n in SC["nombres"]]
