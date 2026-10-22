@@ -51,6 +51,8 @@ from ui.vista.partidos import (
     partidos_fecha_b,
     fechas_conocidas_f,
     partidos_fecha_f,
+    fechas_conocidas_fb,
+    partidos_fecha_fb,
     fechas_conocidas_pb,
     partidos_fecha_pb,
     fechas_conocidas_pc,

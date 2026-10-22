@@ -18,7 +18,7 @@ AMARILLO = "rgba(250, 204, 21, {a})"
 AMARILLO_BORDE = "#eab308"
 
 # categoría -> clave de la pestaña de Ligas
-CLAVE_LIGA = {"Primera División": "p", "Primera Nacional": "b", "Federal A": "f", "Regional Amateur": "reg",
+CLAVE_LIGA = {"Primera División": "p", "Primera Nacional": "b", "Federal A": "f", "Federal B": "fb", "Regional Amateur": "reg",
               "Primera B": "pb", "Primera C": "pc", "Promocional Amateur": "pd"}
 
 
@@ -175,7 +175,9 @@ def mi_zona(S, liga, fase1=False):
         if liga == "reg":
             SR = S["reg"]
             return SR["region_de"][SR["nombres"].index(club)] if club in SR["nombres"] else None
-        L = {"p": S, "b": S["b"], "f": S["f"]}[liga]
+        L = {"p": S, "b": S["b"], "f": S["f"], "fb": S.get("fb")}[liga]
+        if L is None:
+            return None
         if club not in L["nombres"]:
             return None
         if liga == "p":

@@ -61,7 +61,7 @@ COLOR_COMP = [
     ("Campeonato", "#16a34a"), ("Intermedia", "#d97706"), ("Descenso", "#dc2626"),
     ("Zona A", "#4f46e5"), ("Zona B", "#0891b2"), ("Octavos", "#2563eb"),
     ("Cuartos", "#1d4ed8"), ("Semifinal", "#7c3aed"), ("Final", "#b7860b"),
-    ("Promoción", "#9333ea"), ("Fase 1", "#475569"), ("Federal A", "#b45309"),
+    ("Promoción", "#9333ea"), ("Fase 1", "#475569"), ("Federal A", "#b45309"), ("Federal B", "#a16207"),
     ("Primera B", "#0369a1"),
     ("Primera División", "#1e5aa8"), ("Primera Nacional", "#0f766e"),
     ("Regional Amateur", "#0e7490"), ("Región", "#0e7490"),

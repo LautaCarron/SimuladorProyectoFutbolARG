@@ -21,15 +21,20 @@ def _mov_clubes(items):
 def movimientos_html(mv):
     """Cambios de categoría ordenados por liga (de Primera para abajo): quién sube y quién baja de cada una."""
     g = mv.get
-    ligas = [
+    ligas = ([
         ("Primera División", "Primera División", [], [("la B Nacional", [(n, "") for n in g("bajan_p", [])])]),
         ("Primera Nacional", "Primera Nacional",
          [("Primera", [(n, "directo") for n in g("directos", [])]
            + ([(g("reducido"), "reducido")] if g("reducido") else []))],
          [("el Federal A", [(n, "") for n in g("bajan_b_fed", [])]),
           ("la Primera B", [(n, "") for n in g("bajan_b_pb", [])])]),
-        ("Federal A", "Federal A", [("la B Nacional", [(n, "") for n in g("suben_f_b", [])])],
-         [("el Regional", [(n, region_regional(n)) for n in g("bajan_fed_reg", [])])]),
+        ("Federal A", "Federal A",
+         [("la B Nacional", [(n, "") for n in g("suben_f_b", [])])],
+         [("el Federal B", [(n, "") for n in g("bajan_fed_fb", [])]),
+          ("el Regional", [(n, region_regional(n)) for n in g("bajan_fed_reg", [])])])]
+        + ([("Federal B", "Federal B", [("el Federal A", [(n, "") for n in g("suben_fb_f", [])])],
+             [("el Regional", [(n, region_regional(n)) for n in g("bajan_fb_reg", [])])])] if g("fb_activa") else [])
+        + [
         ("Primera B Metropolitana", "Primera B", [("la B Nacional", [(n, "") for n in g("suben_pb_b", [])])],
          [("la Primera C", [(n, "") for n in g("bajan_pb_pc", [])])]),
         ("Primera C", "Primera C", [("la Primera B", [(n, "") for n in g("suben_pc_pb", [])])],
@@ -37,8 +42,10 @@ def movimientos_html(mv):
         ("Promocional Amateur", "Promocional Amateur", [("la Primera C", [(n, "") for n in g("suben_pd_pc", [])])], []),
         ("Regional Amateur", "Regional Amateur",
          [("el Federal A", [(n, "final regional") for n in g("suben_reg_fed", [])]
-           + [(n, "reubicación") for n in g("suben_reg_fed_extra", [])])], []),
-    ]
+           + [(n, "reubicación") for n in g("suben_reg_fed_extra", [])]),
+          ("el Federal B", [(n, "final regional") for n in g("suben_reg_fb", [])]
+           + [(n, "reubicación") for n in g("suben_reg_fb_extra", [])])], []),
+    ])
     tarjetas = ""
     for titulo, logo, suben, bajan in ligas:
         filas = ""
@@ -90,8 +97,11 @@ def render(ctx):
             seccion("Historial", "Campeones de cada temporada y rankings históricos", "#b7860b")
 
             if S["campeones"]:
-                ligas_c = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                           "Promocional Amateur", "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
+                ligas_c = ["Primera División", "Primera Nacional", "Federal A"]
+                if any("Federal B" in x for x in S["campeones"]) or S.get("fb") is not None:
+                    ligas_c.append("Federal B")                  # la columna aparece recién cuando existe el Federal B
+                ligas_c += ["Primera B", "Primera C",
+                            "Promocional Amateur", "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
                 with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                     df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
                     st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
@@ -106,11 +116,14 @@ def render(ctx):
             # Palmarés histórico: títulos oficiales hasta 2025 (palmares.py) + los de las temporadas simuladas
             from datos.palmares import PALMARES
             st.markdown('<div class="mlab" style="margin-top:20px">Palmarés histórico · ligas</div>', unsafe_allow_html=True)
+            _ligas_pal = [("Primera División", "Primera División", "hist_primera"),
+                          ("Primera Nacional", "Primera Nacional", "hist_nacional"),
+                          ("Federal A", "Federal A", "hist_federal")]
+            if S.get("fb") is not None:                      # palmarés oculto hasta que se crea el Federal B
+                _ligas_pal.append(("Federal B", "Federal B", "hist_federalB"))
             st.markdown('<div class="pal-grid">' + "".join(
                 tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
-                for titulo, logo, clave in (("Primera División", "Primera División", "hist_primera"),
-                                            ("Primera Nacional", "Primera Nacional", "hist_nacional"),
-                                            ("Federal A", "Federal A", "hist_federal"),
+                for titulo, logo, clave in (*_ligas_pal,
                                             ("Primera B Metropolitana", "Primera B", "hist_pb"),
                                             ("Primera C Metropolitana", "Primera C", "hist_pc"),
                                             ("Promocional Amateur", "Promocional Amateur", "hist_pd"))) + '</div>',
@@ -127,6 +140,7 @@ def render(ctx):
                         unsafe_allow_html=True)
             st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
                        "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "
+                       "El Federal B suma desde que se crea en el Modo dios. "
                        "En verde (+n), los ganados en las temporadas simuladas. Tocá un club para ver su ficha.")
 
             if S["movimientos"]:

@@ -71,7 +71,8 @@ def render(ctx):
                 aviso("La Copa se sortea al empezar la temporada.")
                 _tabla_cupos(S.get("copa_clasif") or clasificados_inicial(S))
                 pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
-                                             ("Federal A", terminada_f), ("Primera B", terminada_pb),
+                                             ("Federal A", terminada_f), ("Federal B", ctx.terminada_fb),
+                                             ("Primera B", terminada_pb),
                                              ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
                 st.caption("Faltan terminar: " + ", ".join(pendientes))
             else:
@@ -107,7 +108,7 @@ def render(ctx):
                                           "Media": np.round(SC["r"], 1)})
                     df_cl["_o"] = df_cl["Liga"].map({x: k for k, x in enumerate(
                         ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-                         "Regional Amateur"])})
+                         "Federal B", "Regional Amateur"])})
                     df_cl = df_cl.sort_values(["_o", "Media"], ascending=[True, False]).drop(columns="_o")
                     st.markdown(tabla_html(df_cl, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
                 with tab_ca_t["Cupos"]:

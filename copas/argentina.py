@@ -44,7 +44,7 @@ COPA_CORTO = ["64avos", "32avos", "16avos", "Octavos", "Cuartos", "Semifinal", "
 COPA_LLAVES = "ABCDEFGH"
 COPA_EQUIPOS = 128
 _CATEGORIAS = ["Primera División", "Primera Nacional", "Federal A", "Primera B", "Primera C",
-               "Regional Amateur"]
+               "Federal B", "Regional Amateur"]
 
 
 def nueva_copa():
@@ -57,7 +57,7 @@ def ligas_terminadas(S):
     SB, SF, SPB, SPC, SR = S["b"], S["f"], S["pb"], S["pc"], S["reg"]
     return (primera_terminada(S) and SB["fecha"] >= total_b(SB) and SF["fecha"] >= SF["total"]
             and SPB["fecha"] >= SPB["total"] and SPC["fecha"] >= SPC["total"]
-            and SR["fecha"] >= SR["total"])
+            and SR["fecha"] >= SR["total"] and (S.get("fb") is None or S["fb"]["fecha"] >= S["fb"]["total"]))
 
 
 def clasificados_copa(S):
@@ -169,6 +169,9 @@ def categoria_actual(S):
                    (S["pb"], "Primera B"), (S["pc"], "Primera C"), (S["reg"], "Regional Amateur")):
         for n, x in zip(L["nombres"], L["r"]):
             out[n] = (cat, float(x))
+    if S.get("fb") is not None:                          # Federal B (si se creó en el Modo dios)
+        for n, x in zip(S["fb"]["nombres"], S["fb"]["r"]):
+            out[n] = ("Federal B", float(x))
     return out
 
 

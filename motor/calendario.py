@@ -13,7 +13,7 @@ Copa Argentina, como en la vida real.
 import datetime as dt
 
 from copas.registro import REGISTRO, por_nombre
-from motor.fechas import INICIO, anio, desde, dia_liga, total_liga
+from motor.fechas import INICIO, anio, desde, dia_liga, ligas_de, total_liga
 from copas.conmebol import listo, simular_ronda_int
 from ligas.federal import simular_fecha_f
 from ligas.nacional import simular_fecha_b, total_b
@@ -76,9 +76,9 @@ def proximos(S):
         pend["Primera División"] = S["fecha"] + 1
     if SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
         pend["Primera Nacional"] = SB["fecha"] + 1
-    for liga, L in (("Federal A", S["f"]), ("Primera B", S["pb"]), ("Primera C", S["pc"]),
-                    ("Promocional Amateur", S["pd"]), ("Regional Amateur", S["reg"])):
-        if L["fecha"] < L["total"]:
+    for liga, L in (("Federal A", S["f"]), ("Federal B", S.get("fb")), ("Primera B", S["pb"]),
+                    ("Primera C", S["pc"]), ("Promocional Amateur", S["pd"]), ("Regional Amateur", S["reg"])):
+        if L is not None and L["fecha"] < L["total"]:
             pend[liga] = L["fecha"] + 1
     for comp in REGISTRO:
         n = comp.pendiente(S)
@@ -109,6 +109,8 @@ def jugar_proximo_dia(S, P, acumular=True):
                 simular_fecha_b(S, P)
             elif c == "Federal A":
                 simular_fecha_f(S["f"], P, S["rng"])
+            elif c == "Federal B":
+                simular_fecha_f(S["fb"], P, S["rng"])
             elif c == "Primera B":
                 simular_fecha_liga(S["pb"], P, S["rng"], "Primera B", tabla_pb)
             elif c == "Primera C":

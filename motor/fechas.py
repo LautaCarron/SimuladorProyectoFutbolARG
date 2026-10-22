@@ -16,12 +16,18 @@ INICIO = {
     "Primera División": (1, 24, 6),     # domingos desde fines de enero
     "Primera Nacional": (2, 7, 5),      # sábados desde febrero
     "Federal A": (3, 14, 6),            # domingos desde marzo
+    "Federal B": (3, 14, 6),            # igual que el Federal A (sólo cuenta si se creó en el Modo dios: ver ligas_de)
     "Primera B": (2, 7, 5),             # sábados
     "Primera C": (2, 21, 5),            # sábados
     "Promocional Amateur": (3, 1, 5),   # sábados desde marzo
     "Regional Amateur": (6, 6, 6),      # domingos desde junio
 }
 FIN_TEMPORADA = (12, 13)                # las ligas terminan a más tardar a mediados de diciembre
+
+
+def ligas_de(S):
+    """Ligas que se juegan en esta partida (el Federal B existe sólo si se creó en el Modo dios)."""
+    return [liga for liga in INICIO if liga != "Federal B" or S.get("fb") is not None]
 
 
 def anio(S):
@@ -36,7 +42,8 @@ def desde(y, mes, dia, wd):
 def total_liga(S, liga):
     """Cantidad de fechas que tiene hoy la liga (con sus desempates, si los hubo)."""
     return {"Primera División": lambda: total_primera(S), "Primera Nacional": lambda: total_b(S["b"]),
-            "Federal A": lambda: S["f"]["total"], "Primera B": lambda: S["pb"]["total"],
+            "Federal A": lambda: S["f"]["total"], "Federal B": lambda: S["fb"]["total"],
+            "Primera B": lambda: S["pb"]["total"],
             "Primera C": lambda: S["pc"]["total"], "Promocional Amateur": lambda: S["pd"]["total"],
             "Regional Amateur": lambda: S["reg"]["total"]}[liga]()
 

@@ -7,8 +7,9 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 """
 
 import streamlit as st
-from datos.equipos import F_GRUPOS_NOMBRES, region_regional
-from ligas.federal import plan_de_f, simular_fecha_f, tabla_f_f2, tabla_f_grupo
+from datos.equipos import F_GRUPOS_NOMBRES, region_de, region_regional
+from ligas.federal import F_DESC, plan_de_f, simular_fecha_f, tabla_f_f2, tabla_f_grupo
+from ligas.federal_b import destino_descenso_federal_a
 from ui.vista import (
     COLORES_F,
     LEY_F,
@@ -32,11 +33,24 @@ from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zo
 
 
 def render(ctx):
-    (P, S, SF, _abierta, editar_medias, html_tabla_liguilla, pct_f, tab_f, tab_ligas, terminada_f) = (
-        ctx.P, ctx.S, ctx.SF, ctx._abierta, ctx.editar_medias, ctx.html_tabla_liguilla, ctx.pct_f,
-        ctx.tab_f, ctx.tab_ligas, ctx.terminada_f)
+    """Federal A."""
+    render_liga_f(ctx, ctx.SF, ctx.tab_f, ctx.terminada_f, ctx.pct_f, "f")
+
+
+def render_liga_f(ctx, SF, tab_f, terminada_f, pct_f, clave):
+    """Pestaña de una liga con formato Federal: el Federal A (clave "f") o el Federal B (clave "fb"). Es el mismo
+    formato (grupos por cercanía, zonas Campeonato y Descenso y reducido); sólo cambian el nombre, adónde suben
+    y adónde bajan."""
+    (P, S, _abierta, editar_medias, html_tabla_liguilla, tab_ligas) = (
+        ctx.P, ctx.S, ctx._abierta, ctx.editar_medias, ctx.html_tabla_liguilla, ctx.tab_ligas)
+    nombre = SF.get("liga", "Federal A")                      # "Federal A" o "Federal B"
+    es_b = nombre == "Federal B"
+    sube_a = "el Federal A" if es_b else "la Primera Nacional"            # adónde asciende
+    sube_a_txt = "Federal A" if es_b else "B Nacional"
+    baja_a = "Regional Amateur" if es_b else destino_descenso_federal_a(S)  # adónde desciende
+    n_desc = SF.get("desc_n", F_DESC)                         # cuántos descienden
     # ============================================================================
-    # FEDERAL A
+    # FEDERAL A / FEDERAL B
     # ============================================================================
     if _abierta(tab_ligas, tab_f):
         with tab_f:
@@ -52,13 +66,13 @@ def render(ctx):
                 fase_txt_f = "Terminada"
 
             c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
-            c1.markdown(chip(f"Federal A · {len(nom_f)} equipos") + " " +
+            c1.markdown(chip(f"{nombre} · {len(nom_f)} equipos") + " " +
                         chip(f"Fase {fase_txt_f}", "#475569"), unsafe_allow_html=True)
-            if c2.button(":material/skip_next: Próxima fecha", key="f_next", width="stretch", type="primary",
+            if c2.button(":material/skip_next: Próxima fecha", key=f"{clave}_next", width="stretch", type="primary",
                          disabled=terminada_f):
                 simular_fecha_f(SF, P, S["rng"])
                 st.rerun()
-            if c3.button(":material/fast_forward: Hasta el final", key="f_all", width="stretch", disabled=terminada_f):
+            if c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch", disabled=terminada_f):
                 while SF["fecha"] < SF["total"]:
                     simular_fecha_f(SF, P, S["rng"])
                 st.rerun()
@@ -74,8 +88,10 @@ def render(ctx):
                 d_f = pr["directos"]
                 directos_txt = (f"los primeros {d_f} ascendieron directo" if d_f > 1 else
                                 "el campeón ascendió directo" if d_f == 1 else "nadie asciende directo")
-                aviso(f"Terminó la fase 2: {directos_txt} a la B Nacional y los 6 últimos "
-                      "de Zona Descenso bajan al Regional Amateur. "
+                desc_txt = (f"los {n_desc} últimos de Zona Descenso bajan al {baja_a}" if n_desc > 1 else
+                            f"el último de Zona Descenso baja al {baja_a}" if n_desc == 1 else
+                            "nadie desciende")
+                aviso(f"Terminó la fase 2: {directos_txt} a la {sube_a_txt} y {desc_txt}. "
                       + ("Mirá el cuadro del reducido en la pestaña <b>Reducido</b>." if pr["reducido"] else
                          "No hay reducido: no hay más ascensos."))
 
@@ -90,14 +106,20 @@ def render(ctx):
             with tab_f["Posiciones"]:
                 mi_zona = zona_federal(SF, mi_club())          # modo manager: zona de mi club (o None)
                 if ff < SF["f1_rondas"]:
-                    seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · pasan los 4 primeros de "
-                            "cada grupo", "#4f46e5")
+                    cuota_f, extra_f = SF["cuota"][0], SF.get("extra", 0)
+                    pasan_txt = (f"pasan los {cuota_f} mejores de cada grupo" +
+                                 (f" y los {extra_f} mejores {cuota_f + 1}° " if extra_f > 1 else
+                                  f" y el mejor {cuota_f + 1}° " if extra_f == 1 else " ") +
+                                 f"a la Zona Campeonato ({cuota_f * len(SF['grupos']) + extra_f} equipos)")
+                    seccion("Fase 1 · Grupos por cercanía", "Ida y vuelta · " + pasan_txt, "#4f46e5")
                     etiq, ini = marcar(list(F_GRUPOS_NOMBRES), mi_zona)
                     tabs_f = tabs_con_default(etiq, ini)
                     for g, tab in enumerate(tabs_f):
                         with tab:
                             mostrar_tabla(tabla_f_grupo(SF, g), colorear_f, SF["pos_hist"])
-                    leyenda([("1°-4° → Zona Campeonato", COLORES_F["→ Zona Campeonato"])])
+                    leyenda([(f"Primeros {cuota_f} de cada grupo → Zona Campeonato", COLORES_F["→ Zona Campeonato"])] +
+                            ([(f"Mejores {cuota_f + 1}° (por puntos por partido) completan la Zona Campeonato",
+                               COLORES_F["→ Zona Campeonato"])] if extra_f else []))
                 else:
                     seccion("Fase 2 · Zonas", "Puntos reiniciados a 0 · una rueda por zona", "#16a34a")
                     etiq, ini = marcar(["Campeonato", "Descenso", "Fase 1"], mi_zona)
@@ -114,11 +136,11 @@ def render(ctx):
                     leyenda(LEY_F)
             
                 if ff == 0 and not modo_manager():               # en modo manager no se tocan las medias
-                    with st.expander(":material/tune: Editar medias internas de esta temporada (Federal A)"):
-                        SF["r"] = editar_medias(nom_f, SF["r"], f"editor_f_{S['temp']}")
+                    with st.expander(":material/tune: Editar medias internas de esta temporada ({nombre})"):
+                        SF["r"] = editar_medias(nom_f, SF["r"], f"editor_{clave}_{S['temp']}")
                 
             with tab_f["Fixture y resultados"]:
-                vista_fixture("f")
+                vista_fixture(clave)
         
             def partidos_desempate_f(info):
                 grupos_f = {}
@@ -154,8 +176,8 @@ def render(ctx):
                                 f"{'n' if desempate_fd['salvados'] > 1 else ''} {desempate_fd['salvados']}",
                                 "#9333ea")
                         partidos_desempate_f(desempate_fd)
-                        st.caption("Partido único en cancha neutral (penales si empatan). Los 6 últimos bajan "
-                                   "al Regional Amateur.")
+                        st.caption(f"Partido único en cancha neutral (penales si empatan). "
+                                   f"Los {n_desc} últimos bajan al {baja_a}.")
 
             with tab_f["Reducido"]:
                 pr = plan_de_f(SF)
@@ -179,18 +201,19 @@ def render(ctx):
                 render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
         
             with tab_f["Definiciones"]:
-                seccion("Definiciones de la temporada", "Campeón y ascensos a la Primera Nacional",
+                seccion("Definiciones de la temporada", f"Campeón y ascensos a {sube_a}",
                         "#b7860b")
                 if SF["campeon"] is None:
-                    aviso("Las definiciones aparecen acá cuando termina la fase 2 del Federal A.")
+                    aviso(f"Las definiciones aparecen acá cuando termina la fase 2 del {nombre}.")
                 else:
                     st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
-                    with st.expander(":material/emoji_events: Campeón del Federal A", expanded=False):
+                    with st.expander(f":material/emoji_events: Campeón del {nombre}", expanded=False):
                         cf = nom_f[SF["campeon"]]
                         st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
                                     f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
-                                    f'<div class="nm">{esc(cf)}</div><div class="s">Asciende a la Primera'
-                                    f' Nacional</div></div>', unsafe_allow_html=True)
+                                    f'<div class="nm">{esc(cf)}</div><div class="s">Asciende '
+                                    f'{"al Federal A" if es_b else "a la Primera Nacional"}</div></div>',
+                                    unsafe_allow_html=True)
                         if SF.get("desempate_camp"):
                             dc = SF["desempate_camp"]
                             st.markdown(f'<div class="mlab" style="margin-top:14px">Título definido por '
@@ -205,8 +228,10 @@ def render(ctx):
                             '' if SF["asc_reducido"] is not None or not plan_de_f(SF)["reducido"] else
                             '<div style="font-size:.8rem;opacity:.65">El último ascenso sale del '
                             'reducido.</div>'), unsafe_allow_html=True)
-                    with st.expander(":material/south: Descensos al Regional Amateur", expanded=False):
-                        st.markdown('<div class="mlab">Descienden los 6 últimos de Zona Descenso (a la región '
-                                    'de su provincia)</div>'
-                                    + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]))
+                    with st.expander(f":material/south: Descensos al {baja_a}", expanded=False):
+                        a_regional = baja_a == "Regional Amateur"
+                        st.markdown(f'<div class="mlab">Descienden los {n_desc} últimos de Zona Descenso'
+                                    + (' (a la región de su provincia)' if a_regional else '') + '</div>'
+                                    + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]) if a_regional
+                                                          else region_de(nom_f[i]))
                                                           for i in SF["descendidos"]]), unsafe_allow_html=True)

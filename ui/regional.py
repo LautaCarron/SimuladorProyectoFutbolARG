@@ -31,6 +31,8 @@ def render(ctx):
     (P, S, SR, _abierta, editar_medias, html_tabla_liguilla, pct_reg, tab_ligas, tab_reg, terminada_reg) = (
         ctx.P, ctx.S, ctx.SR, ctx._abierta, ctx.editar_medias, ctx.html_tabla_liguilla, ctx.pct_reg,
         ctx.tab_ligas, ctx.tab_reg, ctx.terminada_reg)
+    from ligas.federal_b import destino_ascenso_regional
+    sube = destino_ascenso_regional(S)                  # "Federal A" (o "Federal B" si existe)
     # ============================================================================
     # TORNEO REGIONAL AMATEUR
     # ============================================================================
@@ -38,7 +40,7 @@ def render(ctx):
         with tab_reg:
             c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
             c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
-                        + chip("12 regiones · 6 ascensos al Federal A", "#475569"), unsafe_allow_html=True)
+                        + chip(f"12 regiones · 6 ascensos al {sube}", "#475569"), unsafe_allow_html=True)
             if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
                          disabled=terminada_reg):
                 simular_fecha_reg(SR, P, S["rng"])
@@ -125,13 +127,13 @@ def render(ctx):
 
             with tab_r["Final por el ascenso"]:
                 seccion("Final por el ascenso", "Los 12 campeones regionales se cruzan de a pares, a ida y "
-                        "vuelta · los 6 ganadores ascienden al Federal A", "#b7860b")
+                        f"vuelta · los 6 ganadores ascienden al {sube}", "#b7860b")
                 campeones_ya = [(SR["nombres"][c], reg) for reg, c in SR["campeones"].items() if c is not None]
                 if not campeones_ya:
                     aviso("Los cruces se completan con los campeones de cada región.")
                 st.markdown(finales_reg_html(SR), unsafe_allow_html=True)
                 if SR["ascendidos"]:
-                    st.markdown('<div class="mlab up">▲ Ascienden al Federal A</div>'
+                    st.markdown(f'<div class="mlab up">▲ Ascienden al {sube}</div>'
                                 + lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
                                                       for i in SR["ascendidos"]]), unsafe_allow_html=True)
 
@@ -139,7 +141,7 @@ def render(ctx):
                 render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
 
             with tab_r["Definiciones"]:
-                seccion("Definiciones de la temporada", "Campeones regionales y ascensos al Federal A", "#b7860b")
+                seccion("Definiciones de la temporada", f"Campeones regionales y ascensos al {sube}", "#b7860b")
                 if not any(c is not None for c in SR["campeones"].values()):
                     aviso("Las definiciones aparecen acá cuando termina la liga de cada región.")
                 else:
@@ -148,6 +150,6 @@ def render(ctx):
                                                         SR["campeones"].items() if c is not None]),
                                     unsafe_allow_html=True)
                     if SR["ascendidos"]:
-                        with st.expander(":material/arrow_upward: Ascensos al Federal A", expanded=False):
+                        with st.expander(f":material/arrow_upward: Ascensos al {sube}", expanded=False):
                             st.markdown(lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
                                                             for i in SR["ascendidos"]]), unsafe_allow_html=True)

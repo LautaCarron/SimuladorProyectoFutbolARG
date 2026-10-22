@@ -7,6 +7,7 @@ LOGOS = {
     "Primera División": "https://a.espncdn.com/i/leaguelogos/soccer/500/1.png",
     "Primera Nacional": "https://assets.football-logos.cc/logos/argentina/700x700/primera-nacional.b9471424.png",
     "Federal A": "https://api.promiedos.com.ar/images/league/fahi/1",
+    "Federal B": "https://api.promiedos.com.ar/images/league/fahi/1",     # mismo escudo que el Federal A (cambialo si tenés el del B)
     "Primera B": "https://assets.football-logos.cc/logos/argentina/700x700/primera-b-metropolitana.bee87767.png",
     "Primera C": "https://api.promiedos.com.ar/images/league/ffjb/1",
     "Regional Amateur": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRseADn79McS3QsDbMFi-atkrcnARcxmyS1DMFyser3Og&s=10",
