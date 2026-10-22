@@ -1,6 +1,6 @@
 """Pestañas Ligas · Primera B, Primera C y Promocional Amateur.
 
-Las tres son ligas ida y vuelta con la misma pantalla (barra de estado, posiciones, fixture, desempates,
+Las tres son ligas todos contra todos (ida y vuelta hasta 24 equipos, una vuelta desde 25) con la misma pantalla (barra de estado, posiciones, fixture, desempates,
 movimientos y definiciones). Antes eran tres bloques casi idénticos; ahora hay una sola función y cada
 liga solo declara lo que cambia (nombre, estado, tabla, leyenda y textos) en LIGAS.
 `ctx` trae el estado y los ayudantes compartidos de la interfaz (S, P, las pestañas, terminada_*, etc.).
@@ -8,7 +8,7 @@ liga solo declara lo que cambia (nombre, estado, tabla, leyenda y textos) en LIG
 
 import streamlit as st
 
-from ligas.simples import plan_de, simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from ligas.simples import formato_simple, plan_de, simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
 from ui.vista.mi_club import modo_manager
 from ui.vista.cuadros import bracket_html_simple
 from ui.vista import (
@@ -36,21 +36,21 @@ _VIOLETA = "rgba(147, 51, 234, 0.3)"       # desempate por la permanencia
 LIGAS = [
     dict(clave="pb", nombre="Primera B", estado="SPB", tab="tab_pb", terminada="terminada_pb",
          tabla=tabla_pb, colorear=colorear_pb, chip_color=None,
-         sub_posiciones="Ida y vuelta · ascienden los 2 primeros, del 18° para abajo descienden",
+         sub_posiciones="ascienden los 2 primeros, del 18° para abajo descienden",
          leyenda=[("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]),
                   ("Desempate Campeonato / Ascenso", _NARANJA), ("Desempate Permanencia", _VIOLETA),
                   ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])],
          sub_definiciones="Campeón, ascensos y descensos", expander_campeon="Campeón de la Primera B"),
     dict(clave="pc", nombre="Primera C", estado="SPC", tab="tab_pc", terminada="terminada_pc",
          tabla=tabla_pc, colorear=colorear_pc, chip_color=None,
-         sub_posiciones="Ida y vuelta · ascienden los 2 primeros",
+         sub_posiciones="ascienden los 2 primeros",
          leyenda=[("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"]),
                   ("Desempate Campeonato / Ascenso", _NARANJA), ("Desempate Permanencia", _VIOLETA),
                   ("18° o peor Descenso al Promocional", COLORES_B["Desciende"])],
          sub_definiciones="Campeón y ascensos", expander_campeon="Campeón de la Primera C"),
     dict(clave="pd", nombre="Promocional Amateur", estado="SPD", tab="tab_pd", terminada="terminada_pd",
          tabla=tabla_pd, colorear=colorear_pd, chip_color="#0369a1",
-         sub_posiciones="Ida y vuelta · ascienden los 2 primeros",
+         sub_posiciones="ascienden los 2 primeros",
          leyenda=[("1°-2° Ascenso a Primera C", COLORES_B["Ascenso directo"]),
                   ("Desempate Campeonato / Ascenso", _NARANJA)],
          sub_definiciones="Campeón y ascensos", expander_campeon="Campeón del Promocional Amateur"),
@@ -74,7 +74,7 @@ def _textos(k, plan, n):
         partes.append(f"del {n - ds + 1}° para abajo descienden")
         ley += [("Desempate Permanencia", _VIOLETA),
                 (f"{n - ds + 1}° o peor Descenso a {BAJA_A[k]}", COLORES_B["Desciende"])]
-    return "Ida y vuelta · " + ", ".join(partes), ley
+    return formato_simple(n) + " · " + ", ".join(partes), ley
 
 
 def render(ctx):
@@ -106,7 +106,7 @@ def _render_liga(ctx, cfg):
             st.rerun()
 
         pct = 100 * L["fecha"] / L["total"] if L["total"] else 0
-        barra_estado([("Fase", "Liga ida y vuelta"), ("Fecha", f"{L['fecha']} / {L['total']}"),
+        barra_estado([("Fase", "Liga " + formato_simple(len(L["nombres"])).lower()), ("Fecha", f"{L['fecha']} / {L['total']}"),
                       ("Partidos jugados", len(L["log"]))], pct)
 
         desempates = [p for p in L["log"] if p["rotulo"] == "Desempate"]

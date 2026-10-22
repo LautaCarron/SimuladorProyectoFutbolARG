@@ -1,4 +1,5 @@
-"""Primera B, Primera C y Promocional Amateur: ligas ida y vuelta con la misma mecánica.
+"""Primera B, Primera C y Promocional Amateur: todos contra todos con la misma mecánica (ida y vuelta con 24 equipos
+o menos, una sola vuelta con 25 o más).
 """
 
 import math
@@ -41,6 +42,18 @@ def cfg_simple(S, clave):
     c.setdefault("reducido", False)
     c.setdefault("red_equipos", 4)
     return c
+
+
+IDA_VUELTA_MAX_SIMPLE = 24                  # con 24 equipos o menos: ida y vuelta; con 25 o más: una sola vuelta
+
+
+def hay_vuelta(n):
+    """True si la liga de n equipos se juega ida y vuelta (24 o menos); con 25 o más es una sola vuelta."""
+    return n <= IDA_VUELTA_MAX_SIMPLE
+
+
+def formato_simple(n):
+    return "Ida y vuelta" if hay_vuelta(n) else "Una sola vuelta"
 
 
 def desc_auto(n):
@@ -96,7 +109,8 @@ def nueva_estructura_liga(S_LIGA, rng, S=None, clave=None):
     S_LIGA["red"], S_LIGA["bracket"], S_LIGA["asc_reducido"], S_LIGA["ascendidos"] = None, [], None, []
     base = generar_fixture(n)
     fechas = [[(int(a), int(b)) for a, b in pares] for pares in base]
-    fechas += [[(v, l) for l, v in fecha] for fecha in fechas] # Vuelta
+    if hay_vuelta(n):                                          # 24 equipos o menos: ida y vuelta
+        fechas += [[(v, l) for l, v in fecha] for fecha in fechas]
     S_LIGA["fechas"] = fechas
     S_LIGA["total"] = len(fechas)
     S_LIGA["fecha"] = 0
