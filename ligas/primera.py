@@ -16,6 +16,7 @@ from datos.equipos import N
 from ligas import apertura_clausura as ac
 from motor.incidentes import revisar_liga
 from motor.nucleo import (
+    DESC_LIGA_MIN,
     STATS,
     df_stats,
     fixture_revancha,
@@ -46,7 +47,7 @@ TOTAL_FECHAS = FECHAS_F1 + FECHAS_F2
 
 # Los valores de arriba son los de los 30 equipos de siempre. La cantidad de equipos de Primera puede cambiar
 # (Modo dios): lo que se usa en cada temporada sale de len(S["nombres"]) con estos ayudantes.
-PRIMERA_MIN, PRIMERA_MAX = 20, 48
+PRIMERA_MIN, PRIMERA_MAX = DESC_LIGA_MIN, 48     # como en las demás ligas: nunca menos de 14 equipos
 IDA_VUELTA_MAX = 24               # el torneo anual ida y vuelta sólo se puede jugar con 24 equipos o menos
 
 

@@ -29,7 +29,7 @@ _DIAS_CORTOS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"]
 # Copas CONMEBOL: (mes, a partir del día, día de la semana). Libertadores los martes,
 # Sudamericana los jueves, finales únicas un sábado de noviembre, Recopa en febrero.
 INT_DIAS = {
-    "Copa Libertadores": [(2, 17, 1), (2, 24, 1), (3, 3, 1), (3, 10, 1), (4, 7, 1), (4, 14, 1), (4, 21, 1),
+    "Copa Libertadores": [(2, 3, 1), (2, 10, 1), (2, 17, 1), (2, 24, 1), (3, 3, 1), (3, 10, 1), (4, 7, 1), (4, 14, 1), (4, 21, 1),
                           (5, 5, 1), (5, 19, 1), (5, 26, 1), (8, 11, 1), (8, 18, 1), (9, 15, 1), (9, 22, 1),
                           (10, 20, 1), (10, 27, 1), (11, 28, 5)],
     "Copa Sudamericana": [(4, 9, 3), (4, 16, 3), (4, 23, 3), (5, 7, 3), (5, 21, 3), (5, 28, 3), (7, 16, 3),

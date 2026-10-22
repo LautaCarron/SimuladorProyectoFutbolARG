@@ -31,7 +31,7 @@ from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
 
 
-VERSION_ESTADO = 17       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 18       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():

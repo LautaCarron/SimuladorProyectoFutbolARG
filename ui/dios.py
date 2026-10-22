@@ -161,16 +161,21 @@ def _titulo(nombre, detalle=None):
         st.caption(detalle)
 
 
-def _panel_primera(S, cfg, empezo, n_p, formatos):
+def _panel_primera(S, cfg, empezo, n_p, formatos, base_p):
     """Primera División: formato, descensos y promociones. Devuelve (descensos, promociones) elegidos."""
     with st.container(border=True):
         _titulo("Primera División")
         fmt = st.selectbox("Formato", formatos, format_func=FORMATOS.get, key="dios_formato",
                            index=formatos.index(cfg["formato"] if cfg["formato"] in formatos else formato_posible(cfg["formato"], n_p)))
-        k = st.slider("Descienden a la B", 0, DESCENSOS_MAX, int(cfg["descensos"]), key="dios_k",
+        k_max = tope_descensos(base_p, DESCENSOS_MAX)      # Primera no puede quedar con menos de DESC_LIGA_MIN equipos
+        if st.session_state.get("dios_k", 0) > k_max:         # el límite bajó: el valor guardado se ajusta
+            st.session_state["dios_k"] = k_max
+        k = st.slider("Descienden a la B", 0, max(1, k_max), min(k_max, int(cfg["descensos"])), key="dios_k",
+                      disabled=k_max == 0,
                       help="El puesto N-k juega la promoción contra el perdedor del reducido de la B. Cuántos suben de la B "
                            "se elige en la sección de la Primera Nacional (si no coinciden con los que bajan, "
                            "cambia la cantidad de equipos de Primera).")
+        st.caption(f"Máximo {k_max} descensos: Primera no puede quedar con menos de {DESC_LIGA_MIN} equipos.")
         pr = st.slider("Promociones", 0, PROMOS_MAX, int(cfg["promociones"]), key="dios_prom",
                        help="Series entre los de abajo de Primera y los mejores de la B: 0 (no hay), 1 o 2. "
                             "Suben los de la B que ganan, bajan los de Primera que pierden.")
@@ -355,9 +360,10 @@ def _panel_federal_a(S, f_ya, txt_f):
 def panel_dios(S):
     cfg = cfg_primera(S)
     empezo = S["fecha"] > 0 or bool(S["log"])
+    _d, _r, _ = asc_elegido(S, formato_efectivo(len(S["b"]["nombres"]), cfg_b(S)["formato"]))
+    base_p = len(S["nombres"]) + _d + int(_r)      # equipos de Primera antes de los descensos (con los ascensos de la B)
     if empezo:                       # equipos con los que se jugará la temporada que viene (según lo ya guardado)
-        _d, _r, _ = asc_elegido(S, formato_efectivo(len(S["b"]["nombres"]), cfg_b(S)["formato"]))
-        n_p = equipos_objetivo_p(S, len(S["nombres"]) + _d + int(_r) - int(cfg["descensos"]))
+        n_p = equipos_objetivo_p(S, base_p - int(cfg["descensos"]))
     else:
         n_p = len(S["nombres"])
     # el ida y vuelta sólo se puede elegir con IDA_VUELTA_MAX equipos o menos
@@ -371,7 +377,7 @@ def panel_dios(S):
         st.header("Modo dios")          # mismo estilo (h2) que "Parámetros de simulación", siempre desplegado
         st.caption("Cambiá los campeonatos. " + ("Primera ya empezó: lo que elijas rige desde la próxima temporada."
                                                   if empezo else "Primera no empezó: se aplica ahora mismo."))
-        k, pr = _panel_primera(S, cfg, empezo, n_p, formatos)
+        k, pr = _panel_primera(S, cfg, empezo, n_p, formatos, base_p)
         _panel_nacional(S, k, pr, b_ya, txt_b)
         _panel_federal_a(S, f_ya, txt_f)
         with st.container(border=True):

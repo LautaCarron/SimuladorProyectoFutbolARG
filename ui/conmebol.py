@@ -70,12 +70,17 @@ def render(ctx):
         t = dict(zip(titulos, st.tabs(titulos)))
         if es_lib:
             with t["Fase previa"]:
-                seccion("Fase previa", "Fase 2 (16 equipos) y Fase 3 (8) a ida y vuelta · los 4 que ganan la Fase 3 "
-                        "van a los grupos; los 4 que pierden, a la Sudamericana", color)
-                for fase in ("Fase 2", "Fase 3"):
-                    if C["llaves"].get(fase):
-                        st.markdown(f'<div class="mlab" style="margin-top:10px">{fase}</div>'
-                                    + series_int_html(C, fase), unsafe_allow_html=True)
+                seccion("Fase previa", "Fase 1 (12 equipos), Fase 2 (16: 10 directos + 6 de la Fase 1) y Fase 3 (8) a ida "
+                        "y vuelta · los 4 que ganan la Fase 3 van a los grupos; los 4 que pierden, a la Sudamericana",
+                        color)
+                fases_previa = ("Fase 1", "Fase 2", "Fase 3")
+                actual = max((i for i, f in enumerate(fases_previa) if C["llaves"].get(f)), default=0)
+                fase_sel = st.radio("Fase", fases_previa, index=actual, horizontal=True,
+                                    key=f"lib_fase_previa_{S['temp']}", label_visibility="collapsed")
+                if C["llaves"].get(fase_sel):
+                    st.markdown(series_int_html(C, fase_sel), unsafe_allow_html=True)
+                else:
+                    aviso(f"La {fase_sel} se arma cuando termina la fase anterior.")
         with t["Grupos"]:
             seccion("Fase de grupos", "8 grupos de 4 · ida y vuelta · " + (
                 "1° y 2° a octavos, 3° a la Sudamericana" if es_lib else "1° a octavos, 2° a los playoffs"), color)

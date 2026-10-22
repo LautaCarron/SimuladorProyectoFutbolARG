@@ -14,7 +14,8 @@ Clasifican por la temporada anterior (como en la vida real):
     (Libertadores), Lanús (Sudamericana) e Independiente Rivadavia (Copa Argentina).
 
 Formato:
-  * Libertadores: fase previa (Fase 2: 16 equipos; Fase 3: 8) a ida y vuelta; los 4 que ganan
+  * Libertadores: fase previa a ida y vuelta: Fase 1 (12 equipos; los 6 que ganan pasan a la Fase 2),
+    Fase 2 (16: los 6 de la Fase 1 + 10 que entran directo; pasan 8) y Fase 3 (8); los 4 que ganan
     la Fase 3 van a los grupos y los 4 que pierden, a los grupos de la Sudamericana. Grupos:
     8 de 4, ida y vuelta; 1° y 2° a octavos, 3° a los playoffs de la Sudamericana. Octavos,
     cuartos y semis a ida y vuelta (si el global empata, penales); final única en cancha neutral.
@@ -32,7 +33,7 @@ from motor.nucleo import jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_pen
 
 LIB, SUD, REC = "Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana"
 
-LIB_RONDAS = (["Fase 2 · ida", "Fase 2 · vuelta", "Fase 3 · ida", "Fase 3 · vuelta"]
+LIB_RONDAS = (["Fase 1 · ida", "Fase 1 · vuelta", "Fase 2 · ida", "Fase 2 · vuelta", "Fase 3 · ida", "Fase 3 · vuelta"]
               + [f"Grupos · fecha {k}" for k in range(1, 7)]
               + ["Octavos · ida", "Octavos · vuelta", "Cuartos · ida", "Cuartos · vuelta",
                  "Semifinal · ida", "Semifinal · vuelta", "Final"])
@@ -42,11 +43,16 @@ SUD_RONDAS = ([f"Grupos · fecha {k}" for k in range(1, 7)]
 REC_RONDAS = ["Ida", "Vuelta"]
 
 # Cupos de los otros países (Argentina sale de la tabla de Primera). Brasil absorbe la diferencia
-# para que siempre sean 28 en los grupos, 16 en la fase previa y 28 en la Sudamericana.
+# para que siempre sean 28 en los grupos, 12 en la Fase 1, 10 entrando directo a la Fase 2 (con el de Argentina)
+# y 28 en la Sudamericana.
 CUPOS_LIB_GRUPOS = {"Brasil": 6, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
                     "Ecuador": 2, "Bolivia": 2, "Venezuela": 2}
-CUPOS_LIB_PREVIA = {"Brasil": 1, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
-                    "Ecuador": 2, "Bolivia": 1, "Venezuela": 1}
+CUPOS_LIB_PREVIA = {"Brasil": 1, "Colombia": 2, "Paraguay": 1, "Perú": 1, "Chile": 1, "Uruguay": 1,
+                    "Ecuador": 2, "Bolivia": 0, "Venezuela": 0}      # entran directo a la Fase 2 (9 + 1 de Argentina)
+CUPOS_LIB_FASE1 = {"Brasil": 0, "Colombia": 1, "Paraguay": 1, "Perú": 2, "Chile": 2, "Uruguay": 1,
+                   "Ecuador": 1, "Bolivia": 2, "Venezuela": 2}      # los 12 de la Fase 1
+LIB_FASE3_FIN = LIB_RONDAS.index("Fase 3 · vuelta") + 1             # la Sudamericana espera a los que pierden la Fase 3
+LIB_GRUPOS_FIN = LIB_RONDAS.index("Grupos · fecha 6") + 1           # y a los 3° de los grupos
 CUPOS_SUD = {"Brasil": 6, "Colombia": 3, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
              "Ecuador": 2, "Bolivia": 2, "Venezuela": 2}
 GRUPOS = "ABCDEFGH"
@@ -91,6 +97,8 @@ def _reparto_argentino(orden, copa, temp, corrido=False):
     for k in ((5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15) if corrido else (5, 6, 7, 11, 12, 8, 9, 13, 14, 15)):   # 6°-8° y 12°-13° (si alguno ya entró, el que sigue)
         if len(sud) == 5:
             break
+        if k >= len(orden):               # Primera con pocos equipos (Modo dios): ese puesto no existe
+            continue
         n = orden[k]
         if n not in ya:
             sud.append((n, f"Primera {temp}: {pos[n]}°"))
@@ -180,10 +188,15 @@ def nuevas_internacionales(S, rng):
             lib_g.append((n, f"{pais} · grupos"))
             ya.add(n)
     lib_p = list(arg_p)
-    ext_p = _ajustar_cupos(CUPOS_LIB_PREVIA, 16 - len(lib_p))
+    ext_p = _ajustar_cupos(CUPOS_LIB_PREVIA, 10 - len(lib_p))
     for pais in PAISES:
         for n in _sortear_pais(rng, S, pais, ext_p[pais], ya):
-            lib_p.append((n, f"{pais} · fase previa"))
+            lib_p.append((n, f"{pais} · Fase 2"))
+            ya.add(n)
+    lib_f1 = []
+    for pais in PAISES:
+        for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya):
+            lib_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)
     sud = list(arg_s)
     ext_s = _ajustar_cupos(CUPOS_SUD, 28 - len(sud))
@@ -192,10 +205,11 @@ def nuevas_internacionales(S, rng):
             sud.append((n, f"{pais} · Sudamericana"))
             ya.add(n)
 
-    L = _copa(LIB, LIB_RONDAS, medias, lib_g + lib_p)
+    L = _copa(LIB, LIB_RONDAS, medias, lib_g + lib_p + lib_f1)
     L["directos"] = [n for n, _ in lib_g]
+    L["f2_directos"] = [n for n, _ in lib_p]               # entran directo a la Fase 2 (esperan a los de la Fase 1)
     L["cabeza"] = c.get("campeon_lib")
-    L["llaves"]["Fase 2"] = _cruces_bombos(rng, [n for n, _ in lib_p], L["r"])
+    L["llaves"]["Fase 1"] = _cruces_bombos(rng, [n for n, _ in lib_f1], L["r"])
     U = _copa(SUD, SUD_RONDAS, medias, sud)
     U["directos"] = [n for n, _ in sud]
     rec = [(c.get("campeon_lib"), "Campeón de la Libertadores"), (c.get("campeon_sud"), "Campeón de la Sudamericana")]
@@ -339,9 +353,9 @@ def listo(S, clave):
         return False
     if clave == "sud":
         L = S["int"]["lib"]
-        if C["ronda"] == 0 and L["ronda"] < 4:          # necesita los que pierden la Fase 3
+        if C["ronda"] == 0 and L["ronda"] < LIB_FASE3_FIN:          # necesita los que pierden la Fase 3
             return False
-        if C["ronda"] >= 5 and L["ronda"] < 10:         # necesita los 3° de los grupos
+        if C["ronda"] >= 5 and L["ronda"] < LIB_GRUPOS_FIN:         # necesita los 3° de los grupos
             return False
     return True
 
@@ -421,7 +435,10 @@ def _cierre_grupos(S, C, rng):
 
 def _cierre_serie(S, C, fase, rng):
     series = C["llaves"][fase]
-    if fase == "Fase 2":
+    if fase == "Fase 1":                              # los 6 que ganan se suman a los 10 que entran directo a la Fase 2
+        ganadores = [x["gana"] for x in series]
+        C["llaves"]["Fase 2"] = _cruces_bombos(rng, C["f2_directos"] + ganadores, C["r"])
+    elif fase == "Fase 2":
         ganadores = [x["gana"] for x in series]
         C["llaves"]["Fase 3"] = [_serie(*sorted(par, key=lambda n: -C["r"][n]))
                                  for par in zip(*[iter([str(x) for x in rng.permutation(ganadores)])] * 2)]
