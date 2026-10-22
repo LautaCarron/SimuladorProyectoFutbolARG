@@ -26,7 +26,7 @@ _CSS = """
 /* Mientras está la intro, lo de Streamlit queda escondido detrás */
 header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecoration"],
 [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] { display: none !important; }
-.st-key-afa_entrar, .st-key-afa_ir_manager { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
+.st-key-afa_entrar, .st-key-afa_ir_manager, .st-key-afa_ir_partidas { position: absolute !important; width: 1px; height: 1px; overflow: hidden;
   clip: rect(0 0 0 0); opacity: 0; pointer-events: none; }
 
 #afa-intro {
@@ -112,6 +112,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 #afa-intro .modo { position: relative; margin: 0; border-bottom: 1px solid var(--regla); opacity: 0; translate: 0 14px;
   animation: afa-subir .8s var(--ease-out) forwards; }
 #afa-intro .modo:nth-child(1) { animation-delay: 1.6s; } #afa-intro .modo:nth-child(2) { animation-delay: 1.72s; }
+#afa-intro .modo:nth-child(3) { animation-delay: 1.84s; }
 #afa-intro .modo-btn { width: 100%; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: center;
   padding: 22px 18px 22px 4px; background: none; border: 0; border-radius: 0; text-align: left; cursor: pointer;
   transition: padding .35s var(--ease-out); position: relative; isolation: isolate; }
@@ -230,7 +231,7 @@ _HTML = f"""
       <div class="firma"><span class="cinta" aria-hidden="true"><i></i><i></i><i></i></span><small>De la Primera al Regional Amateur</small></div>
     </div>
     <nav aria-label="Modos de juego">
-      <div class="modos-titulo"><span>Elegí un modo</span><span>2 modos</span></div>
+      <div class="modos-titulo"><span>Elegí un modo</span><span>2 modos · o seguí una partida</span></div>
       <ol class="modos">
         <li class="modo">
           <button class="modo-btn" id="afa-entrar" type="button">
@@ -252,6 +253,16 @@ _HTML = f"""
               <span class="estado" aria-live="polite"><i></i><span>Creá tu entrenador</span></span></span>
           </button>
         </li>
+        <li class="modo" id="afa-partida">
+          <button class="modo-btn" id="afa-entrar-partida" type="button">
+            <span class="num" aria-hidden="true">03</span>
+            <span><span class="modo-nombre">Cargar partida</span>
+              <span class="modo-desc">Retomá una partida guardada (archivo .afa) y seguí desde donde la dejaste, antes de simular nada.</span>
+              <span class="modo-cats">Simulador o Manager · se guarda todo: ligas, copas, calendario y carrera</span></span>
+            <span class="ir"><span class="accion">Cargar <span class="ico" data-sol="flecha"></span></span>
+              <span class="estado" aria-live="polite"><i></i><span>Elegí tu archivo</span></span></span>
+          </button>
+        </li>
       </ol>
     </nav>
   </section>
@@ -262,7 +273,8 @@ _HTML = f"""
 </main>
 """
 
-# "Entrar" y "Manager Falopa" aprietan su botón oculto de Streamlit (pasan al simulador o al manager).
+# "Entrar", "Manager Falopa" y "Cargar partida" aprietan su botón oculto de Streamlit (pasan al simulador, al
+# manager o al simulador con la pestaña Partidas abierta).
 # Los soles y los íconos (SVG) se dibujan desde acá porque st.html no deja pasar SVG.
 _JS = """
 <script>
@@ -279,17 +291,18 @@ _JS = """
   if (window.__afaIntro) return;
   window.__afaIntro = true;
   document.addEventListener('click', function (e) {
-    const t = e.target.closest && e.target.closest('#afa-entrar, #afa-entrar-manager');
+    const t = e.target.closest && e.target.closest('#afa-entrar, #afa-entrar-manager, #afa-entrar-partida');
     if (!t) return;
     e.preventDefault();
     const esManager = t.id === 'afa-entrar-manager';
+    const esPartida = t.id === 'afa-entrar-partida';
     const intro = document.getElementById('afa-intro');
     if (intro) {
       intro.classList.add('entrando');
       const est = t.querySelector('.estado span');
-      if (est) est.textContent = esManager ? 'Abriendo el manager…' : 'Abriendo el simulador…';
+      if (est) est.textContent = esManager ? 'Abriendo el manager…' : esPartida ? 'Abriendo tus partidas…' : 'Abriendo el simulador…';
     }
-    const b = boton(esManager ? 'afa_ir_manager' : 'afa_entrar');
+    const b = boton(esManager ? 'afa_ir_manager' : esPartida ? 'afa_ir_partidas' : 'afa_entrar');
     if (b) b.click();
   });
 })();
@@ -299,10 +312,18 @@ _JS = """
 
 def _entrar():
     st.session_state["afa_pantalla"] = "simulador"
+    st.session_state.pop("afa_tab_inicial", None)
 
 
 def _entrar_manager():
     st.session_state["afa_pantalla"] = "manager"
+    st.session_state.pop("afa_tab_inicial", None)
+
+
+def _entrar_partidas():
+    """Abre el simulador directo en la pestaña Partidas (ui/ui_guardado.py), para cargar una partida guardada."""
+    st.session_state["afa_pantalla"] = "simulador"
+    st.session_state["afa_tab_inicial"] = "Partidas"
 
 
 def _correr_js(js):
@@ -323,5 +344,6 @@ def mostrar_inicio():
     st.html(_CSS + _HTML)
     st.button("Entrar al simulador", key="afa_entrar", on_click=_entrar)
     st.button("Crear manager", key="afa_ir_manager", on_click=_entrar_manager)
+    st.button("Cargar partida", key="afa_ir_partidas", on_click=_entrar_partidas)
     _correr_js(_JS.replace("__SOLES__", json.dumps({"lleno": _SOL_LLENO, "linea": _SOL_LINEA, "flecha": _FLECHA, "candado": _CANDADO})))
     st.stop()

@@ -64,6 +64,10 @@ COPAS
   * Mundial de Clubes, cada 4 temporadas (copas/mundial.py).
   * Las copas por rondas se registran en copas/registro.py; el calendario de todo está en motor/calendario.py.
 
+PARTIDAS GUARDADAS: la pestaña "Partidas" (al lado de Historial) descarga la partida en un archivo .afa y la carga
+de nuevo (ui/ui_guardado.py y motor/guardado.py). También se puede cargar antes de empezar a simular, desde la
+pantalla de inicio ("Cargar partida").
+
 MODOS: Simulador, Manager (ui/manager.py, motor/ofertas.py, motor/eventos.py, motor/relaciones.py) y Modo dios
 (ui/dios.py). Las pestañas de la interfaz están en ui/ (las que repiten el nombre de un módulo de lógica llevan
 el prefijo ui_: ui/ui_conmebol.py, ui/ui_primera.py, etc.) y las piezas compartidas de dibujo en ui/vista/.
@@ -251,6 +255,8 @@ P = dict(sorpresa=sorpresa)
 if "S" not in st.session_state or st.session_state.S.get("version") != VERSION_ESTADO:
     st.session_state.S = crear_estado()
 S = st.session_state.S
+if _msg_partida := st.session_state.pop("afa_msg_partida", None):      # lo deja la pestaña Partidas al cargar
+    st.toast(_msg_partida, icon=":material/check_circle:")
 
 # Modo Manager: se muestra el simulador completo y se suma la pestaña "Manager" (oficina, mi club, carrera)
 modo_mgr = st.session_state.get("afa_pantalla") == "manager" or st.query_params.get("modo") == "manager"
@@ -441,13 +447,16 @@ def _inicial(etiquetas, claves):
 # Sólo se dibuja la pestaña abierta (on_change="rerun" + .open): antes se armaban las 6 ligas y
 # todas las copas en cada clic, la página pesaba más de 1 MB y el navegador se quedaba trabado.
 with st.container(key="menu_top"):
+    # "Cargar partida" en la pantalla de inicio deja afa_tab_inicial = "Partidas": se abre directo esa pestaña
+    _tab_ini = st.session_state.get("afa_tab_inicial")
     if modo_mgr:
-        tab_mgr, tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
-            ["Manager", "Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"],
-            key="tabs_top", on_change="rerun")
+        tab_mgr, tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h, tab_pa = tabs_con_default(
+            ["Manager", "Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial", "Partidas"],
+            _tab_ini, key="tabs_top", on_change="rerun")
     else:
-        tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h = st.tabs(
-            ["Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial"], key="tabs_top", on_change="rerun")
+        tab_ligas, tab_copas, tab_cal, tab_c, tab_av, tab_h, tab_pa = tabs_con_default(
+            ["Ligas", "Copas", "Calendario", "Clubes", "Avisos", "Historial", "Partidas"],
+            _tab_ini, key="tabs_top", on_change="rerun")
 if _sin_leer:                          # contador de avisos nuevos (globito rojo en la pestaña)
     st.markdown(f'<style>.st-key-menu_top>[data-testid="stTabs"]>div>[role="tablist"]>[role="tab"]:nth-child({6 if modo_mgr else 5})'
                 f'::after{{content:"{_sin_leer}";margin-left:6px;background:var(--lose);color:#fff;font-size:.66rem;'
@@ -567,8 +576,9 @@ from ui import ui_calendario
 from ui import clubes as ui_clubes
 from ui import avisos as ui_avisos
 from ui import historial as ui_historial
+from ui import ui_guardado
 from ui import manager as ui_manager
 
 ctx = SimpleNamespace(**{k: v for k, v in globals().items() if not k.startswith("__")})
-for _modulo in (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial):
+for _modulo in (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional, ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos, ui_historial, ui_guardado):
     _modulo.render(ctx)

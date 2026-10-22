@@ -24,6 +24,23 @@ resuelven solos al terminar cada temporada.
   plantel y economía (`ui/manager.py`, `motor/ofertas.py`, `motor/eventos.py`, `motor/relaciones.py`).
 * **Modo dios**: cambia formatos, descensos, ascensos y promociones de cada liga desde la barra lateral (`ui/dios.py`).
 
+### Guardar y cargar partidas
+
+La pestaña **Partidas** (al lado de Historial) descarga la partida en un archivo `.afa` y la vuelve a cargar:
+
+* **Guardar**: botón *Descargar partida*. El archivo incluye todo: ligas, copas, calendario, historial y, en modo
+  Manager, la carrera. Se puede ponerle un nombre.
+* **Cargar**: se elige el archivo `.afa`, se ve de qué partida se trata (temporada, día, modo, club) y se confirma.
+  Reemplaza la partida actual.
+* **Antes de empezar a simular**: la pantalla de inicio tiene la opción **Cargar partida**, que abre el simulador
+  directo en esa pestaña. En la web estática el simulador abre directo, así que la pestaña está a un clic.
+* Los archivos quedan en el dispositivo de cada persona (no en el servidor): andan igual en la PC, en Streamlit Cloud
+  y en la web estática, y nadie ve las partidas de otro.
+* Una partida solo se puede cargar en la misma versión de datos con la que se guardó (`VERSION_ESTADO` en
+  `motor/temporada.py`); si cambia la estructura del estado, las partidas viejas se rechazan con un aviso.
+* El formato está pensado para no depender de la versión de pandas / numpy y, al cargar, solo acepta tipos conocidos:
+  un `.afa` ajeno no puede ejecutar código (ver `motor/guardado.py`).
+
 ## Cómo ejecutarlo
 
 ```bash
@@ -48,6 +65,7 @@ motor/               Lógica de simulación pura (sin Streamlit)
   fechas.py            días de juego base de cada liga
   incidentes.py        suspensiones y sanciones
   ofertas.py, eventos.py, relaciones.py   modo Manager
+  guardado.py          formato .afa: guardar y cargar partidas
 ligas/               Una liga por módulo (formato, desempates, ascensos, cómo se juega cada fecha)
   primera.py, apertura_clausura.py, nacional.py, federal.py, federal_b.py, simples.py, regional.py
 copas/               Competencias por rondas y copas internacionales
@@ -58,6 +76,7 @@ copas/               Competencias por rondas y copas internacionales
                        SupercopaArgentina y MundialDeClubes)
 datos/               Solo datos (equipos, medias, escudos, palmarés, clubes del exterior)
 ui/                  Pestañas de la interfaz Streamlit; cada una expone render(ctx)
+  ui_guardado.py       pestaña Partidas (descargar / cargar)
   vista/               Piezas de dibujo compartidas (tablas, cuadros, fixture, ficha, CSS, calendario...)
 ```
 
@@ -89,4 +108,7 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
   `copas/registro.py` (hereda de `PorRondas` o de `Competencia`) y sumarla a `REGISTRO`.
 * **Cambiar planteles, medias o escudos**: `datos/equipos.py` (no tiene lógica).
 * **Una pestaña nueva**: crear `ui/ui_<nombre>.py` con `render(ctx)` y engancharla en `simuladorafa.py`.
-* **Cambió la estructura del estado guardado**: subir `VERSION_ESTADO` en `motor/temporada.py`.
+* **Cambió la estructura del estado guardado**: subir `VERSION_ESTADO` en `motor/temporada.py` (las partidas `.afa`
+  guardadas con la versión anterior dejan de poder cargarse).
+* **Un tipo nuevo dentro del estado** (algo que no sea número, texto, lista, diccionario, fecha, array o DataFrame):
+  sumarlo a `_PERMITIDOS` en `motor/guardado.py`, o no se va a poder cargar.
