@@ -11,6 +11,7 @@ rige desde la próxima temporada (los equipos se reacomodan en el pase de tempor
 """
 
 import streamlit as st
+from motor.nucleo import DESC_LIGA_MIN, tope_descensos
 from datos.equipos import N
 from ligas.federal import (F_DESC, F_DESC_MAX, F_DIRECTOS_MAX, F_RED_EQUIPOS_MAX, cfg_federal, nueva_estructura_f,
                            plan_reducido_f)
@@ -35,6 +36,19 @@ DETALLE = {
 }
 
 
+def _slider_desc(label, n, tope, valor, key, **kw):
+    """Slider de descensos con el límite de que la liga no quede con menos de DESC_LIGA_MIN (14) equipos: con 16 equipos
+    hasta 2, con 14 ninguno, con 22 o más el tope de la liga. Si el límite es 0 no hay slider y devuelve 0."""
+    lim = tope_descensos(n, tope)
+    if lim <= 0:
+        st.caption(f"{label}: sin descensos (con {n} equipos la liga quedaría con menos de {DESC_LIGA_MIN}).")
+        return 0
+    if st.session_state.get(key, 0) > lim:                  # el límite bajó: el valor guardado se ajusta
+        st.session_state[key] = lim
+    st.caption(f"Máximo {lim} (la liga no puede quedar con menos de {DESC_LIGA_MIN} equipos).")
+    return st.slider(label, 0, lim, min(lim, int(valor)), key=key, **kw)
+
+
 def _panel_simple(S, clave, nombre, sube_a, baja_a):
     """Primera B / Primera C: cuántos ascienden directo, cuántos descienden y si hay reducido por un ascenso más.
     Rige ahora si la liga no empezó; si no, desde la próxima temporada (los equipos se reacomodan en el pase)."""
@@ -47,9 +61,8 @@ def _panel_simple(S, clave, nombre, sube_a, baja_a):
     d0 = int(cfg["directos"])
     desc_ini = desc_auto(n) if cfg["descensos"] is None else int(cfg["descensos"])
     d = st.slider("Ascienden directo", 0, ASC_MAX, d0, key=f"dios_{clave}_directos")
-    ds = st.slider("Descienden", 0, DESC_MAX, min(DESC_MAX, desc_ini), key=f"dios_{clave}_desc",
-                   disabled=baja_a is None,
-                   help="Sin tocar: del 18° para abajo (según la cantidad de equipos).") if baja_a else 0
+    ds = _slider_desc("Descienden", n, DESC_MAX, desc_ini, f"dios_{clave}_desc",
+                      help="Sin tocar: del 18° para abajo (según la cantidad de equipos).") if baja_a else 0
     hay = st.checkbox("Reducido por un ascenso más", value=bool(cfg["reducido"]), key=f"dios_{clave}_reducido")
     m = st.slider("Equipos en el reducido", 2, RED_MAX, int(cfg["red_equipos"]), key=f"dios_{clave}_red",
                   disabled=not hay, help="Los que siguen a los ascendidos directos en la tabla final.")
@@ -111,8 +124,8 @@ def _panel_federal_b(S):
     m_b = st.slider("Equipos en el reducido", 2, tope_b, min(tope_b, int(cfg["red_equipos"])),
                     key="dios_fb_red_equipos", disabled=not hay_red,
                     help=f"Los que siguen a los ascendidos directos en la zona Campeonato (hasta {tope_b}).")
-    ds_b = st.slider("Descienden al Regional", 0, F_DESC_MAX, min(F_DESC_MAX, int(cfg["descensos"])),
-                     key="dios_fb_desc", help="Los últimos de la zona Descenso.")
+    ds_b = _slider_desc("Descienden al Regional", n_fb, F_DESC_MAX, cfg["descensos"], "dios_fb_desc",
+                        help="Los últimos de la zona Descenso.")
     pr = plan_reducido_f(d_b, hay_red, m_b, zona)
     suben = pr["directos"] + (1 if pr["reducido"] else 0)
     if pr["reducido"]:
@@ -245,9 +258,9 @@ def _panel_nacional(S, k, pr, b_ya, txt_b):
         st.divider()
         _sub("Descensos")
         desc_elegido = cfg_nac["descensos"]
-        desc_b = st.slider("Descienden de la B", 0, B_DESC_MAX,
-                           int(auto_desc if desc_elegido is None else desc_elegido), key="dios_b_desc",
-                           help="De 0 a 8 equipos bajan de la B al Federal A o a la Primera B. Si no lo tocás, se calcula "
+        desc_b = _slider_desc("Descienden de la B", n_b, B_DESC_MAX,
+                              auto_desc if desc_elegido is None else desc_elegido, "dios_b_desc",
+                              help="De 0 a 8 equipos bajan de la B al Federal A o a la Primera B. Si no lo tocás, se calcula "
                                 "según la cantidad de equipos (6 con 36).")
         plan_nuevo = plan_b(n_b, fmt_b, desc_b)
         st.caption(f"Bajan {plan_nuevo['desc']} al Federal A o a la Primera B.")
@@ -317,8 +330,8 @@ def _panel_federal_a(S, f_ya, txt_f):
         ph_red = st.empty()
         st.divider()
         _sub("Descensos")
-        ds_f = st.slider(f"Descienden al {destino}", 0, F_DESC_MAX, min(F_DESC_MAX, int(cfg_fed["descensos"])),
-                         key="dios_f_desc", help="Los últimos de la zona Descenso.")
+        ds_f = _slider_desc(f"Descienden al {destino}", n_f, F_DESC_MAX, cfg_fed["descensos"], "dios_f_desc",
+                            help="Los últimos de la zona Descenso.")
         pr_f = plan_reducido_f(d_f, hay_red, m_f, zona)
         suben_f = d_f + (1 if pr_f["reducido"] else 0)
         ph_asc.caption(f"Ascienden {suben_f} en total.")

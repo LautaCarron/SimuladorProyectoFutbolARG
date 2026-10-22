@@ -19,6 +19,7 @@ from motor.nucleo import (
     cruces_mejor_peor,
     jugar_reducido_federal,
     tanda_penales,
+    tope_descensos,
     unir,
 )
 from ligas.primera import definir_bloque
@@ -75,7 +76,7 @@ def plan_simple(n, directos=2, descensos=None, reducido=False, red_equipos=4):
     """Plan de la temporada de una liga de n equipos, ya acotado para que sea posible."""
     d = max(0, min(int(directos), n - 2))
     desc = desc_auto(n) if descensos is None else int(descensos)
-    desc = max(0, min(desc, n - d - 1))
+    desc = max(0, min(desc, n - d - 1, tope_descensos(n, DESC_MAX)))
     m = max(2, min(int(red_equipos), RED_MAX, n - d - desc))
     if not reducido or n - d - desc < 2:
         return {"directos": d, "desc": desc, "reducido": False, "equipos": 0, "rondas": 0, "juegan": 0, "etapas": []}

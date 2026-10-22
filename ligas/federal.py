@@ -16,6 +16,7 @@ from motor.nucleo import (
     generar_fixture,
     jugar,
     jugar_reducido_federal,
+    tope_descensos,
     mods_ids,
     nuevo_partido,
     sumar_partidos,
@@ -160,7 +161,7 @@ def nueva_estructura_f(SF, rng, S=None):
     if S is not None:                                     # Modo dios: ascensos directos, reducido y descensos de esta temporada
         c = cfg_federal(S, SF.get("cfg_clave", "federal"))
         SF["plan_red"] = plan_reducido_f(int(c["directos"]), bool(c["reducido"]), int(c["red_equipos"]), zona)
-        SF["desc_n"] = max(0, min(int(c["descensos"]), n - zona))
+        SF["desc_n"] = max(0, min(int(c["descensos"]), n - zona, tope_descensos(n, F_DESC_MAX)))
     elif "plan_red" not in SF:
         SF["plan_red"] = plan_reducido_f(F_DIRECTOS_DEF, True, F_RED_EQUIPOS_DEF, zona)
     

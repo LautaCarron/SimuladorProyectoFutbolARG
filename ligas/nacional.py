@@ -25,6 +25,7 @@ from motor.nucleo import (
     nuevo_partido,
     sumar_partidos,
     tanda_penales,
+    tope_descensos,
     ultimas_localias,
     unir,
 )
@@ -212,6 +213,7 @@ def plan_b(n, formato="actual", desc=None, asc=None):
     if formato != "actual":
         vueltas = 2 if formato == "anual_ida_vuelta" else 1
         bajan = min(B_DESCIENDEN, max(1, n // 4)) if desc is None else max(0, min(desc, n - 1))
+        bajan = min(bajan, tope_descensos(n, B_DESC_MAX))
         return {"n": n, "formato": formato, "base": vueltas * _rondas(n), "desc": bajan,
                 "red": plan_reducido_b(asc[0], asc[1], asc[2], n, bajan)}
     za, zb = (n + 1) // 2, n // 2                       # fase 1: dos zonas (iguales si n es par)
@@ -221,6 +223,7 @@ def plan_b(n, formato="actual", desc=None, asc=None):
     c, i, d = tam2
     bajan = (min(B_DESCIENDEN, d // 2) if desc is None         # bajan la mitad de la zona Descenso (6 de 12)
              else max(0, min(desc, d - 1)))
+    bajan = min(bajan, tope_descensos(n, B_DESC_MAX))
     return {"n": n, "formato": "actual", "zona_tam": [za, zb], "f1_zonal": zonal, "f1_inter": inter,
             "f1": zonal + inter, "tam2": tam2, "f2": max(_rondas(z) for z in tam2), "desc": bajan,
             "x_int": min(i, B_ENTRAN_OCTAVOS - (c - 4)),       # (sin uso en el reducido: ahora lo define "red")

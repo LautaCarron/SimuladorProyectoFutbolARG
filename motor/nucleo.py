@@ -119,6 +119,16 @@ def mods_nombres(rng, nombres_l, nombres_v):
 # ----------------------------------------------------------------------------
 # MOTOR COMÚN
 # ----------------------------------------------------------------------------
+DESC_LIGA_MIN = 14        # ninguna liga puede quedar con menos de 14 equipos por los descensos
+DESC_TOPE = 8             # y nunca bajan más de 8
+
+
+def tope_descensos(n, tope=DESC_TOPE):
+    """Máximo de descensos de una liga de n equipos: los que dejen a la liga con 14, hasta `tope` (8). Con 16 equipos
+    pueden bajar 2, con 14 ninguno, con 20 son 6 y con 22 o más, 8."""
+    return max(0, min(tope, n - DESC_LIGA_MIN))
+
+
 def generar_fixture(n):
     """Todos contra todos, una vuelta (método de Berger). Lista de fechas.
 
