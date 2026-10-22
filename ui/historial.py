@@ -8,7 +8,7 @@ import pandas as pd
 import streamlit as st
 from datos.equipos import region_regional
 from datos.logos import logo_img
-from datos.regional import REGIONES_REG
+from datos.datos_regional import REGIONES_REG
 from ui.vista import aviso, crest, esc, lista_equipos_html, seccion, tabla_html
 
 

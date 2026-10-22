@@ -9,7 +9,7 @@ Clasifican por la temporada anterior (como en la vida real):
     Sudamericana van a los grupos de la Libertadores siguiente.
   * Los otros 9 países: cupos fijos por país (Brasil tiene más); qué club ocupa cada cupo se
     sortea cada temporada entre los de primera división de ese país (los más fuertes entran
-    más seguido). Todos con licencia (ver clubes_int.py).
+    más seguido). Todos con licencia (ver datos/clubes_int.py).
   * Temporada 1: la tabla de Primera se toma por media; campeones 2025: Flamengo
     (Libertadores), Lanús (Sudamericana) e Independiente Rivadavia (Copa Argentina).
 

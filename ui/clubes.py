@@ -5,7 +5,7 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 """
 
 import streamlit as st
-from datos.regional import REGIONES_REG
+from datos.datos_regional import REGIONES_REG
 from ui.vista import crest, esc, norm, render_ficha, seccion, ver_equipo
 
 

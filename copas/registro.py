@@ -7,7 +7,7 @@ REGISTRO en vez de nombrar cada competencia a mano.
 
 Para sumar una competencia nueva: escribir su lógica en un módulo propio, agregar acá una clase
 (heredando de PorRondas o de Competencia) y sumarla a REGISTRO. Sin Streamlit: es motor puro.
-Importa copas, mundial y fechas_ligas (que no dependen de él): no hay importaciones circulares.
+Importa copas/argentina.py, copas/mundial.py y motor/fechas.py (que no dependen de él): no hay importaciones circulares.
 """
 
 import datetime as dt

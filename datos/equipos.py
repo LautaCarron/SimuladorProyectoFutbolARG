@@ -5,7 +5,7 @@ escudos. No tiene lógica de simulación.
 """
 
 from datos.clubes_int import CLUBES_INT, OSCUROS_INT
-from datos.regional import GRUPO_FEDERAL_REG, REGIONAL
+from datos.datos_regional import GRUPO_FEDERAL_REG, REGIONAL
 from datos.clubes_mundial import MUNDIAL_CLUBES
 
 # ----------------------------------------------------------------------------
@@ -14,7 +14,7 @@ from datos.clubes_mundial import MUNDIAL_CLUBES
 # Primera Nacional 2026) · debajo de la Primera Nacional el fútbol argentino se divide
 # geográficamente: Federal A (clubes del interior, indirectamente afiliados) y Primera B
 # (clubes metropolitanos, CABA/Gran Buenos Aires, directamente afiliados). Debajo de la
-# Primera B está la Primera C. Todas las categorías se simulan (ver torneos.py).
+# Primera B está la Primera C. Todas las categorías se simulan (ver ligas/ y motor/temporada.py).
 # ----------------------------------------------------------------------------
 EQUIPOS = {
     "River Plate": 80, "Boca Juniors": 80, "Estudiantes (LP)": 79,
@@ -93,7 +93,7 @@ EQUIPOS_PRIMERA_D = {
     "Leones de Rosario FC": 25,
 }
 
-# Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en regional.py,
+# Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en datos/datos_regional.py,
 # generado del JSON oficial del torneo). Acá sólo nombre -> media inicial.
 EQUIPOS_REGIONAL = {x["nombre"]: x["media"] for x in REGIONAL}
 

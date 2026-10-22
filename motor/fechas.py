@@ -3,7 +3,7 @@
 Cada liga juega un día fijo del fin de semana, una fecha por semana desde su arranque; si tiene más fechas
 que fines de semana hasta mitad de diciembre, suma fechas entre semana (miércoles) repartidas en toda la
 temporada. Las fechas extra (desempates) van la semana siguiente a la última programada.
-Lo usan calendario.py y competencias.py (la Supercopa se juega después de la última fecha de Primera).
+Lo usan motor/calendario.py y copas/registro.py (la Supercopa se juega después de la última fecha de Primera).
 """
 
 import datetime as dt

@@ -6,7 +6,7 @@ Copa Argentina, como en la vida real.
   Si una liga tiene más fechas que fines de semana hasta mitad de diciembre, suma fechas
   entre semana (miércoles) repartidas en toda la temporada.
 * Las copas por rondas (Copa Argentina, Supercopa, Mundial de Clubes) fijan sus días en
-  competencias.py; acá solo se consulta el registro.
+  copas/registro.py; acá solo se consulta el registro.
 * Las fechas extra (desempates) van la semana siguiente a la última programada.
 """
 

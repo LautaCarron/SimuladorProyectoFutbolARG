@@ -6,7 +6,7 @@ Modo manager: se abre sola (y se marca con ⭐) la región donde juega el club q
 """
 
 import streamlit as st
-from datos.regional import FINALES_REG, REGIONES_REG
+from datos.datos_regional import FINALES_REG, REGIONES_REG
 from ligas.regional import simular_fecha_reg, tabla_reg_region
 from ui.vista import (
     COLOR_ORO,

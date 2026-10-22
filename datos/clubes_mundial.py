@@ -1,16 +1,16 @@
 """Clubes que podrían clasificar al Mundial de Clubes (próxima edición: 2029, 32 equipos).
 
-Solo datos, sin lógica de simulación ni Streamlit (por ahora no está conectado a ningún otro
-archivo). CONMEBOL no figura acá: sus clubes ya están en datos.py (Argentina) y en
-clubes_int.py (resto de la CONMEBOL).
+Solo datos, sin lógica de simulación ni Streamlit (lo consumen datos/equipos.py y
+copas/mundial.py). CONMEBOL no figura acá: sus clubes ya están en datos/equipos.py (Argentina) y en
+datos/clubes_int.py (resto de la CONMEBOL).
 
 Cupos del formato vigente (ciclo 2025-2028): los campeones continentales de los cuatro años
 clasifican directo y el resto de los lugares sale del ranking de cada confederación, con
 máximo de 2 clubes por país salvo que haya más campeones del mismo país.
 
 Medias: orientativas, en la misma escala que EQUIPOS (Primera argentina 63-80). Tope 90.
-Escudos: todavía no hay; vista.crest() dibuja un distintivo con las iniciales si falta la URL.
-Para sumarlos después: ESCUDOS.update({nombre: url}) en datos.py.
+Escudos: todavía no hay; crest() (ui/vista/base.py) dibuja un distintivo con las iniciales si falta la URL.
+Para sumarlos después: ESCUDOS.update({nombre: url}) en datos/equipos.py.
 
 Los nombres evitan chocar con los de clubes argentinos o sudamericanos (p. ej. "Arsenal (ING)",
 porque en Primera B ya existe "Arsenal").

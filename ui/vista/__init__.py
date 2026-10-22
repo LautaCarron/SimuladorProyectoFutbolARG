@@ -1,8 +1,8 @@
 """Fachada de compatibilidad: reexporta todo lo que antes vivía en vista.py.
 
-El código se repartió por tema (vista_css, vista_base, vista_partidos, vista_ficha, vista_fixture,
-vista_tablas, vista_puente, vista_cuadros, vista_copas_int, vista_calendario). Las pestañas siguen
-importando de acá, así que no cambian.
+El código se repartió por tema en ui/vista/: css, base, partidos, ficha, fixture, tablas, puente, cuadros,
+copas_int, formatos, mi_club y vista_calendario (este último lleva el prefijo para no repetir el nombre de
+ui/ui_calendario.py ni de motor/calendario.py). Las pestañas siguen importando de acá, así que no cambian.
 """
 
 from ui.vista.css import (
@@ -134,7 +134,7 @@ from ui.vista.copas_int import (
     cuadro_mundial_html,
     ranking_conmebol_html,
 )
-from ui.vista.calendario import (
+from ui.vista.vista_calendario import (
     _cal_partidos,
     _cal_rotulo,
     eventos_calendario,

@@ -123,7 +123,7 @@ def _armar_octavos(S, t):
 
 # ---- Cómo se juega cada fecha ------------------------------------------------------------------------
 def simular(S, P, tabla_general):
-    """Juega la fecha que sigue (regular o ronda de llaves). `tabla_general(S)` es la tabla anual de primera.py."""
+    """Juega la fecha que sigue (regular o ronda de llaves). `tabla_general(S)` es la tabla anual de ligas/primera.py."""
     f = S["fecha"]
     if f >= TOTAL:
         return

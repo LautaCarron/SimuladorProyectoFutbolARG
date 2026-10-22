@@ -15,7 +15,7 @@ from motor.nucleo import (
     sumar_partidos,
     tanda_penales,
 )
-from datos.regional import FINALES_REG, REGIONES_REG
+from datos.datos_regional import FINALES_REG, REGIONES_REG
 from ligas.primera import definir_bloque
 
 

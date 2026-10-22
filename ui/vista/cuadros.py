@@ -5,7 +5,7 @@ import streamlit as st
 
 from motor.calendario import dia_de, texto_dia
 from datos.logos import logo_img
-from datos.regional import FINALES_REG
+from datos.datos_regional import FINALES_REG
 from ui.vista.base import chip, crest, esc
 from ui.vista.partidos import tanda_html
 from copas.argentina import COPA_CORTO, COPA_LLAVES

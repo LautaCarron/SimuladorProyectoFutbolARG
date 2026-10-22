@@ -2,10 +2,11 @@
 Simulador del fútbol argentino: Primera División + Categorías de Ascenso
 -------------------------------------------------------------------------------
 Ejecutar con:
-    python -m pip install streamlit numpy pandas
+    python -m pip install -r requirements.txt
     python -m streamlit run simuladorafa.py
 
-PRIMERA DIVISIÓN (30 equipos)
+PRIMERA DIVISIÓN (30 equipos) · formato "actual" (en el Modo dios también hay torneo anual a una rueda,
+anual ida y vuelta, y Apertura y Clausura con llaves: ver ligas/primera.py y ligas/apertura_clausura.py)
   * Fase 1: todos contra todos, 29 fechas (una vuelta).
   * Fase 2: tres zonas de 10 según la tabla (Campeonato 1-10, Intermedia 11-20,
     Descenso 21-30), 9 fechas dentro de la zona con localía invertida.
@@ -49,6 +50,24 @@ PRIMERA C (Equipos directamente afiliados)
   * Ascensos: Campeón y subcampeón (1° y 2°) ascienden de forma directa a la 
     Primera B.
 
+PROMOCIONAL AMATEUR y REGIONAL AMATEUR
+  * Promocional Amateur: liga todos contra todos con la misma mecánica que la Primera B y la Primera C
+    (ligas/simples.py).
+  * Regional Amateur: clubes repartidos en 12 regiones, con ligas por región y finales por el ascenso
+    (ligas/regional.py y datos/datos_regional.py).
+  * Federal B: categoría opcional que se crea desde el Modo dios entre el Federal A y el Regional Amateur
+    (ligas/federal_b.py).
+
+COPAS
+  * Copa Argentina y Supercopa Argentina (copas/argentina.py).
+  * Libertadores, Sudamericana y Recopa de la CONMEBOL (copas/conmebol.py).
+  * Mundial de Clubes, cada 4 temporadas (copas/mundial.py).
+  * Las copas por rondas se registran en copas/registro.py; el calendario de todo está en motor/calendario.py.
+
+MODOS: Simulador, Manager (ui/manager.py, motor/ofertas.py, motor/eventos.py, motor/relaciones.py) y Modo dios
+(ui/dios.py). Las pestañas de la interfaz están en ui/ (las que repiten el nombre de un módulo de lógica llevan
+el prefijo ui_: ui/ui_conmebol.py, ui/ui_primera.py, etc.) y las piezas compartidas de dibujo en ui/vista/.
+
 Cada equipo tiene una "media interna" (fuerza) que cambia cada temporada.
 Los partidos se simulan con goles Poisson y cada equipo tiene una "forma del
 día" aleatoria: cuanto mayor es el nivel de sorpresas, más seguido gana el
@@ -85,7 +104,7 @@ from datos.equipos import (
     region_regional,
 )
 
-if ERROR_DATOS:                 # datos.py ya no depende de Streamlit: el aviso lo muestra la interfaz
+if ERROR_DATOS:                 # datos/equipos.py ya no depende de Streamlit: el aviso lo muestra la interfaz
     st.error(ERROR_DATOS)
     st.stop()
 from motor.nucleo import (
@@ -116,7 +135,7 @@ from ligas.primera import (
 from ligas.regional import simular_fecha_reg, tabla_reg_region
 from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
 from motor.temporada import VERSION_ESTADO, crear_estado, nueva_temporada
-from datos.regional import FINALES_REG, REGIONES_REG
+from datos.datos_regional import FINALES_REG, REGIONES_REG
 from copas.argentina import (
     COPA_CORTO,
     COPA_LLAVES,
@@ -534,17 +553,17 @@ def html_tabla_liguilla(partidos):
 # PESTAÑAS · cada una vive en su propio módulo ui_*.py y recibe en `ctx` el estado compartido
 # (S, P, las pestañas, las banderas terminada_*, los ayudantes). El orden es el de la pantalla.
 # ============================================================================
-from ui import primera as ui_primera
-from ui import nacional as ui_nacional
-from ui import federal as ui_federal
-from ui import federal_b as ui_federal_b
+from ui import ui_primera
+from ui import ui_nacional
+from ui import ui_federal
+from ui import ui_federal_b
 from ui import ligas_simples as ui_ligas_simples
-from ui import regional as ui_regional
+from ui import ui_regional
 from ui import copa_argentina as ui_copa_argentina
 from ui import supercopa as ui_supercopa
-from ui import conmebol as ui_conmebol
-from ui import mundial as ui_mundial
-from ui import calendario as ui_calendario
+from ui import ui_conmebol
+from ui import ui_mundial
+from ui import ui_calendario
 from ui import clubes as ui_clubes
 from ui import avisos as ui_avisos
 from ui import historial as ui_historial

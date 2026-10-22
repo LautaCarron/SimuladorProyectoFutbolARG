@@ -3,7 +3,7 @@
 Clasificación (ciclo de 4 años, como el formato 2025-2028 de la FIFA): los campeones continentales de
 los 4 años anteriores clasifican directo y el resto de cada cupo sale del ranking, con máximo de 2
 clubes por país (salvo campeones). Cupos: UEFA 12, CONMEBOL 6, AFC 4, CAF 4, Concacaf 4, OFC 1 y el
-anfitrión (ver clubes_mundial.py).
+anfitrión (ver datos/clubes_mundial.py).
 
   * CONMEBOL (6 cupos): los 4 campeones de la Libertadores del ciclo y los 2 mejores del ranking que no
     fueron campeones. El ranking es el oficial de CONMEBOL para el Mundial: suma 4 Libertadores, y sólo
@@ -13,7 +13,7 @@ anfitrión (ver clubes_mundial.py).
     los que sobran sean campeones. A igual puntaje, el que sumó más en la última temporada y después
     la media. 2025: campeón y puntos reales (Flamengo campeón).
   * UEFA, AFC, CAF, Concacaf y OFC no se simulan como torneo: al terminar cada temporada se sortea su
-    campeón continental entre los clubes de clubes_mundial.py (los de mayor media tienen más chances).
+    campeón continental entre los clubes de datos/clubes_mundial.py (los de mayor media tienen más chances).
     El "ranking" de esas confederaciones se aproxima con la media del club. 2025: campeones reales.
 
 Formato (como 2025): 8 grupos de 4 a una rueda (3 fechas) y eliminación directa: octavos, cuartos,

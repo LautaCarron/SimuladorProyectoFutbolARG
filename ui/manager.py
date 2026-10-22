@@ -66,7 +66,7 @@ from motor.relaciones import (
     umbral_despido,
 )
 from ui.vista import aviso, chip, crest, esc, eventos_calendario, fila_partido_html, norm, render_ficha, seccion
-from ui.vista.calendario import _cal_partidos
+from ui.vista.vista_calendario import _cal_partidos
 from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partidos
 
 # ---- Opciones ---------------------------------------------------------------

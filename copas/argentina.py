@@ -2,7 +2,7 @@
 
 Copa Argentina: 128 equipos, eliminación directa a partido único desde 64avos de final.
 Todos los partidos en cancha neutral; si empatan, penales. Se juega durante la temporada
-(los miércoles, en el medio de las ligas: ver calendario.py).
+(los miércoles, en el medio de las ligas: ver motor/calendario.py).
 
 Clasifican, como en la vida real, por lo hecho en la temporada anterior:
   * Primera División: los 30.
@@ -33,7 +33,7 @@ import numpy as np
 
 from motor.incidentes import revisar_copa
 from motor.nucleo import jugar_ko, mods_ids, mods_nombres, nuevo_partido, tanda_penales
-from datos.regional import REGIONES_REG
+from datos.datos_regional import REGIONES_REG
 from ligas.federal import tabla_f_f2
 from ligas.nacional import total_b
 from ligas.primera import primera_terminada, tabla_final

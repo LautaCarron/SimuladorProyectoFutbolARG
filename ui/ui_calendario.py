@@ -13,7 +13,7 @@ import streamlit as st
 from motor.calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
 from datos.logos import logo_img
 from ui.vista import calendario_mes_html, esc, eventos_calendario, seccion
-from ui.vista.calendario import calendario_grilla_html
+from ui.vista.vista_calendario import calendario_grilla_html
 from ui.vista.mi_club import mi_club
 
 VISTA_MIS, VISTA_TODOS = "Mis partidos", "Todos los equipos"
