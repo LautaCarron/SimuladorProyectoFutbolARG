@@ -61,6 +61,16 @@ def movimientos_html(mv):
                      '<div class="mv-sec"><div class="mv-lab down">▼ Descenso administrativo'
                      f'<b>{len(g("descenso_adm"))}</b></div><div class="mv-lista">'
                      f'{_mov_clubes([(n, "sanción") for n in g("descenso_adm")])}</div></div></div>')
+    if g("ajustes"):
+        # Modo dios: los que suben o bajan de más para llegar al tamaño elegido o no dejar una liga sin equipos
+        from motor.tamanos import NOMBRES
+        corto = {"p": "Primera", "b": "B Nacional", "pb": "Primera B", "pc": "Primera C", "pd": "Promocional",
+                 "reg": "Regional"}
+        items = [(x["club"], f'{corto.get(x["de"], NOMBRES[x["de"]])} → {corto.get(x["a"], NOMBRES[x["a"]])}')
+                 for x in g("ajustes")]
+        tarjetas += ('<div class="mv-card"><div class="mv-h"><span>Ajuste automático de tamaño</span></div>'
+                     '<div class="mv-sec"><div class="mv-lab">⇅ Cambian de categoría de más'
+                     f'<b>{len(items)}</b></div><div class="mv-lista">{_mov_clubes(items)}</div></div></div>')
     return f'<div class="mv-grid">{tarjetas}</div>'
 
 

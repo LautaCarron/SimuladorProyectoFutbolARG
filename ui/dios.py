@@ -13,6 +13,7 @@ rige desde la próxima temporada (los equipos se reacomodan en el pase de tempor
 import streamlit as st
 from motor.nucleo import DESC_LIGA_MIN, tope_descensos
 from datos.equipos import N
+from motor.tamanos import MAXIMO, MINIMO, NOMBRES as NOMBRES_TAM, ORDEN as ORDEN_TAM, PASO, camino, objetivos
 from ligas.federal import (F_DESC, F_DESC_MAX, F_DIRECTOS_MAX, F_RED_EQUIPOS_MAX, cfg_federal, nueva_estructura_f,
                            plan_reducido_f)
 from ligas.federal_b import (FB_EQUIPOS, activo as fb_activo, cfg_federal_b, destino_descenso_federal_a,
@@ -36,6 +37,19 @@ DETALLE = {
 }
 
 
+def _slider(label, lo, hi, valor, key, **kw):
+    """st.slider que no se rompe cuando el mínimo y el máximo coinciden (Streamlit lo rechaza): pasa cuando una liga
+    queda con muy pocos equipos. En ese caso muestra el único valor posible y lo devuelve."""
+    lo, hi = int(lo), int(hi)
+    if hi <= lo:
+        st.session_state.pop(key, None)
+        st.caption(f"{label}: {lo} (con esta cantidad de equipos no hay otra opción).")
+        return lo
+    if key in st.session_state and not lo <= int(st.session_state[key]) <= hi:   # el rango cambió
+        st.session_state[key] = max(lo, min(hi, int(st.session_state[key])))
+    return st.slider(label, lo, hi, max(lo, min(hi, int(valor))), key=key, **kw)
+
+
 def _slider_desc(label, n, tope, valor, key, **kw):
     """Slider de descensos con el límite de que la liga no quede con menos de DESC_LIGA_MIN (14) equipos: con 16 equipos
     hasta 2, con 14 ninguno, con 22 o más el tope de la liga. Si el límite es 0 no hay slider y devuelve 0."""
@@ -46,7 +60,7 @@ def _slider_desc(label, n, tope, valor, key, **kw):
     if st.session_state.get(key, 0) > lim:                  # el límite bajó: el valor guardado se ajusta
         st.session_state[key] = lim
     st.caption(f"Máximo {lim} (la liga no puede quedar con menos de {DESC_LIGA_MIN} equipos).")
-    return st.slider(label, 0, lim, min(lim, int(valor)), key=key, **kw)
+    return _slider(label, 0, lim, valor, key, **kw)
 
 
 def _panel_simple(S, clave, nombre, sube_a, baja_a):
@@ -60,11 +74,11 @@ def _panel_simple(S, clave, nombre, sube_a, baja_a):
                "por un ascenso más. " + ("Ya empezó: rige desde la próxima temporada." if ya else "Rige ahora mismo."))
     d0 = int(cfg["directos"])
     desc_ini = desc_auto(n) if cfg["descensos"] is None else int(cfg["descensos"])
-    d = st.slider("Ascienden directo", 0, ASC_MAX, d0, key=f"dios_{clave}_directos")
+    d = _slider("Ascienden directo", 0, ASC_MAX, d0, key=f"dios_{clave}_directos")
     ds = _slider_desc("Descienden", n, DESC_MAX, desc_ini, f"dios_{clave}_desc",
                       help="Sin tocar: del 18° para abajo (según la cantidad de equipos).") if baja_a else 0
     hay = st.checkbox("Reducido por un ascenso más", value=bool(cfg["reducido"]), key=f"dios_{clave}_reducido")
-    m = st.slider("Equipos en el reducido", 2, RED_MAX, int(cfg["red_equipos"]), key=f"dios_{clave}_red",
+    m = _slider("Equipos en el reducido", 2, RED_MAX, int(cfg["red_equipos"]), key=f"dios_{clave}_red",
                   disabled=not hay, help="Los que siguen a los ascendidos directos en la tabla final.")
     pl = plan_simple(n, d, ds if baja_a else 0, hay, m)
     txt = f"Suben {pl['directos']} directo" + ("s" if pl["directos"] != 1 else "")
@@ -114,15 +128,13 @@ def _panel_federal_b(S):
                    ("ya empezó: rige desde la próxima temporada." if ya else "rige ahora mismo."))
     n_fb = len(SFB["nombres"]) if existe else FB_EQUIPOS
     zona = (n_fb + 1) // 2
-    d_b = st.slider("Ascienden directo al Federal A", 0, F_DIRECTOS_MAX, min(F_DIRECTOS_MAX, int(cfg["directos"])),
+    d_b = _slider("Ascienden directo al Federal A", 0, F_DIRECTOS_MAX, int(cfg["directos"]),
                     key="dios_fb_directos", help="Los primeros de la zona Campeonato. El campeón sube siempre que "
                                                  "haya ascensos directos.")
     hay_red = st.checkbox("Reducido por el último ascenso", value=bool(cfg["reducido"]), key="dios_fb_reducido")
     tope_b = max(2, zona - d_b)                        # todos los que siguen a los directos en la zona Campeonato
-    if st.session_state.get("dios_fb_red_equipos", 2) > tope_b:
-        st.session_state["dios_fb_red_equipos"] = tope_b
-    m_b = st.slider("Equipos en el reducido", 2, tope_b, min(tope_b, int(cfg["red_equipos"])),
-                    key="dios_fb_red_equipos", disabled=not hay_red,
+    m_b = _slider("Equipos en el reducido", 2, tope_b, int(cfg["red_equipos"]),
+                  key="dios_fb_red_equipos", disabled=not hay_red,
                     help=f"Los que siguen a los ascendidos directos en la zona Campeonato (hasta {tope_b}).")
     ds_b = _slider_desc("Descienden al Regional", n_fb, F_DESC_MAX, cfg["descensos"], "dios_fb_desc",
                         help="Los últimos de la zona Descenso.")
@@ -170,13 +182,12 @@ def _panel_primera(S, cfg, empezo, n_p, formatos, base_p):
         k_max = tope_descensos(base_p, DESCENSOS_MAX)      # Primera no puede quedar con menos de DESC_LIGA_MIN equipos
         if st.session_state.get("dios_k", 0) > k_max:         # el límite bajó: el valor guardado se ajusta
             st.session_state["dios_k"] = k_max
-        k = st.slider("Descienden a la B", 0, max(1, k_max), min(k_max, int(cfg["descensos"])), key="dios_k",
-                      disabled=k_max == 0,
+        k = _slider("Descienden a la B", 0, k_max, int(cfg["descensos"]), key="dios_k",
                       help="El puesto N-k juega la promoción contra el perdedor del reducido de la B. Cuántos suben de la B "
                            "se elige en la sección de la Primera Nacional (si no coinciden con los que bajan, "
                            "cambia la cantidad de equipos de Primera).")
         st.caption(f"Máximo {k_max} descensos: Primera no puede quedar con menos de {DESC_LIGA_MIN} equipos.")
-        pr = st.slider("Promociones", 0, PROMOS_MAX, int(cfg["promociones"]), key="dios_prom",
+        pr = _slider("Promociones", 0, PROMOS_MAX, int(cfg["promociones"]), key="dios_prom",
                        help="Series entre los de abajo de Primera y los mejores de la B: 0 (no hay), 1 o 2. "
                             "Suben los de la B que ganan, bajan los de Primera que pierden.")
         st.caption(f"Con {n_p} equipos: formato actual desde {ACTUAL_MIN}, anual una rueda desde {ANUAL_IDA_MIN} "
@@ -244,7 +255,7 @@ def _panel_nacional(S, k, pr, b_ya, txt_b):
                                m_def if cfg_nac["red_equipos"] is None else int(cfg_nac["red_equipos"]))
         st.divider()
         _sub("Ascensos a Primera")
-        d_b = st.slider("Ascienden directo", 0, B_DIRECTOS_MAX, min(B_DIRECTOS_MAX, d_ini), key=f"dios_b_directos_{fe_b}",
+        d_b = _slider("Ascienden directo", 0, B_DIRECTOS_MAX, d_ini, key=f"dios_b_directos_{fe_b}",
                         help="Los primeros de la tabla final (en el formato actual, de la Zona Campeonato). El 1° "
                              "es el campeón.")
         ph_asc = st.empty()                                       # se completa cuando se conoce todo lo elegido
@@ -253,7 +264,7 @@ def _panel_nacional(S, k, pr, b_ya, txt_b):
         st.divider()
         _sub("Reducido")
         hay_red_b = st.checkbox("Reducido por un ascenso más", value=r_ini, key=f"dios_b_reducido_{fe_b}")
-        m_b = st.slider("Equipos en el reducido", 2, B_RED_EQUIPOS_MAX, min(B_RED_EQUIPOS_MAX, max(2, m_ini)),
+        m_b = _slider("Equipos en el reducido", 2, B_RED_EQUIPOS_MAX, max(2, m_ini),
                         key=f"dios_b_red_equipos_{fe_b}", disabled=not hay_red_b,
                         help="Los que siguen a los ascendidos directos en la tabla final (en el formato actual: "
                              "Campeonato, después Intermedia). Los que bajan no lo juegan.")
@@ -320,17 +331,15 @@ def _panel_federal_a(S, f_ya, txt_f):
         st.caption("Mismo formato siempre (grupos, zonas Campeonato y Descenso). "
                    + ("Ya empezó: rige desde la próxima temporada." if f_ya else "Rige ahora mismo."))
         _sub("Ascensos a la Primera Nacional")
-        d_f = st.slider("Ascienden directo", 0, F_DIRECTOS_MAX, int(cfg_fed["directos"]), key="dios_f_directos",
+        d_f = _slider("Ascienden directo", 0, F_DIRECTOS_MAX, int(cfg_fed["directos"]), key="dios_f_directos",
                         help="Los primeros de la zona Campeonato. El campeón sube siempre que haya ascensos directos.")
         ph_asc = st.empty()
         st.divider()
         _sub("Reducido")
         hay_red = st.checkbox("Reducido por el último ascenso", value=bool(cfg_fed["reducido"]), key="dios_f_reducido")
         tope_f = max(2, zona - d_f)                    # todos los que siguen a los directos en la zona Campeonato
-        if st.session_state.get("dios_f_red_equipos", 2) > tope_f:      # el tope baja al subir los directos
-            st.session_state["dios_f_red_equipos"] = tope_f
-        m_f = st.slider("Equipos en el reducido", 2, tope_f, min(tope_f, int(cfg_fed["red_equipos"])),
-                        key="dios_f_red_equipos", disabled=not hay_red,
+        m_f = _slider("Equipos en el reducido", 2, tope_f, int(cfg_fed["red_equipos"]),
+                      key="dios_f_red_equipos", disabled=not hay_red,
                         help=f"Los que siguen a los ascendidos directos en la zona Campeonato (hasta {tope_f}).")
         ph_red = st.empty()
         st.divider()
@@ -355,6 +364,48 @@ def _panel_federal_a(S, f_ya, txt_f):
             if not f_ya:                               # el Federal no empezó: se rearma ahora
                 nueva_estructura_f(S["f"], S["rng"], S)
             st.rerun()
+
+
+def _panel_tamanos(S):
+    """Tamaño objetivo de cada liga: el simulador sube y baja equipos de más (de a pocos por temporada) hasta llegar
+    y después lo mantiene fijo. Ver motor/tamanos.py."""
+    _titulo("Tamaño de las ligas")
+    st.caption(f"Elegí con cuántos equipos querés que termine cada liga. Cada temporada se acerca de a {PASO} como "
+               "máximo (bajan de más los más flojos o suben de más los mejores de la liga de abajo) y, cuando llega, "
+               "queda fija: suben y bajan los que hagan falta para mantenerla. Vacío = automático. Rige desde el "
+               "próximo pase de temporada. Ninguna liga baja de 14 equipos (la B Nacional, de 20).")
+    obj = objetivos(S)
+    actual = {"p": len(S["nombres"]), "b": len(S["b"]["nombres"]), "fa": len(S["f"]["nombres"]),
+              "fb": len(S["fb"]["nombres"]) if S.get("fb") else None, "pb": len(S["pb"]["nombres"]),
+              "pc": len(S["pc"]["nombres"]), "pd": len(S["pd"]["nombres"])}
+    elegidos = {}
+    for k in ORDEN_TAM:
+        if actual[k] is None:                     # el Federal B todavía no existe
+            continue
+        v = st.number_input(f"{NOMBRES_TAM[k]} · hoy {actual[k]}", min_value=MINIMO[k], max_value=MAXIMO[k],
+                            value=obj.get(k), step=1, placeholder="Automático", key=f"dios_tam_{k}")
+        elegidos[k] = None if v is None else int(v)
+        if v is not None and int(v) != actual[k]:
+            c = camino(actual[k], int(v))
+            st.caption(" → ".join(map(str, c)) + f" (llega en {len(c) - 1} temporada{'s' if len(c) > 2 else ''})")
+        elif v is not None:
+            st.caption("Ya tiene ese tamaño: queda fija.")
+    cambio = any(elegidos[k] != obj.get(k) for k in elegidos)
+    c1, c2 = st.columns(2)
+    if c1.button(":material/save: Guardar", key="dios_tam_guardar", width="stretch", type="primary",
+                 disabled=not cambio):
+        for k, v in elegidos.items():
+            if v is None:
+                obj.pop(k, None)
+            else:
+                obj[k] = v
+        st.rerun()
+    if c2.button(":material/restart_alt: Todo automático", key="dios_tam_borrar", width="stretch",
+                 disabled=not obj):
+        obj.clear()
+        for k in ORDEN_TAM:
+            st.session_state.pop(f"dios_tam_{k}", None)
+        st.rerun()
 
 
 def panel_dios(S):
@@ -388,3 +439,5 @@ def panel_dios(S):
             _panel_simple(S, "pc", "Primera C", "la Primera B", "el Promocional")
         with st.container(border=True):
             _panel_simple(S, "pd", "Promocional Amateur", "la Primera C", None)
+        with st.container(border=True):
+            _panel_tamanos(S)

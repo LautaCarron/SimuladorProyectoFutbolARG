@@ -29,6 +29,7 @@ from ligas.nacional import ascensos_a_primera, equipos_objetivo_b, nueva_estruct
 from ligas.primera import equipos_objetivo_p, descensos, nueva_estructura, tabla_final
 from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
+from motor.tamanos import ajustar as ajustar_tamanos
 
 
 VERSION_ESTADO = 18       # cambia si se modifica la estructura del estado guardado
@@ -92,12 +93,18 @@ def nueva_temporada(S, volatilidad):
     SB, SF, SPB, SPC, SPD, rng = S["b"], S["f"], S["pb"], S["pc"], S["pd"], S["rng"]
     SFB = S.get("fb")                                   # Federal B (None mientras no se crea en el Modo dios)
     S.setdefault("federal_b", [])
+    # quién jugaba dónde esta temporada (para el ajuste de tamaño de las ligas, ver motor/tamanos.py)
+    viejas = {"p": list(S["nombres"]), "b": list(SB["nombres"]), "fa": list(SF["nombres"]),
+              "fb": list(SFB["nombres"]) if SFB else None, "pb": list(SPB["nombres"]), "pc": list(SPC["nombres"]),
+              "pd": list(SPD["nombres"]), "reg": list(S["reg"]["nombres"])}
     for lig in (S, SB, SF, SPB, SPC, SPD, S["reg"], *([SFB] if SFB else [])):
         for nom, x in zip(lig["nombres"], lig["r"]):
             S["rating"][nom] = float(x)
 
     final = tabla_final(S)
     promos_b = SB.get("promos") or []
+    for pr in promos_b:                                 # el nombre ahora: los índices de la B cambian en el pase
+        pr["b_nombre"] = SB["nombres"][pr["b_id"]]
     # Copa Argentina de la temporada que viene: clasifican por lo hecho en esta
     S["copa_clasif"] = [(x[0], x[3]) for x in clasificados_copa(S)]
     # copas CONMEBOL de la temporada que viene (tabla de Primera, Copa Argentina y campeones)
@@ -282,7 +289,7 @@ def nueva_temporada(S, volatilidad):
         "entran_pb": [n for n in entran if origen(n) == "Metropolitana" and n not in ascendidos_pb],
         "campeon_federal": SF["nombres"][SF["campeon"]] if SF["campeon"] is not None else None,
         "promo_texto": (" ".join(
-            (f"Promoción: {SB['nombres'][pr['b_id']]} (B) le ganó a {pr['p_nombre']}: asciende y baja {pr['p_nombre']}."
+            (f"Promoción: {pr['b_nombre']} (B) le ganó a {pr['p_nombre']}: asciende y baja {pr['p_nombre']}."
              if pr["gana_b"] else f"Promoción: {pr['p_nombre']} se mantiene en Primera.") for pr in promos_b)
             or "Esta temporada no hubo promoción."),
     }
@@ -320,6 +327,14 @@ def nueva_temporada(S, volatilidad):
             continue
         bajan_adm.append(club)
     S["movimientos"]["descenso_adm"] = bajan_adm
+
+    # Tamaño de las ligas: el objetivo elegido en el Modo dios (de a poco) y el piso de equipos de cada una
+    listas = {"p": S["nombres"], "b": SB["nombres"], "fa": S["federal"], "pb": S["primera_b"],
+              "pc": S["primera_c"], "pd": S["promocional"], "reg": S["regional"]}
+    if hay_fb:
+        listas["fb"] = S["federal_b"]
+    S["movimientos"]["ajustes"] = [{"club": c, "de": de, "a": a, "motivo": m}
+                                   for c, de, a, m in ajustar_tamanos(S, listas, viejas, hay_fb)]
     S["movimientos"]["suben_reg_fed_extra"] = []          # sin reubicación: el Federal A cambia de tamaño
     for L in ligas_t[:-1]:
         L["alertas"], L["quita"], L["desc_adm"] = [], {}, []

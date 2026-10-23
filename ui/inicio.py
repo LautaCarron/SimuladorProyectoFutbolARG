@@ -327,13 +327,9 @@ def _entrar_partidas():
 
 
 def _correr_js(js):
-    """Corre el script en la página de la app con un iframe de componentes que lo inyecta arriba
-    (st.html con JavaScript no siempre lo ejecuta: según la versión, el sanitizador lo descarta)."""
-    import streamlit.components.v1 as components
-    cuerpo = js.replace("<div hidden></div>", "").replace("<script>", "").replace("</script>", "")
-    components.html("<script>const s = window.parent.document.createElement('script');"
-                    f"s.textContent = {json.dumps(cuerpo)};"
-                    "window.parent.document.head.appendChild(s);</script>", height=0)
+    """Corre el script en la página de la app (ver ui/js.py)."""
+    from ui.js import inyectar_js
+    inyectar_js(js, "afa_js_inicio")
 
 
 def mostrar_inicio():

@@ -95,11 +95,8 @@ def _instalar_puente_js():
             raise TypeError
         st.html(_PUENTE_JS, unsafe_allow_javascript=True)
     except TypeError:
-        import streamlit.components.v1 as components
-        js = _PUENTE_JS.replace("<script>", "").replace("</script>", "")
-        components.html("<script>const s = window.parent.document.createElement('script');"
-                        f"s.textContent = {json.dumps(js)};"
-                        "window.parent.document.head.appendChild(s);</script>", height=0)
+        from ui.js import inyectar_js
+        inyectar_js(_PUENTE_JS, "afa_js_puente")
 
 
 def _club_elegido():
