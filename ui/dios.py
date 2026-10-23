@@ -45,8 +45,10 @@ def _slider(label, lo, hi, valor, key, **kw):
         st.session_state.pop(key, None)
         st.caption(f"{label}: {lo} (con esta cantidad de equipos no hay otra opción).")
         return lo
-    if key in st.session_state and not lo <= int(st.session_state[key]) <= hi:   # el rango cambió
-        st.session_state[key] = max(lo, min(hi, int(st.session_state[key])))
+    if key in st.session_state:                       # ya tiene valor: se respeta (ajustado si cambió el rango)
+        if not lo <= int(st.session_state[key]) <= hi:
+            st.session_state[key] = max(lo, min(hi, int(st.session_state[key])))
+        return st.slider(label, lo, hi, key=key, **kw)
     return st.slider(label, lo, hi, max(lo, min(hi, int(valor))), key=key, **kw)
 
 
@@ -368,40 +370,44 @@ def _panel_federal_a(S, f_ya, txt_f):
 
 def _panel_tamanos(S):
     """Tamaño objetivo de cada liga: el simulador sube y baja equipos de más (de a pocos por temporada) hasta llegar
-    y después lo mantiene fijo. Ver motor/tamanos.py."""
+    y después lo mantiene fijo. Ver motor/tamanos.py. Va en un formulario: los números se eligen sin que la página
+    se recargue y todo se aplica junto al tocar Guardar."""
     _titulo("Tamaño de las ligas")
     st.caption(f"Elegí con cuántos equipos querés que termine cada liga. Cada temporada se acerca de a {PASO} como "
                "máximo (bajan de más los más flojos o suben de más los mejores de la liga de abajo) y, cuando llega, "
-               "queda fija: suben y bajan los que hagan falta para mantenerla. Vacío = automático. Rige desde el "
+               "queda fija. Las ligas con objetivo acomodan solas sus ascensos y descensos para que sean parejos "
+               "(bajan tantos como suben, según el tamaño de la liga). Vacío = automático. Todo rige desde el "
                "próximo pase de temporada. Ninguna liga baja de 14 equipos (la B Nacional, de 20).")
     obj = objetivos(S)
     actual = {"p": len(S["nombres"]), "b": len(S["b"]["nombres"]), "fa": len(S["f"]["nombres"]),
               "fb": len(S["fb"]["nombres"]) if S.get("fb") else None, "pb": len(S["pb"]["nombres"]),
               "pc": len(S["pc"]["nombres"]), "pd": len(S["pd"]["nombres"])}
-    elegidos = {}
-    for k in ORDEN_TAM:
-        if actual[k] is None:                     # el Federal B todavía no existe
-            continue
-        v = st.number_input(f"{NOMBRES_TAM[k]} · hoy {actual[k]}", min_value=MINIMO[k], max_value=MAXIMO[k],
-                            value=obj.get(k), step=1, placeholder="Automático", key=f"dios_tam_{k}")
-        elegidos[k] = None if v is None else int(v)
-        if v is not None and int(v) != actual[k]:
-            c = camino(actual[k], int(v))
-            st.caption(" → ".join(map(str, c)) + f" (llega en {len(c) - 1} temporada{'s' if len(c) > 2 else ''})")
-        elif v is not None:
-            st.caption("Ya tiene ese tamaño: queda fija.")
-    cambio = any(elegidos[k] != obj.get(k) for k in elegidos)
-    c1, c2 = st.columns(2)
-    if c1.button(":material/save: Guardar", key="dios_tam_guardar", width="stretch", type="primary",
-                 disabled=not cambio):
+    claves = [k for k in ORDEN_TAM if actual[k] is not None]        # el Federal B, sólo si ya existe
+    with st.form("dios_tamanos", border=False, enter_to_submit=False):
+        elegidos = {}
+        for k in claves:
+            v = st.number_input(f"{NOMBRES_TAM[k]} · hoy {actual[k]}", min_value=MINIMO[k], max_value=MAXIMO[k],
+                                value=obj.get(k), step=1, placeholder="Automático", key=f"dios_tam_{k}")
+            elegidos[k] = None if v is None else int(v)
+            g = obj.get(k)                                    # lo guardado (el camino se ve después de guardar)
+            if g is not None and g != actual[k]:
+                c = camino(actual[k], g)
+                st.caption(" → ".join(map(str, c)) + f" (llega en {len(c) - 1} temporada{'s' if len(c) > 2 else ''})")
+            elif g is not None:
+                st.caption("Ya tiene ese tamaño: queda fija.")
+        c1, c2 = st.columns(2)
+        guardar = c1.form_submit_button(":material/save: Guardar", type="primary", width="stretch")
+        borrar = c2.form_submit_button(":material/restart_alt: Borrar", width="stretch",
+                                       help="Borra todos los tamaños elegidos: las ligas vuelven a cambiar de tamaño "
+                                            "según los ascensos y descensos, como antes.")
+    if guardar:
         for k, v in elegidos.items():
             if v is None:
                 obj.pop(k, None)
             else:
                 obj[k] = v
         st.rerun()
-    if c2.button(":material/restart_alt: Todo automático", key="dios_tam_borrar", width="stretch",
-                 disabled=not obj):
+    if borrar and obj:
         obj.clear()
         for k in ORDEN_TAM:
             st.session_state.pop(f"dios_tam_{k}", None)

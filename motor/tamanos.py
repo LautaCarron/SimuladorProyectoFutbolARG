@@ -12,7 +12,11 @@ Se corre al final del pase de temporada, después de los ascensos y descensos no
 
 Las ligas: p (Primera), b (Primera Nacional), fa (Federal A), fb (Federal B), pb (Primera B), pc (Primera C),
 pd (Promocional Amateur) y reg (Regional Amateur, que no tiene objetivo: es la base de la pirámide del interior).
+El Promocional es el último escalón de las metropolitanas: si sobran clubes, quedan ahí (su objetivo sólo sirve para
+que no le falten equipos).
 """
+
+import math
 
 from datos.equipos import origen
 
@@ -104,9 +108,8 @@ def ajustar(S, listas, viejas, hay_fb):
                 if sobran <= 0:
                     break
                 destino = P.abajo(k, n)
-                if destino is None:                  # el Promocional no tiene abajo: suben de más los mejores
-                    destino = P.arriba(k)
-                    n = max(listas[k], key=P.r)
+                if destino is None:                  # el Promocional es el último escalón: los que sobran quedan ahí
+                    break
                 if destino not in listas or not P.puede_recibir(destino):
                     continue
                 P.mover(n, k, destino, "tamaño objetivo")
@@ -184,3 +187,81 @@ def ajustar(S, listas, viejas, hay_fb):
                 P.mover(n, v, k, "mínimo de equipos")
                 falta -= 1
     return P.movidos
+
+
+# ---------------------------------------------------------------- ascensos y descensos parejos
+REG_ASC = 6                       # el Regional Amateur sube siempre 6 (los ganadores de las finales)
+
+
+def intercambio(n):
+    """Cuántos equipos razonable que cambien por año entre una liga de `n` equipos y la de abajo: 2 con 14,
+    3 con 20, 4 con 30, 5 con 36 y hasta 6."""
+    return max(2, min(6, round(n / 7)))
+
+
+def plan_equilibrado(S, tamanos=None):
+    """Con tamaño objetivo, los ascensos y descensos se acomodan solos y quedan parejos: entre cada liga y la de
+    abajo bajan tantos como suben, en una cantidad razonable para el tamaño de la liga (ver `intercambio`).
+    Así, cuando una liga llega a su tamaño, ya no hacen falta movimientos de más para mantenerla.
+
+    Sólo toca las fronteras de las ligas que tienen objetivo. El reducido que se haya elegido se respeta: si hay
+    reducido, los ascensos directos son uno menos. Devuelve {clave: texto} con lo que quedó (para el Modo dios)."""
+    from ligas.federal import cfg_federal
+    from ligas.nacional import asc_elegido, cfg_b, formato_efectivo
+    from ligas.primera import DESCENSOS_MAX, cfg_primera
+    from ligas.simples import cfg_simple
+
+    obj = objetivos(S)
+    if not obj:
+        return {}
+    hay_fb = bool(S.get("fb"))
+    tam = dict(tamanos or {})
+    actual = {"p": len(S["nombres"]), "b": len(S["b"]["nombres"]), "fa": len(S["f"]["nombres"]),
+              "fb": len(S["fb"]["nombres"]) if hay_fb else 0, "pb": len(S["pb"]["nombres"]),
+              "pc": len(S["pc"]["nombres"]), "pd": len(S["pd"]["nombres"])}
+    for k, v in actual.items():
+        tam.setdefault(k, obj.get(k, v))
+
+    def con(*claves):                     # ¿alguna de estas ligas tiene objetivo?
+        return any(k in obj for k in claves)
+
+    def ascensos(c, total):               # total de ascensos: directos + (1 si hay reducido)
+        total = max(0, int(total))
+        red = bool(c.get("reducido")) and total > 0
+        c["reducido"], c["directos"] = red, total - int(red)
+
+    # Primera <-> B Nacional
+    if con("p", "b"):
+        k = min(DESCENSOS_MAX, intercambio(tam["p"]))
+        cfg_primera(S)["descensos"] = k
+        cb = cfg_b(S)
+        _, r, _ = asc_elegido(S, formato_efectivo(len(S["b"]["nombres"]), cb["formato"]))
+        cb["reducido"] = bool(r)
+        ascensos(cb, k)
+    # B Nacional <-> Federal A (los del interior) y Primera B (los metropolitanos)
+    if con("b", "fa", "pb"):
+        k = intercambio(tam["b"])
+        al_fa, al_pb = max(2, math.ceil(k / 2)), max(2, k // 2)     # de cada una suben al menos 2
+        cfg_b(S)["descensos"] = al_fa + al_pb
+        ascensos(cfg_federal(S), al_fa)
+        ascensos(cfg_simple(S, "pb"), al_pb)
+    # Federal A <-> Federal B (si existe) y Federal B <-> Regional; sin Federal B, Federal A <-> Regional
+    if hay_fb:
+        if con("fa", "fb"):
+            k = intercambio(tam["fa"])
+            cfg_federal(S)["descensos"] = k
+            ascensos(cfg_federal(S, "federal_b"), k)
+        if con("fb"):
+            cfg_federal(S, "federal_b")["descensos"] = REG_ASC
+    elif con("fa"):
+        cfg_federal(S)["descensos"] = REG_ASC
+    # Primera B <-> Primera C <-> Promocional
+    if con("pb", "pc"):
+        k = intercambio(tam["pb"])
+        cfg_simple(S, "pb")["descensos"] = k
+        ascensos(cfg_simple(S, "pc"), k)
+    if con("pc", "pd"):
+        k = intercambio(tam["pc"])
+        cfg_simple(S, "pc")["descensos"] = k
+        ascensos(cfg_simple(S, "pd"), k)
+    return tam

@@ -32,6 +32,8 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%;}
 body:has([role="dialog"]) [data-testid="stHeader"]{visibility:hidden;}   /* con la ficha abierta no se superpone */
 [data-testid="stExpandSidebarButton"]{width:36px !important;height:36px !important;background:var(--tiza) !important;border:1px solid var(--line-2) !important;border-radius:4px !important;color:var(--tinta-2) !important;}
 [data-testid="stSidebar"]{background:var(--tiza-2);border-right:1px solid var(--line);}
+/* el botón para cerrar la barra lateral queda siempre a mano, aunque se baje hasta el final */
+[data-testid="stSidebarHeader"]{position:sticky;top:0;z-index:5;background:var(--tiza-2);}
 [data-testid="stSidebar"] h2{font-size:.78rem;font-stretch:85%;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--tinta-2);}
 ::selection{background:var(--cel);color:var(--tinta);}
 /* ---------- "Simular todo": al tocarlo, el mismo botón dice "Simulando…" hasta que termina ---------- */

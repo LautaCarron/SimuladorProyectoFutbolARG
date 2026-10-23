@@ -29,7 +29,7 @@ from ligas.nacional import ascensos_a_primera, equipos_objetivo_b, nueva_estruct
 from ligas.primera import equipos_objetivo_p, descensos, nueva_estructura, tabla_final
 from ligas.regional import nueva_estructura_reg
 from ligas.simples import nueva_estructura_liga
-from motor.tamanos import ajustar as ajustar_tamanos
+from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
 VERSION_ESTADO = 18       # cambia si se modifica la estructura del estado guardado
@@ -335,6 +335,8 @@ def nueva_temporada(S, volatilidad):
         listas["fb"] = S["federal_b"]
     S["movimientos"]["ajustes"] = [{"club": c, "de": de, "a": a, "motivo": m}
                                    for c, de, a, m in ajustar_tamanos(S, listas, viejas, hay_fb)]
+    # con tamaño objetivo, los ascensos y descensos de la temporada que viene quedan parejos y razonables
+    plan_equilibrado(S, {k: len(v) for k, v in listas.items() if k != "reg"})
     S["movimientos"]["suben_reg_fed_extra"] = []          # sin reubicación: el Federal A cambia de tamaño
     for L in ligas_t[:-1]:
         L["alertas"], L["quita"], L["desc_adm"] = [], {}, []
