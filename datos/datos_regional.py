@@ -275,6 +275,82 @@ REGIONAL = [
     {"nombre": "Río Grande (Neuquén)", "region": "Patagonia Norte", "zona": "Sur · Zona 12", "final": 6, "provincia": "Neuquén", "ciudad": "Neuquén", "liga": "Liga del Neuquén", "escudo": "https://cms.interiorfutbolero.com.ar/wp-content/uploads/2026/08/Rio-Grande-de-Neuquen.png", "media": 30.0},
 ]
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Clubes agregados a mano (no están en el JSON): equipos de ligas del interior que juegan el Torneo Regional Federal
+# Amateur. Quedan afuera los de Rosario (van por otras llaves) y los afiliados directamente a la AFA (ya están en las
+# categorías de la AFA). Media inicial 10 y sin escudo (se les dibuja el distintivo con las iniciales; para ponerles
+# escudo, completar "escudo"). Sin zona del JSON: las zonas del simulador se sortean cada temporada.
+# Formato: (nombre, región, provincia, ciudad, liga)
+# ---------------------------------------------------------------------------------------------------------------------
+_FINAL_REG = {"NOA Sur": 1, "NOA Norte": 1, "NEA Oeste": 2, "NEA Este": 2, "Centro": 3, "Cuyo": 3, "Litoral": 4,
+              "Norte Bonaerense": 4, "AMBA y La Plata": 4, "Pampeana Sur": 5, "Patagonia Sur": 6, "Patagonia Norte": 6}
+_EXTRA = [
+    # NOA Sur
+    ("Famaillá (Tucumán)", "NOA Sur", "Tucumán", "Famaillá", "Liga Tucumana", "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Club_Social_y_Deportivo_Atl%C3%A9tico_Famaill%C3%A1.png/330px-Club_Social_y_Deportivo_Atl%C3%A9tico_Famaill%C3%A1.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Dep. Graneros (Tucumán)", "NOA Sur", "Tucumán", "Graneros", "Liga Tucumana", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRiCHMOavAIDML-a_mnzinMMnLtDxWzrxVSDsG6hdvlQ&s=10"),
+    ("Comercio C.U.(SdE)", "NOA Sur", "Santiago del Estero", "Santiago del Estero", "Liga Santiagueña", "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Escudo_del_Club_Comercio_Central_Unidos.png/330px-Escudo_del_Club_Comercio_Central_Unidos.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Vélez Sarsfield (San Ramón)", "NOA Sur", "Santiago del Estero", "San Ramón", "Liga Santiagueña", "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Escudo_del_Club_Atl%C3%A9tico_V%C3%A9lez_Sarsfield_de_San_Ram%C3%B3n.png/330px-Escudo_del_Club_Atl%C3%A9tico_V%C3%A9lez_Sarsfield_de_San_Ram%C3%B3n.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Talleres (Quimilí)", "NOA Sur", "Santiago del Estero", "Quimilí", "Liga de Quimilí", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQng2rQlo38aaVcZMZ2fb7KWbSuFf4VLrMU7781ZdXQgQ&s=10"),
+    ("Defensores (Monte Quemado)", "NOA Sur", "Santiago del Estero", "Monte Quemado", "Liga de Monte Quemado", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQH1Xw1EOCnVZCusmYJoSrlq8auvB8TnqW4nDYA__TRYg&s=10"),
+    ("Central Córdoba (Frías)", "NOA Sur", "Santiago del Estero", "Frías", "Liga de Frías", "https://upload.wikimedia.org/wikipedia/commons/7/7e/Escudo_del_Club_Central_C%C3%B3rdoba_de_Frias.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail_unscaled"),
+    ("Argentinos (Termas de Río Hondo)", "NOA Sur", "Santiago del Estero", "Termas de Río Hondo", "Liga de Río Hondo"),
+    ("Unión y Juventud (Bandera)", "NOA Sur", "Santiago del Estero", "Bandera", "Liga Ceresina", "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/62/Escudo_del_Club_Uni%C3%B3n_y_Juventud_de_Bandera.png/1280px-Escudo_del_Club_Uni%C3%B3n_y_Juventud_de_Bandera.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail"),
+    # NOA Norte
+    ("Unión Maimará", "NOA Norte", "Jujuy", "Maimará", "Liga de Tilcara", "https://upload.wikimedia.org/wikipedia/commons/2/2b/Escudo_de_Uni%C3%B3n_Maimar%C3%A1.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail_unscaled"),
+    ("Mitre (Calilegua)", "NOA Norte", "Jujuy", "Calilegua", "Liga Libertador Gral. San Martín"),
+    ("Defensores (Yuto)", "NOA Norte", "Jujuy", "Yuto", "Liga Libertador Gral. San Martín", "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/80/Club-atl%C3%A9tico-defensores-de-yuto.png/500px-Club-atl%C3%A9tico-defensores-de-yuto.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Animaná (Salta)", "NOA Norte", "Salta", "Animaná", "Liga de Cafayate"),
+    ("Castañares (Salta)", "NOA Norte", "Salta", "Salta", "Liga Salteña"),
+    # NEA Oeste
+    ("Estudiantes (Resistencia)", "NEA Oeste", "Chaco", "Resistencia", "Liga Chaqueña", "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/11/Estud2.png/330px-Estud2.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Unión (Machagai)", "NEA Oeste", "Chaco", "Machagai", "Liga Chaqueña", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTOsYCKTPyKUMor8QX9cvyDlCD6sm5Xi-9N3GIa7K7OIw&s=10"),
+    # Centro
+    ("Dep. Alijilán (Catamarca)", "Centro", "Catamarca", "Alijilán", "Liga Catamarqueña", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYuCX9vZfuxGDxEtNZT3PIjBmvh8lZYeRpCL5Sfn6Erw&s=10"),
+    ("14 de Agosto (Tinogasta)", "Centro", "Catamarca", "Tinogasta", "Liga de Tinogasta"),
+    ("Racing 250 (Belén)", "Centro", "Catamarca", "Belén", "Liga de Belén"),
+    ("Rioja Juniors (La Rioja)", "Centro", "La Rioja", "La Rioja", "Liga Riojana"),
+    ("Colón (Colonia Caroya)", "Centro", "Córdoba", "Colonia Caroya", "Liga de Jesús María"),
+    ("Sarmiento (Etruria)", "Centro", "Córdoba", "Etruria", "Liga Villamariense"),
+    ("Huracán (Laboulaye)", "Centro", "Córdoba", "Laboulaye", "Liga de Laboulaye"),
+    ("Matienzo (Monte Buey)", "Centro", "Córdoba", "Monte Buey", "Liga de Bell Ville"),
+    ("Banda Norte (Río Cuarto)", "Centro", "Córdoba", "Río Cuarto", "Liga Río Cuartense"),
+    ("Belgrano (Berrotarán)", "Centro", "Córdoba", "Berrotarán", "Liga Río Cuartense"),
+    ("Talleres (Berrotarán)", "Centro", "Córdoba", "Berrotarán", "Liga Río Cuartense"),
+    # Cuyo
+    ("Peñaflor (San Juan)", "Cuyo", "San Juan", "Rivadavia", "Liga Sanjuanina"),
+    ("Colón Juniors (San Juan)", "Cuyo", "San Juan", "San Juan", "Liga Sanjuanina"),
+    ("Marquesado (San Juan)", "Cuyo", "San Juan", "Rivadavia", "Liga Sanjuanina"),
+    ("Rincón del Atuel (San Rafael)", "Cuyo", "Mendoza", "Rincón del Atuel", "Liga Sanrafaelina"),
+    ("Villa Atuel (San Rafael)", "Cuyo", "Mendoza", "Villa Atuel", "Liga Sanrafaelina"),
+    # Litoral
+    ("Sportivo Urquiza (Paraná)", "Litoral", "Entre Ríos", "Paraná", "Liga Paranaense"),
+    ("Unión (Crespo)", "Litoral", "Entre Ríos", "Crespo", "Liga Paranaense"),
+    ("Lanús (Concepción del Uruguay)", "Litoral", "Entre Ríos", "Concepción del Uruguay", "Liga de Concepción del Uruguay"),
+    ("Racing (Teodolina)", "Litoral", "Santa Fe", "Teodolina", "Liga Venadense"),
+    ("Sportivo Sarmiento (Maggiolo)", "Litoral", "Santa Fe", "Maggiolo", "Liga Venadense"),
+    # Norte Bonaerense
+    ("Lima FC (Zárate)", "Norte Bonaerense", "Buenos Aires", "Lima", "Liga de Zárate", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR8iyI_ryYPumu01BCf3RzetU2UC6APMKnAv-ujJz01RA&s=10"),
+    ("Internacional (Zárate)", "Norte Bonaerense", "Buenos Aires", "Zárate", "Liga de Zárate"),
+    ("Central Bs.As. (Zárate)", "Norte Bonaerense", "Buenos Aires", "Zárate", "Liga de Zárate"),
+    ("Sports (Salto)", "Norte Bonaerense", "Buenos Aires", "Salto", "Liga Saltense", "https://img.a.transfermarkt.technology/wappen/head/117825.png?lm=1789467245"),
+    ("Argentino (Lincoln)", "Norte Bonaerense", "Buenos Aires", "Lincoln", "Liga Deportiva del Oeste (Junín)"),
+    ("Argentino (Chacabuco)", "Norte Bonaerense", "Buenos Aires", "Chacabuco", "Liga de Chacabuco"),
+    # AMBA y La Plata
+    ("Unidos de Olmos (La Plata)", "AMBA y La Plata", "Buenos Aires", "Olmos", "Liga Amateur Platense"),
+    ("Escobar FC", "AMBA y La Plata", "Buenos Aires", "Escobar", "Liga de Escobar"),
+    # Pampeana Sur
+    ("Grupo Universitario (Tandil)", "Pampeana Sur", "Buenos Aires", "Tandil", "Liga Tandilense", "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/db/Grupo_Universitario_logo.jpg/250px-Grupo_Universitario_logo.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Independiente (Tandil)", "Pampeana Sur", "Buenos Aires", "Tandil", "Liga Tandilense", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKRYq1J39LK2EqqQ78McKbrvLjZ3_1dj_4cDEuYjq-RQ&s=10"),
+    ("Peñarol (MdP)", "Pampeana Sur", "Buenos Aires", "Mar del Plata", "Liga Marplatense", "https://upload.wikimedia.org/wikipedia/commons/d/dc/Escudo_CON-BORDE-BLANCO_vector_rgb.svg?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=original"),
+    # Patagonia
+    ("Racing Club (Trelew)", "Patagonia Sur", "Chubut", "Trelew", "Liga del Valle (Trelew)", "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/Racing_de_Trelew.png/330px-Racing_de_Trelew.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+    ("Camioneros (Caleta Olivia)", "Patagonia Sur", "Santa Cruz", "Caleta Olivia", "Liga de Caleta Olivia"),
+    ("Independiente (San Julián)", "Patagonia Sur", "Santa Cruz", "Puerto San Julián", "Liga de Puerto Santa Cruz", "https://upload.wikimedia.org/wikipedia/commons/3/3e/Escudo_del_Asociaci%C3%B3n_Club_Independiente_de_San_Julian.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"),
+]
+REGIONAL += [{"nombre": n, "region": rg, "zona": rg + " · Sin zona", "final": _FINAL_REG[rg], "provincia": pv,
+              "ciudad": ci, "liga": lg, "escudo": (esc[0] if esc else ""), "media": 10.0}
+             for n, rg, pv, ci, lg, *esc in _EXTRA]
+
 # Las 12 regiones, ordenadas de a pares: cada par juega una de las 6 finales por el ascenso
 REGIONES_REG = ["NOA Sur", "NOA Norte", "NEA Oeste", "NEA Este", "Centro", "Cuyo", "Litoral", "Norte Bonaerense", "AMBA y La Plata", "Pampeana Sur", "Patagonia Sur", "Patagonia Norte"]
 FINALES_REG = [("NOA Sur", "NOA Norte"), ("NEA Oeste", "NEA Este"), ("Centro", "Cuyo"), ("Litoral", "Norte Bonaerense"), ("AMBA y La Plata", "Pampeana Sur"), ("Patagonia Sur", "Patagonia Norte")]

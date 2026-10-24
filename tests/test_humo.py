@@ -170,7 +170,7 @@ def test_regional_el_limite_de_24_se_reevalua_en_cada_temporada(monkeypatch):
     S, P = crear_estado(), parametros_partido()
     SR = S["reg"]
     original = regional.region_reg
-    assert len(SR["zonas_de"]["Centro"]) == 2 and len(SR["zonas_de"]["NOA Norte"]) == 1
+    assert len(SR["zonas_de"]["Centro"]) == 2 and len(SR["zonas_de"]["NEA Este"]) == 1
 
     def jugar_regional():
         while SR["fecha"] < SR["total"]:
@@ -178,19 +178,20 @@ def test_regional_el_limite_de_24_se_reevalua_en_cada_temporada(monkeypatch):
         assert all(c is not None for c in SR["campeones"].values())
 
     jugar_regional()
-    # Temporada siguiente: 5 clubes de Centro pasan a NOA Norte -> Centro queda con 22 y NOA Norte con 29
-    movidos = [n for n, r in zip(SR["nombres"], SR["region_de"]) if r == "Centro"][:5]
-    monkeypatch.setattr(regional, "region_reg", lambda nm: "NOA Norte" if nm in movidos else original(nm))
+    # Temporada siguiente: Centro baja a REG_MAX_LIGA clubes y los que salen pasan a NEA Este, que supera el límite
+    sobran = len(SR["grupos"]["Centro"]) - REG_MAX_LIGA
+    movidos = [n for n, r in zip(SR["nombres"], SR["region_de"]) if r == "Centro"][:sobran]
+    monkeypatch.setattr(regional, "region_reg", lambda nm: "NEA Este" if nm in movidos else original(nm))
     nueva_estructura_reg(SR, S["rng"])
-    assert len(SR["grupos"]["Centro"]) <= REG_MAX_LIGA < len(SR["grupos"]["NOA Norte"])
-    assert SR["zonas_de"]["Centro"] == ["Centro"] and len(SR["zonas_de"]["NOA Norte"]) == 2
+    assert len(SR["grupos"]["Centro"]) <= REG_MAX_LIGA < len(SR["grupos"]["NEA Este"])
+    assert SR["zonas_de"]["Centro"] == ["Centro"] and len(SR["zonas_de"]["NEA Este"]) == 2
     assert not any(c.startswith("Centro · Zona") for c in SR["zonas"])       # no queda nada de la división anterior
     jugar_regional()
-    assert SR["campeones"]["NOA Norte"] in SR["cruces"]["NOA Norte"] and "Centro" not in SR["cruces"]
+    assert SR["campeones"]["NEA Este"] in SR["cruces"]["NEA Este"] and "Centro" not in SR["cruces"]
     assert len(tabla_reg_region(SR, "Centro")) == len(SR["grupos"]["Centro"])
 
     # y de vuelta: cada club vuelve a su región
     monkeypatch.setattr(regional, "region_reg", original)
     nueva_estructura_reg(SR, S["rng"])
-    assert len(SR["zonas_de"]["Centro"]) == 2 and SR["zonas_de"]["NOA Norte"] == ["NOA Norte"]
+    assert len(SR["zonas_de"]["Centro"]) == 2 and SR["zonas_de"]["NEA Este"] == ["NEA Este"]
     jugar_regional()

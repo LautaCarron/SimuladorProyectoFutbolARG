@@ -94,7 +94,7 @@ EQUIPOS_PRIMERA_D = {
     "Leones de Rosario FC": 25,
 }
 
-# Torneo Regional Amateur: 245 clubes en 12 regiones (datos completos en datos/datos_regional.py,
+# Torneo Regional Amateur: 316 clubes en 12 regiones (datos completos en datos/datos_regional.py,
 # generado del JSON oficial del torneo). Acá sólo nombre -> media inicial.
 EQUIPOS_REGIONAL = {x["nombre"]: x["media"] for x in REGIONAL}
 
