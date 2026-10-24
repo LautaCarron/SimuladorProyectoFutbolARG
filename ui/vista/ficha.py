@@ -4,6 +4,7 @@
 import pandas as pd
 import streamlit as st
 
+from datos.equipos import datos_club
 from motor.calendario import dia_partido, texto_dia
 from ui.vista.base import chip, coincide, crest, esc, norm
 from ui.vista.partidos import fila_partido_html, resultado_para
@@ -55,6 +56,11 @@ def render_ficha(S, club, nombre, clave):
         f'<div style="margin-top:6px">{chip(cat) if cat else ""} '
         f'<span style="font-size:.8rem;opacity:.65">Temporada {S["temp"]}</span></div></div></div>',
         unsafe_allow_html=True)
+    dc = datos_club(nombre)
+    if dc:
+        st.markdown(f'<div style="font-size:.85rem;opacity:.75;margin:-2px 0 8px">'
+                    f'{esc(dc["ciudad"])}, {esc(dc["provincia"])} · {esc(dc["liga"])}</div>',
+                    unsafe_allow_html=True)
     st.markdown(
         f'<div class="rec"><div><b>{len(partidos)}</b><span>PJ</span></div>'
         f'<div><b>{g}</b><span>G</span></div><div><b>{e}</b><span>E</span></div>'

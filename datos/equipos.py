@@ -7,6 +7,7 @@ escudos. No tiene lógica de simulación.
 from datos.clubes_int import CLUBES_INT, OSCUROS_INT
 from datos.datos_regional import GRUPO_FEDERAL_REG, REGIONAL
 from datos.clubes_mundial import MUNDIAL_CLUBES
+from datos.clubes_interior import DATOS_INTERIOR, datos_club  # noqa: F401  (ciudad, provincia y liga)
 
 # ----------------------------------------------------------------------------
 # DATOS: equipos reales de la temporada 2026 (medias orientativas, escala ~40-95).
@@ -343,7 +344,7 @@ ORIGEN = {
 def origen(nombre):
     if nombre in EQUIPOS_FEDERAL or nombre in EQUIPOS_REGIONAL:
         return "Interior"
-    if nombre in EQUIPOS_PRIMERA_B or nombre in EQUIPOS_PRIMERA_C:
+    if nombre in EQUIPOS_PRIMERA_B or nombre in EQUIPOS_PRIMERA_C or nombre in EQUIPOS_PRIMERA_D:
         return "Metropolitana"
     return ORIGEN.get(nombre, "Interior")
 
@@ -410,7 +411,7 @@ REGION_REGIONAL = {
     "Sarmiento (Resistencia)": "NEA Oeste", "Sol de América (Formosa)": "NEA Oeste",
     "Tucumán Central": "NOA Sur", "Argentino (Monte Maíz)": "Centro",
     "Atenas (Río Cuarto)": "Centro", "Cipolletti": "Patagonia Norte",
-    "Costa Brava": "Pampeana Sur", "Deportivo Rincón": "Patagonia Norte",
+    "Costa Brava": "Patagonia Norte", "Deportivo Rincón": "Patagonia Norte",
     "FADEP": "Cuyo", "Huracán Las Heras": "Cuyo", "Juventud Unida Universitario": "Cuyo",
     "San Martín (Mendoza)": "Cuyo", "Alvarado": "Pampeana Sur",
     "Círculo Deportivo": "Pampeana Sur", "Germinal": "Patagonia Sur",
@@ -452,5 +453,8 @@ NPD = len(EQUIPOS_PRIMERA_D)  # TPA (Primera D)
 ERROR_DATOS = None        # texto del error si los datos no cierran (lo muestra la interfaz)
 _todos = (list(EQUIPOS) + list(EQUIPOS_B) + list(EQUIPOS_FEDERAL) + list(EQUIPOS_PRIMERA_B)
           + list(EQUIPOS_PRIMERA_C) + list(EQUIPOS_PRIMERA_D) + [x["nombre"] for x in REGIONAL])
-if N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or NPD < 6 or len(set(_todos)) != len(_todos):
+_sin_datos = [n for n in [*EQUIPOS, *EQUIPOS_B, *EQUIPOS_FEDERAL] if origen(n) == "Interior" and datos_club(n) is None]
+if _sin_datos:
+    ERROR_DATOS = "Faltan ciudad/provincia/liga de clubes del interior: " + ", ".join(_sin_datos)
+elif N != 30 or NB != 36 or NF < 6 or NPB < 6 or NPC < 6 or NPD < 6 or len(set(_todos)) != len(_todos):
     ERROR_DATOS = "Hay un error en la cantidad de equipos o nombres repetidos."
