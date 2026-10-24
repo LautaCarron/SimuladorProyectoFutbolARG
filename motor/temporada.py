@@ -1,6 +1,8 @@
 """Estado de la partida y paso de una temporada a la siguiente (ascensos, descensos, copas, palmarés).
 """
 
+from dataclasses import dataclass
+
 import numpy as np
 import time
 
@@ -12,8 +14,6 @@ from datos.equipos import (
     EQUIPOS_PRIMERA_B,
     EQUIPOS_PRIMERA_C,
     EQUIPOS_REGIONAL,
-    N,
-    NB,
     REGIONAL,
     origen,
 )
@@ -32,7 +32,7 @@ from ligas.simples import nueva_estructura_liga
 from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
-VERSION_ESTADO = 18       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 19       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():
@@ -89,7 +89,63 @@ def crear_estado():
     return S
 
 
+@dataclass
+class Cierre:
+    """Lo que se va decidiendo al cerrar la temporada y pasa de una fase a la siguiente (ver nueva_temporada)."""
+    SB: dict
+    SF: dict
+    SFB: dict | None
+    SPB: dict
+    SPC: dict
+    SPD: dict
+    rng: object
+    final: object                      # tabla final de Primera
+    promos_b: list                     # promociones Primera - B Nacional
+    viejas: dict                       # quién jugaba dónde esta temporada
+    asc_fb: object = None
+    ascendidos_f: object = None
+    ascendidos_pb: object = None
+    ascendidos_pc: object = None
+    ascendidos_pd: object = None
+    bajan_b_extra: object = None
+    bajan_b_fed: object = None
+    bajan_b_pb: object = None
+    bajan_p: object = None
+    base_b: object = None
+    creando_fb: object = None
+    desc_fb: object = None
+    descendidos_f: object = None
+    descendidos_pb: object = None
+    descendidos_pc: object = None
+    directos: object = None
+    entran: object = None
+    extra_reg: object = None
+    hay_fb: object = None
+    ligas_t: object = None
+    objetivo_b: object = None
+    reducido: object = None
+    suben: object = None
+    suben_reg_a: object = None
+    suben_reg_b: object = None
+
+
 def nueva_temporada(S, volatilidad):
+    """Cierra la temporada: campeones, ascensos y descensos, tamaños de las ligas, ratings y la temporada que viene.
+    Cada fase lee y deja lo que necesita en `cierre`; el orden importa (el azar se consume en este orden)."""
+    cierre = _preparar_cierre(S)
+    _registrar_historial(S, cierre)
+    _movimientos_primera_y_b(S, cierre)
+    _reasignar_ligas_inferiores(S, cierre)
+    _movimientos_regional_y_federal_b(S, cierre)
+    _aplicar_movimientos(S, cierre)
+    _disciplina(S, cierre)
+    _ajustar_tamanos(S, cierre)
+    _evolucionar_ratings(S, cierre, volatilidad)
+    _armar_nueva_temporada(S, cierre)
+
+
+def _preparar_cierre(S):
+    """Foto del estado antes de cerrar: qué liga era cuál, ratings guardados, tabla final de Primera y clasificaciones."""
     SB, SF, SPB, SPC, SPD, rng = S["b"], S["f"], S["pb"], S["pc"], S["pd"], S["rng"]
     SFB = S.get("fb")                                   # Federal B (None mientras no se crea en el Modo dios)
     S.setdefault("federal_b", [])
@@ -109,7 +165,18 @@ def nueva_temporada(S, volatilidad):
     S["copa_clasif"] = [(x[0], x[3]) for x in clasificados_copa(S)]
     # copas CONMEBOL de la temporada que viene (tabla de Primera, Copa Argentina y campeones)
     fin_de_temporada(S)
+    return Cierre(
+        SB=SB, SF=SF, SFB=SFB, SPB=SPB, SPC=SPC, SPD=SPD, final=final, promos_b=promos_b, rng=rng,
+        viejas=viejas)
 
+
+def _registrar_historial(S, cierre):
+    """Campeones de la temporada y palmarés histórico (ligas, copas y competencias del registro)."""
+    (
+        SB, SF, SFB, SPB, SPC, SPD, final, rng
+    ) = (
+        cierre.SB, cierre.SF, cierre.SFB, cierre.SPB, cierre.SPC, cierre.SPD, cierre.final, cierre.rng
+    )
     # Campeón de cada liga en la temporada que termina (para el Historial)
     def _campeon(L):
         return L["nombres"][L["campeon"]] if L.get("campeon") is not None else ""
@@ -158,6 +225,10 @@ def nueva_temporada(S, volatilidad):
             S[comp.hist][camp] = S[comp.hist].get(camp, 0) + 1
         comp.cerrar(S, rng)
 
+
+def _movimientos_primera_y_b(S, cierre):
+    """Quién sube y quién baja entre Primera y la B Nacional, con los ajustes de tamaño del Modo dios."""
+    (SB, SF, SPB, final, promos_b) = (cierre.SB, cierre.SF, cierre.SPB, cierre.final, cierre.promos_b)
     reducido = SB["nombres"][SB["asc_reducido"]] if SB["asc_reducido"] is not None else None   # sin reducido en el torneo anual
     k_desc = descensos(S)                                         # Modo dios: cuántos bajan directo (suben tantos de la B)
     suben = ascensos_a_primera(S)
@@ -205,7 +276,22 @@ def nueva_temporada(S, volatilidad):
 
     S["nombres"] = [n for n in S["nombres"] if n not in bajan_p] + suben
     base_b = [n for n in SB["nombres"] if n not in suben and n not in bajan_b] + bajan_p
+    (
+        cierre.bajan_b_extra, cierre.bajan_b_fed, cierre.bajan_b_pb, cierre.bajan_p, cierre.base_b,
+        cierre.directos, cierre.objetivo_b, cierre.reducido, cierre.suben
+    ) = (
+        bajan_b_extra, bajan_b_fed, bajan_b_pb, bajan_p, base_b, directos, objetivo_b, reducido, suben
+    )
 
+
+def _reasignar_ligas_inferiores(S, cierre):
+    """Ascensos y descensos internos: Federal A, Primera B, Primera C y Promocional; y quiénes completan la B."""
+    (
+        SF, SPB, SPC, SPD, bajan_b_fed, bajan_b_pb, base_b, objetivo_b, rng
+    ) = (
+        cierre.SF, cierre.SPB, cierre.SPC, cierre.SPD, cierre.bajan_b_fed, cierre.bajan_b_pb, cierre.base_b,
+        cierre.objetivo_b, cierre.rng
+    )
     # Ascensos y descensos internos
     ascendidos_f = [SF["nombres"][i] for i in SF["ascendidos"]]
     ascendidos_pb = [SPB["nombres"][i] for i in (SPB.get("ascendidos") or SPB["asc_directo"])]
@@ -235,7 +321,18 @@ def nueva_temporada(S, volatilidad):
     S["primera_b"] = [n for i, n in enumerate(pool) if i not in elegidos and origen(n) == "Metropolitana"] + bajan_b_pb + ascendidos_pc
     S["primera_c"] = [n for n in SPC["nombres"] if n not in ascendidos_pc and n not in descendidos_pc] + descendidos_pb + ascendidos_pd
     S["promocional"] = [n for n in SPD["nombres"] if n not in ascendidos_pd] + descendidos_pc
+    (
+        cierre.ascendidos_f, cierre.ascendidos_pb, cierre.ascendidos_pc, cierre.ascendidos_pd,
+        cierre.descendidos_f, cierre.descendidos_pb, cierre.descendidos_pc, cierre.entran
+    ) = (
+        ascendidos_f, ascendidos_pb, ascendidos_pc, ascendidos_pd, descendidos_f, descendidos_pb,
+        descendidos_pc, entran
+    )
 
+
+def _movimientos_regional_y_federal_b(S, cierre):
+    """Regional Amateur y Federal B (en marcha, por crear o inexistente)."""
+    (SFB, descendidos_f) = (cierre.SFB, cierre.descendidos_f)
     # Regional Amateur: los 6 ganadores de las finales ascienden (al Federal A, o al Federal B si existe)
     ascendidos_reg = [S["reg"]["nombres"][i] for i in S["reg"]["ascendidos"]]
     suben_reg_a, suben_reg_b, extra_reg = ascendidos_reg, [], []
@@ -261,7 +358,29 @@ def nueva_temporada(S, volatilidad):
         S["federal"] = S["federal"] + ascendidos_reg
         S["regional"] = [n for n in S["regional"] if n not in ascendidos_reg] + descendidos_f
     hay_fb = SFB is not None or creando_fb
-    
+    (
+        cierre.asc_fb, cierre.creando_fb, cierre.desc_fb, cierre.extra_reg, cierre.hay_fb,
+        cierre.suben_reg_a, cierre.suben_reg_b
+    ) = (
+        asc_fb, creando_fb, desc_fb, extra_reg, hay_fb, suben_reg_a, suben_reg_b
+    )
+
+
+def _aplicar_movimientos(S, cierre):
+    """Arma la B de la temporada que viene y deja el resumen de movimientos en S["movimientos"]."""
+    (
+        SB, SF, asc_fb, ascendidos_f, ascendidos_pb, ascendidos_pc, ascendidos_pd, bajan_b_extra,
+        bajan_b_fed, bajan_b_pb, bajan_p, base_b, creando_fb, desc_fb, descendidos_f, descendidos_pb,
+        descendidos_pc, directos, entran, extra_reg, hay_fb, promos_b, reducido, suben, suben_reg_a,
+        suben_reg_b
+    ) = (
+        cierre.SB, cierre.SF, cierre.asc_fb, cierre.ascendidos_f, cierre.ascendidos_pb,
+        cierre.ascendidos_pc, cierre.ascendidos_pd, cierre.bajan_b_extra, cierre.bajan_b_fed,
+        cierre.bajan_b_pb, cierre.bajan_p, cierre.base_b, cierre.creando_fb, cierre.desc_fb,
+        cierre.descendidos_f, cierre.descendidos_pb, cierre.descendidos_pc, cierre.directos, cierre.entran,
+        cierre.extra_reg, cierre.hay_fb, cierre.promos_b, cierre.reducido, cierre.suben, cierre.suben_reg_a,
+        cierre.suben_reg_b
+    )
     SB["nombres"] = base_b + entran
 
     S["movimientos"] = {
@@ -294,6 +413,10 @@ def nueva_temporada(S, volatilidad):
             or "Esta temporada no hubo promoción."),
     }
 
+
+def _disciplina(S, cierre):
+    """Tribunal de Disciplina: avisos al historial y descensos administrativos."""
+    (SB, SF, SFB, SPB, SPC, hay_fb) = (cierre.SB, cierre.SF, cierre.SFB, cierre.SPB, cierre.SPC, cierre.hay_fb)
     # ---- Tribunal de Disciplina: avisos de la temporada al historial, descensos
     # administrativos (lo gravísimo: baja una categoría más) y quitas de puntos a cero
     ligas_t = (S, SB, SF, *([SFB] if SFB else []), SPB, SPC, S["reg"], S.get("copa", {}))
@@ -327,7 +450,12 @@ def nueva_temporada(S, volatilidad):
             continue
         bajan_adm.append(club)
     S["movimientos"]["descenso_adm"] = bajan_adm
+    cierre.ligas_t = ligas_t
 
+
+def _ajustar_tamanos(S, cierre):
+    """Tamaño de las ligas: objetivo del Modo dios y piso de equipos; limpia los avisos de la temporada."""
+    (SB, hay_fb, ligas_t, viejas) = (cierre.SB, cierre.hay_fb, cierre.ligas_t, cierre.viejas)
     # Tamaño de las ligas: el objetivo elegido en el Modo dios (de a poco) y el piso de equipos de cada una
     listas = {"p": S["nombres"], "b": SB["nombres"], "fa": S["federal"], "pb": S["primera_b"],
               "pc": S["primera_c"], "pd": S["promocional"], "reg": S["regional"]}
@@ -341,6 +469,10 @@ def nueva_temporada(S, volatilidad):
     for L in ligas_t[:-1]:
         L["alertas"], L["quita"], L["desc_adm"] = [], {}, []
 
+
+def _evolucionar_ratings(S, cierre, volatilidad):
+    """Las medias de cada liga cambian un poco de una temporada a la otra y empieza la temporada nueva."""
+    (SB, rng) = (cierre.SB, cierre.rng)
     for nombres in (S["nombres"], SB["nombres"], S["federal"], S["primera_b"], S["primera_c"],
                     S["regional"], *([S["federal_b"]] if S["federal_b"] else [])):
         arr = np.array([S["rating"][n] for n in nombres])
@@ -354,10 +486,13 @@ def nueva_temporada(S, volatilidad):
     S["temp"] += 1
     S["cerrada_ambas"] = False
 
-    # --- AGREGAR ESTAS DOS LÍNEAS PARA BORRAR FANTASMAS ---
+
+def _armar_nueva_temporada(S, cierre):
+    """Estructura, fixtures y sorteos de la temporada que viene."""
+    (SB, SF, rng) = (cierre.SB, cierre.SF, cierre.rng)
+
     SF["nombres"] = list(S["federal"])
     SF["r"] = np.array([S["rating"][n] for n in SF["nombres"]])
-    # ------------------------------------------------------
 
     nueva_estructura(S)
     nueva_estructura_b(SB, rng, S)
@@ -394,7 +529,7 @@ def nueva_temporada(S, volatilidad):
         if comp.crea_estado:
             S[comp.clave] = comp.nueva(S, rng)
 
-    #----------------- REINICIAR ESTADOS DE DESEMPATE -----------------
+    # reinicia los estados de desempate de Primera B, C y Promocional
     for liga in [S["pb"], S["pc"], S["pd"]]:
         liga["desempate_pendiente"] = False
         liga["ids_desempate"] = []

@@ -5,22 +5,16 @@ import pandas as pd
 import streamlit as st
 
 from motor.calendario import dia_partido, texto_dia
-from ui.vista.base import _estado, chip, coincide, crest, esc, norm
-from ui.vista.partidos import (
-    categoria_de,
-    fila_partido_html,
-    proximo_partido,
-    resultado_para,
-    todos_los_partidos,
-)
+from ui.vista.base import chip, coincide, crest, esc, norm
+from ui.vista.partidos import fila_partido_html, resultado_para
+from motor import consultas
 from ui.vista.tablas import tabla_html
 
 
 # ---- Ficha de un club (con buscador de sus partidos) ------------------------
-def render_ficha(nombre, clave):
-    S, SB, SF, SPB, SPC = _estado()
-    partidos = [p for p in todos_los_partidos() if nombre in (p["local"], p["visita"])]
-    cat = categoria_de(nombre)
+def render_ficha(S, club, nombre, clave):
+    partidos = consultas.partidos_club(S, nombre)
+    cat = consultas.categoria_de(S, nombre)
     filas, letras = [], []
     gf_t = gc_t = 0
     for p in partidos:
@@ -68,7 +62,7 @@ def render_ficha(nombre, clave):
         f'<div><b>{gc_t}</b><span>GC</span></div><div><b>{gf_t - gc_t:+d}</b><span>DG</span></div>'
         f'<div><span>Últimos 5</span><div class="form">{forma or "—"}</div></div></div>',
         unsafe_allow_html=True)
-    prox = proximo_partido(nombre)
+    prox = consultas.proximo_partido(S, nombre)
     if prox:
         rival = prox["visita"] if prox["local"] == nombre else prox["local"]
         cond = "Local" if prox["local"] == nombre else "Visitante"
@@ -103,9 +97,9 @@ def render_ficha(nombre, clave):
     penales = [p for p in partidos if p["pen"]]
     if penales:
         st.markdown('<div class="mlab">Definiciones por penales</div>'
-                    + "".join(fila_partido_html(p) for p in penales), unsafe_allow_html=True)
+                    + "".join(fila_partido_html(S, club, p) for p in penales), unsafe_allow_html=True)
 
 
 @st.dialog("Ficha del club", width="large")
-def ver_equipo(nombre):
-    render_ficha(nombre, "dlg")
+def ver_equipo(S, club, nombre):
+    render_ficha(S, club, nombre, "dlg")

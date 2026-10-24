@@ -9,7 +9,7 @@ import streamlit as st
 from datos.equipos import region_regional
 from datos.logos import logo_img
 from datos.datos_regional import REGIONES_REG
-from ui.vista import aviso, crest, esc, lista_equipos_html, seccion, tabla_html
+from ui.vista import aviso, crest, esc, seccion, tabla_html
 
 
 def _mov_clubes(items):
@@ -76,7 +76,7 @@ def movimientos_html(mv):
 
 def render(ctx):
     (S, _abierta, tab_h) = (
-        ctx.S, ctx._abierta, ctx.tab_h)
+        ctx.S, ctx.abierta, ctx.pestanas.tab_h)
     # ============================================================================
     # HISTORIAL
     # ============================================================================

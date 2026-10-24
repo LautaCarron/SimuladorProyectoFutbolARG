@@ -25,7 +25,7 @@ from collections import Counter
 import numpy as np
 
 from datos.clubes_mundial import CUPOS_2029, MEDIA_MUNDIAL, PAIS_MUNDIAL, clubes_de
-from copas.conmebol import _medias, pais_de
+from copas.conmebol import medias_ext, pais_de
 from motor.nucleo import MAX_R, MIN_R, jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_penales
 
 MUNDIAL = "Mundial de Clubes"
@@ -109,7 +109,7 @@ def ciclo(S):
 
 def medias(S):
     """Media actual de todos los clubes que pueden jugar el Mundial."""
-    out = dict(_medias(S))
+    out = dict(medias_ext(S))
     out.update(S.setdefault("rating_mundial", dict(MEDIA_MUNDIAL)))
     return out
 

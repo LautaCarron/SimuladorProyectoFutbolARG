@@ -1,7 +1,6 @@
 """Cuadros de eliminación: reducidos, finales del Regional, Copa Argentina y avisos del Tribunal.
 """
 
-import streamlit as st
 
 from motor.calendario import dia_de, texto_dia
 from datos.logos import logo_img
@@ -161,11 +160,12 @@ def _fila_final(SR, i, reg, goles, clase, pen=None):
             f'<span class="rf-g rf-tot">{tot}{pk}</span></div>')
 
 
-def finales_reg_html(SR):
+def finales_reg_html(S):
     """Las 6 finales por el ascenso (de a pares de regiones, según el JSON): cada tarjeta
     muestra ida, vuelta y global de cada campeón y quién asciende (al Federal A, o al B si existe)."""
     from ligas.federal_b import destino_ascenso_regional
-    sube = destino_ascenso_regional(st.session_state.S)
+    SR = S["reg"]
+    sube = destino_ascenso_regional(S)
     tarjetas = ""
     for k, (ra, rb) in enumerate(FINALES_REG):
         x = SR["finales"][k] if k < len(SR["finales"]) else None
@@ -304,9 +304,8 @@ _ICONO_AVISO = {"clima": "⛈", "luz": "💡", "bengalas": "🔥", "invasion": "
                 "doping": "💊", "animales": "🐕", "cancha": "🏟️", "logistica": "👕", "hinchada": "🎊"}
 
 
-def avisos_html(avisos, con_temporada=False):
+def avisos_html(S, avisos, con_temporada=False):
     """Tarjetas de los avisos (lo más nuevo primero)."""
-    S = st.session_state.S
     out = ""
     for a in reversed(avisos):
         grave = a["clave"] not in ("clima", "luz")

@@ -1,6 +1,6 @@
 """Modo Manager (Manager Falopa): alta del manager, oficina con ofertas y carrera.
 
-Va en ui/manager.py. En modo manager se muestra el simulador COMPLETO (ligas, copas, calendario,
+Pantallas del modo manager (la lógica sin Streamlit está en motor/manager.py). En modo manager se muestra el simulador COMPLETO (ligas, copas, calendario,
 "Próximo día", "Simular todo"... todo funciona igual que en el modo simulación) y se suma una pestaña
 "Manager" con la oficina, tu club y la carrera.
 
@@ -13,15 +13,22 @@ Estado: st.session_state["manager"] (aparte de S, así Reiniciar / Nueva tempora
 Las ofertas llegan siempre; algunas son para la Reserva y el club puede subirte a DT del primer
 equipo (lógica en motor/ofertas.py).
 
-Se engancha desde simuladorafa.py (ver los bloques al final de este archivo).
+Se engancha desde simuladorafa.py (_preparar_manager y la pestaña "Manager" de ui/pestanas.py).
 """
 
-import datetime as dt
-import uuid
 
 import streamlit as st
 
-from motor.calendario import dia_partido, jugar_proximo_dia, proximos, texto_dia
+from motor.calendario import proximos, texto_dia
+from motor.consultas import categoria_de as partidos_categoria
+from motor.consultas import partidos_club
+from motor.manager import (
+    aplicar_tactica,
+    jugar_dias,
+    primer_dia,
+    proximo_partido_club,
+)
+from motor.manager import simular_hasta_pausa as _simular_dias
 from motor.ofertas import (
     GLOBAL_MAX,
     GLOBAL_MIN,
@@ -34,15 +41,14 @@ from motor.ofertas import (
     generar_oferta,
     info_club,
     nivel_texto,
-    nuevo_dia,
     nuevo_manager_estado,
     objetivo,
     perfil_club,
     rechazar,
     renunciar,
 )
-from motor.eventos import EVENTOS, descripcion_opcion, resolver, sortear
-from motor.nucleo import ESTILOS_JUEGO, TACTICAS, con_tacticas, tactica_total
+from motor.eventos import EVENTOS, descripcion_opcion, resolver
+from motor.nucleo import ESTILOS_JUEGO, TACTICAS, tactica_total
 from motor.relaciones import (
     CAMA_ATAQUE,
     CAMA_CONTROL,
@@ -53,21 +59,16 @@ from motor.relaciones import (
     KARMA_DEJAR_CLUB,
     KARMA_RENUNCIAR,
     UMBRAL_CAMA,
-    aplicar_partido,
     asegurar,
     cambiar,
     clave_partido,
-    con_cama,
     descripcion,
     efecto_cama,
     entrar_club,
-    revisar_despido,
     salir_club,
     umbral_despido,
 )
-from ui.vista import aviso, chip, crest, esc, eventos_calendario, fila_partido_html, norm, render_ficha, seccion
-from ui.vista.vista_calendario import _cal_partidos
-from ui.vista.partidos import categoria_de as categoria_rival, todos_los_partidos
+from ui.vista import aviso, chip, crest, esc, fila_partido_html, norm, render_ficha, seccion
 
 # ---- Opciones ---------------------------------------------------------------
 NACIONALIDADES = ["Argentina", "Uruguay", "Chile", "Paraguay", "Bolivia", "Brasil", "Colombia", "Ecuador",
@@ -84,13 +85,9 @@ REPUTACIONES = {
     "Ex estrella": "Fuiste figura: te llaman los grandes.",
 }
 
-TOPE_DIAS = 60                    # "Hasta la próxima novedad" / "hasta mi próximo partido": máximo de días
 
 
 # ---- Ayudas de interfaz -----------------------------------------------------
-def _primer_dia(S):
-    prox = proximos(S)
-    return min((d for d, _ in prox.values()), default=dt.date.today())
 
 
 def _pct(x):
@@ -115,14 +112,6 @@ def efectos_tactica(nombre):
             f"Goles a favor {_pct(atk)} · Goles en contra {_pct(dfn)} · Mediocampo neutro")
 
 
-def aplicar_tactica(S, M):
-    """Carga en el generador de azar del simulador la táctica del club del manager. Sólo juega con
-    táctica si dirige al primer equipo (en la Reserva no define cómo juega el primer equipo)."""
-    tab = {}
-    if M.get("club") and M.get("rol") == "primer_equipo" and M.get("formacion") in TACTICAS:
-        base = tactica_total(M["formacion"], M.get("estilo"))                # formación + estilo de juego
-        tab = {M["club"]: con_cama(base, efecto_cama(M))}                    # el plantel puede hacerte la cama
-    S["rng"] = con_tacticas(S["rng"], tab)
 
 
 def _volver_al_inicio():
@@ -248,7 +237,7 @@ def alta_manager(S):
         M = nuevo_manager_estado(glob)
         M.update(nombre=nombre.strip(), apellido=apellido.strip(), edad=int(edad), nacionalidad=nacionalidad,
                  formacion=formacion, estilo=estilo, reputacion=reputacion,
-                 global_a_mano=(modo_g == "A mano"), hoy=_primer_dia(S))
+                 global_a_mano=(modo_g == "A mano"), hoy=primer_dia(S))
         asegurar(M)                                   # relaciones iniciales (según la reputación)
         if club:                                      # arranca dirigiendo el primer equipo
             M["club"], M["rol"] = club, "primer_equipo"
@@ -264,82 +253,15 @@ def alta_manager(S):
         st.rerun()
 
 
-# ---- Sincronización con el calendario del simulador --------------------------
-def _dias_jugados(S):
-    """{día: [competiciones]} de los días del calendario cuyo programa ya se jugó completo."""
-    dias = {}
-    for d, liga, _n, jugada in eventos_calendario(S):
-        if d is None:
-            continue
-        r = dias.setdefault(d, {"comps": [], "todo": True})
-        r["comps"].append(liga)
-        r["todo"] = r["todo"] and jugada
-    return {d: r["comps"] for d, r in dias.items() if r["todo"]}
 
 
-def sincronizar_manager(S, M):
-    """Corre el motor de ofertas por cada día que se jugó por completo desde la última vez.
-    Sirve para cualquier forma de jugar. Devuelve los textos de las novedades (ofertas nuevas que
-    siguen vigentes y ascensos) y los deja anotados en M["novedades"]."""
-    aplicar_tactica(S, M)                                   # la táctica viaja en el generador de azar
-    asegurar(M)
-    if M["club"] and M["rel"]["dirigencia"] is None:        # carrera empezada antes de que existieran las relaciones
-        entrar_club(S, M, M["club"])
-    uid = S.setdefault("_mgr_uid", uuid.uuid4().hex)       # cambia si se reinicia el simulador
-    jugados = _dias_jugados(S)
-    sync = M.get("sync")
-    if not sync or sync["uid"] != uid:
-        M["sync"] = {"uid": uid, "dias": set(jugados)}     # lo ya jugado antes no genera ofertas
-        M["partidos_vistos"] = {clave_partido(p) for p in _partidos_club(M["club"])} if M["club"] else set()
-        return []
-    if M.get("evento") and not M["club"]:                  # el evento era de un club que ya no dirigís
-        M["evento"] = None
-    if M.get("evento"):                                    # evento pendiente: los días siguientes esperan
-        return []
-    textos = []
-    pendientes = []
-    for d in sorted(x for x in jugados if x not in sync["dias"]):
-        sync["dias"].add(d)
-        M["registro"].append({"dia": d, "comps": sorted(set(jugados[d]))})
-        r = nuevo_dia(S, M, d, S["rng"])
-        r["relaciones"] = _relaciones_dia(S, M, d)         # partidos del día: hinchada, dirigencia, plantel...
-        pendientes.append((d, r))
-        if M.get("evento"):                                # salió un evento: se frena acá; el resto espera
-            break
-    del M["registro"][:-40]
-    vigentes = {o["id"] for o in M["ofertas"]}
-    for d, r in pendientes:
-        for t in r["relaciones"]:
-            textos.append((d, t))
-        for t in r["eventos"]:
-            textos.append((d, f"📣 {t}"))
-        for o in r["nuevas"]:
-            if o["id"] in vigentes:
-                textos.append((d, f"📩 Nueva oferta de {o['club']} ({ROLES[o['rol']]})."))
-    M.setdefault("novedades", []).extend({"dia": d, "texto": t} for d, t in textos)
-    del M["novedades"][:-30]
-    return [t for _, t in textos]
 
 
-def proximo_partido_club(S, club):
-    """Próximo partido sin jugar del club en cualquier competencia (liga, Copa Argentina, Supercopa,
-    copas CONMEBOL, Mundial), según el calendario. None si no hay ninguno programado todavía."""
-    for _d, liga, n, jugada in eventos_calendario(S):         # ya vienen ordenados por día
-        if jugada:
-            continue
-        try:
-            partidos = _cal_partidos(S, liga, n)
-        except Exception:
-            continue
-        for p in partidos:
-            if p["gl"] is None and club in (p["local"], p["visita"]):
-                return p
-    return None
 
 
 def _datos_rival(S, club, rival):
     partes = []
-    cat = categoria_rival(rival)
+    cat = partidos_categoria(S, rival)
     if cat:
         partes.append(cat)
     if categoria_de(S, rival) and categoria_de(S, club):
@@ -358,66 +280,16 @@ def _tarjeta_proximo(S, M):
         return
     rival = p["visita"] if p["local"] == club else p["local"]
     cond = "en cancha neutral" if p["neutral"] else "de local" if p["local"] == club else "de visitante"
-    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+    st.markdown(fila_partido_html(S, club, p), unsafe_allow_html=True)
     st.markdown(f"Jugás contra **{esc(rival)}**, {cond}. " + esc(_datos_rival(S, club, rival)))
     if M["rol"] == "reserva":
         st.caption("Como DT de la Reserva no dirigís este partido: lo dirige el DT del primer equipo.")
 
 
-def _relaciones_dia(S, M, d):
-    """Mueve las relaciones con los partidos de mi club que ya se jugaron hasta el día `d` (sólo cuentan
-    cuando sos DT del primer equipo) y revisa si te echan. Devuelve los textos de lo que pasó."""
-    avisos = []
-    if not M["club"]:
-        return avisos
-    nuevos = sorted((p for p in _partidos_club(M["club"])
-                     if clave_partido(p) not in M["partidos_vistos"] and (dia_partido(S, p) or d) <= d),
-                    key=lambda p: dia_partido(S, p) or d)
-    for p in nuevos:
-        M["partidos_vistos"].add(clave_partido(p))
-        if M["rol"] == "primer_equipo":
-            M["rel_log"].append({"dia": dia_partido(S, p) or d, "texto": aplicar_partido(S, M, p)})
-    del M["rel_log"][:-12]
-    if M["rol"] != "primer_equipo":
-        return avisos
-    M["dias_dt"] += 1
-    plantel = M["rel"]["plantel"]
-    if efecto_cama(M) > 0 and not M.get("cama_avisada"):
-        M["cama_avisada"] = True
-        avisos.append(f"🛏️ El plantel te está haciendo la cama: el equipo rinde peor ({plantel:.0f}% de relación).")
-    elif M.get("cama_avisada") and plantel >= UMBRAL_CAMA + 10:
-        M["cama_avisada"] = False
-        avisos.append("🤝 El plantel volvió a bancarte.")
-    despido = revisar_despido(S, M, S["rng"])
-    if despido:
-        M["cama_avisada"] = False
-        avisos.append(f"🚨 {despido}")
-    else:
-        evento = sortear(S, M, S["rng"], bool(nuevos))      # a veces pasa algo que hay que decidir
-        if evento:
-            M["evento"] = evento
-            avisos.append(f"⏸ Evento para resolver: {EVENTOS[evento['id']]['titulo']}.")
-    return avisos
 
 
-def _partidos_club(club):
-    return [p for p in todos_los_partidos() if club in (p["local"], p["visita"])]
 
 
-def _jugar_dias(S, M, P, acumular, hasta):
-    """Juega días del calendario hasta que `hasta(textos, nuevos_partidos)` sea verdadero (o no quede
-    nada / se llegue al tope). Devuelve (días jugados, textos, partidos nuevos del club)."""
-    antes = {id(p) for p in _partidos_club(M["club"])} if M["club"] else set()
-    jugados, textos, nuevos = 0, [], []
-    while jugados < TOPE_DIAS and proximos(S):
-        jugar_proximo_dia(S, P, acumular)
-        jugados += 1
-        textos += sincronizar_manager(S, M)
-        if M["club"]:
-            nuevos = [p for p in _partidos_club(M["club"]) if id(p) not in antes]
-        if M.get("evento") or hasta(textos, nuevos):       # un evento pausa la simulación
-            break
-    return jugados, textos, nuevos
 
 
 # ---- Panel de la pestaña Manager ----------------------------------------------
@@ -427,12 +299,12 @@ def _msg_dias(jugados, textos, vacio=""):
 
 
 def _cb_hasta_novedad(S, M, P, acumular):
-    jugados, textos, _ = _jugar_dias(S, M, P, acumular, lambda t, n: bool(t))
+    jugados, textos, _ = jugar_dias(S, M, P, acumular, lambda t, n: bool(t))
     st.session_state["mgr_msg"] = _msg_dias(jugados, textos, "Sin novedades.")
 
 
 def _cb_prox_partido(S, M, P, acumular):
-    jugados, textos, nuevos = _jugar_dias(S, M, P, acumular, lambda t, n: bool(n))
+    jugados, textos, nuevos = jugar_dias(S, M, P, acumular, lambda t, n: bool(n))
     st.session_state["mgr_ultimo"] = list(nuevos)
     st.session_state["mgr_msg"] = _msg_dias(jugados, textos)
 
@@ -462,18 +334,6 @@ def pantalla_evento(S, M):
     st.caption("⏸ La simulación está en pausa hasta que decidas.")
 
 
-def simular_hasta_pausa(S, P, acumular):
-    """"Simular todo" del modo manager: juega día por día hasta que termina la temporada o aparece un evento
-    (que hay que resolver antes de seguir)."""
-    M = st.session_state["manager"]
-    jugados, textos = 0, []
-    while proximos(S) and jugados < 400:
-        jugar_proximo_dia(S, P, acumular)
-        jugados += 1
-        textos += sincronizar_manager(S, M)
-        if M.get("evento"):
-            break
-    st.session_state["mgr_msg"] = _msg_dias(jugados, textos)
 
 
 def _cb_aceptar(S, M, o):
@@ -481,7 +341,7 @@ def _cb_aceptar(S, M, o):
         cambiar(M, "karma", KARMA_DEJAR_CLUB)               # dejás un club por otro
     aceptar(S, M, o)
     entrar_club(S, M, o["club"])
-    M["partidos_vistos"] = set(M.get("partidos_vistos", ())) | {clave_partido(p) for p in _partidos_club(o["club"])}
+    M["partidos_vistos"] = set(M.get("partidos_vistos", ())) | {clave_partido(p) for p in partidos_club(S, o["club"])}
     M["cama_avisada"] = False
     st.session_state["mgr_msg"] = f"Aceptaste: {ROLES[o['rol']]} en <b>{esc(o['club'])}</b>."
 
@@ -570,10 +430,10 @@ def _mi_club(S, M, P, acumular, abierta):
     if ultimo:
         st.markdown('<div class="mlab">Último partido de tu club</div>', unsafe_allow_html=True)
         for p in ultimo:
-            st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+            st.markdown(fila_partido_html(S, club, p, abierto=True), unsafe_allow_html=True)
     if abierta:
         with st.container(border=True):
-            render_ficha(club, "mgr")
+            render_ficha(S, club, club, "mgr")
 
 
 CSS_REL = """<style>
@@ -677,8 +537,8 @@ def panel_manager(S, P, acumular):
 
 def render(ctx):
     """Pestaña "Manager" del simulador (sólo en modo manager)."""
-    if getattr(ctx, "modo_mgr", False) and ctx._abierta(ctx.tab_mgr):
-        with ctx.tab_mgr:
+    if getattr(ctx, "modo_mgr", False) and ctx.abierta(ctx.pestanas.tab_mgr):
+        with ctx.pestanas.tab_mgr:
             panel_manager(ctx.S, ctx.P, ctx.acumular)
 
 
@@ -768,17 +628,7 @@ def _carrera(S, M):
     b2.button(":material/home: Volver al inicio", key="mgr_inicio_btn", width="stretch", on_click=_cb_volver_inicio)
 
 
-# ---- Cómo engancharlo en simuladorafa.py -------------------------------------------
-# 1) Justo después de `S = st.session_state.S` (reemplaza el bloque anterior de modo_manager):
-#
-#     modo_mgr = st.session_state.get("afa_pantalla") == "manager" or st.query_params.get("modo") == "manager"
-#     if modo_mgr:
-#         from ui.manager import alta_manager, sincronizar_manager
-#         if not st.session_state.get("manager"):
-#             alta_manager(S)                      # primero se cargan los datos del manager
-#             st.stop()
-#         for _txt in sincronizar_manager(S, st.session_state["manager"]):
-#             st.toast(_txt)
-#
-# 2) En las pestañas de arriba se suma "Manager" al principio cuando modo_mgr es verdadero.
-# 3) Se agrega `from ui import manager as ui_manager` y `ui_manager` a la lista que recorre render(ctx).
+def simular_hasta_pausa(S, P, acumular):
+    """"Simular todo" del modo manager (la lógica está en motor/manager.py): deja el resumen en pantalla."""
+    jugados, textos = _simular_dias(S, st.session_state["manager"], P, acumular)
+    st.session_state["mgr_msg"] = _msg_dias(jugados, textos)

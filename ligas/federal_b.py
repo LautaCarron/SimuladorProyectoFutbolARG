@@ -16,6 +16,7 @@ import numpy as np
 
 from datos.equipos import F_GRUPOS_NOMBRES  # noqa: F401  (los grupos por cercanía son los del Federal A)
 from ligas.federal import cfg_federal, nueva_estructura_f
+from ligas.regional import tabla_reg_region
 
 LIGA_FB = "Federal B"
 FB_EQUIPOS = 20                    # equipos con los que nace el Federal B
@@ -60,10 +61,10 @@ def destino_descenso_federal_a(S):
 def elegir_del_regional(SR, excluir, cantidad):
     """Los `cantidad` mejores del Regional Amateur (fuera de los de `excluir`), según cómo salieron en la temporada.
 
-    Se ordenan por puesto en la liga de su región (los 6 campeones regionales que perdieron la final por el
-    ascenso salen primero, después los segundos de cada región y así), y a igual puesto por puntos por partido,
+    Se ordenan por puesto en su región (los 6 campeones regionales que perdieron la final por el ascenso salen primero,
+    después los segundos de cada región y así; en una región dividida en dos zonas, primero el campeón regional, después
+    el otro campeón de zona y luego los demás por su puesto en la zona), y a igual puesto por puntos por partido,
     diferencia de gol por partido, goles a favor por partido y media interna."""
-    from ligas.regional import tabla_reg_region
     if cantidad <= 0:
         return []
     excluir = set(excluir)
@@ -77,7 +78,7 @@ def elegir_del_regional(SR, excluir, cantidad):
             if nom in excluir:
                 continue
             pj = max(int(f["PJ"]), 1)
-            candidatos.append((int(f["Pos"]), -float(f["Pts"]) / pj, -float(f["DG"]) / pj,
+            candidatos.append((int(f["Puesto"]), -float(f["Pts"]) / pj, -float(f["DG"]) / pj,
                                -float(f["GF"]) / pj, -float(SR["r"][int(f["id"])]), nom))
     candidatos.sort()
     return [c[-1] for c in candidatos[:cantidad]]

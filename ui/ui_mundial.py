@@ -24,7 +24,6 @@ from copas.mundial import (
 from ui.vista import (
     aviso,
     bandera,
-    barra_estado,
     chip,
     crest,
     cuadro_mundial_html,
@@ -39,7 +38,7 @@ from ui.vista import (
 
 def render(ctx):
     (P, S, _abierta, tab_copas, tab_mun) = (
-        ctx.P, ctx.S, ctx._abierta, ctx.tab_copas, ctx.tab_mun)
+        ctx.P, ctx.S, ctx.abierta, ctx.pestanas.tab_copas, ctx.pestanas.tab_mun)
     # ============================================================================
     # MUNDIAL DE CLUBES (cada 4 temporadas: 2029, 2033...)
     # ============================================================================
@@ -67,8 +66,7 @@ def render(ctx):
             c1 = st.columns(1)[0]
             c1.markdown(chip("Mundial de Clubes · 32 equipos", color) + " " + chip(
                 f"Próxima edición: {anio_mundial(prox)} (temporada {prox})", "#475569"), unsafe_allow_html=True)
-            seccion("Camino al Mundial", "Los campeones continentales de los 4 años anteriores clasifican directo; "
-                    "el resto de cada cupo sale del ranking (máximo 2 clubes por país)", color)
+            seccion("Camino al Mundial", color=color)
             aviso("Esta temporada no hay Mundial de Clubes. Se sortea al empezar la temporada de la edición, con "
                   "lo que haya pasado en las copas hasta entonces.")
             ranking_sudamerica(prox, color)
@@ -90,17 +88,13 @@ def render(ctx):
             while not mundial_terminado(S):
                 simular_ronda_mundial(S, P, S["rng"])
             st.rerun()
-        barra_estado([("Próxima ronda" if not terminado else "Estado", fase_mundial(M)),
-                      ("Rondas", f"{M['ronda']} / {M['total']}"), ("Partidos jugados", len(M["log"]))],
-                     100 * M["ronda"] / max(M["total"], 1))
         titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Ranking CONMEBOL", "Definiciones"]
         t = dict(zip(titulos, st.tabs(titulos)))
         with t["Grupos"]:
-            seccion("Fase de grupos", "8 grupos de 4 · una rueda en cancha neutral · 1° y 2° a octavos", color)
+            seccion("Fase de grupos", color=color)
             st.markdown(grupos_mundial_html(M), unsafe_allow_html=True)
         with t["Eliminatorias"]:
-            seccion("Eliminatorias", "Octavos, cuartos, semifinales y final en cancha neutral · si empatan, penales",
-                    color)
+            seccion("Eliminatorias", color=color)
             st.markdown(cuadro_mundial_html(M), unsafe_allow_html=True)
         with t["Partidos"]:
             if not M["log"]:
@@ -110,7 +104,7 @@ def render(ctx):
                 r_sel = st.selectbox(":material/event: Ronda", rondas, index=len(rondas) - 1,
                                      format_func=lambda n: MUNDIAL_RONDAS[n - 1], key=f"mun_ronda_{S['temp']}")
                 for p in [p for p in M["log"] if p["fecha"] == r_sel]:
-                    st.markdown(fila_partido_html(p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
+                    st.markdown(fila_partido_html(S, ctx.club, p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
         with t["Clasificados"]:
             seccion("Clasificados", "UEFA 12 · CONMEBOL 6 · AFC 4 · CAF 4 · Concacaf 4 · OFC 1 · anfitrión 1", color)
             orden_conf = ["UEFA", "CONMEBOL", "AFC", "CAF", "CONCACAF", "OFC"]
@@ -124,7 +118,7 @@ def render(ctx):
                         unsafe_allow_html=True)
             ranking_sudamerica(M["temp"] + CADA, color)
         with t["Definiciones"]:
-            seccion("Definiciones", "Campeón del Mundial de Clubes", "#b7860b")
+            seccion("Definiciones", color="#b7860b")
             if M["campeon"] is None:
                 aviso("El campeón aparece acá cuando se juega la final.")
             else:

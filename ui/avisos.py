@@ -10,7 +10,7 @@ from ui.vista import aviso, avisos_html, seccion
 
 def render(ctx):
     (S, _abierta, _avisos, _sin_leer, _total_avisos, tab_av) = (
-        ctx.S, ctx._abierta, ctx._avisos, ctx._sin_leer, ctx._total_avisos, ctx.tab_av)
+        ctx.S, ctx.abierta, ctx.avisos, ctx.sin_leer, ctx.total_avisos, ctx.pestanas.tab_av)
     # ============================================================================
     # AVISOS
     # ============================================================================
@@ -26,9 +26,9 @@ def render(ctx):
                     st.rerun()
             if _avisos:
                 st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
-                st.markdown(avisos_html(_avisos), unsafe_allow_html=True)
+                st.markdown(avisos_html(S, _avisos), unsafe_allow_html=True)
             else:
                 aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones.")
             if S.get("alertas_hist"):
                 st.markdown('<div class="mlab" style="margin-top:18px">Temporadas anteriores</div>', unsafe_allow_html=True)
-                st.markdown(avisos_html(S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
+                st.markdown(avisos_html(S, S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)

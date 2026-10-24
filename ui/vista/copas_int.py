@@ -3,34 +3,13 @@
 
 from ui.vista.base import bandera, crest, esc
 from ui.vista.cuadros import _kb, _kb_col, _kb_final, _nm_club
-from ui.vista.partidos import pendiente, tanda_html
-from copas.conmebol import GRUPOS, _FIX4, pais_de, tabla_grupo
+from ui.vista.partidos import tanda_html
+from copas.conmebol import CLAVE_INT, GRUPOS, pais_de, tabla_grupo
 from copas.mundial import GRUPOS as GRUPOS_MUNDIAL, MUNDIAL, pais_club, tabla_grupo as tabla_grupo_mundial
 
 
 # ---- Copas CONMEBOL ----
-_INT_CLAVE = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
-
-
-def _int_pendientes(C, n):
-    """Partidos por jugar de la ronda n de una copa CONMEBOL (si ya se conocen los cruces)."""
-    etapa = C["rondas"][n - 1]
-    liga = C["nombre"]
-    if etapa.startswith("Grupos"):
-        if C["grupos"] is None:
-            return []
-        f = int(etapa.split()[-1]) - 1
-        return [pendiente(liga, n, etapa, f"Grupo {GRUPOS[g]}", eq[i], eq[j])
-                for g, eq in enumerate(C["grupos"]) for i, j in _FIX4[f]]
-    fase = "Recopa" if liga == "Recopa Sudamericana" else etapa.split(" · ")[0]
-    series = C["llaves"].get("Final" if liga == "Recopa Sudamericana" else fase)
-    if not series:
-        return []
-    if etapa == "Final":
-        return [dict(pendiente(liga, n, etapa, "Final", series[0]["a"], series[0]["b"]), neutral=True)]
-    ida = etapa.endswith("ida") or etapa == "Ida"
-    return [pendiente(liga, n, etapa, fase, x["b"], x["a"]) if ida else pendiente(liga, n, etapa, fase, x["a"], x["b"])
-            for x in series]
+_INT_CLAVE = CLAVE_INT
 
 
 def _club_int(n, size=26):

@@ -57,17 +57,23 @@ encabezados para servir esos archivos.
 ## Estructura del proyecto
 
 ```
-simuladorafa.py      Punto de entrada: arma el estado, las pestañas y los botones globales
+simuladorafa.py      Punto de entrada: sólo arma la página y reparte el contexto a las pestañas
+config.py            Parámetros fijos (sorpresa, volatilidad) y detección del entorno (PC / web estática)
 motor/               Lógica de simulación pura (sin Streamlit)
   nucleo.py            goles, penales, fixtures, tablas y cruces genéricos
   temporada.py         estado de la partida y paso de una temporada a la siguiente
+  simulacion.py        cómo se juega cada competencia (tabla de despacho) y "Simular todo"
+  progreso.py          qué terminó, porcentajes y avisos de la temporada (clase Progreso)
   calendario.py        qué día se juega cada fecha / ronda
+  consultas.py         partidos jugados y por jugar de cada competencia (reciben S por parámetro)
+  manager.py           lógica del modo Manager sin interfaz (sincronización, relaciones, simular día por día)
   fechas.py            días de juego base de cada liga
   incidentes.py        suspensiones y sanciones
   ofertas.py, eventos.py, relaciones.py   modo Manager
   guardado.py          formato .afa: guardar y cargar partidas
 ligas/               Una liga por módulo (formato, desempates, ascensos, cómo se juega cada fecha)
   primera.py, apertura_clausura.py, nacional.py, federal.py, federal_b.py, simples.py, regional.py
+  desempates.py        piezas comunes de los desempates por puntos (bloque empatado, duelo o liguilla)
 copas/               Competencias por rondas y copas internacionales
   argentina.py         Copa Argentina y Supercopa
   conmebol.py          Libertadores, Sudamericana y Recopa
@@ -76,6 +82,9 @@ copas/               Competencias por rondas y copas internacionales
                        SupercopaArgentina y MundialDeClubes)
 datos/               Solo datos (equipos, medias, escudos, palmarés, clubes del exterior)
 ui/                  Pestañas de la interfaz Streamlit; cada una expone render(ctx)
+  contexto.py          clase Contexto: lo que reciben las pestañas (estado, progreso, pestañas, avisos)
+  pestanas.py          arma las pestañas de arriba, las de ligas y las de copas
+  acciones.py          botones globales: Próximo día, Simular todo, Nueva temporada, Reiniciar
   ui_guardado.py       pestaña Partidas (descargar / cargar)
   vista/               Piezas de dibujo compartidas (tablas, cuadros, fixture, ficha, CSS, calendario...)
 ```
@@ -104,11 +113,26 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
 
 ## Cómo sumar cosas
 
+* **Una liga nueva que se juega por fechas**: sumarla a `_JUGADORES` en `motor/simulacion.py` (y a `_LIGAS_RESTANTES`
+  para que entre en "Simular todo"). "Próximo día" y "Simular todo" usan esa misma tabla.
 * **Una competencia por rondas nueva**: escribir su lógica en un módulo de `copas/`, agregar una clase en
   `copas/registro.py` (hereda de `PorRondas` o de `Competencia`) y sumarla a `REGISTRO`.
 * **Cambiar planteles, medias o escudos**: `datos/equipos.py` (no tiene lógica).
-* **Una pestaña nueva**: crear `ui/ui_<nombre>.py` con `render(ctx)` y engancharla en `simuladorafa.py`.
+* **Una pestaña nueva**: crear `ui/ui_<nombre>.py` con `render(ctx)` (`ctx` es un `Contexto`, ver `ui/contexto.py`),
+  sumar su contenedor a `Pestanas` en `ui/pestanas.py` y engancharla en `PESTANAS_UI` de `simuladorafa.py`.
+* **Una consulta o vista nueva**: las funciones de `ui/vista` y de `motor/consultas.py` reciben `S` por parámetro;
+  no leer `st.session_state.S` desde la vista. Lo mismo con el club del manager
+  (`ctx.club`) y el modo (`ctx.modo_mgr`): viajan por parámetro, no por claves ocultas de la sesión.
+* **Un archivo `.py` nuevo**: sumarlo a `ARCHIVOS` de `index.html` (si no, la web estática no lo carga).
 * **Cambió la estructura del estado guardado**: subir `VERSION_ESTADO` en `motor/temporada.py` (las partidas `.afa`
   guardadas con la versión anterior dejan de poder cargarse).
 * **Un tipo nuevo dentro del estado** (algo que no sea número, texto, lista, diccionario, fecha, array o DataFrame):
   sumarlo a `_PERMITIDOS` en `motor/guardado.py`, o no se va a poder cargar.
+
+## Más documentación y pruebas
+
+* `docs/FORMATOS.md`: cómo funciona cada competencia (formatos, ascensos, descensos, copas).
+* `tests/golden.py`: herramienta para refactorizar el motor sin cambiar su comportamiento (compara el estado completo
+  de dos versiones con la misma semilla; ver el docstring).
+* `tests/test_humo.py`: prueba rápida (una temporada del motor y la app completa con el test headless de Streamlit).
+  Correr con `python -m pip install -r requirements-dev.txt` y `python -m pytest`.

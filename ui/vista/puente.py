@@ -1,9 +1,9 @@
 """Puente: tocar un club en cualquier tabla abre su ficha; tocar un día del calendario lo elige.
 """
 
-import json
-import sys
 import streamlit as st
+
+from config import ES_WEB
 
 from ui.vista.ficha import ver_equipo
 
@@ -91,7 +91,7 @@ def _instalar_puente_js():
     con Streamlit (Community Cloud o la PC) con un iframe que lo inyecta en la página de arriba,
     porque ahí el sanitizador de st.html puede descartar el script."""
     try:
-        if sys.platform != "emscripten":
+        if not ES_WEB:
             raise TypeError
         st.html(_PUENTE_JS, unsafe_allow_javascript=True)
     except TypeError:
@@ -110,7 +110,7 @@ def _dia_elegido():
     st.session_state["puente_dia"] = ""
 
 
-def puente_clubes():
+def puente_clubes(S, club):
     """Campos ocultos + script que conectan los clubes de las tablas con su ficha y los días del calendario
     con su selección."""
     with st.container(key="puente"):
@@ -121,4 +121,4 @@ def puente_clubes():
         _instalar_puente_js()
     nombre = st.session_state.pop("_club_a_abrir", "")
     if nombre:
-        ver_equipo(nombre)
+        ver_equipo(S, club, nombre)

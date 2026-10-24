@@ -7,13 +7,13 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 import streamlit as st
 from copas.argentina import rivales_supercopa, simular_supercopa, supercopa_lista
 from datos.logos import logo_img
-from ui.vista import aviso, barra_estado, chip, crest, esc, fila_partido_html, lista_equipos_html, seccion
+from ui.vista import aviso, chip, crest, esc, fila_partido_html, lista_equipos_html, seccion
 
 
 def render(ctx):
     (P, S, SS, _abierta, tab_copas, tab_sup, terminada, terminada_copa) = (
-        ctx.P, ctx.S, ctx.SS, ctx._abierta, ctx.tab_copas, ctx.tab_sup, ctx.terminada,
-        ctx.terminada_copa)
+        ctx.P, ctx.S, ctx.SS, ctx.abierta, ctx.pestanas.tab_copas, ctx.pestanas.tab_sup, ctx.progreso.terminada,
+        ctx.progreso.terminada_copa)
     # ============================================================================
     # SUPERCOPA ARGENTINA
     # ============================================================================
@@ -27,10 +27,6 @@ def render(ctx):
                          type="primary", disabled=not listo_sup):
                 simular_supercopa(S, P, S["rng"])
                 st.rerun()
-            estado_sup = ("Terminada" if SS["jugada"] else "Lista para jugar" if listo_sup
-                          else "Esperando a Primera y a la Copa")
-            barra_estado([("Estado", estado_sup), ("Partidos jugados", len(SS["log"]))],
-                         100 if SS["jugada"] else 0)
             seccion("Supercopa Argentina", "Campeón de Primera vs. campeón de la Copa Argentina · partido único "
                     "en cancha neutral, penales si empatan", "#b7860b")
             if SS["jugada"]:
@@ -40,7 +36,7 @@ def render(ctx):
                             f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
                             f'<div class="nm">{esc(cc)}</div><div class="s">finalista: {esc(sub)}</div></div>',
                             unsafe_allow_html=True)
-                st.markdown(fila_partido_html(SS["p"], abierto=True), unsafe_allow_html=True)
+                st.markdown(fila_partido_html(S, ctx.club, SS["p"], abierto=True), unsafe_allow_html=True)
                 st.caption(f"{esc(SS['a'])}: {SS['crit_a']} · {esc(SS['b'])}: {SS['crit_b']}")
             elif listo_sup:
                 a_s, _, ca_s, b_s, _, cb_s = rivales_supercopa(S)

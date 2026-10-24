@@ -11,7 +11,7 @@ from ui.vista import crest, esc, norm, render_ficha, seccion, ver_equipo
 
 def render(ctx):
     (S, SB, SR, _abierta, tab_c) = (
-        ctx.S, ctx.SB, ctx.SR, ctx._abierta, ctx.tab_c)
+        ctx.S, ctx.SB, ctx.SR, ctx.abierta, ctx.pestanas.tab_c)
     # ============================================================================
     # CLUBES
     # ============================================================================
@@ -44,7 +44,7 @@ def render(ctx):
                                    else str, key=f"club_sel_{cat}")
             if elegido:
                 with st.container(border=True):
-                    render_ficha(elegido, "clubes")
+                    render_ficha(S, ctx.club, elegido, "clubes")
             st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(cat if cat != "Regional Amateur" else f"Regional · {region_c}")} · {len(lista)} clubes · '
                         f'tocá uno para ver su ficha</div>', unsafe_allow_html=True)
             # Grilla de clubes: cada casilla es un botón (invisible, ocupa toda la casilla) que abre la ficha
@@ -55,4 +55,4 @@ def render(ctx):
                         st.markdown(f'<div class="ct-in">{crest(n, 52)}<span>{esc(n)}</span></div>',
                                     unsafe_allow_html=True)
                         if st.button(n, key=f"clubbtn_{slug}_{i}"):
-                            ver_equipo(n)
+                            ver_equipo(S, ctx.club, n)

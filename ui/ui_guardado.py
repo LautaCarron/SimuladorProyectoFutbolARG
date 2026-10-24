@@ -106,7 +106,7 @@ def _cargar(ctx):
 
 
 def render(ctx):
-    (_abierta, tab_pa) = (ctx._abierta, ctx.tab_pa)
+    (_abierta, tab_pa) = (ctx.abierta, ctx.pestanas.tab_pa)
     # ============================================================================
     # PARTIDAS
     # ============================================================================

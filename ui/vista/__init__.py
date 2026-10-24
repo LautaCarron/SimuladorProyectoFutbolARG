@@ -9,7 +9,6 @@ from ui.vista.css import (
     CSS,
 )
 from ui.vista.base import (
-    _estado,
     COLOR_ORO,
     COLORES_DESTINO,
     COLORES_ZONA,
@@ -36,32 +35,11 @@ from ui.vista.base import (
     barra_estado,
 )
 from ui.vista.partidos import (
-    todos_los_partidos,
-    _categoria_arg,
-    categoria_de,
     marcador_html,
     tanda_html,
     fila_partido_html,
     lista_equipos_html,
     resultado_para,
-    pendiente,
-    fechas_conocidas_p,
-    partidos_fecha_p,
-    fechas_conocidas_b,
-    partidos_fecha_b,
-    fechas_conocidas_f,
-    partidos_fecha_f,
-    fechas_conocidas_fb,
-    partidos_fecha_fb,
-    fechas_conocidas_pb,
-    partidos_fecha_pb,
-    fechas_conocidas_pc,
-    partidos_fecha_pc,
-    fechas_conocidas_pd,
-    partidos_fecha_pd,
-    fechas_conocidas_reg,
-    partidos_fecha_reg,
-    proximo_partido,
 )
 from ui.vista.ficha import (
     render_ficha,
@@ -122,7 +100,6 @@ from ui.vista.cuadros import (
 )
 from ui.vista.copas_int import (
     _INT_CLAVE,
-    _int_pendientes,
     _club_int,
     serie_int_html,
     series_int_html,

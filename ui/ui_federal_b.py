@@ -9,6 +9,6 @@ from ui.ui_federal import render_liga_f
 
 def render(ctx):
     SFB = ctx.S.get("fb")
-    if SFB is None or ctx.tab_fb is None:
+    if SFB is None or ctx.pestanas.tab_fb is None:
         return
-    render_liga_f(ctx, SFB, ctx.tab_fb, ctx.terminada_fb, ctx.pct_fb, "fb")
+    render_liga_f(ctx, SFB, ctx.pestanas.tab_fb, ctx.progreso.terminada_fb, ctx.progreso.pct_fb, "fb")

@@ -9,12 +9,12 @@ liga solo declara lo que cambia (nombre, estado, tabla, leyenda y textos) en LIG
 import streamlit as st
 
 from ligas.simples import formato_simple, plan_de, simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
-from ui.vista.mi_club import modo_manager
 from ui.vista.cuadros import bracket_html_simple
+from ui.vista.editor_medias import editar_medias
+from ui.vista.liguilla import html_tabla_liguilla
 from ui.vista import (
     COLORES_B,
     aviso,
-    barra_estado,
     chip,
     colorear_pb,
     colorear_pc,
@@ -34,21 +34,21 @@ _VIOLETA = "rgba(147, 51, 234, 0.3)"       # desempate por la permanencia
 
 # clave: prefijo de las claves de widgets y del fixture · estado/tab/terminada: nombres que trae ctx
 LIGAS = [
-    dict(clave="pb", nombre="Primera B", estado="SPB", tab="tab_pb", terminada="terminada_pb",
+    dict(clave="pb", nombre="Primera B", tab="tab_pb", terminada="terminada_pb",
          tabla=tabla_pb, colorear=colorear_pb, chip_color=None,
          sub_posiciones="ascienden los 2 primeros, del 18° para abajo descienden",
          leyenda=[("1°-2° Ascenso a Primera Nacional", COLORES_B["Ascenso directo"]),
                   ("Desempate Campeonato / Ascenso", _NARANJA), ("Desempate Permanencia", _VIOLETA),
                   ("18° o peor Descenso a Primera C", COLORES_B["Desciende"])],
          sub_definiciones="Campeón, ascensos y descensos", expander_campeon="Campeón de la Primera B"),
-    dict(clave="pc", nombre="Primera C", estado="SPC", tab="tab_pc", terminada="terminada_pc",
+    dict(clave="pc", nombre="Primera C", tab="tab_pc", terminada="terminada_pc",
          tabla=tabla_pc, colorear=colorear_pc, chip_color=None,
          sub_posiciones="ascienden los 2 primeros",
          leyenda=[("1°-2° Ascenso a Primera B", COLORES_B["Ascenso directo"]),
                   ("Desempate Campeonato / Ascenso", _NARANJA), ("Desempate Permanencia", _VIOLETA),
                   ("18° o peor Descenso al Promocional", COLORES_B["Desciende"])],
          sub_definiciones="Campeón y ascensos", expander_campeon="Campeón de la Primera C"),
-    dict(clave="pd", nombre="Promocional Amateur", estado="SPD", tab="tab_pd", terminada="terminada_pd",
+    dict(clave="pd", nombre="Promocional Amateur", tab="tab_pd", terminada="terminada_pd",
          tabla=tabla_pd, colorear=colorear_pd, chip_color="#0369a1",
          sub_posiciones="ascienden los 2 primeros",
          leyenda=[("1°-2° Ascenso a Primera C", COLORES_B["Ascenso directo"]),
@@ -84,12 +84,11 @@ def render(ctx):
 
 def _render_liga(ctx, cfg):
     S, P = ctx.S, ctx.P
-    html_tabla_liguilla = ctx.html_tabla_liguilla       # ayudante definido en simuladorafa.py
-    L = getattr(ctx, cfg["estado"])
-    tab = getattr(ctx, cfg["tab"])
-    terminada = getattr(ctx, cfg["terminada"])
+    L = S[cfg["clave"]]
+    tab = getattr(ctx.pestanas, cfg["tab"])
+    terminada = getattr(ctx.progreso, cfg["terminada"])
     k, nombre, tabla, colorear = cfg["clave"], cfg["nombre"], cfg["tabla"], cfg["colorear"]
-    if not ctx._abierta(ctx.tab_ligas, tab):
+    if not ctx.abierta(ctx.pestanas.tab_ligas, tab):
         return
     with tab:
         c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
@@ -106,8 +105,6 @@ def _render_liga(ctx, cfg):
             st.rerun()
 
         pct = 100 * L["fecha"] / L["total"] if L["total"] else 0
-        barra_estado([("Fase", "Liga " + formato_simple(len(L["nombres"])).lower()), ("Fecha", f"{L['fecha']} / {L['total']}"),
-                      ("Partidos jugados", len(L["log"]))], pct)
 
         desempates = [p for p in L["log"] if p["rotulo"] == "Desempate"]
         mostrar_desempate = L.get("desempate_pendiente") or len(desempates) > 0
@@ -121,23 +118,22 @@ def _render_liga(ctx, cfg):
 
         with tabs[idx]:
             sub, ley = _textos(k, plan_de(L, k), len(L["nombres"]))
-            seccion("Tabla de posiciones", sub, "#4f46e5")
+            seccion("Tabla de posiciones", color="#4f46e5")
             mostrar_tabla(tabla(L), colorear, L["pos_hist"])
             leyenda(ley)
-            if L["fecha"] == 0 and not modo_manager():      # en modo manager no se tocan las medias
+            if L["fecha"] == 0 and not ctx.modo_mgr:      # en modo manager no se tocan las medias
                 with st.expander(f":material/tune: Editar medias internas de esta temporada ({nombre})"):
-                    L["r"] = ctx.editar_medias(L["nombres"], L["r"], f"editor_{k}_{S['temp']}")
+                    L["r"] = editar_medias(L["nombres"], L["r"], f"editor_{k}_{S['temp']}")
         idx += 1
 
         with tabs[idx]:
-            vista_fixture(k)
+            vista_fixture(S, ctx.club, k)
         idx += 1
 
         if mostrar_desempate:
             with tabs[idx]:
                 if L.get("desempate_pendiente"):
-                    seccion("Desempates por Posiciones", "Están empatados en puntos. Jugarán un partido único.",
-                            "#9333ea")
+                    seccion("Desempates por Posiciones", color="#9333ea")
                     df_des = tabla(L)
                     df_des = df_des[df_des["id"].isin(L["ids_desempate"])]
                     mostrar_tabla(df_des, colorear)
@@ -147,16 +143,16 @@ def _render_liga(ctx, cfg):
                         grupos.setdefault(p["comp"], []).append(p)
                     for motivo, parts in grupos.items():
                         if "Liguilla" in motivo:
-                            seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                            seccion(f"Tabla final: {motivo}", color="#9333ea")
                             st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
                             with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos",
                                              expanded=False):
                                 for p in parts:
-                                    st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                                    st.markdown(fila_partido_html(S, ctx.club, p), unsafe_allow_html=True)
                         else:
-                            seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                            seccion(f"Desempate: {motivo}", color="#dc2626")
                             for p in parts:
-                                st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+                                st.markdown(fila_partido_html(S, ctx.club, p, abierto=True), unsafe_allow_html=True)
             idx += 1
 
         with tabs[idx]:
@@ -164,7 +160,7 @@ def _render_liga(ctx, cfg):
         idx += 1
 
         with tabs[idx]:
-            seccion("Definiciones de la temporada", cfg["sub_definiciones"], "#b7860b")
+            seccion("Definiciones de la temporada", color="#b7860b")
             if L["campeon"] is None:
                 aviso("Las definiciones aparecen acá cuando termina la liga.")
             else:

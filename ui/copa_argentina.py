@@ -11,7 +11,6 @@ from copas.argentina import COPA_LLAVES, COPA_RONDAS, clasificados_inicial, cupo
 from datos.logos import logo_img
 from ui.vista import (
     aviso,
-    barra_estado,
     chip,
     crest,
     cuadro_final_copa_html,
@@ -39,9 +38,9 @@ def _tabla_cupos(lista):
 def render(ctx):
     (P, S, SC, _abierta, pct_copa, tab_ca, tab_copas, terminada, terminada_b, terminada_copa,
      terminada_f, terminada_pb, terminada_pc, terminada_reg) = (
-        ctx.P, ctx.S, ctx.SC, ctx._abierta, ctx.pct_copa, ctx.tab_ca, ctx.tab_copas, ctx.terminada,
-        ctx.terminada_b, ctx.terminada_copa, ctx.terminada_f, ctx.terminada_pb,
-        ctx.terminada_pc, ctx.terminada_reg)
+        ctx.P, ctx.S, ctx.SC, ctx.abierta, ctx.progreso.pct_copa, ctx.pestanas.tab_ca, ctx.pestanas.tab_copas, ctx.progreso.terminada,
+        ctx.progreso.terminada_b, ctx.progreso.terminada_copa, ctx.progreso.terminada_f, ctx.progreso.terminada_pb,
+        ctx.progreso.terminada_pc, ctx.progreso.terminada_reg)
     # ============================================================================
     # COPA ARGENTINA
     # ============================================================================
@@ -61,9 +60,6 @@ def render(ctx):
                 st.rerun()
             ronda_txt = ("Sin sortear" if not SC["sorteada"] else "Terminada" if terminada_copa
                          else COPA_RONDAS[SC["ronda"]])
-            barra_estado([("Próxima ronda" if SC["sorteada"] and not terminada_copa else "Estado", ronda_txt),
-                          ("Rondas", f"{SC['ronda']} / {SC['total']}"), ("Partidos jugados", len(SC["log"]))],
-                         pct_copa)
 
             if not SC["sorteada"]:
                 seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
@@ -71,7 +67,7 @@ def render(ctx):
                 aviso("La Copa se sortea al empezar la temporada.")
                 _tabla_cupos(S.get("copa_clasif") or clasificados_inicial(S))
                 pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
-                                             ("Federal A", terminada_f), ("Federal B", ctx.terminada_fb),
+                                             ("Federal A", terminada_f), ("Federal B", ctx.progreso.terminada_fb),
                                              ("Primera B", terminada_pb),
                                              ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
                 st.caption("Faltan terminar: " + ", ".join(pendientes))
@@ -79,11 +75,7 @@ def render(ctx):
                 titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Cupos", "Definiciones"]
                 tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
                 with tab_ca_t["Cuadro"]:
-                    seccion("Cuadro de la Copa Argentina", "8 llaves de 16 equipos (64avos a octavos) · el ganador "
-                            "de cada llave juega los cuartos · todo en cancha neutral · (n) = penales", "#1e5aa8")
-                    st.caption("64avos por categoría: Primera vs. Regional Amateur, B Nacional vs. Primera C, "
-                               "Federal A vs. Primera B; los que sobran se cruzan con la misma regla. Se juega "
-                               "los miércoles, en el medio de las ligas (ver Calendario).")
+                    seccion("Cuadro de la Copa Argentina", color="#1e5aa8")
                     opciones = [f"Llave {x}" for x in COPA_LLAVES] + ["Fase final"]
                     vista_llave = st.segmented_control("Llave", opciones, default="Llave A", key="ca_llave",
                                                        label_visibility="collapsed") or "Llave A"
@@ -99,7 +91,7 @@ def render(ctx):
                         ronda_sel = st.selectbox(":material/event: Ronda", range(jugadas), index=jugadas - 1,
                                                  format_func=lambda k: COPA_RONDAS[k], key=f"ca_ronda_{S['temp']}")
                         for m in SC["cuadro"][ronda_sel]:
-                            st.markdown(fila_partido_html(m["p"]), unsafe_allow_html=True)
+                            st.markdown(fila_partido_html(S, ctx.club, m["p"]), unsafe_allow_html=True)
                 with tab_ca_t["Clasificados"]:
                     seccion("Clasificados", "Los 128 equipos y por qué entraron (por la temporada anterior; "
                             "en la temporada 1, por media)", "#1e5aa8")
@@ -115,7 +107,7 @@ def render(ctx):
                     seccion("Cupos", "Cuántos equipos de cada liga clasificaron a la Copa de esta temporada", "#1e5aa8")
                     _tabla_cupos(list(zip(SC["nombres"], SC["criterio"])))
                 with tab_ca_t["Definiciones"]:
-                    seccion("Definiciones", "Campeón y finalista de la Copa Argentina", "#b7860b")
+                    seccion("Definiciones", color="#b7860b")
                     if SC["campeon"] is None:
                         aviso("El campeón aparece acá cuando se juega la final.")
                     else:
@@ -126,4 +118,4 @@ def render(ctx):
                                     f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
                                     f'<div class="nm">{esc(cc)}</div><div class="s">{esc(SC["origen"][SC["campeon"]])}'
                                     f' · finalista: {esc(SC["nombres"][sub])}</div></div>', unsafe_allow_html=True)
-                        st.markdown(fila_partido_html(fin["p"], abierto=True), unsafe_allow_html=True)
+                        st.markdown(fila_partido_html(S, ctx.club, fin["p"], abierto=True), unsafe_allow_html=True)

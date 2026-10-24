@@ -11,40 +11,20 @@ from ligas.nacional import es_anual_b, rotulo_b
 from ligas.primera import fechas_f2
 from ligas.primera import formato, rotulo_p
 from ligas.regional import rotulo_reg
-from ui.vista.base import _estado, chip, esc, norm, seccion
+from ui.vista.base import chip, esc, norm, seccion
+from motor import consultas
+from ui.vista.partidos import marcador_html, tanda_html
 from ui.vista.ficha import ver_equipo
-from ui.vista.mi_club import mi_club
-from ui.vista.partidos import (
-    fechas_conocidas_b,
-    fechas_conocidas_f,
-    fechas_conocidas_fb,
-    fechas_conocidas_p,
-    fechas_conocidas_pb,
-    fechas_conocidas_pc,
-    fechas_conocidas_pd,
-    fechas_conocidas_reg,
-    marcador_html,
-    partidos_fecha_b,
-    partidos_fecha_f,
-    partidos_fecha_fb,
-    partidos_fecha_p,
-    partidos_fecha_pb,
-    partidos_fecha_pc,
-    partidos_fecha_pd,
-    partidos_fecha_reg,
-    tanda_html,
-)
 
 
 # ---- Fixture y resultados ---------------------------------------------------
-def render_fecha(partidos, clave):
+def render_fecha(S, club, partidos, clave):
     """Partidos de una fecha en dos columnas; cada club se puede tocar para ver su ficha."""
     grupos = []
     for p in partidos:
         if not grupos or grupos[-1][0] != p["comp"]:
             grupos.append((p["comp"], []))
         grupos[-1][1].append(p)
-    club = mi_club()
     for g, (comp, lista) in enumerate(grupos):
         if len(grupos) > 1 or comp not in ("Fase 1",):
             st.markdown(chip(comp) + (' <span style="opacity:.6;font-size:.75rem">cancha neutral'
@@ -62,11 +42,11 @@ def render_fecha(partidos, clave):
                         c1, c2, c3 = st.columns([5, 3.6, 5], vertical_alignment="center", gap="small")
                         if c1.button(p["local"], key=f"{k}_l", help="Ver la ficha del club",
                                      width="stretch"):
-                            ver_equipo(p["local"])
+                            ver_equipo(S, club, p["local"])
                         c2.markdown(marcador_html(p, crests=True), unsafe_allow_html=True)
                         if c3.button(p["visita"], key=f"{k}_v", help="Ver la ficha del club",
                                      width="stretch"):
-                            ver_equipo(p["visita"])
+                            ver_equipo(S, club, p["visita"])
                         if p["tanda"]:
                             st.markdown(tanda_html(p), unsafe_allow_html=True)
 
@@ -75,52 +55,50 @@ def _mover_fecha(key, delta, maximo):
     st.session_state[key] = min(max(1, st.session_state.get(key, 1) + delta), maximo)
 
 
-def vista_fixture(liga, region=None):
-    S, SB, SF, SPB, SPC = _estado()
-    
+def vista_fixture(S, club, liga, region=None):
+    SB, SF = S["b"], S["f"]
     if liga == "p":
         # Lo separamos en dos líneas para que sea más claro
-        total, jugadas, obtener = fechas_conocidas_p(), S["fecha"], partidos_fecha_p
+        total, jugadas, obtener = consultas.fechas_conocidas_p(S), S["fecha"], lambda n: consultas.partidos_fecha_p(S, n)
         rotulo = lambda n: rotulo_p(S, n)
         f_p = formato(S)
         extra = (" · las llaves se arman al terminar la etapa regular de cada torneo" if f_p == "apertura_clausura"
                  else "" if (f_p != "actual" or S["fase"] == 2)
                  else f" · las {fechas_f2(S)} fechas de la fase 2 se arman al terminar la fase 1")
     elif liga == "b":
-        total, jugadas, obtener = fechas_conocidas_b(), SB["fecha"], partidos_fecha_b
+        total, jugadas, obtener = consultas.fechas_conocidas_b(S), SB["fecha"], lambda n: consultas.partidos_fecha_b(S, n)
         rotulo = lambda n: rotulo_b(SB, n)
         extra = ("" if (es_anual_b(SB) or SB["fechas2"] is not None) else
                  " · la fase 2 se arma al terminar la fase 1")
     elif liga == "pb":
-        total, jugadas = fechas_conocidas_pb(), SPB["fecha"]
-        obtener, rotulo = partidos_fecha_pb, lambda n: f"Fecha {n}"
+        total, jugadas = consultas.fechas_conocidas_simple(S["pb"]), S["pb"]["fecha"]
+        obtener, rotulo = lambda n: consultas.partidos_fecha_pb(S, n), lambda n: f"Fecha {n}"
         extra = ""
     elif liga == "pc":
-        total, jugadas = fechas_conocidas_pc(), SPC["fecha"]
-        obtener, rotulo = partidos_fecha_pc, lambda n: f"Fecha {n}"
+        total, jugadas = consultas.fechas_conocidas_simple(S["pc"]), S["pc"]["fecha"]
+        obtener, rotulo = lambda n: consultas.partidos_fecha_pc(S, n), lambda n: f"Fecha {n}"
         extra = ""
     elif liga == "pd":
-        SPD = st.session_state.S["pd"]
-        total, jugadas = fechas_conocidas_pd(), SPD["fecha"]
-        obtener, rotulo = partidos_fecha_pd, lambda n: f"Fecha {n}"
+        total, jugadas = consultas.fechas_conocidas_simple(S["pd"]), S["pd"]["fecha"]
+        obtener, rotulo = lambda n: consultas.partidos_fecha_pd(S, n), lambda n: f"Fecha {n}"
         extra = ""
     elif liga == "fb":
-        SFB = st.session_state.S["fb"]
-        total, jugadas = fechas_conocidas_fb(), SFB["fecha"]
-        obtener, rotulo = partidos_fecha_fb, lambda n: rotulo_f(SFB, n)
+        SFB = S["fb"]
+        total, jugadas = consultas.fechas_conocidas_f(SFB), SFB["fecha"]
+        obtener, rotulo = lambda n: consultas.partidos_fecha_f(SFB, n), lambda n: rotulo_f(SFB, n)
         extra = ("" if SFB["zonas2"] is not None else
                  " · la fase 2 se arma al terminar la fase 1")
     elif liga == "reg":
-        SREG = st.session_state.S["reg"]
-        total, jugadas = fechas_conocidas_reg(), SREG["fecha"]
-        obtener, rotulo = (lambda n: partidos_fecha_reg(n, region)), (lambda n: rotulo_reg(SREG, n))
+        SREG = S["reg"]
+        total, jugadas = consultas.fechas_conocidas_reg(S), SREG["fecha"]
+        obtener, rotulo = (lambda n: consultas.partidos_fecha_reg(S, n, region)), (lambda n: rotulo_reg(SREG, n))
         extra = (f" · {region}" if region else "") + " · desempates y finales se arman al terminar la liga"
     else:
-        total, jugadas = fechas_conocidas_f(), SF["fecha"]
-        obtener, rotulo = partidos_fecha_f, lambda n: rotulo_f(SF, n)
+        total, jugadas = consultas.fechas_conocidas_f(SF), SF["fecha"]
+        obtener, rotulo = lambda n: consultas.partidos_fecha_f(SF, n), lambda n: rotulo_f(SF, n)
         extra = ("" if SF["zonas2"] is not None else
                  " · la fase 2 se arma al terminar la fase 1")
-    seccion("Fixture y resultados", "Tocá un club para ver su ficha" + extra, "#1e5aa8")
+    seccion("Fixture y resultados", color="#1e5aa8")
     if total == 0:
         st.info("Todavía no hay fechas programadas.")
         return
@@ -148,4 +126,4 @@ def vista_fixture(liga, region=None):
         st.info("No hay partidos de esta región en esta fecha." if region else
                 "Los partidos de esta fecha se conocen cuando termina la liga.")
         return
-    render_fecha(partidos, f"{liga}{S['temp']}_{elegida}" + (f"_{norm(region)}" if region else ""))
+    render_fecha(S, club, partidos, f"{liga}{S['temp']}_{elegida}" + (f"_{norm(region)}" if region else ""))

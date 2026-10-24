@@ -34,6 +34,7 @@ import zlib
 import numpy as np
 import pandas as pd
 
+from motor.calendario import proximos, texto_dia
 from motor.temporada import VERSION_ESTADO
 
 MAGIC = b"AFASAVE1"
@@ -124,7 +125,6 @@ def _resumen(S, manager, modo):
     enc = {"temp": int(S["temp"]), "anio": 2025 + int(S["temp"]), "modo": modo, "dia": None,
            "manager": None, "club": None}
     try:
-        from motor.calendario import proximos, texto_dia
         prox = proximos(S)
         if prox:
             enc["dia"] = texto_dia(min(d for d, _ in prox.values()))

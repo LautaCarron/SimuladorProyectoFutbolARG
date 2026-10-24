@@ -14,7 +14,6 @@ from motor.calendario import anio, jugar_proximo_dia, nombre_mes, proximos, text
 from datos.logos import logo_img
 from ui.vista import calendario_mes_html, esc, eventos_calendario, seccion
 from ui.vista.vista_calendario import calendario_grilla_html
-from ui.vista.mi_club import mi_club
 
 VISTA_MIS, VISTA_TODOS = "Mis partidos", "Todos los equipos"
 
@@ -24,12 +23,11 @@ def _mover_mes(clave, meses, paso):
     st.session_state[clave] = meses[min(max(i, 0), len(meses) - 1)]
 
 
-def _cb_simular(S, P, acumular, hasta):
+def _cb_simular(S, M, P, acumular, hasta):
     """Sin día elegido juega el próximo día; con día elegido juega todos los días hasta esa fecha (inclusive).
     En modo manager, si aparece un evento se frena ahí (hay que resolverlo antes de seguir)."""
-    M = st.session_state.get("manager") if st.session_state.get("_modo_manager") else None
     if M:
-        from ui.manager import sincronizar_manager
+        from motor.manager import sincronizar_manager
     interrumpido = False
     for _ in range(1 if hasta is None else 400):          # tope de seguridad: más que una temporada
         prox = proximos(S)
@@ -48,14 +46,13 @@ def _cb_simular(S, P, acumular, hasta):
 
 def render(ctx):
     (P, S, _abierta, _hoy, _prox, acumular, tab_cal) = (
-        ctx.P, ctx.S, ctx._abierta, ctx._hoy, ctx._prox, ctx.acumular, ctx.tab_cal)
+        ctx.P, ctx.S, ctx.abierta, ctx.hoy, ctx.prox, ctx.acumular, ctx.pestanas.tab_cal)
     # ============================================================================
     # CALENDARIO
     # ============================================================================
     if _abierta(tab_cal):
         with tab_cal:
-            seccion(f"Calendario {anio(S)}", "Cuándo se juega cada fecha de cada liga y cada ronda de la Copa "
-                    "Argentina (los miércoles, en el medio de las ligas)", "#1e5aa8")
+            seccion(f"Calendario {anio(S)}", color="#1e5aa8")
             # día elegido tocándolo en el calendario (llega por el puente). Tocar el mismo día lo desmarca.
             iso = st.session_state.pop("_dia_a_elegir", "")
             if iso:
@@ -81,8 +78,8 @@ def render(ctx):
             c1.markdown(texto_prox, unsafe_allow_html=True)
             c2.button(":material/fast_forward: Simular hasta esa fecha" if sel
                       else ":material/calendar_today: Jugar ese día", key="cal_next", width="stretch",
-                      type="primary", disabled=_hoy is None, on_click=_cb_simular, args=(S, P, acumular, sel))
-            club = mi_club()                     # modo manager: club que dirigís (None si no hay)
+                      type="primary", disabled=_hoy is None, on_click=_cb_simular, args=(S, ctx.manager, P, acumular, sel))
+            club = ctx.club                     # modo manager: club que dirigís (None si no hay)
             vista = VISTA_TODOS
             if club:
                 vista = st.segmented_control("Vista", [VISTA_MIS, VISTA_TODOS], default=VISTA_MIS,
@@ -118,6 +115,6 @@ def render(ctx):
                     st.session_state[f"{clave_mes}_sigue"] = mes_def
                 mes = st.segmented_control("Mes", meses, format_func=lambda m: nombre_mes(m)[:3], key=clave_mes,
                                            label_visibility="collapsed") or mes_def
-                st.markdown(calendario_mes_html(S, eventos, mes, _hoy, seleccion=sel), unsafe_allow_html=True)
+                st.markdown(calendario_mes_html(S, ctx.club, eventos, mes, _hoy, seleccion=sel), unsafe_allow_html=True)
                 st.caption("Tocá cada competición para ver sus partidos. ⚠ = partido con incidente (ver Avisos)."
                            + (" Los partidos de tu club van en amarillo." if club else ""))

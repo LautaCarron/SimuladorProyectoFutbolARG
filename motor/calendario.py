@@ -10,16 +10,15 @@ Copa Argentina, como en la vida real.
 * Las fechas extra (desempates) van la semana siguiente a la última programada.
 """
 
-import datetime as dt
 
+from copas.conmebol import CLAVE_INT, listo
 from copas.registro import REGISTRO, por_nombre
-from motor.fechas import INICIO, anio, desde, dia_liga, ligas_de, total_liga
-from copas.conmebol import listo, simular_ronda_int
-from ligas.federal import simular_fecha_f
-from ligas.nacional import simular_fecha_b, total_b
-from ligas.primera import primera_terminada, simular_fecha
-from ligas.regional import simular_fecha_reg
-from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from ligas.nacional import total_b
+from ligas.primera import primera_terminada
+from motor.fechas import INICIO, anio, desde, dia_liga, ligas_de, total_liga  # noqa: F401  (INICIO, ligas_de y total_liga se reexportan)
+from motor.simulacion import jugar_competencia
+
+MAX_FECHAS_POR_DIA = 4          # por si una liga tiene dos fechas el mismo día
 
 _MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
           "octubre", "noviembre", "diciembre"]
@@ -37,7 +36,6 @@ INT_DIAS = {
                           (11, 21, 5)],
     "Recopa Sudamericana": [(2, 19, 3), (2, 26, 3)],
 }
-_CLAVE_INT = {"Copa Libertadores": "lib", "Copa Sudamericana": "sud", "Recopa Sudamericana": "rec"}
 
 
 def dia_de(S, liga, n):
@@ -85,42 +83,48 @@ def proximos(S):
         if n is not None:
             pend[comp.nombre] = n
     if S.get("int"):
-        for nombre, clave in _CLAVE_INT.items():
+        for nombre, clave in CLAVE_INT.items():
             if listo(S, clave):
                 pend[nombre] = S["int"][clave]["ronda"] + 1
     return {c: (dia_de(S, c, n), n) for c, n in pend.items()}
 
 
 def jugar_proximo_dia(S, P, acumular=True):
-    """Juega todo lo programado para el próximo día del calendario (ligas y Copa)."""
+    """Juega todo lo programado para el próximo día del calendario (ligas y copas). Devuelve ese día."""
     prox = proximos(S)
     if not prox:
         return None
     hoy = min(d for d, _ in prox.values())
-    for _ in range(4):                                  # por si una liga tiene dos fechas ese día
-        prox = proximos(S)
-        hoy_c = [c for c, (d, _) in prox.items() if d == hoy]
-        if not hoy_c:
+    for _ in range(MAX_FECHAS_POR_DIA):
+        del_dia = [c for c, (d, _) in proximos(S).items() if d == hoy]
+        if not del_dia:
             break
-        for c in hoy_c:
-            if c == "Primera División":
-                simular_fecha(S, P, acumular)
-            elif c == "Primera Nacional":
-                simular_fecha_b(S, P)
-            elif c == "Federal A":
-                simular_fecha_f(S["f"], P, S["rng"])
-            elif c == "Federal B":
-                simular_fecha_f(S["fb"], P, S["rng"])
-            elif c == "Primera B":
-                simular_fecha_liga(S["pb"], P, S["rng"], "Primera B", tabla_pb)
-            elif c == "Primera C":
-                simular_fecha_liga(S["pc"], P, S["rng"], "Primera C", tabla_pc)
-            elif c == "Promocional Amateur":
-                simular_fecha_liga(S["pd"], P, S["rng"], "Promocional Amateur", tabla_pd)
-            elif c == "Regional Amateur":
-                simular_fecha_reg(S["reg"], P, S["rng"])
-            elif por_nombre(c):
-                por_nombre(c).jugar(S, P, S["rng"])
-            elif c in _CLAVE_INT:
-                simular_ronda_int(S, _CLAVE_INT[c], P, S["rng"])
+        for competencia in del_dia:
+            jugar_competencia(S, P, competencia, acumular)
     return hoy
+
+
+def eventos_calendario(S):
+    """Todo lo programado en la temporada: lista de (día, competición, n, jugada), ordenada por día."""
+    ev = []
+    jugadas = {"Primera División": S["fecha"], "Primera Nacional": S["b"]["fecha"], "Federal A": S["f"]["fecha"],
+               "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Promocional Amateur": S["pd"]["fecha"],
+               "Regional Amateur": S["reg"]["fecha"]}
+    if S.get("fb") is not None:
+        jugadas["Federal B"] = S["fb"]["fecha"]
+    for liga in ligas_de(S):
+        for n in range(1, total_liga(S, liga) + 1):
+            ev.append((dia_de(S, liga, n), liga, n, n <= jugadas[liga]))
+    for comp in REGISTRO:                      # Copa Argentina, Supercopa y Mundial de Clubes
+        if comp.activa(S):
+            for n in range(1, comp.total(S) + 1):
+                ev.append((comp.dia(S, n), comp.nombre, n, n <= comp.hechas(S)))
+    for liga, clave in CLAVE_INT.items():
+        C = S.get("int", {}).get(clave)
+        if C:
+            for n in range(1, C["total"] + 1):
+                ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
+    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", *[comp.nombre for comp in REGISTRO],
+             "Primera División", "Primera Nacional", "Federal A", "Federal B", "Regional Amateur",
+             "Primera B", "Primera C", "Promocional Amateur"]
+    return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))

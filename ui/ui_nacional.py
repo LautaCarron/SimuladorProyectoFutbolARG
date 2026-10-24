@@ -11,10 +11,8 @@ from datos.equipos import origen
 from ligas.nacional import (
     B_MAX_ANUAL,
     B_ZONAS2,
-    ascensos_a_primera,
     b_f1,
     b_f2,
-    descensos_b,
     es_anual_b,
     formato_b,
     plan_de,
@@ -29,11 +27,12 @@ from ligas.nacional import (
 )
 from ligas.nacional import k_prom, promo_cands
 from ligas.primera import descensos, primera_terminada
+from ui.vista.editor_medias import editar_medias
+from ui.vista.liguilla import html_tabla_liguilla
 from ui.vista import (
     COLORES_ZONA,
     LEY_B,
     aviso,
-    barra_estado,
     bracket_html,
     chip,
     colorear_b,
@@ -49,7 +48,7 @@ from ui.vista import (
     vista_fixture,
 )
 from ui.vista.base import COLORES_B
-from ui.vista.mi_club import marcar, mi_club, modo_manager, tabs_con_default, zona_nacional
+from ui.vista.mi_club import marcar, tabs_con_default, zona_nacional
 
 
 def _vs_primera(SB):
@@ -94,10 +93,9 @@ def _frase_ascensos(SB):
 
 
 def render(ctx):
-    (P, S, SB, _abierta, b_espera_primera, editar_medias, html_tabla_liguilla, tab_b, tab_ligas,
+    (P, S, SB, _abierta, b_espera_primera, tab_b, tab_ligas,
      terminada_b) = (
-        ctx.P, ctx.S, ctx.SB, ctx._abierta, ctx.b_espera_primera, ctx.editar_medias,
-        ctx.html_tabla_liguilla, ctx.tab_b, ctx.tab_ligas, ctx.terminada_b)
+        ctx.P, ctx.S, ctx.SB, ctx.abierta, ctx.progreso.b_espera_primera, ctx.pestanas.tab_b, ctx.pestanas.tab_ligas, ctx.progreso.terminada_b)
     # ============================================================================
     # PRIMERA NACIONAL
     # ============================================================================
@@ -147,8 +145,6 @@ def render(ctx):
                 st.rerun()
 
             pct_b_dyn = 100 * fb / total_b(SB) if total_b(SB) else 0
-            barra_estado([("Fase", fase_txt), ("Fecha", f"{fb} / {total_b(SB)}"),
-                          ("Partidos jugados", len(SB["log"]))], pct_b_dyn)
                   
             if anual:
                 motivo_anual = (f"con {n_b} equipos la B se juega todos contra todos"
@@ -182,18 +178,16 @@ def render(ctx):
             idx_b = 0
     
             with sb[idx_b]:
-                mi_zona = zona_nacional(SB, mi_club())        # modo manager: zona de mi club (o None)
+                mi_zona = zona_nacional(SB, ctx.club)        # modo manager: zona de mi club (o None)
                 if anual:
-                    seccion("Torneo anual · " + ("ida y vuelta" if formato_b(SB) == "anual_ida_vuelta" else "una rueda"),
-                            f"{n_b} equipos · {base_b} fechas · una sola tabla", "#4f46e5")
+                    seccion("Torneo anual · " + ("ida y vuelta" if formato_b(SB) == "anual_ida_vuelta" else "una rueda"), color="#4f46e5")
                     mostrar_tabla(tabla_b_anual(SB), colorear_b, SB["pos_hist"])
                     leyenda([("Ascienden directo", COLORES_B["Ascenso directo"])]
                             + ([("Juega el reducido", COLORES_B["Reducido"])] if hay_red else [])
                             + ([("Juega la promoción", COLORES_B["Promoción"])] if k_prom(SB) and not hay_red else [])
                             + [(f"Descienden ({desc_b} últimos)", COLORES_B["Desciende"])])
                 elif fb < B_F1:
-                    seccion("Fase 1 · Zonas A y B", f"Una rueda + {plan['f1_inter']} fechas interzonales · "
-                            + (f"{za} equipos por zona" if za == zb else f"{za} y {zb} equipos por zona"), "#4f46e5")
+                    seccion("Fase 1 · Zonas A y B", color="#4f46e5")
                     etiq, ini = marcar(["Zona A", "Zona B"], mi_zona)
                     tabs_b = tabs_con_default(etiq, ini)
                     for z, tab in enumerate(tabs_b):
@@ -205,7 +199,7 @@ def render(ctx):
                              (f"{rg(1)} → Zona Intermedia", COLORES_ZONA[1]),
                              (f"{rg(2)} → Zona Descenso", COLORES_ZONA[2])])
                 else:
-                    seccion("Fase 2 · Zonas", "Arrastran los puntos de la Fase 1 · una rueda por zona", "#16a34a")
+                    seccion("Fase 2 · Zonas", color="#16a34a")
                     etiq, ini = marcar([f"Zona {n}" for n in B_ZONAS2] + ["Fase 1"], mi_zona)
                     tabs_b = tabs_con_default(etiq, ini)
                     for z in range(3):
@@ -242,19 +236,19 @@ def render(ctx):
                             f"{_promo_texto(SB)}. "
                             f"(Con {B_MAX_ANUAL} equipos o menos la B pasa a ser un torneo anual ida y vuelta.)")
                 
-                if fb == 0 and not modo_manager():               # en modo manager no se tocan las medias
+                if fb == 0 and not ctx.modo_mgr:               # en modo manager no se tocan las medias
                     with st.expander(":material/tune: Editar medias internas de esta temporada (Primera Nacional)"):
                         SB["r"] = editar_medias(SB["nombres"], SB["r"], f"editor_b_{S['temp']}")
             idx_b += 1
     
             with sb[idx_b]: 
-                vista_fixture("b")
+                vista_fixture(S, ctx.club, "b")
             idx_b += 1
     
             if mostrar_desempate_b:
                 with sb[idx_b]:
                     if SB.get("desempate_pendiente"):
-                        seccion("Desempates en la Primera Nacional", "Están empatados en puntos. Jugarán un desempate.", "#9333ea")
+                        seccion("Desempates en la Primera Nacional", color="#9333ea")
                         for z_des in (0, 2):
                             df_des = tabla_b_f2(SB, z_des)
                             df_des = df_des[df_des["id"].isin(SB["ids_desempate"])]
@@ -269,23 +263,21 @@ def render(ctx):
                 
                         for motivo, parts in grupos.items():
                             if "Liguilla" in motivo:
-                                seccion(f"Tabla final: {motivo}", "Posiciones del mini-torneo a partido único", "#9333ea")
+                                seccion(f"Tabla final: {motivo}", color="#9333ea")
                                 st.markdown(html_tabla_liguilla(parts), unsafe_allow_html=True)
                                 with st.expander(f":material/visibility: Ver los {len(parts)} enfrentamientos", expanded=False):
                                     for p in parts:
-                                        st.markdown(fila_partido_html(p), unsafe_allow_html=True)
+                                        st.markdown(fila_partido_html(S, ctx.club, p), unsafe_allow_html=True)
                             else:
-                                seccion(f"Desempate: {motivo}", "Partido único definitorio", "#dc2626")
+                                seccion(f"Desempate: {motivo}", color="#dc2626")
                                 for p in parts:
-                                    st.markdown(fila_partido_html(p, abierto=True), unsafe_allow_html=True)
+                                    st.markdown(fila_partido_html(S, ctx.club, p, abierto=True), unsafe_allow_html=True)
                 idx_b += 1
 
             if hay_red:
                 with sb[idx_b]:
                     pr_red = red_b(SB)
-                    seccion(f"Reducido por el ascenso n.º {pr_red['directos'] + 1}",
-                            " → ".join(e.replace(" del reducido", "") for e in pr_red["etapas"])
-                            + " · partido único, penales si empatan · L = local, V = visitante, N = neutral", "#2563eb")
+                    seccion(f"Reducido por el ascenso n.º {pr_red['directos'] + 1}", color="#2563eb")
                     if SB.get("red") is None:
                         aviso("El cuadro se completa al terminar " + ("el torneo" if anual else "la fase 2 y sus posibles "
                               "desempates") + f". Lo juegan {pr_red['equipos']} equipos: del {pr_red['directos'] + 1}° al "
@@ -302,8 +294,7 @@ def render(ctx):
             idx_b += 1
         
             with sb[idx_b]:
-                seccion("Definiciones de la temporada", "Campeón, ascensos, promoción y descensos",
-                        "#b7860b")
+                seccion("Definiciones de la temporada", color="#b7860b")
                 if SB["campeon"] is None:
                     aviso("Las definiciones aparecen acá cuando termina el torneo." if anual else
                           "Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
@@ -340,7 +331,7 @@ def render(ctx):
                                 st.caption("Esta temporada no hay promoción.")
                             elif SB.get("promo_partidos"):
                                 for pm in SB["promo_partidos"]:
-                                    st.markdown(fila_partido_html(pm, abierto=True), unsafe_allow_html=True)
+                                    st.markdown(fila_partido_html(S, ctx.club, pm, abierto=True), unsafe_allow_html=True)
                             elif promo_cands(SB):
                                 st.markdown('<div class="mlab">Juegan la promoción</div>'
                                             + lista_equipos_html([

@@ -4,52 +4,23 @@
 import calendar as _calendar
 import datetime as _dt
 
-from motor.calendario import anio, dia_de, texto_dia
+from motor.calendario import anio, dia_de, eventos_calendario, texto_dia  # noqa: F401  (eventos_calendario se reexporta)
+from motor.consultas import partidos_de_calendario as _cal_partidos  # noqa: F401  (la usa ui/vista/__init__)
 from datos.logos import logo_img
 from ligas.federal import rotulo_f
 from ligas.nacional import rotulo_b
 from ligas.primera import rotulo_p
 from ligas.regional import rotulo_reg
 from ui.vista.base import crest, esc
-from ui.vista.copas_int import _INT_CLAVE, _int_pendientes
-from ui.vista.mi_club import mi_club
+from ui.vista.copas_int import _INT_CLAVE
 from ui.vista.partidos import (
-    partidos_fecha_b,
-    partidos_fecha_f,
-    partidos_fecha_fb,
-    partidos_fecha_p,
-    partidos_fecha_pb,
-    partidos_fecha_pc,
-    partidos_fecha_pd,
-    partidos_fecha_reg,
-    pendiente,
     resultado_para,
 )
-from motor.calendario import INICIO, ligas_de, total_liga
-from copas.registro import REGISTRO, por_nombre
+from motor.calendario import INICIO
+from copas.registro import por_nombre
 
 
 # ---- Calendario del mes ----
-def _cal_partidos(S, liga, n):
-    """Partidos (jugados o por jugar) de la fecha n de una liga, o la ronda n de la Copa."""
-    if liga in _INT_CLAVE:
-        C = S["int"][_INT_CLAVE[liga]]
-        return [p for p in C["log"] if p["fecha"] == n] or _int_pendientes(C, n)
-    comp = por_nombre(liga)
-    if comp:                                       # Copa Argentina, Supercopa, Mundial de Clubes
-        hechos = [p for p in comp.log(S) if p["fecha"] == n]
-        return hechos or [pendiente(liga, n, rot, cmp_, a, b) for a, b, rot, cmp_ in comp.cruces(S, n)]
-    obtener = {"Primera División": partidos_fecha_p, "Primera Nacional": partidos_fecha_b,
-               "Federal A": partidos_fecha_f, "Federal B": partidos_fecha_fb,
-               "Primera B": partidos_fecha_pb, "Primera C": partidos_fecha_pc,
-               "Promocional Amateur": partidos_fecha_pd,
-               "Regional Amateur": partidos_fecha_reg}[liga]
-    try:
-        return obtener(n)
-    except (IndexError, KeyError, TypeError):
-        return []
-
-
 def _cal_rotulo(S, liga, n):
     if liga in _INT_CLAVE:
         return S["int"][_INT_CLAVE[liga]]["rondas"][n - 1]
@@ -59,30 +30,6 @@ def _cal_rotulo(S, liga, n):
             "Federal A": lambda: rotulo_f(S["f"], n), "Federal B": lambda: rotulo_f(S["fb"], n),
             "Regional Amateur": lambda: rotulo_reg(S["reg"], n)
             }.get(liga, lambda: f"Fecha {n}")()
-
-
-def eventos_calendario(S):
-    """Todo lo programado en la temporada: lista de (día, competición, n, jugada)."""
-    ev = []
-    jugadas = {"Primera División": S["fecha"], "Primera Nacional": S["b"]["fecha"], "Federal A": S["f"]["fecha"],
-               "Primera B": S["pb"]["fecha"], "Primera C": S["pc"]["fecha"], "Promocional Amateur": S["pd"]["fecha"], "Regional Amateur": S["reg"]["fecha"]}
-    if S.get("fb") is not None:
-        jugadas["Federal B"] = S["fb"]["fecha"]
-    for liga in ligas_de(S):
-        for n in range(1, total_liga(S, liga) + 1):
-            ev.append((dia_de(S, liga, n), liga, n, n <= jugadas[liga]))
-    for comp in REGISTRO:                      # Copa Argentina, Supercopa y Mundial de Clubes
-        if comp.activa(S):
-            for n in range(1, comp.total(S) + 1):
-                ev.append((comp.dia(S, n), comp.nombre, n, n <= comp.hechas(S)))
-    for liga, clave in _INT_CLAVE.items():
-        C = S.get("int", {}).get(clave)
-        if C:
-            for n in range(1, C["total"] + 1):
-                ev.append((dia_de(S, liga, n), liga, n, n <= C["ronda"]))
-    orden = ["Recopa Sudamericana", "Copa Libertadores", "Copa Sudamericana", *[comp.nombre for comp in REGISTRO], "Primera División", "Primera Nacional", "Federal A", "Federal B", "Regional Amateur",
-             "Primera B", "Primera C", "Promocional Amateur"]
-    return sorted(ev, key=lambda e: (e[0], orden.index(e[1])))
 
 
 def _cal_res(p):
@@ -101,11 +48,10 @@ CSS_SELECCION = ("<style>.cal-num[data-dia]{cursor:pointer}"
                  ".cal-dia.sel{outline:2px solid #eab308;outline-offset:-2px;border-radius:10px}</style>")
 
 
-def calendario_mes_html(S, eventos, mes, proximo, solo_club=False, seleccion=None):
+def calendario_mes_html(S, club, eventos, mes, proximo, solo_club=False, seleccion=None):
     """Días del mes con lo que se juega cada uno (cada competición se despliega).
     Con `solo_club` (y un club dirigido por el manager) se ocultan los demás equipos: sólo quedan los
     días, las competencias y los partidos de ese club. Los partidos de mi club siempre se marcan."""
-    club = mi_club()
     filtrar = bool(solo_club and club)
     dias = {}
     for d, liga, n, jugada in eventos:

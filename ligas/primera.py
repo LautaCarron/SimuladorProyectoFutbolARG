@@ -12,6 +12,7 @@ contra el perdedor del reducido de la B, y suben de la B tantos como bajan (ver 
 import numpy as np
 import pandas as pd
 
+from ligas.desempates import bloque_empatado, duelo_o_liguilla
 from datos.equipos import N
 from ligas import apertura_clausura as ac
 from motor.incidentes import revisar_liga
@@ -398,17 +399,6 @@ def iniciar_fase2(S, acumular):
     S["fase"] = 2
 
 
-def _bloque(pts, ids, idx_ini):
-    """Bloque de equipos igualados en puntos alrededor del índice `idx_ini`: (inicio, fin)."""
-    inicio = idx_ini
-    while inicio > 0 and pts[inicio - 1] == pts[idx_ini]:
-        inicio -= 1
-    fin = idx_ini + 1
-    while fin < len(pts) and pts[fin] == pts[idx_ini]:
-        fin += 1
-    return inicio, fin
-
-
 def _detectar_empates(S, extra):
     """Mira si hay igualdad en puntos en las fronteras que importan (título, permanencia, promoción) y, si la
     hay, deja pendiente una fecha más con los desempates. Devuelve True si agregó esa fecha."""
@@ -421,18 +411,15 @@ def _detectar_empates(S, extra):
         for idx_f, nombre in fronteras:
             if idx_f < 0 or idx_f + 1 >= len(pts) or pts[idx_f] != pts[idx_f + 1]:
                 continue
-            inicio, fin = _bloque(pts, ids, idx_f)
+            inicio, fin = bloque_empatado(pts, idx_f)
             if (zona, inicio) in bloques:
                 continue
             bloques.add((zona, inicio))
             ids_bloque = [int(i) for i in ids[inicio:fin]]
             ids_involucrados.extend(ids_bloque)
-            if len(ids_bloque) == 2:
-                motivos.append(f"Duelo {zona} {nombre} {inicio}-{fin}")
-                partidos_desempate.append((ids_bloque[0], ids_bloque[1]))
-            else:
-                motivos.append(f"Liguilla {zona} {nombre} {inicio}-{fin}")
-                partidos_desempate.append((ids_bloque[0], ids_bloque[0]))
+            tipo, partido = duelo_o_liguilla(ids_bloque)
+            motivos.append(f"{tipo} {zona} {nombre} {inicio}-{fin}")
+            partidos_desempate.append(partido)
 
     if formato(S) == "actual":
         # --- Zona Campeonato (1° puesto) y Zona Descenso (permanencia y promoción)

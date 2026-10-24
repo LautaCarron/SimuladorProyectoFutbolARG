@@ -2,12 +2,10 @@
 
 Va en ui/vista/mi_club.py. Sólo usa streamlit y funciones de lectura del estado S.
 
-  * mi_club()                  -> nombre del club que dirige el manager (None si está libre o en modo simulación).
-                                  simuladorafa.py lo deja en st.session_state["_mi_club"] en cada ejecución.
+  El club que dirige el manager viaja por parámetro (ctx.club en las pestañas); ya no hay claves ocultas en la sesión.
   * competencias_club(S, club) -> claves de las pestañas donde compite el club ("p", "ca", "lib", ...).
   * estilo_mi_club(club)       -> <style> que pinta de amarillo al club en tablas, grupos, cuadros y partidos.
-  * mi_zona(S, liga, fase1)    -> zona / grupo / región de mi club dentro de una liga ("p", "b", "f", "reg").
-  * tabs_zona(etiquetas, zona, clave) -> st.tabs con ⭐ y abierta por defecto en la zona de mi club.
+  * zona_primera / zona_nacional / zona_federal / region_de_club -> zona de mi club dentro de su liga.
 """
 
 import streamlit as st
@@ -20,15 +18,6 @@ AMARILLO_BORDE = "#eab308"
 # categoría -> clave de la pestaña de Ligas
 CLAVE_LIGA = {"Primera División": "p", "Primera Nacional": "b", "Federal A": "f", "Federal B": "fb", "Regional Amateur": "reg",
               "Primera B": "pb", "Primera C": "pc", "Promocional Amateur": "pd"}
-
-
-def mi_club():
-    return st.session_state.get("_mi_club")
-
-
-def modo_manager():
-    """True si se está jugando en modo manager (con o sin club). simuladorafa.py lo deja en cada ejecución."""
-    return bool(st.session_state.get("_modo_manager"))
 
 
 # ---- En qué zona / región juega mi club dentro de su liga --------------------------------------
@@ -158,51 +147,3 @@ def estilo_mi_club(club):
 .mrow.mio, .cal-p.mio {{ background: {f.format(a=0.20)}; box-shadow: inset 3px 0 0 {AMARILLO_BORDE}; border-radius: 6px; }}
 [class*="st-key-mi_partido_"] {{ background: {f.format(a=0.20)}; box-shadow: inset 3px 0 0 {AMARILLO_BORDE}; border-radius: 8px; }}
 </style>"""
-
-
-# ---- Zona de mi club dentro de su liga -------------------------------------------
-def mi_zona(S, liga, fase1=False):
-    """Zona de mi club en la fase actual de la liga (None si no juega esa liga o todavía no hay zonas):
-       "p"   Primera: 0 Campeonato, 1 Intermedia, 2 Descenso (desde la fase 2).
-       "b"   Primera Nacional: fase 1 -> 0 Zona A / 1 Zona B; fase 2 -> 0 Campeonato, 1 Intermedia, 2 Descenso.
-       "f"   Federal A: fase 1 -> grupo 0-4 (por cercanía); fase 2 -> 0 Campeonato / 1 Descenso.
-       "reg" Regional Amateur: nombre de la región.
-    `fase1` lo calcula cada pestaña con la misma condición que ya usa para dibujar la fase."""
-    club = mi_club()
-    if not club:
-        return None
-    try:
-        if liga == "reg":
-            SR = S["reg"]
-            return SR["region_de"][SR["nombres"].index(club)] if club in SR["nombres"] else None
-        L = {"p": S, "b": S["b"], "f": S["f"], "fb": S.get("fb")}[liga]
-        if L is None:
-            return None
-        if club not in L["nombres"]:
-            return None
-        if liga == "p":
-            z = L.get("zona_de")                              # sólo existe desde la fase 2
-        elif liga == "b":
-            if L.get("formato", "actual") != "actual":
-                return None
-            z = L.get("zona_de") if fase1 else L.get("zona2_de")
-        else:
-            z = L.get("grupo_de") if fase1 else L.get("zona2_de")
-        if z is None:
-            return None
-        v = int(z[L["nombres"].index(club)])
-        return v if v >= 0 else None
-    except (KeyError, IndexError, ValueError, TypeError):
-        return None
-
-
-def tabs_zona(etiquetas, zona, clave):
-    """st.tabs de zonas/grupos. Con un club dirigido, la zona de mi club lleva ⭐ y se abre sola.
-    La key lleva el club y la zona: si cambia cualquiera de los dos, vuelve a abrirse en la zona nueva."""
-    club = mi_club()
-    if not club or zona is None or not (0 <= zona < len(etiquetas)):
-        return st.tabs(etiquetas)
-    marcadas = list(etiquetas)
-    marcadas[zona] = f"{etiquetas[zona]} ⭐"
-    slug = "".join(c if c.isalnum() else "_" for c in club)
-    return st.tabs(marcadas, default=marcadas[zona], key=f"{clave}_{slug}_{zona}")

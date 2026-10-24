@@ -4,7 +4,7 @@
 import numpy as np
 import streamlit as st
 
-from ligas.primera import destino, zona_de_pos
+from ligas.primera import zona_de_pos
 from ui.vista.base import (
     COLORES_B,
     COLORES_DESTINO,
@@ -150,10 +150,14 @@ def mostrar_tabla(df, fn_color, hist=None):
                 unsafe_allow_html=True)
 
 
-def colorear_fase1(fila):
-    """Pinta según la zona a la que pasa (o pasaría) cada equipo de Primera."""
-    c = COLORES_ZONA[zona_de_pos(fila["Pos"], len(st.session_state.S["nombres"]))]
-    return [f"background-color: {c}"] * len(fila)
+def colorear_fase1(S):
+    """Función de color por fila: pinta según la zona a la que pasa (o pasaría) cada equipo de Primera."""
+    cantidad = len(S["nombres"])
+
+    def colorear(fila):
+        c = COLORES_ZONA[zona_de_pos(fila["Pos"], cantidad)]
+        return [f"background-color: {c}"] * len(fila)
+    return colorear
 
 
 def colorear_destino(fila):

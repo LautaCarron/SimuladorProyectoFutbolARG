@@ -12,9 +12,8 @@ rige desde la próxima temporada (los equipos se reacomodan en el pase de tempor
 
 import streamlit as st
 from motor.nucleo import DESC_LIGA_MIN, tope_descensos
-from datos.equipos import N
 from motor.tamanos import MAXIMO, MINIMO, NOMBRES as NOMBRES_TAM, ORDEN as ORDEN_TAM, PASO, camino, objetivos
-from ligas.federal import (F_DESC, F_DESC_MAX, F_DIRECTOS_MAX, F_RED_EQUIPOS_MAX, cfg_federal, nueva_estructura_f,
+from ligas.federal import (F_DESC_MAX, F_DIRECTOS_MAX, cfg_federal, nueva_estructura_f,
                            plan_reducido_f)
 from ligas.federal_b import (FB_EQUIPOS, activo as fb_activo, cfg_federal_b, destino_descenso_federal_a,
                              pendiente as fb_pendiente)

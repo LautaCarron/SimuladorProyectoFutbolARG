@@ -12,7 +12,6 @@ from datos.logos import logo_img
 from ui.vista import (
     aviso,
     bandera,
-    barra_estado,
     chip,
     crest,
     cuadro_int_html,
@@ -28,7 +27,7 @@ from ui.vista import (
 
 def render(ctx):
     (P, S, _abierta, tab_copas, tab_lib, tab_rec, tab_sud) = (
-        ctx.P, ctx.S, ctx._abierta, ctx.tab_copas, ctx.tab_lib, ctx.tab_rec, ctx.tab_sud)
+        ctx.P, ctx.S, ctx.abierta, ctx.pestanas.tab_copas, ctx.pestanas.tab_lib, ctx.pestanas.tab_rec, ctx.pestanas.tab_sud)
     # ============================================================================
     # COPAS CONMEBOL: LIBERTADORES, SUDAMERICANA Y RECOPA
     # ============================================================================
@@ -49,9 +48,6 @@ def render(ctx):
             while listo(S, clave):
                 simular_ronda_int(S, clave, P, S["rng"])
             st.rerun()
-        barra_estado([("Próxima ronda" if not terminada_c else "Estado", fase_actual(C)),
-                      ("Rondas", f"{C['ronda']} / {C['total']}"), ("Partidos jugados", len(C["log"]))],
-                     100 * C["ronda"] / max(C["total"], 1))
         if espera:
             aviso("La Sudamericana espera a la Libertadores: sus grupos se arman con los que pierden la Fase 3 "
                   "y los playoffs, con los terceros de los grupos. Avanzá la Libertadores (o usá Próximo día).")
@@ -70,7 +66,7 @@ def render(ctx):
         t = dict(zip(titulos, st.tabs(titulos)))
         if es_lib:
             with t["Fase previa"]:
-                seccion("Fase previa", "Fase 1 (12 equipos), Fase 2 (16: 10 directos + 6 de la Fase 1) y Fase 3 (8) a ida "
+                seccion("Fase previa", "Fase 1 (6 equipos), Fase 2 (16: 13 directos + 3 de la Fase 1) y Fase 3 (8) a ida "
                         "y vuelta · los 4 que ganan la Fase 3 van a los grupos; los 4 que pierden, a la Sudamericana",
                         color)
                 fases_previa = ("Fase 1", "Fase 2", "Fase 3")
@@ -82,8 +78,7 @@ def render(ctx):
                 else:
                     aviso(f"La {fase_sel} se arma cuando termina la fase anterior.")
         with t["Grupos"]:
-            seccion("Fase de grupos", "8 grupos de 4 · ida y vuelta · " + (
-                "1° y 2° a octavos, 3° a la Sudamericana" if es_lib else "1° a octavos, 2° a los playoffs"), color)
+            seccion("Fase de grupos", color=color)
             if C["grupos"] is None:
                 aviso("Los grupos se sortean cuando termina la fase previa de la Libertadores.")
             else:
@@ -92,15 +87,13 @@ def render(ctx):
                 st.markdown(grupos_int_html(C, destinos), unsafe_allow_html=True)
         if not es_lib:
             with t["Playoffs"]:
-                seccion("Playoffs", "2° de cada grupo vs. los 3° de la Libertadores (cierran de local) · ida y vuelta",
-                        color)
+                seccion("Playoffs", color=color)
                 if C["llaves"].get("Playoffs"):
                     st.markdown(series_int_html(C, "Playoffs"), unsafe_allow_html=True)
                 else:
                     aviso("Se arman cuando terminan los grupos de las dos copas.")
         with t["Eliminatorias"]:
-            seccion("Eliminatorias", "Octavos, cuartos y semis a ida y vuelta (cierra de local el de mejor campaña) · "
-                    "final única en cancha neutral · se ve el global de cada serie", color)
+            seccion("Eliminatorias", color=color)
             st.markdown(cuadro_int_html(C), unsafe_allow_html=True)
             fases = [f for f in ("Octavos", "Cuartos", "Semifinal") if C["llaves"].get(f)]
             if fases:
@@ -116,17 +109,16 @@ def render(ctx):
                 r_sel = st.selectbox(":material/event: Ronda", rondas, index=len(rondas) - 1,
                                      format_func=lambda n: C["rondas"][n - 1], key=f"{clave}_ronda_{S['temp']}")
                 for p in [p for p in C["log"] if p["fecha"] == r_sel]:
-                    st.markdown(fila_partido_html(p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
+                    st.markdown(fila_partido_html(S, ctx.club, p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
         with t["Clasificados"]:
-            seccion("Clasificados", "Argentina: por la tabla de Primera, la Copa Argentina y los campeones · "
-                    "los otros países: cupos por país, los clubes se sortean cada año", color)
+            seccion("Clasificados", color=color)
             filas = [{"Equipo": n, "País": pais_de(n), "Cómo clasificó": v, "Media": round(C["r"][n], 1)}
                      for n, v in C["via"].items()]
             filas.sort(key=lambda x: (x["País"] != "Argentina", x["País"], -x["Media"]))
             df_i = pd.DataFrame(filas)
             st.markdown(tabla_html(df_i, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
         with t["Definiciones"]:
-            seccion("Definiciones", f"Campeón de la {nombre}", "#b7860b")
+            seccion("Definiciones", color="#b7860b")
             if C["campeon"] is None:
                 aviso("El campeón aparece acá cuando se juega la final.")
             else:

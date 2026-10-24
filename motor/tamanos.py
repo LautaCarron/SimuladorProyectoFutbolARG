@@ -19,6 +19,10 @@ que no le falten equipos).
 import math
 
 from datos.equipos import origen
+from ligas.federal import cfg_federal
+from ligas.nacional import asc_elegido, cfg_b, formato_efectivo
+from ligas.primera import DESCENSOS_MAX, cfg_primera
+from ligas.simples import cfg_simple
 
 PASO = 4                          # equipos que, como mucho, cambia una liga por temporada para llegar al objetivo
 ORDEN = ["p", "b", "fa", "pb", "fb", "pc", "pd"]          # de arriba hacia abajo
@@ -51,14 +55,19 @@ def camino(actual, objetivo, paso=PASO):
 
 
 class _Piramide:
-    """Las listas de equipos de la temporada que viene y quién está arriba / abajo de quién."""
+    """Las listas de equipos de la temporada que viene y quién está arriba / abajo de quién.
+    `viejas`: las listas de la temporada que termina (para saber quién jugaba dónde)."""
 
-    def __init__(self, S, listas, hay_fb):
-        self.S, self.L, self.hay_fb = S, listas, hay_fb
+    def __init__(self, S, listas, hay_fb, viejas):
+        self.S, self.L, self.hay_fb, self.viejas = S, listas, hay_fb, viejas
         self.movidos = []                      # (club, de, a, motivo) para el Historial
 
     def r(self, n):
         return self.S["rating"].get(n, 50.0)
+
+    def eran(self, k):
+        """Los que jugaron en la liga k la temporada que termina."""
+        return self.viejas.get(k) or []
 
     def arriba(self, k):
         return {"b": "p", "fa": "b", "pb": "b", "fb": "fa", "pc": "pb", "pd": "pc",
@@ -84,109 +93,127 @@ class _Piramide:
     def puede_recibir(self, k):
         return k not in MAXIMO or len(self.L[k]) < MAXIMO[k]
 
+    def ceder(self, v, prof=0):
+        """Deja a la liga v en condiciones de ceder un equipo: si está en su mínimo, primero recibe uno de la liga
+        de arriba (en cadena: si la de arriba también está justa, ella recibe de la suya)."""
+        if self.puede_ceder(v):
+            return True
+        a = self.arriba(v)
+        if a is None or a not in self.L or prof > 8 or not self.ceder(a, prof + 1):
+            return False
+        # de la B sólo bajan al Federal A los del interior y a la Primera B los metropolitanos
+        eleg = [n for n in self.L[a] if a != "b" or self.abajo("b", n) == v]
+        if not eleg:
+            return False
+        eran = set(self.viejas.get(v) or [])
+        n = min(eleg, key=lambda x: (x not in eran, self.r(x)))      # primero los que acaban de subir desde v
+        self.mover(n, a, v, "mínimo de equipos")
+        return True
+
+    def ceder_abajo(self, v, prof=0):
+        """Igual que ceder(), pero la liga v (que está debajo) se repone con el mejor de su liga de abajo."""
+        if self.puede_ceder(v):
+            return True
+        if prof > 8:
+            return False
+        for d in self.abajo(v):
+            if d not in self.L or not self.ceder_abajo(d, prof + 1):
+                continue
+            eleg = [n for n in self.L[d] if v != "b" or self.abajo("b", n) == d]
+            if eleg:
+                self.mover(max(eleg, key=self.r), d, v, "mínimo de equipos")
+                return True
+        return False
+
 
 def ajustar(S, listas, viejas, hay_fb):
     """Corrige las listas de la temporada que viene (`listas`: clave -> lista de clubes, se modifican en el lugar).
     `viejas`: las listas de la temporada que termina (para saber quién jugaba dónde). Devuelve los movimientos
     hechos: [(club, de, a, motivo)]."""
-    P = _Piramide(S, listas, hay_fb)
-    obj = objetivos(S)
+    P = _Piramide(S, listas, hay_fb, viejas)
     claves = [k for k in ORDEN if k in listas and (k != "fb" or hay_fb)]
+    _llevar_al_objetivo(P, claves, objetivos(S))
+    _reponer_pisos(P, claves)
+    return P.movidos
 
-    # ---- 1. tamaño objetivo, de arriba hacia abajo
+
+def _llevar_al_objetivo(P, claves, obj):
+    """Tamaño objetivo de cada liga (si lo eligió el Modo dios), de arriba hacia abajo y de a `PASO` equipos."""
     for k in claves:
         T = obj.get(k)
         if T is None:
             continue
         T = max(MINIMO[k], min(MAXIMO[k], int(T)))
-        m = meta(len(viejas.get(k) or listas[k]), T)
-        sobran = len(listas[k]) - m
+        m = meta(len(P.viejas.get(k) or P.L[k]), T)
+        sobran = len(P.L[k]) - m
         if sobran > 0:
-            # bajan de más los más flojos (primero los que jugaron acá esta temporada, no los recién llegados)
-            cand = sorted(listas[k], key=lambda n: (n not in (viejas.get(k) or []), P.r(n)))
-            for n in cand:
-                if sobran <= 0:
-                    break
-                destino = P.abajo(k, n)
-                if destino is None:                  # el Promocional es el último escalón: los que sobran quedan ahí
-                    break
-                if destino not in listas or not P.puede_recibir(destino):
-                    continue
-                P.mover(n, k, destino, "tamaño objetivo")
-                sobran -= 1
+            _bajar_los_que_sobran(P, k, sobran)
         elif sobran < 0:
-            # suben de más los mejores de la liga de abajo (los que jugaron allá, no los que recién bajaron)
-            fuentes = [x for x in P.abajo(k) if x in listas]
-            cand = sorted(((n, f) for f in fuentes for n in listas[f]),
-                          key=lambda nf: (nf[0] in (viejas.get(k) or []), -P.r(nf[0])))
-            for n, f in cand:
-                if sobran >= 0:
-                    break
-                if not P.puede_ceder(f):
-                    continue
-                P.mover(n, f, k, "tamaño objetivo")
-                sobran += 1
+            _subir_los_que_faltan(P, k, sobran)
 
-    # ---- 2. piso: ninguna liga por debajo de su mínimo (de abajo hacia arriba, dos pasadas por las cascadas)
-    def ceder(v, prof=0):
-        """Deja a la liga v en condiciones de ceder un equipo: si está en su mínimo, primero recibe uno de la liga
-        de arriba (en cadena: si la de arriba también está justa, ella recibe de la suya)."""
-        if P.puede_ceder(v):
-            return True
-        a = P.arriba(v)
-        if a is None or a not in listas or prof > 8 or not ceder(a, prof + 1):
-            return False
-        # de la B sólo bajan al Federal A los del interior y a la Primera B los metropolitanos
-        eleg = [n for n in listas[a] if a != "b" or P.abajo("b", n) == v]
-        if not eleg:
-            return False
-        eran = set(viejas.get(v) or [])
-        n = min(eleg, key=lambda x: (x not in eran, P.r(x)))      # primero los que acaban de subir desde v
-        P.mover(n, a, v, "mínimo de equipos")
-        return True
 
-    def ceder_abajo(v, prof=0):
-        """Igual que ceder(), pero la liga v (que está debajo) se repone con el mejor de su liga de abajo."""
-        if P.puede_ceder(v):
-            return True
-        if prof > 8:
-            return False
-        for d in P.abajo(v):
-            if d not in listas or not ceder_abajo(d, prof + 1):
-                continue
-            eleg = [n for n in listas[d] if v != "b" or P.abajo("b", n) == d]
-            if eleg:
-                P.mover(max(eleg, key=P.r), d, v, "mínimo de equipos")
-                return True
-        return False
+def _bajar_los_que_sobran(P, k, sobran):
+    """Bajan de más los más flojos (primero los que jugaron acá esta temporada, no los recién llegados)."""
+    cand = sorted(P.L[k], key=lambda n: (n not in P.eran(k), P.r(n)))
+    for n in cand:
+        if sobran <= 0:
+            break
+        destino = P.abajo(k, n)
+        if destino is None:                  # el Promocional es el último escalón: los que sobran quedan ahí
+            break
+        if destino not in P.L or not P.puede_recibir(destino):
+            continue
+        P.mover(n, k, destino, "tamaño objetivo")
+        sobran -= 1
 
+
+def _subir_los_que_faltan(P, k, sobran):
+    """Suben de más los mejores de la liga de abajo (los que jugaron allá, no los que recién bajaron)."""
+    fuentes = [x for x in P.abajo(k) if x in P.L]
+    cand = sorted(((n, f) for f in fuentes for n in P.L[f]),
+                  key=lambda nf: (nf[0] in P.eran(k), -P.r(nf[0])))
+    for n, f in cand:
+        if sobran >= 0:
+            break
+        if not P.puede_ceder(f):
+            continue
+        P.mover(n, f, k, "tamaño objetivo")
+        sobran += 1
+
+
+def _reponer_pisos(P, claves):
+    """Ninguna liga por debajo de su mínimo (de abajo hacia arriba, dos pasadas más por las cascadas)."""
     for _ in range(3):
         for k in reversed(claves):
-            falta = MINIMO[k] - len(listas[k])
-            if falta <= 0:
-                continue
-            eran = set(viejas.get(k) or [])
-            arr = P.arriba(k)
-            vecinos = [v for v in [arr, *P.abajo(k)] if v in listas]
-            # a) vuelven los que se fueron de esta liga (primero los que subieron, el más flojo primero)
-            cand = [(n, v) for v in vecinos for n in listas[v] if n in eran]
-            cand.sort(key=lambda nv: (nv[1] != arr, P.r(nv[0]) if nv[1] == arr else -P.r(nv[0])))
-            # b) si no alcanza, los mejores de abajo y, por último, los más flojos de arriba
-            abajo = [(n, v) for v in P.abajo(k) if v in listas for n in sorted(listas[v], key=P.r, reverse=True)]
-            arriba = ([(n, arr) for n in sorted(listas[arr], key=P.r) if arr != "b" or P.abajo("b", n) == k]
-                      if arr in listas else [])
-            for n, v in cand + abajo + arriba:
-                if falta <= 0:
-                    break
-                if n not in listas[v]:
-                    continue
-                if not P.puede_ceder(v) and not (ceder(v) if v == arr else ceder_abajo(v)):
-                    continue
-                if n not in listas[v]:                      # ceder() pudo haber movido justo a este
-                    continue
-                P.mover(n, v, k, "mínimo de equipos")
-                falta -= 1
-    return P.movidos
+            falta = MINIMO[k] - len(P.L[k])
+            if falta > 0:
+                _completar_liga(P, k, falta)
+
+
+def _completar_liga(P, k, falta):
+    """Trae equipos a la liga k hasta que no falte ninguno."""
+    listas = P.L
+    eran = set(P.viejas.get(k) or [])
+    arr = P.arriba(k)
+    vecinos = [v for v in [arr, *P.abajo(k)] if v in listas]
+    # a) vuelven los que se fueron de esta liga (primero los que subieron, el más flojo primero)
+    cand = [(n, v) for v in vecinos for n in listas[v] if n in eran]
+    cand.sort(key=lambda nv: (nv[1] != arr, P.r(nv[0]) if nv[1] == arr else -P.r(nv[0])))
+    # b) si no alcanza, los mejores de abajo y, por último, los más flojos de arriba
+    abajo = [(n, v) for v in P.abajo(k) if v in listas for n in sorted(listas[v], key=P.r, reverse=True)]
+    arriba = ([(n, arr) for n in sorted(listas[arr], key=P.r) if arr != "b" or P.abajo("b", n) == k]
+              if arr in listas else [])
+    for n, v in cand + abajo + arriba:
+        if falta <= 0:
+            break
+        if n not in listas[v]:
+            continue
+        if not P.puede_ceder(v) and not (P.ceder(v) if v == arr else P.ceder_abajo(v)):
+            continue
+        if n not in listas[v]:                      # ceder() pudo haber movido justo a este
+            continue
+        P.mover(n, v, k, "mínimo de equipos")
+        falta -= 1
 
 
 # ---------------------------------------------------------------- ascensos y descensos parejos
@@ -206,11 +233,6 @@ def plan_equilibrado(S, tamanos=None):
 
     Sólo toca las fronteras de las ligas que tienen objetivo. El reducido que se haya elegido se respeta: si hay
     reducido, los ascensos directos son uno menos. Devuelve {clave: texto} con lo que quedó (para el Modo dios)."""
-    from ligas.federal import cfg_federal
-    from ligas.nacional import asc_elegido, cfg_b, formato_efectivo
-    from ligas.primera import DESCENSOS_MAX, cfg_primera
-    from ligas.simples import cfg_simple
-
     obj = objetivos(S)
     if not obj:
         return {}

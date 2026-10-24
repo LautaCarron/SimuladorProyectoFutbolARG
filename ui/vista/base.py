@@ -11,12 +11,6 @@ from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS, ESCUDOS_SIN_FONDO
 from datos.imagenes import slug
 
 
-def _estado():
-    """Estado de la sesión actual: Primera, B Nacional, Federal A, Primera B y Primera C."""
-    S = st.session_state.S
-    return S, S["b"], S["f"], S["pb"], S["pc"]
-
-
 COLOR_ORO = "rgba(227, 162, 26, 0.30)"
 
 
