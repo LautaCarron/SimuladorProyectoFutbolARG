@@ -204,6 +204,7 @@ def colorear_pb(fila):
 def colorear_reg(fila):
     d = fila["Destino"]
     c = (COLOR_ORO if d == "Campeón regional" else
+         COLORES_B["Ascenso directo"] if d == "Clasifica" else
          "rgba(249, 115, 22, 0.3)" if d == "Desempate Campeonato" else "")
     return [f"background-color: {c}" if c else ""] * len(fila)
 

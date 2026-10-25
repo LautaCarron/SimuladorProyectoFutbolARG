@@ -7,7 +7,15 @@ Modo manager: se abre sola (y se marca con ⭐) la región donde juega el club q
 
 import streamlit as st
 from datos.datos_regional import FINALES_REG, REGIONES_REG
-from ligas.regional import simular_fecha_reg, tabla_reg_region
+from ligas.regional import (
+    REG_PASAN,
+    fase_reg,
+    simular_fecha_reg,
+    subgrupo_de_club,
+    tabla_subgrupo_reg,
+    tabla_zona_reg,
+)
+from ui.vista.base import COLORES_B
 from ui.vista.editor_medias import editar_medias
 from ui.vista.liguilla import html_tabla_liguilla
 from ui.vista import (
@@ -28,28 +36,40 @@ from ui.vista import (
 from ui.vista.mi_club import region_de_club
 
 
-def _zona_corta(clave, claves):
-    """\"Zona A\" para una región dividida; \"\" si la región tiene una sola zona."""
-    return clave.split(" · ")[-1] if len(claves) > 1 else ""
+def _tabs_fases(titulos, abrir):
+    """Pestañas de fase; abre la `abrir` si esta versión de Streamlit deja elegir la pestaña inicial."""
+    try:
+        return st.tabs(titulos, default=titulos[abrir])
+    except TypeError:
+        return st.tabs(titulos)
 
 
-def _tabla_de_zona(df_reg, clave, claves):
-    """Las filas de una zona dentro de la tabla de la región (que trae las dos zonas juntas)."""
-    return df_reg[df_reg["Zona"] == _zona_corta(clave, claves)].reset_index(drop=True)
-
-
-def _mostrar_region(SR, reg):
-    """Tabla de la región: una sola tabla, o una tabla separada por cada zona si la región está dividida."""
-    df = tabla_reg_region(SR, reg)
-    claves = SR["zonas_de"][reg]
-    if len(claves) == 1:
-        mostrar_tabla(df, colorear_reg)
+def _tabla_zona(SR, reg):
+    if len(SR["zona2"][reg]) == 0:
+        aviso(f"La zona se arma al terminar la fase 1 con los {REG_PASAN} mejores de cada subgrupo "
+              "(ida y vuelta, con la tabla en cero).")
         return
-    for clave in claves:
-        sub = _tabla_de_zona(df, clave, claves)
-        st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(_zona_corta(clave, claves))} · '
-                    f'{len(sub)} clubes</div>', unsafe_allow_html=True)
-        mostrar_tabla(sub, colorear_reg)
+    mostrar_tabla(tabla_zona_reg(SR, reg), colorear_reg)
+
+
+def _mostrar_region(SR, reg, club=None):
+    """Una pestaña por fase: la fase 1 (una tabla por subgrupo) y la fase 2 (tabla de la zona regional)."""
+    claves = SR["subgrupos_de"][reg]
+    if not claves:                                      # región chica: sólo hay zona regional
+        seccion("Zona regional", color="#16a34a")
+        _tabla_zona(SR, reg)
+        return
+    mio = subgrupo_de_club(SR, club) if club else None
+    t1, t2 = _tabs_fases(["Fase 1 · Subgrupos", "Fase 2 · Zona regional"], 1 if SR["f1_cerrada"] else 0)
+    with t1:
+        for clave in claves:
+            sub = tabla_subgrupo_reg(SR, clave)
+            titulo = clave.split(" · ")[-1] + (" ⭐" if clave == mio else "")
+            st.markdown(f'<div class="mlab" style="margin-top:14px">{esc(titulo)} · {len(sub)} clubes · '
+                        f'{esc(SR["desc_subgrupo"][clave])}</div>', unsafe_allow_html=True)
+            mostrar_tabla(sub, colorear_reg)
+    with t2:
+        _tabla_zona(SR, reg)
 
 
 def render(ctx):
@@ -65,7 +85,8 @@ def render(ctx):
         with tab_reg:
             c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
             c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
-                        + chip(f"12 regiones · 6 ascensos al {sube}", "#475569"), unsafe_allow_html=True)
+                        + chip(f"12 regiones · 6 ascensos al {sube}", "#475569") + " "
+                        + chip(fase_reg(SR), "#16a34a"), unsafe_allow_html=True)
             if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
                          disabled=terminada_reg):
                 simular_fecha_reg(SR, P, S["rng"])
@@ -75,10 +96,6 @@ def render(ctx):
                 while SR["fecha"] < SR["total"]:
                     simular_fecha_reg(SR, P, S["rng"])
                 st.rerun()
-
-            fase_reg = ("Ligas regionales" if SR["fecha"] < SR["f_liga"] else
-                        "Desempate por el campeonato" if SR["fecha"] < SR["f_final0"] else
-                        "Terminado" if terminada_reg else "Final por el ascenso")
 
             # modo manager: región del club que dirigís (None si no juega el Regional). La key lleva el
             # club, así al cambiar de club la región se vuelve a abrir en la nueva.
@@ -101,12 +118,15 @@ def render(ctx):
                                   label_visibility="collapsed") or (mi_reg or REGIONES_REG[0])
                 n_final, rival = next((k + 1, b if a == region else a) for k, (a, b) in enumerate(FINALES_REG)
                                       if region in (a, b))
+                n_sub = len(SR["subgrupos_de"][region])
                 st.markdown(chip(f"{len(SR['grupos'][region])} clubes", "#0e7490") + " "
+                            + (chip(f"{n_sub} subgrupos", "#475569") + " " if n_sub else "")
                             + chip(f"Final {n_final} por el ascenso vs. {rival}", "#b7860b"),
                             unsafe_allow_html=True)
                 seccion(f"Región {region}", color="#16a34a")
-                _mostrar_region(SR, region)
-                leyenda([("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
+                _mostrar_region(SR, region, club_mgr)
+                leyenda([("Clasifica a la zona regional", COLORES_B["Ascenso directo"]),
+                         ("Campeón regional", COLOR_ORO), ("Desempate Campeonato", "rgba(249, 115, 22, 0.3)")])
                 if SR["fecha"] == 0 and not ctx.modo_mgr:      # en modo manager no se tocan las medias
                     nom_reg_ed = [f"{n} · {rg}" for n, rg in zip(SR["nombres"], SR["region_de"])]
                     with st.expander(":material/tune: Editar medias internas de esta temporada (Regional Amateur)"):
@@ -116,18 +136,10 @@ def render(ctx):
                 with tab_r["Desempate"]:
                     seccion("Desempates por el campeonato", color="#9333ea")
                     for reg in REGIONES_REG:
-                        claves_reg = SR["zonas_de"][reg]
-                        if SR["desempate_pendiente"]:
-                            df_reg = None
-                            for clave in claves_reg:
-                                if clave not in SR["motivos_desempate"]:
-                                    continue
-                                if df_reg is None:
-                                    df_reg = tabla_reg_region(SR, reg)
-                                st.markdown(f'<div class="mlab" style="margin-top:14px">Región {esc(clave)}</div>',
-                                            unsafe_allow_html=True)
-                                df_des = _tabla_de_zona(df_reg, clave, claves_reg).head(SR["motivos_desempate"][clave])
-                                mostrar_tabla(df_des, colorear_reg)
+                        if SR["desempate_pendiente"] and reg in SR["motivos_desempate"]:
+                            st.markdown(f'<div class="mlab" style="margin-top:14px">Región {esc(reg)}</div>',
+                                        unsafe_allow_html=True)
+                            mostrar_tabla(tabla_zona_reg(SR, reg).head(SR["motivos_desempate"][reg]), colorear_reg)
                         grupos_r = {}
                         for p in desempates_r:
                             if p["region"] == reg:

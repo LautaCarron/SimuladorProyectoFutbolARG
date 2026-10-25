@@ -51,15 +51,17 @@ PRIMERA C (Equipos directamente afiliados)
 PROMOCIONAL AMATEUR y REGIONAL AMATEUR
   * Promocional Amateur: liga todos contra todos con la misma mecánica que la Primera B y la Primera C
     (ligas/simples.py).
-  * Regional Amateur: clubes repartidos en 12 regiones, con ligas por región y finales por el ascenso
+  * Regional Amateur: clubes repartidos en 12 regiones, con dos fases y una final por el ascenso
     (ligas/regional.py y datos/datos_regional.py).
-      - Cada región es una liga de todos contra todos a una sola vuelta. Si una región tiene más de 24 clubes
-        (REG_MAX_LIGA) se sortea al empezar la temporada en dos zonas (A y B) del mismo tamaño: cada una juega su
-        propia liga.
-      - El título de cada zona nunca se define por diferencia de gol: si el 1° puesto está igualado en puntos hay un
-        desempate (partido único en cancha neutral, liguilla si son 3 o más, penales si empatan).
-      - En una región dividida, los campeones de las dos zonas juegan un partido único en cancha neutral (penales si
-        empatan) en la fecha "Final de región", antes de las finales por el ascenso. Su ganador es el campeón regional.
+      - Fase 1 · Subgrupos: cada región se divide en subgrupos de unos 5 clubes (entre 3 y 7, hasta 8 subgrupos por
+        región) armados por cercanía: se juntan los clubes de la misma liga y, si no alcanza, los de la misma
+        provincia. Todos contra todos, ida y vuelta. Los subgrupos se sortean de nuevo cada temporada.
+      - Fase 2 · Zona regional: los 2 mejores de cada subgrupo pasan a la zona de su región (hasta 16 clubes), todos
+        contra todos, ida y vuelta, con la tabla en cero. Una región chica (menos de 8 clubes) no se divide y juega
+        directo la zona con todos sus clubes.
+      - El título de la zona nunca se define por diferencia de gol: si el 1° puesto está igualado en puntos hay un
+        desempate (partido único en cancha neutral, liguilla si son 3 o más, penales si empatan). Su ganador es el
+        campeón regional.
       - Las finales por el ascenso (ida y vuelta) enfrentan a los campeones de las dos regiones de cada par.
   * Federal B: categoría opcional que se crea desde el Modo dios entre el Federal A y el Regional Amateur
     (ligas/federal_b.py).

@@ -92,7 +92,7 @@ def vista_fixture(S, club, liga, region=None):
         SREG = S["reg"]
         total, jugadas = consultas.fechas_conocidas_reg(S), SREG["fecha"]
         obtener, rotulo = (lambda n: consultas.partidos_fecha_reg(S, n, region)), (lambda n: rotulo_reg(SREG, n))
-        extra = (f" · {region}" if region else "") + " · desempates y finales se arman al terminar la liga"
+        extra = (f" · {region}" if region else "") + " · la zona regional se arma al terminar la fase 1; desempates y finales, al terminar la zona"
     else:
         total, jugadas = consultas.fechas_conocidas_f(SF), SF["fecha"]
         obtener, rotulo = lambda n: consultas.partidos_fecha_f(SF, n), lambda n: rotulo_f(SF, n)

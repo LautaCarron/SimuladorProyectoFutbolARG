@@ -1,15 +1,26 @@
-"""Regional Amateur: ligas por región, desempates y finales.
+"""Regional Amateur: subgrupos, zona regional, desempates y finales.
 
-Cada región es una liga de todos contra todos a una sola vuelta. Si una región tiene más de `REG_MAX_LIGA` clubes se
-sortea en dos zonas (A y B): cada una juega su propia liga, y al terminar (y resolver los desempates de cada zona) los
-dos campeones de zona juegan un partido único por el título de la región, antes de la final por el ascenso contra la
-otra región. Las zonas se llaman "<región> · Zona A" y "<región> · Zona B"; una región que no se divide tiene una sola
-zona, que se llama igual que la región.
+Formato (dos fases y la final por el ascenso):
+
+  Fase 1 · Subgrupos. Cada región se divide en subgrupos de unos 5 clubes armados por cercanía: se juntan los clubes
+  de la misma liga y, si una liga no alcanza, los de la misma provincia. Todos contra todos, ida y vuelta.
+
+  Fase 2 · Zona regional. Los 2 mejores de cada subgrupo pasan a la zona de su región (las tablas arrancan de cero).
+  Todos contra todos, ida y vuelta. Si el 1° puesto queda igualado en puntos hay desempate (nunca se define por
+  diferencia de gol). El campeón de la zona es el campeón regional. Una región chica, que no llega a dividirse en
+  subgrupos, juega directo la zona regional con todos sus clubes.
+
+  Final por el ascenso. Los campeones de las dos regiones de cada par juegan ida y vuelta (FINALES_REG).
+
+Los subgrupos se arman de nuevo en cada temporada (sorteando el orden de provincias y ligas), así que un club no
+comparte siempre el mismo grupo.
 """
 
 import numpy as np
 import pandas as pd
 
+from datos.clubes_interior import datos_club
+from datos.datos_regional import FINALES_REG, REGIONES_REG
 from datos.equipos import region_regional
 from motor.incidentes import revisar_liga
 from motor.nucleo import (
@@ -22,85 +33,229 @@ from motor.nucleo import (
     sumar_partidos,
     tanda_penales,
 )
-from datos.datos_regional import FINALES_REG, REGIONES_REG
 from ligas.primera import definir_bloque
 
 
 REG_LIGA = "Regional Amateur"
 
-
 REG_FINAL = "Final por el ascenso"
-REG_CRUCE = "Final de región"          # entre los campeones de las dos zonas de una región
-REG_MAX_LIGA = 24                      # una región con más clubes que esto se divide en dos zonas
+REG_GRUPO = 5            # tamaño que se busca para cada subgrupo de la fase 1
+REG_GRUPO_MIN = 3        # un subgrupo nunca queda con menos clubes que esto
+REG_MAX_GRUPOS = 8       # tope de subgrupos por región: la zona regional tiene a lo sumo 16 clubes
+REG_PASAN = 2            # clasificados de cada subgrupo a la zona regional
+REG_FASE1 = "Fase 1"
+REG_ZONA = "Zona regional"
 
 
 def region_reg(nombre):
     return region_regional(nombre)
 
 
-def _armar_zonas(SR, rng):
-    """Zonas de la temporada: {clave: ids} y {región: [claves]}. Una región con más de REG_MAX_LIGA clubes se sortea en
-    dos zonas del mismo tamaño (o con uno más la A); el resto es una sola zona que se llama como la región."""
-    zonas, zonas_de = {}, {}
-    for reg in REGIONES_REG:
-        ids = SR["grupos"][reg]
-        if len(ids) > REG_MAX_LIGA:
-            mezcla = rng.permutation(ids)
-            mitad = (len(ids) + 1) // 2
-            claves = [f"{reg} · Zona A", f"{reg} · Zona B"]
-            zonas[claves[0]], zonas[claves[1]] = np.sort(mezcla[:mitad]), np.sort(mezcla[mitad:])
-        else:
-            claves = [reg]
-            zonas[reg] = ids
-        zonas_de[reg] = claves
-    return zonas, zonas_de
+# ---------------------------------------------------------------- armado de los subgrupos
+def _cantidad_subgrupos(n):
+    """Subgrupos de una región con `n` clubes (1 = no se divide: juega directo la zona regional)."""
+    return min(REG_MAX_GRUPOS, max(1, round(n / REG_GRUPO)))
 
 
-def region_de_zona(clave):
-    """Región a la que pertenece una zona ("Centro · Zona A" -> "Centro")."""
-    return clave.split(" · Zona ")[0]
+def _datos_clubes(nombres, ids):
+    """{id: (provincia, liga, ciudad)}. Un club sin datos queda solo en su propia liga."""
+    out = {}
+    for i in ids:
+        d = datos_club(nombres[int(i)]) or {}
+        out[int(i)] = (d.get("provincia", ""), d.get("liga") or f"({nombres[int(i)]})", d.get("ciudad", ""))
+    return out
+
+
+def _armar_subgrupos(ids, datos, k, rng):
+    """Parte los clubes en `k` subgrupos parejos manteniendo juntos a los de la misma liga y provincia.
+
+    Se ordenan por provincia, liga y ciudad (el orden de provincias y ligas se sortea) y se corta la fila en `k`
+    tramos de tamaño parecido. Cada corte se mueve hasta 2 puestos para caer, de mejor a peor, entre dos ligas, entre
+    dos ciudades o, si no queda otra, en el medio de una ciudad (cada paso de distancia pesa como un nivel de esos)."""
+    provincias = sorted({datos[int(i)][0] for i in ids})
+    ligas = sorted({datos[int(i)][1] for i in ids})
+    o_prov = dict(zip(provincias, rng.permutation(len(provincias))))
+    o_liga = dict(zip(ligas, rng.permutation(len(ligas))))
+    orden = sorted((int(i) for i in ids),
+                   key=lambda i: (o_prov[datos[i][0]], o_liga[datos[i][1]], datos[i][2], i))
+    n = len(orden)
+    techo = -(-n // k) + 1                                  # ningún subgrupo pasa de esto
+    cortes = [0]
+    for j in range(1, k):
+        ideal = round(j * n / k)
+        minimo = cortes[-1] + REG_GRUPO_MIN                 # el subgrupo que se cierra no queda de menos
+        maximo = min(n - (k - j) * REG_GRUPO_MIN, cortes[-1] + techo)    # y a los que faltan les alcanza
+        candidatos = range(max(minimo, ideal - 2), min(maximo, ideal + 2) + 1)
+
+        def costo(c):
+            a, b = datos[orden[c - 1]], datos[orden[c]]
+            borde = 0 if a[1] != b[1] else 1 if a[2] != b[2] else 2
+            return (abs(c - ideal) + borde, borde)
+
+        cortes.append(min(candidatos, key=costo) if len(candidatos) else min(max(ideal, minimo), maximo))
+    cortes.append(n)
+    return [orden[a:b] for a, b in zip(cortes, cortes[1:])]
+
+
+def _ligas_texto(datos, ids):
+    """Ligas de un subgrupo, de más a menos clubes: \"Liga Salteña, Liga de Metán +1\"."""
+    cuenta = {}
+    for i in ids:
+        lg = datos[int(i)][1]
+        cuenta[lg] = cuenta.get(lg, 0) + 1
+    ordenadas = sorted(cuenta, key=lambda lg: (-cuenta[lg], lg))
+    return ", ".join(ordenadas[:3]) + (f" +{len(ordenadas) - 3}" if len(ordenadas) > 3 else "")
+
+
+def _doble_rueda(ids):
+    """Todos contra todos, ida y vuelta (la vuelta repite la ida con la localía invertida). Lista de fechas."""
+    ids = [int(i) for i in ids]
+    ida = [[(ids[x], ids[y]) for x, y in fecha] for fecha in generar_fixture(len(ids))]
+    return ida + [[(b, a) for a, b in fecha] for fecha in ida]
+
+
+def _rondas_doble(q):
+    """Fechas de un todos contra todos ida y vuelta con `q` clubes (con q impar, cada club descansa una fecha)."""
+    return 0 if q < 2 else 2 * (q - 1 if q % 2 == 0 else q)
 
 
 def nueva_estructura_reg(SR, rng):
-    """Arma las ligas regionales (una rueda) con los clubes que hoy juegan el Regional: una por región, o dos zonas
-    sorteadas en las regiones con más de REG_MAX_LIGA clubes."""
+    """Arma la temporada del Regional con los clubes que hoy lo juegan: los subgrupos de cada región (fase 1) y los
+    datos de la zona regional (fase 2), que se completa al terminar la fase 1."""
     nombres = SR["nombres"]
     n = len(nombres)
     SR["region_de"] = [region_reg(nm) for nm in nombres]
     SR["grupos"] = {reg: np.array([i for i, rg in enumerate(SR["region_de"]) if rg == reg], dtype=int)
                     for reg in REGIONES_REG}
-    SR["zonas"], SR["zonas_de"] = _armar_zonas(SR, rng)
-    SR["zona_de"] = [None] * n                         # clave de la zona donde juega cada club
-    for clave, ids in SR["zonas"].items():
-        for i in ids:
-            SR["zona_de"][int(i)] = clave
-    idas = {clave: generar_fixture(len(ids)) if len(ids) > 1 else [] for clave, ids in SR["zonas"].items()}
-    rondas = max((len(f) for f in idas.values()), default=0)
-    fechas = [[] for _ in range(rondas)]
-    for clave, f in idas.items():
-        ids = SR["zonas"][clave]
-        for k, pares in enumerate(f):
-            fechas[k] += [(int(ids[x]), int(ids[y])) for x, y in pares]
-    SR["fechas"] = fechas
-    SR["f_liga"] = rondas
-    SR["f_des"] = 0                                    # 1 si hay una fecha de desempates por el título de zona
-    SR["f_cruce"] = 1 if any(len(c) == 2 for c in SR["zonas_de"].values()) else 0   # fecha entre campeones de zona
-    SR["f_final0"] = rondas + SR["f_cruce"]            # última fecha antes de las finales (corre si hay desempate)
-    SR["total"] = rondas + SR["f_cruce"] + 2
+    SR["subgrupos"] = {}                                # clave -> ids de cada subgrupo
+    SR["subgrupos_de"] = {}                             # región -> [claves] (vacío si no se divide)
+    SR["desc_subgrupo"] = {}                            # clave -> ligas que juegan en el subgrupo
+    SR["subgrupo_de"] = [None] * n                      # subgrupo de cada club
+    SR["zona_de"] = [None] * n                          # donde juega cada club ahora: su subgrupo o su región
+    SR["zona2"] = {}                                    # región -> ids de la zona regional (fase 2)
+    fechas1, rondas2 = [], 0
+    for reg in REGIONES_REG:
+        ids = SR["grupos"][reg]
+        k = _cantidad_subgrupos(len(ids)) if len(ids) else 0
+        claves = []
+        if k > 1:
+            datos = _datos_clubes(nombres, ids)
+            for j, g in enumerate(_armar_subgrupos(ids, datos, k, rng), start=1):
+                clave = f"{reg} · Grupo {j}"
+                claves.append(clave)
+                SR["subgrupos"][clave] = np.array(sorted(g), dtype=int)
+                SR["desc_subgrupo"][clave] = _ligas_texto(datos, g)
+                for i in g:
+                    SR["subgrupo_de"][i] = SR["zona_de"][i] = clave
+                for t, pares in enumerate(_doble_rueda(g)):
+                    while len(fechas1) <= t:
+                        fechas1.append([])
+                    fechas1[t] += pares
+            SR["zona2"][reg] = np.array([], dtype=int)  # se arma con los clasificados
+            rondas2 = max(rondas2, _rondas_doble(REG_PASAN * k))
+        else:                                           # región chica: juega directo la zona con todos sus clubes
+            SR["zona2"][reg] = ids
+            for i in ids:
+                SR["zona_de"][int(i)] = reg
+            rondas2 = max(rondas2, _rondas_doble(len(ids)))
+        SR["subgrupos_de"][reg] = claves
+    SR["f_fase1"] = len(fechas1)
+    SR["f_fase2"] = rondas2
+    SR["f_liga"] = SR["f_fase1"] + rondas2             # fechas de las dos fases (sin desempate ni finales)
+    SR["fechas"] = fechas1 + [[] for _ in range(rondas2)]
+    SR["f_des"] = 0                                    # 1 si hay una fecha de desempates por el título de la zona
+    SR["f_final0"] = SR["f_liga"]                      # última fecha antes de las finales (corre si hay desempate)
+    SR["total"] = SR["f_liga"] + 2
     SR["fecha"] = 0
     for k in STATS:
         SR[k] = np.zeros(n, dtype=int)
     SR["historial"] = []
     SR["log"] = []
     SR["pos_hist"] = []
+    SR["stats_f1"] = None                              # fotos de las tablas de la fase 1 cuando termina
+    SR["f1_cerrada"] = False
     SR["desempate_pendiente"] = False
-    SR["motivos_desempate"] = {}                       # zona -> cantidad de igualados arriba
-    SR["orden_final"] = {}                             # zona -> ids ordenados tras el desempate
-    SR["campeones_zona"] = {}                          # zona -> campeón de la zona
-    SR["cruces"] = {}                                  # región dividida -> (campeón, finalista) del cruce de zonas
+    SR["motivos_desempate"] = {}                       # región -> cantidad de igualados arriba
+    SR["orden_final"] = {}                             # región -> ids ordenados tras el desempate
     SR["campeones"] = {reg: None for reg in REGIONES_REG}
     SR["finales"] = []
     SR["ascendidos"] = []
+    if SR["f_fase1"] == 0:                             # ninguna región se divide: se pasa directo a la zona
+        _cerrar_fase1(SR, rng)
+
+
+def subgrupo_de_club(SR, club):
+    """Subgrupo del club en la fase 1 (None si su región no se divide o el club no juega el Regional)."""
+    if club not in SR["nombres"]:
+        return None
+    return SR["subgrupo_de"][SR["nombres"].index(club)]
+
+
+# ---------------------------------------------------------------- tablas
+def _v1(SR):
+    """Estadísticas de la fase 1: la foto si la fase terminó, o las que se están jugando."""
+    return SR.get("stats_f1") or SR
+
+
+def tabla_subgrupo_reg(SR, clave):
+    """Tabla de un subgrupo de la fase 1. `Pos` es el puesto en el subgrupo; los que pasan a la zona regional
+    llevan `Destino` = \"Clasifica\" (una vez que empezó a jugarse)."""
+    df = df_stats(SR["nombres"], SR["r"], _v1(SR), SR["subgrupos"][clave])
+    df.insert(0, "Pos", df.index + 1)
+    jugado = int(df["PJ"].sum()) > 0
+    df["Destino"] = ["Clasifica" if jugado and p <= REG_PASAN else "" for p in df["Pos"]]
+    return df
+
+
+def tabla_zona_reg(SR, reg):
+    """Tabla de la zona regional (fase 2), con el desempate por el título aplicado si lo hubo. `Pos` es el puesto
+    en la zona. Vacía mientras la zona todavía no se armó."""
+    df = df_stats(SR["nombres"], SR["r"], SR, SR["zona2"][reg])
+    if reg in SR["orden_final"]:
+        df = df.set_index("id").loc[SR["orden_final"][reg]].reset_index()
+    df.insert(0, "Pos", df.index + 1)
+    campeon = SR["campeones"].get(reg)
+    igualados = SR["motivos_desempate"].get(reg) if SR["desempate_pendiente"] else None
+    df["Destino"] = ["Desempate Campeonato" if igualados and p <= igualados else
+                     "Campeón regional" if i == campeon else "" for p, i in zip(df["Pos"], df["id"])]
+    return df
+
+
+def _posiciones_subgrupo(SR):
+    """{id: puesto en su subgrupo de la fase 1}."""
+    pos = {}
+    for clave in SR["subgrupos"]:
+        df = tabla_subgrupo_reg(SR, clave)
+        pos.update({int(i): int(p) for i, p in zip(df["id"], df["Pos"])})
+    return pos
+
+
+def tabla_reg_region(SR, reg):
+    """Ranking de todos los clubes de la región (`Puesto`, 1 = campeón regional).
+
+    Primero los de la zona regional, en el orden de su tabla (con el desempate aplicado); después los eliminados en la
+    fase 1: por su puesto en el subgrupo (los 3° antes que los 4°, etc.) y a igual puesto por puntos, diferencia de gol
+    y goles a favor por partido. Las columnas PJ, Pts, DG y GF de cada club son las de la fase en la que quedó."""
+    partes = []
+    if len(SR["zona2"][reg]):
+        zona = tabla_zona_reg(SR, reg)
+        zona["Fase"] = REG_ZONA
+        partes.append(zona)
+    en_zona = {int(i) for i in SR["zona2"][reg]}
+    fuera = [int(i) for i in SR["grupos"][reg] if int(i) not in en_zona]
+    if fuera:
+        pos = _posiciones_subgrupo(SR)
+        df = df_stats(SR["nombres"], SR["r"], _v1(SR), fuera)
+        pj = df["PJ"].clip(lower=1)
+        df["_o"] = list(zip([pos.get(int(i), 99) for i in df["id"]], -df["Pts"] / pj, -df["DG"] / pj, -df["GF"] / pj))
+        df = df.sort_values("_o").drop(columns="_o").reset_index(drop=True)
+        df["Destino"] = "Eliminado en la fase 1" if SR["f1_cerrada"] else ""
+        df["Fase"] = REG_FASE1
+        partes.append(df)
+    df = pd.concat(partes, ignore_index=True)
+    df["Puesto"] = np.arange(1, len(df) + 1)
+    df["Pos"] = df["Puesto"]
+    return df
 
 
 def _coef_reg(SR, i):
@@ -109,92 +264,50 @@ def _coef_reg(SR, i):
     return pts / pj, (int(SR["gf"][i]) - int(SR["gc"][i])) / pj, int(SR["gf"][i]) / pj
 
 
-def tabla_zona_reg(SR, clave):
-    """Tabla de una zona (con el desempate por el título aplicado, si lo hubo). `Pos` es el puesto en la zona."""
-    df = df_stats(SR["nombres"], SR["r"], SR, SR["zonas"][clave])
-    if clave in SR["orden_final"]:
-        df = df.set_index("id").loc[SR["orden_final"][clave]].reset_index()
-    df.insert(0, "Pos", df.index + 1)
-    return df
+# ---------------------------------------------------------------- cierres de cada etapa
+def _cerrar_fase1(SR, rng):
+    """Termina la fase 1: guarda las tablas de los subgrupos, arma la zona de cada región con los 2 mejores de cada
+    subgrupo y deja las tablas en cero para la fase 2."""
+    n = len(SR["nombres"])
+    SR["stats_f1"] = {k: SR[k].copy() for k in STATS}
+    SR["stats_f1"]["quita"] = dict(SR.get("quita") or {})      # las quitas de puntos se quedan en la fase 1
+    SR["f1_cerrada"] = True
+    for reg in REGIONES_REG:
+        claves = SR["subgrupos_de"][reg]
+        if claves:
+            pasan = [int(i) for clave in claves for i in tabla_subgrupo_reg(SR, clave)["id"].iloc[:REG_PASAN]]
+            SR["zona2"][reg] = np.array(rng.permutation(pasan), dtype=int)
+    for k in STATS:
+        SR[k] = np.zeros(n, dtype=int)
+    SR["quita"] = {}
+    for reg in REGIONES_REG:
+        ids = SR["zona2"][reg]
+        for i in ids:
+            SR["zona_de"][int(i)] = reg
+        if len(ids) > 1:
+            for t, pares in enumerate(_doble_rueda(ids)):
+                SR["fechas"][SR["f_fase1"] + t] += pares
 
 
-def tabla_reg_region(SR, reg):
-    """Tabla de la liga de una región (con el desempate por el título aplicado, si lo hubo).
-
-    Región de una sola zona: la tabla de la liga. Región dividida: las tablas de las dos zonas una debajo de la otra
-    (`Pos` es el puesto en la zona y `Destino` dice a qué zona pertenece cada club). En los dos casos `Puesto` es el
-    puesto en la región: en una región dividida, primero el campeón regional, después el otro campeón de zona y luego
-    los demás por su puesto en la zona y su rendimiento."""
-    claves = SR["zonas_de"][reg]
-    partes = []
-    for clave in claves:
-        df = tabla_zona_reg(SR, clave)
-        igualados = SR["motivos_desempate"].get(clave)
-        pendiente = SR["desempate_pendiente"] and igualados
-        if len(claves) == 1:
-            destinos = ["Campeón regional" if p == 1 else "" for p in df["Pos"]]
-        else:
-            zona = clave.split(" · ")[-1]
-            camp, fin = SR["campeones"].get(reg), (SR["cruces"].get(reg) or (None, None))[1]
-            destinos = []
-            for p, i in zip(df["Pos"], df["id"]):
-                destinos.append("Campeón regional" if i == camp else "Finalista de región" if i == fin else
-                                "Campeón de zona" if p == 1 else zona)
-        if pendiente:
-            destinos = ["Desempate Campeonato" if k < igualados else d for k, d in enumerate(destinos)]
-        df["Destino"] = destinos
-        df["Zona"] = clave.split(" · ")[-1] if len(claves) > 1 else ""
-        partes.append(df)
-    df = partes[0] if len(partes) == 1 else pd.concat(partes, ignore_index=True)
-    df["Puesto"] = _puestos_region(SR, reg, df)
-    return df
-
-
-def _puestos_region(SR, reg, df):
-    """Puesto de cada club en la región (ver tabla_reg_region)."""
-    if len(SR["zonas_de"][reg]) == 1:
-        return df["Pos"].to_numpy()
-    camp, fin = SR["campeones"].get(reg), (SR["cruces"].get(reg) or (None, None))[1]
-
-    def orden(f):
-        i = int(f["id"])
-        if i == camp:
-            return (0,)
-        if i == fin:
-            return (1,)
-        pj = max(int(f["PJ"]), 1)
-        return (2, int(f["Pos"]), -float(f["Pts"]) / pj, -float(f["DG"]) / pj, -float(f["GF"]) / pj)
-
-    ranking = sorted(range(len(df)), key=lambda k: orden(df.iloc[k]))
-    puesto = np.zeros(len(df), dtype=int)
-    for p, k in enumerate(ranking, start=1):
-        puesto[k] = p
-    return puesto
-
-
-def _proclamar_zona(SR, clave, campeon):
-    """Campeón de una zona; si es la única de su región, es el campeón regional."""
-    SR["campeones_zona"][clave] = int(campeon)
-    reg = region_de_zona(clave)
-    if len(SR["zonas_de"][reg]) == 1:
-        SR["campeones"][reg] = int(campeon)
+def _proclamar_campeon(SR, reg, campeon):
+    SR["campeones"][reg] = int(campeon)
 
 
 def _cierre_ligas_reg(SR):
-    """Al terminar la rueda: campeón de cada zona, o desempate si el 1° puesto está igualado."""
+    """Al terminar la zona regional: campeón de cada región, o desempate si el 1° puesto está igualado."""
     for reg in REGIONES_REG:
-        for clave in SR["zonas_de"][reg]:
-            if len(SR["zonas"][clave]) == 0:
-                continue
-            df = tabla_zona_reg(SR, clave)
-            pts = df["Pts"].to_numpy()
-            if len(pts) > 1 and pts[0] == pts[1]:
-                fin = 1
-                while fin < len(pts) and pts[fin] == pts[0]:
-                    fin += 1
-                SR["motivos_desempate"][clave] = fin
-            else:
-                _proclamar_zona(SR, clave, df["id"].iloc[0])
+        ids = SR["zona2"][reg]
+        if len(ids) == 0:
+            continue
+        df = tabla_zona_reg(SR, reg)
+        pts = df["Pts"].to_numpy()
+        if len(pts) > 1 and pts[0] == pts[1]:
+            fin = 1
+            while fin < len(pts) and pts[fin] == pts[0]:
+                fin += 1
+            SR["motivos_desempate"][reg] = fin
+        else:
+            _proclamar_campeon(SR, reg, df["id"].iloc[0])
     if SR["motivos_desempate"]:
         SR["desempate_pendiente"] = True
         SR["f_des"] = 1
@@ -204,9 +317,8 @@ def _cierre_ligas_reg(SR):
 
 def _jugar_desempates_reg(SR, P, rng, n_fecha):
     nom, r = SR["nombres"], SR["r"]
-    for clave, fin in SR["motivos_desempate"].items():
-        reg = region_de_zona(clave)
-        ids = tabla_zona_reg(SR, clave)["id"].to_numpy()
+    for reg, fin in SR["motivos_desempate"].items():
+        ids = tabla_zona_reg(SR, reg)["id"].to_numpy()
 
         def registrar(a, b, gl, gv, tanda, gana, comp, reg=reg):
             partido = nuevo_partido(REG_LIGA, n_fecha, "Desempate", comp, nom[a], nom[b],
@@ -215,36 +327,14 @@ def _jugar_desempates_reg(SR, P, rng, n_fecha):
             SR["log"].append(partido)
             return partido
 
-        orden = definir_bloque(rng, r, ids[:fin], P["sorpresa"], registrar, f"Región {clave} · Campeonato",
-                               f"Liguilla Región {clave} · Campeonato", nom, campeonato=True, cupos=1)
-        SR["orden_final"][clave] = np.array(orden + [int(i) for i in ids[fin:]])
-        _proclamar_zona(SR, clave, orden[0])
+        orden = definir_bloque(rng, r, ids[:fin], P["sorpresa"], registrar, f"Región {reg} · Campeonato",
+                               f"Liguilla Región {reg} · Campeonato", nom, campeonato=True, cupos=1)
+        SR["orden_final"][reg] = np.array(orden + [int(i) for i in ids[fin:]])
+        _proclamar_campeon(SR, reg, orden[0])
     SR["desempate_pendiente"] = False
 
 
-def _jugar_cruces_reg(SR, P, rng, n_fecha):
-    """Regiones divididas en dos zonas: los campeones de zona juegan un partido único en cancha neutral (penales si
-    empatan) por el título de la región."""
-    nom, r = SR["nombres"], SR["r"]
-    for reg in REGIONES_REG:
-        claves = SR["zonas_de"][reg]
-        if len(claves) < 2:
-            continue
-        a, b = (SR["campeones_zona"][c] for c in claves)
-
-        def registrar(x, y, gl, gv, tanda, gana, comp, reg=reg):
-            partido = nuevo_partido(REG_LIGA, n_fecha, REG_CRUCE, comp, nom[x], nom[y],
-                                    gl, gv, tanda=tanda, gana=nom[gana], neutral=True)
-            partido["region"] = reg
-            SR["log"].append(partido)
-            return partido
-
-        orden = definir_bloque(rng, r, [a, b], P["sorpresa"], registrar, f"Región {reg} · Final de zonas",
-                               f"Liguilla Región {reg} · Final de zonas", nom, campeonato=True, cupos=1)
-        SR["campeones"][reg] = int(orden[0])
-        SR["cruces"][reg] = (int(orden[0]), int(orden[1]))
-
-
+# ---------------------------------------------------------------- finales por el ascenso
 def _armar_finales_reg(SR):
     SR["finales"] = []
     for ra, rb in FINALES_REG:
@@ -258,7 +348,7 @@ def _armar_finales_reg(SR):
                                   "ronda": REG_FINAL, "ida": None, "vuelta": None,
                                   "gana": ca if ca is not None else cb, "ga": 0, "gb": 0, "pen": None})
             continue
-        # cierra de local el de mejor campaña en su liga regional
+        # cierra de local el de mejor campaña en su zona regional
         a, b = sorted([ca, cb], key=lambda i: tuple(-x for x in _coef_reg(SR, i)))
         SR["finales"].append({"a": int(a), "b": int(b), "reg": f"{ra} / {rb}", "ronda": REG_FINAL,
                               "ida": None, "vuelta": None, "gana": None, "ga": 0, "gb": 0, "pen": None})
@@ -301,22 +391,37 @@ def _jugar_pierna_reg(SR, P, rng, series, vuelta, n_fecha):
         SR["log"].append(partido)
 
 
+# ---------------------------------------------------------------- calendario y simulación
 def rotulo_reg(SR, n):
     """Nombre de la fecha n (1, 2, ...) del Regional."""
+    if n <= SR["f_fase1"]:
+        return f"{REG_FASE1} · Fecha {n}"
     if n <= SR["f_liga"]:
-        return f"Fecha {n}"
+        return f"{REG_ZONA} · Fecha {n - SR['f_fase1']}"
     if n <= SR["f_liga"] + SR["f_des"]:
         return "Desempate por el campeonato"
-    if n <= SR["f_final0"]:
-        return REG_CRUCE
     return f"{REG_FINAL} · {'vuelta' if n - SR['f_final0'] == 2 else 'ida'}"
+
+
+def fase_reg(SR):
+    """Etapa en la que está el Regional: para mostrar en la interfaz."""
+    f = SR["fecha"]
+    if f >= SR["total"]:
+        return "Terminado"
+    if f < SR["f_fase1"]:
+        return "Fase 1 · Subgrupos"
+    if f < SR["f_liga"]:
+        return "Fase 2 · Zona regional"
+    if f < SR["f_final0"]:
+        return "Desempate por el campeonato"
+    return "Final por el ascenso"
 
 
 def simular_fecha_reg(SR, P, rng):
     f = SR["fecha"]
     if f >= SR["total"]:
         return
-    if f < SR["f_liga"]:                                # ---- ligas regionales
+    if f < SR["f_liga"]:                                # ---- fase 1 (subgrupos) y fase 2 (zona regional)
         pares = SR["fechas"][f]
         if pares:
             h = np.array([x[0] for x in pares])
@@ -324,21 +429,21 @@ def simular_fecha_reg(SR, P, rng):
             gh, ga = jugar(rng, SR["r"][h], SR["r"][a], **P, **mods_ids(rng, SR["nombres"], h, a))
             sumar_partidos(SR, h, a, gh, ga)
             nom = SR["nombres"]
+            rotulo = rotulo_reg(SR, f + 1)
             for x, y, g1, g2 in zip(h, a, gh, ga):
-                reg = SR["region_de"][x]
-                partido = nuevo_partido(REG_LIGA, f + 1, f"Fecha {f + 1}", f"Región {SR['zona_de'][x]}",
+                partido = nuevo_partido(REG_LIGA, f + 1, rotulo, f"Región {SR['zona_de'][x]}",
                                         nom[x], nom[y], g1, g2)
-                partido["region"] = reg
+                partido["region"] = SR["region_de"][x]
                 SR["log"].append(partido)
             revisar_liga(SR, SR["log"][-len(h):], rng)
         SR["fecha"] += 1
+        if SR["fecha"] == SR["f_fase1"] and not SR["f1_cerrada"]:
+            _cerrar_fase1(SR, rng)
         if SR["fecha"] == SR["f_liga"]:
             _cierre_ligas_reg(SR)
         return
-    if f < SR["f_liga"] + SR["f_des"]:                  # ---- desempates por el título de zona
+    if f < SR["f_liga"] + SR["f_des"]:                  # ---- desempates por el título de la región
         _jugar_desempates_reg(SR, P, rng, f + 1)
-    elif f < SR["f_final0"]:                            # ---- campeón de cada región dividida en dos zonas
-        _jugar_cruces_reg(SR, P, rng, f + 1)
     else:                                               # ---- finales por el ascenso
         vuelta = f - SR["f_final0"] == 1
         if not vuelta:

@@ -106,48 +106,70 @@ def test_vista_recibe_el_estado_por_parametro():
     assert not at.exception
 
 
-def test_regional_regiones_de_mas_de_24_clubes_se_dividen_en_dos_zonas():
+def _jugar_regional(SR, P, rng):
+    from ligas.regional import simular_fecha_reg
+
+    while SR["fecha"] < SR["total"]:
+        simular_fecha_reg(SR, P, rng)
+
+
+def test_regional_fase_1_en_subgrupos_y_fase_2_en_la_zona_regional():
+    import numpy as np
+
     from datos.datos_regional import FINALES_REG, REGIONES_REG
-    from ligas.regional import REG_CRUCE, REG_MAX_LIGA, simular_fecha_reg, tabla_reg_region
+    from ligas.regional import (
+        REG_FASE1,
+        REG_GRUPO_MIN,
+        REG_PASAN,
+        simular_fecha_reg,
+        tabla_reg_region,
+        tabla_subgrupo_reg,
+    )
 
     S, P = crear_estado(), parametros_partido()
     SR = S["reg"]
-    divididas = [r for r in REGIONES_REG if len(SR["grupos"][r]) > REG_MAX_LIGA]
-    assert divididas, "con los datos actuales hay regiones con más de 24 clubes"
-    for reg in REGIONES_REG:
-        claves = SR["zonas_de"][reg]
-        assert len(claves) == (2 if reg in divididas else 1)
-        tamanos = sorted(len(SR["zonas"][c]) for c in claves)
-        assert sum(tamanos) == len(SR["grupos"][reg])
-        assert tamanos[-1] - tamanos[0] <= 1                       # zonas parejas
-        assert set(SR["zonas"][claves[0]]).isdisjoint(SR["zonas"][claves[-1]]) or len(claves) == 1
-    assert SR["f_cruce"] == 1 and SR["f_liga"] <= REG_MAX_LIGA - 1       # la liga más larga es la de 24 clubes
+    for reg in REGIONES_REG:                                    # los subgrupos parten la región sin repetir a nadie
+        claves = SR["subgrupos_de"][reg]
+        if claves:
+            todos = np.concatenate([SR["subgrupos"][c] for c in claves])
+            assert sorted(todos) == sorted(SR["grupos"][reg])
+            assert all(len(SR["subgrupos"][c]) >= REG_GRUPO_MIN for c in claves)
+        else:
+            assert len(SR["zona2"][reg]) == len(SR["grupos"][reg])
+    assert SR["f_fase1"] > 0 and SR["f_liga"] == SR["f_fase1"] + SR["f_fase2"]
 
-    while SR["fecha"] < SR["total"]:
+    for _ in range(SR["f_fase1"]):
         simular_fecha_reg(SR, P, S["rng"])
+    assert SR["f1_cerrada"] and not SR["pj"].any()              # la zona regional arranca con las tablas en cero
+    partidos_f1 = [p for p in SR["log"] if p["rotulo"].startswith(REG_FASE1)]
+    assert len(partidos_f1) == sum(len(v) * (len(v) - 1) for v in SR["subgrupos"].values())    # ida y vuelta
+    for reg in REGIONES_REG:
+        claves = SR["subgrupos_de"][reg]
+        if not claves:
+            continue
+        esperados = {int(i) for c in claves for i in tabla_subgrupo_reg(SR, c)["id"].iloc[:REG_PASAN]}
+        assert {int(i) for i in SR["zona2"][reg]} == esperados and len(esperados) == REG_PASAN * len(claves)
+        for c in claves:                                        # todos jugaron contra todos dos veces
+            assert all(SR["stats_f1"]["pj"][i] == 2 * (len(SR["subgrupos"][c]) - 1) for i in SR["subgrupos"][c])
 
-    cruces = [p for p in SR["log"] if p["rotulo"] == REG_CRUCE]
-    assert sorted(p["region"] for p in cruces) == sorted(divididas)         # uno por cada región dividida
-    assert all(p["neutral"] and p["fecha"] == SR["f_final0"] for p in cruces)
-    finales = [p for p in SR["log"] if p["liga"] == "Regional Amateur" and p["comp"] == "Final por el ascenso"]
-    assert finales and min(p["fecha"] for p in finales) > SR["f_final0"]    # el cruce va antes de las finales
-    for reg in divididas:
-        zona_a, zona_b = (SR["campeones_zona"][c] for c in SR["zonas_de"][reg])
-        campeon, finalista = SR["cruces"][reg]
-        assert SR["campeones"][reg] == campeon and {campeon, finalista} == {zona_a, zona_b}
+    _jugar_regional(SR, P, S["rng"])
+    for reg in REGIONES_REG:
+        zona = SR["zona2"][reg]
+        assert all(SR["pj"][i] == 2 * (len(zona) - 1) for i in zona)
         tabla = tabla_reg_region(SR, reg)
         assert len(tabla) == len(SR["grupos"][reg]) and sorted(tabla["Puesto"]) == list(range(1, len(tabla) + 1))
-        assert int(tabla.sort_values("Puesto")["id"].iloc[0]) == campeon
+        assert int(tabla.sort_values("Puesto")["id"].iloc[0]) == SR["campeones"][reg]
+        assert set(tabla["id"].iloc[: len(zona)]) == {int(i) for i in zona}     # los eliminados quedan abajo
     assert all(SR["campeones"][r] is not None for r in REGIONES_REG) and len(SR["ascendidos"]) == len(FINALES_REG)
 
 
-def test_vista_de_la_region_dividida():
-    """La tabla de una región dividida se dibuja con los componentes de siempre."""
+def test_vista_de_las_tablas_del_regional():
+    """Los subgrupos y la zona regional se dibujan con los componentes de siempre."""
     from streamlit.testing.v1 import AppTest
 
     def app():
         from config import parametros_partido
-        from ligas.regional import simular_fecha_reg, tabla_reg_region
+        from ligas.regional import simular_fecha_reg, tabla_subgrupo_reg, tabla_zona_reg
         from motor.temporada import crear_estado
         from ui.vista.tablas import colorear_reg, mostrar_tabla
 
@@ -156,42 +178,41 @@ def test_vista_de_la_region_dividida():
         while SR["fecha"] < SR["total"]:
             simular_fecha_reg(SR, P, S["rng"])
         for reg in ("Centro", "NOA Sur"):
-            mostrar_tabla(tabla_reg_region(SR, reg), colorear_reg)
+            for clave in SR["subgrupos_de"][reg]:
+                mostrar_tabla(tabla_subgrupo_reg(SR, clave), colorear_reg)
+            mostrar_tabla(tabla_zona_reg(SR, reg), colorear_reg)
 
     at = AppTest.from_function(app, default_timeout=120).run()
     assert not at.exception
 
 
-def test_regional_el_limite_de_24_se_reevalua_en_cada_temporada(monkeypatch):
-    """Una región que baja de 24 deja de dividirse y otra que lo supera empieza a dividirse (y al revés)."""
+def test_regional_los_subgrupos_se_rearman_en_cada_temporada(monkeypatch):
+    """Una región que se achica deja de dividirse y juega directo la zona; una que crece pasa a dividirse (y al revés)."""
     import ligas.regional as regional
-    from ligas.regional import REG_MAX_LIGA, nueva_estructura_reg, simular_fecha_reg, tabla_reg_region
+    from ligas.regional import REG_MAX_GRUPOS, REG_PASAN, nueva_estructura_reg, tabla_reg_region
 
     S, P = crear_estado(), parametros_partido()
     SR = S["reg"]
     original = regional.region_reg
-    assert len(SR["zonas_de"]["Centro"]) == 2 and len(SR["zonas_de"]["NEA Este"]) == 1
+    assert len(SR["subgrupos_de"]["Centro"]) > 1
+    _jugar_regional(SR, P, S["rng"])
+    assert all(c is not None for c in SR["campeones"].values())
 
-    def jugar_regional():
-        while SR["fecha"] < SR["total"]:
-            simular_fecha_reg(SR, P, S["rng"])
-        assert all(c is not None for c in SR["campeones"].values())
-
-    jugar_regional()
-    # Temporada siguiente: Centro baja a REG_MAX_LIGA clubes y los que salen pasan a NEA Este, que supera el límite
-    sobran = len(SR["grupos"]["Centro"]) - REG_MAX_LIGA
-    movidos = [n for n, r in zip(SR["nombres"], SR["region_de"]) if r == "Centro"][:sobran]
+    # Temporada siguiente: Centro queda con 6 clubes y el resto pasa a NEA Este
+    centro = [n for n, r in zip(SR["nombres"], SR["region_de"]) if r == "Centro"]
+    movidos = set(centro[6:])
     monkeypatch.setattr(regional, "region_reg", lambda nm: "NEA Este" if nm in movidos else original(nm))
     nueva_estructura_reg(SR, S["rng"])
-    assert len(SR["grupos"]["Centro"]) <= REG_MAX_LIGA < len(SR["grupos"]["NEA Este"])
-    assert SR["zonas_de"]["Centro"] == ["Centro"] and len(SR["zonas_de"]["NEA Este"]) == 2
-    assert not any(c.startswith("Centro · Zona") for c in SR["zonas"])       # no queda nada de la división anterior
-    jugar_regional()
-    assert SR["campeones"]["NEA Este"] in SR["cruces"]["NEA Este"] and "Centro" not in SR["cruces"]
-    assert len(tabla_reg_region(SR, "Centro")) == len(SR["grupos"]["Centro"])
+    assert SR["subgrupos_de"]["Centro"] == [] and len(SR["zona2"]["Centro"]) == 6   # juega directo la zona
+    assert len(SR["subgrupos_de"]["NEA Este"]) == REG_MAX_GRUPOS                    # tope de subgrupos
+    assert not any(c.startswith("Centro · Grupo") for c in SR["subgrupos"])          # nada de la división anterior
+    _jugar_regional(SR, P, S["rng"])
+    assert all(c is not None for c in SR["campeones"].values())
+    assert len(SR["zona2"]["NEA Este"]) == REG_PASAN * REG_MAX_GRUPOS
+    assert len(tabla_reg_region(SR, "Centro")) == 6
 
     # y de vuelta: cada club vuelve a su región
     monkeypatch.setattr(regional, "region_reg", original)
     nueva_estructura_reg(SR, S["rng"])
-    assert len(SR["zonas_de"]["Centro"]) == 2 and SR["zonas_de"]["NEA Este"] == ["NEA Este"]
-    jugar_regional()
+    assert len(SR["subgrupos_de"]["Centro"]) > 1 and len(SR["subgrupos_de"]["NEA Este"]) > 1
+    _jugar_regional(SR, P, S["rng"])

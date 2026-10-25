@@ -32,7 +32,7 @@ from ligas.simples import nueva_estructura_liga
 from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
-VERSION_ESTADO = 19       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 20       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado():
