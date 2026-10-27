@@ -112,13 +112,13 @@
     "Excursionistas": 50,
     "Comunicaciones": 50,
     "UAI Urquiza": 40,
-    "Cañuelas": 44,
+    
     "Liniers": 44,
     "Argentino de Merlo": 40,
     "Talleres (RE)": 50,
     "Argentino (Q)": 40,
     "Dock Sud": 40,
-    "Fénix": 40,
+    "Real Pilar": 41,
     "Deportivo Laferrere": 45,
     "Villa San Carlos": 47,
     "Villa Dálmine": 45,
@@ -129,9 +129,13 @@
     "Defensores Unidos": 42,
     "Sportivo Italiano": 44,
     "Flandria": 43,
-    "Deportivo Armenio": 42
+    "Deportivo Armenio": 42,
+    "San Martin (Burzaco)": 40,
+    "Ituzaingó": 38
   },
   "primera_c": {
+    "Cañuelas": 40,
+    "Fénix": 40,
     "Deportivo Español": 40,
     "Berazategui": 33,
     "Yupanqui": 30,
@@ -140,9 +144,7 @@
     "Cambaceres": 33,
     "Central Ballester": 32,
     "El Porvenir": 35,
-    "Ituzaingó": 38,
     "Puerto Nuevo": 31,
-    "Real Pilar": 41,
     "Sacachispas": 38,
     "Argentinos de Rosario": 25,
     "Central Cordoba de Rosario": 30,
@@ -153,7 +155,10 @@
     "Mercedes": 25,
     "Sportivo Barracas": 29,
     "Muniz": 24,
-    "General Lamadrid": 30
+    "General Lamadrid": 30,
+    "Leandro N.Alem": 25,
+    "Centro Español": 25,
+    "J.J. Urquiza": 25
   },
   "primera_d": {
     "Estrella del Sur": 31,
@@ -165,9 +170,10 @@
     "Barrancas": 20,
     "FC Ezeiza": 20,
     "Bs.As. City FC": 20,
-    "Alumni (Los Hornos)": 20,
-    "Everton (LP)": 20,
+    "Alumni (Los Hornos)": 19,
+    "Everton (LP)": 19,
     "Tiro Federal (Rosario)": 20,
-    "Leones de Rosario FC": 25
+    "Leones de Rosario FC": 25,
+    "Las Mandarinas": 18
   }
 }

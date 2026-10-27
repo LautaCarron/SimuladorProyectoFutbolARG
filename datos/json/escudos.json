@@ -158,7 +158,12 @@
     "Luján": "https://api.promiedos.com.ar/images/team/bbjaa/1",
     "Mercedes": "https://api.promiedos.com.ar/images/team/gjiac/4",
     "Muniz": "https://api.promiedos.com.ar/images/team/bedhh/1",
-    "General Lamadrid": "https://api.promiedos.com.ar/images/team/jaff/1"
+    "General Lamadrid": "https://api.promiedos.com.ar/images/team/jaff/1",
+    "San Martin (Burzaco)": "https://api.promiedos.com.ar/images/team/bedhe/1",
+    "Leandro N.Alem": "https://api.promiedos.com.ar/images/team/bbjac/1",
+    "Centro Español": "https://api.promiedos.com.ar/images/team/bbjee/1",
+    "J.J. Urquiza": "https://api.promiedos.com.ar/images/team/bfjej/1",
+    "Las Mandarinas": "https://futbolfundaciones.wordpress.com/wp-content/uploads/2026/04/las-mandarinas-brandsen-buenos-aires.png"
   },
   "oscuros": ["Atlético Escobar", "Atlético Regina (Villa Regina)", "Atlético San Julián", "Central Norte", "Ciudad de Bolívar", "Colocasi (San Francisco del Monte de Oro)", "Defensores de Belgrano", "Deportivo Español", "Deportivo Municipal (La Leonesa)", "Deportivo Norte (Mar del Plata)", "Deportivo Trancas", "El Fortín (Olavarría)", "Embajadores (Olavarría)", "FADEP", "Huracán (Corrientes)", "Jorge Newbery (Comodoro Rivadavia)", "La Cantera (Posadas)", "Montecaseros", "Parque Sur (Concepción del Uruguay)", "Patronato", "Río Grande (Neuquén)", "San Lorenzo (Villa Castells)", "San Luis de la Puntilla (Belen)", "San Martín (San Juan)", "Santa Cruz Futbol Club (Río Turbio)", "Social Pinto", "Talleres (Nueva Esperanza)", "Unión (Oncativo)", "Villa Dálmine"],
   "sin_fondo": ["Acción Juvenil (General Deheza)", "Argentino Peñarol", "Sarmiento (Leones)"]
