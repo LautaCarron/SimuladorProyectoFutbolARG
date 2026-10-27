@@ -80,7 +80,11 @@ copas/               Competencias por rondas y copas internacionales
   mundial.py           Mundial de Clubes
   registro.py          Registro de competencias por rondas (clases Competencia, PorRondas, CopaArgentina,
                        SupercopaArgentina y MundialDeClubes)
-datos/               Solo datos (equipos, medias, escudos, palmarés, clubes del exterior)
+datos/               Datos separados del código: los .py solo leen datos/json/*.json y exponen los mismos nombres de siempre
+  json/                equipos.json (medias por categoría), escudos.json, geografia.json (origen y regiones), palmares.json,
+                       logos.json, clubes_interior.json, clubes_int.json, clubes_mundial.json,
+                       regional.json (clubes con zona, regiones, finales) y regional_extra.json (clubes sueltos a mano)
+  cargador.py          cargar("nombre") lee datos/json/<nombre>.json (si está mal escrito, avisa archivo y línea)
 ui/                  Pestañas de la interfaz Streamlit; cada una expone render(ctx)
   contexto.py          clase Contexto: lo que reciben las pestañas (estado, progreso, pestañas, avisos)
   pestanas.py          arma las pestañas de arriba, las de ligas y las de copas
@@ -117,13 +121,18 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
   para que entre en "Simular todo"). "Próximo día" y "Simular todo" usan esa misma tabla.
 * **Una competencia por rondas nueva**: escribir su lógica en un módulo de `copas/`, agregar una clase en
   `copas/registro.py` (hereda de `PorRondas` o de `Competencia`) y sumarla a `REGISTRO`.
-* **Cambiar planteles, medias o escudos**: `datos/equipos.py` (no tiene lógica).
+* **Cambiar planteles, medias o escudos**: `datos/json/equipos.json` (medias por categoría) y `datos/json/escudos.json`.
+  Los `.py` de `datos/` ya no tienen datos, solo los leen.
+* **Sumar clubes al Regional Amateur sin zona**: una entrada más en `datos/json/regional_extra.json` (`nombre`, `region`,
+  `provincia`, `ciudad`, `liga` y, si hay, `escudo`). Entra con media 10 en "<región> · Sin zona". Si el club es del interior y
+  no está en el Regional, también necesita su ciudad/provincia/liga en `datos/json/clubes_interior.json`.
 * **Una pestaña nueva**: crear `ui/ui_<nombre>.py` con `render(ctx)` (`ctx` es un `Contexto`, ver `ui/contexto.py`),
   sumar su contenedor a `Pestanas` en `ui/pestanas.py` y engancharla en `PESTANAS_UI` de `simuladorafa.py`.
 * **Una consulta o vista nueva**: las funciones de `ui/vista` y de `motor/consultas.py` reciben `S` por parámetro;
   no leer `st.session_state.S` desde la vista. Lo mismo con el club del manager
   (`ctx.club`) y el modo (`ctx.modo_mgr`): viajan por parámetro, no por claves ocultas de la sesión.
-* **Un archivo `.py` nuevo**: sumarlo a `ARCHIVOS` de `index.html` (si no, la web estática no lo carga).
+* **Un archivo `.py` o `.json` nuevo**: sumarlo a `ARCHIVOS` de `index.html` (si no, la web estática no lo carga).
+  `tests/test_datos.py` avisa si falta algún JSON de datos.
 * **Cambió la estructura del estado guardado**: subir `VERSION_ESTADO` en `motor/temporada.py` (las partidas `.afa`
   guardadas con la versión anterior dejan de poder cargarse).
 * **Un tipo nuevo dentro del estado** (algo que no sea número, texto, lista, diccionario, fecha, array o DataFrame):

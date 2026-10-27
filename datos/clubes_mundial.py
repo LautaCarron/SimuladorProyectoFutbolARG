@@ -16,102 +16,21 @@ Los nombres evitan chocar con los de clubes argentinos o sudamericanos (p. ej. "
 porque en Primera B ya existe "Arsenal").
 """
 
-CUPOS_2029 = {"UEFA": 12, "CONMEBOL": 6, "AFC": 4, "CAF": 4, "CONCACAF": 4, "OFC": 1, "Anfitrión": 1}
+from datos.cargador import cargar
+
+
+_D = cargar("clubes_mundial")      # datos/json/clubes_mundial.json
+CUPOS_2029 = _D["cupos_2029"]
 
 # Clasificados por título continental (al 1/10/2026, según las notas de junio de 2026 de TUDN,
 # El Universal y 365Scores: Paris Saint-Germain (Champions 2025 y 2026), Al-Ahli (AFC 2025), Pyramids 
 # y Mamelodi Sundowns (CAF 2025 y 2026), Cruz Azul (Concacaf 2025) y Toluca (Concacaf 2026). Flamengo (Libertadores 2025) es CONMEBOL.
-CLASIFICADOS_2029 = {
-    "Paris Saint-Germain", "Al-Ahli", "Pyramids", "Mamelodi Sundowns", "Cruz Azul", "Toluca",
-}
+CLASIFICADOS_2029 = set(_D["clasificados_2029"])
 
 # (nombre, país, confederación, media)
-MUNDIAL_CLUBES = [
-    # UEFA
-    ("Paris Saint-Germain", "Francia", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/160.png&h=96&w=96"),
-    ("Real Madrid", "España", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/86.png&h=96&w=96"),
-    ("Manchester City", "Inglaterra", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/382.png&h=96&w=96"),
-    ("Bayern Múnich", "Alemania", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/132.png&h=96&w=96"),
-    ("Arsenal (ING)", "Inglaterra", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/359.png&h=96&w=96"),
-    ("Liverpool (ING)", "Inglaterra", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/364.png&h=96&w=96"),
-    ("FC Barcelona", "España", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/83.png&h=96&w=96"),
-    ("Inter de Milán", "Italia", "UEFA", 88, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/110.png&h=96&w=96"),
-    ("Chelsea", "Inglaterra", "UEFA", 90, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/363.png&h=96&w=96"),
-    ("Atlético Madrid", "España", "UEFA", 88, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/1068.png&h=96&w=96"),
-    ("Borussia Dortmund", "Alemania", "UEFA", 86, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/124.png&h=96&w=96"),
-    ("Bayer Leverkusen", "Alemania", "UEFA", 85, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/131.png&h=96&w=96"),
-    ("Juventus", "Italia", "UEFA", 83, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/111.png&h=96&w=96"),
-    ("Napoli", "Italia", "UEFA", 83, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/114.png&h=96&w=96"),
-    ("Tottenham", "Inglaterra", "UEFA", 79, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/367.png&h=96&w=96"),
-    ("Milan", "Italia", "UEFA", 82, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/103.png&h=96&w=96"),
-    ("Atalanta", "Italia", "UEFA", 81, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/105.png&h=96&w=96"),
-    ("Benfica", "Portugal", "UEFA", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/1929.png&h=96&w=96"),
-    ("Sporting CP", "Portugal", "UEFA", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2250.png&h=96&w=96"),
-    ("Newcastle United", "Inglaterra", "UEFA", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/361.png&h=96&w=96"),
-    ("Aston Villa", "Inglaterra", "UEFA", 83, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/362.png&h=96&w=96"),
-    ("Manchester United", "Inglaterra", "UEFA", 84, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/360.png&h=96&w=96"),
-    ("Porto", "Portugal", "UEFA", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/437.png&h=96&w=96"),
-    ("Roma", "Italia", "UEFA", 82, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/104.png&h=96&w=96"),
-    ("Olympique de Marsella", "Francia", "UEFA", 79, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/176.png&h=96&w=96"),
-    ("Sevilla", "España", "UEFA", 79, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/243.png&h=96&w=96"),
-    ("RB Leipzig", "Alemania", "UEFA", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/11420.png&h=96&w=96"),
-    ("Monaco", "Francia", "UEFA", 79, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/174.png&h=96&w=96"),
-    ("Lyon", "Francia", "UEFA", 79, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/167.png&h=96&w=96"),
-    ("Ajax", "Países Bajos", "UEFA", 76, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/139.png&h=96&w=96"),
-    ("Lille", "Francia", "UEFA", 78, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/166.png&h=96&w=96"),
-    # AFC
-    ("Al-Hilal", "Arabia Saudita", "AFC", 80, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/929.png&h=96&w=96"),
-    ("Al-Ahli", "Arabia Saudita", "AFC", 78, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8346.png&h=96&w=96"),
-    ("Al-Nassr", "Arabia Saudita", "AFC", 77, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/817.png&h=96&w=96"),
-    ("Al-Ittihad", "Arabia Saudita", "AFC", 76, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2276.png&h=96&w=96"),
-    ("Vissel Kobe", "Japón", "AFC", 72, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7477.png&h=96&w=96"),
-    ("Kashima Antlers", "Japón", "AFC", 71, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7115.png&h=96&w=96"),
-    ("Gamba Osaka", "Japón", "AFC", 69, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7102.png&h=96&w=96"),
-    ("Urawa Reds D.", "Japón", "AFC", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/3385.png&h=96&w=96"),
-    ("Kawasaki Frontale", "Japón", "AFC", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7112.png&h=96&w=96"),
-    ("Ulsan HD", "Corea del Sur", "AFC", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7120.png&h=96&w=96"),
-    ("Al-Sadd", "Qatar", "AFC", 66, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7135.png&h=96&w=96"),
-    ("Al-Duhail", "Qatar", "AFC", 66, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/12008.png&h=96&w=96"),
-    ("Shabab Al-Ahli", "Emiratos Árabes Unidos", "AFC", 63, "https://img.a.transfermarkt.technology/wappen/head/60529.png?lm=1789463064"),
-    ("Al-Ain", "Emiratos Árabes Unidos", "AFC", 66, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7128.png&h=96&w=96"),
-    ("Newcastle Jets", "Australia", "AFC", 57, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5323.png&h=96&w=96"),
-    ("Adelade United FC", "Australia", "AFC", 56, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5321.png&h=96&w=96"),
-    ("Shanghai Port", "China", "AFC", 60, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/15515.png&h=96&w=96"),
-    # CAF
-    ("Al Ahly", "Egipto", "CAF", 75, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10207.png&h=96&w=96"),
-    ("Pyramids", "Egipto", "CAF", 72, "https://img.a.transfermarkt.technology/wappen/head/44664.png?lm=1789461893"),
-    ("Mamelodi Sundowns", "Sudáfrica", "CAF", 71, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7084.png&h=96&w=96"),
-    ("Wydad Casablanca", "Marruecos", "CAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8625.png&h=96&w=96"),
-    ("Espérance de Tunis", "Túnez", "CAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8377.png&h=96&w=96"),
-    ("Zamalek", "Egipto", "CAF", 68, "https://img.a.transfermarkt.technology/wappen/head/664.png?lm=1789459205"),
-    ("RS Berkane", "Marruecos", "CAF", 66, "https://img.a.transfermarkt.technology/wappen/head/37176.png?lm=1789461352"),
-    ("Orlando Pirates", "Sudáfrica", "CAF", 66, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7085.png&h=96&w=96"),
-    ("Raja Casablanca", "Marruecos", "CAF", 64, "https://img.a.transfermarkt.technology/wappen/head/2068.png?lm=1789360910"),
-    ("TP Mazembe", "RD Congo", "CAF", 62, "https://upload.wikimedia.org/wikipedia/en/7/7a/TP_Mazembe_Logo.svg?utm_source=en.wikipedia.org&utm_campaign=index&utm_content=original"),
-    # CONCACAF
-    ("Club América", "México", "CONCACAF", 77, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/227.png&h=96&w=96"),
-    ("Monterrey", "México", "CONCACAF", 76, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/220.png&h=96&w=96"),
-    ("Cruz Azul", "México", "CONCACAF", 76, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/218.png&h=96&w=96"),
-    ("Toluca", "México", "CONCACAF", 74, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/223.png&h=96&w=96"),
-    ("Tigres", "México", "CONCACAF", 74, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/232.png&h=96&w=96"),
-    ("León", "México", "CONCACAF", 74, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/228.png&h=96&w=96"),
-    ("Pachuca", "México", "CONCACAF", 72, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/234.png&h=96&w=96"),
-    ("Guadalajara", "México", "CONCACAF", 72, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/219.png&h=96&w=96"),
-    ("Queretaro", "México", "CONCACAF", 72, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/222.png&h=96&w=96"),
-    ("Inter Miami", "Estados Unidos", "CONCACAF", 75, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20232.png&h=96&w=96"),
-    ("LA Galaxy", "Estados Unidos", "CONCACAF", 74, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/187.png&h=96&w=96"),
-    ("Columbus Crew", "Estados Unidos", "CONCACAF", 69, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/183.png&h=96&w=96"),
-    ("Seattle Sounders", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9726.png&h=96&w=96"),
-    ("FC Cincinnati", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18267.png&h=96&w=96"),
-    ("Nashville SC", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18986.png&h=96&w=96"),
-    ("Vancouver Whitecaps", "Estados Unidos", "CONCACAF", 70, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9727.png&h=96&w=96"),
-    ("Toronto FC", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7318.png&h=96&w=96"),
-    ("New York City FC", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17606.png&h=96&w=96"),
-    ("D.C. United", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/193.png&h=96&w=96"),
-    ("Atlanta United FC", "Estados Unidos", "CONCACAF", 68, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18418.png&h=96&w=96"),
-    # OFC
-    ("Auckland City", "Nueva Zelanda", "OFC", 50, "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7279.png&h=96&w=96"),
-]
+MUNDIAL_CLUBES = [(c["nombre"], c["pais"], c["confederacion"], c["media"],
+                  *([c["escudo"]] if c.get("escudo") else []))
+                 for c in _D["clubes"]]
 
 # Usamos índices (x[0] es Nombre, x[1] País, x[2] Conf, x[3] Media) 
 # Esto evita que el programa explote si algún club tiene 4 datos y otro tiene 5.
