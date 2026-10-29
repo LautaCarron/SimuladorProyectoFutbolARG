@@ -1,10 +1,21 @@
 """Primera B, Primera C y Promocional Amateur: todos contra todos con la misma mecánica (ida y vuelta con 24 equipos
 o menos, una sola vuelta con 25 o más).
+
+Excepción: el Promocional Amateur con 25 equipos o más se juega en DOS ZONAS (A y B), siempre ida y vuelta, y no tiene
+desempates (dentro de cada zona manda la diferencia de gol). Los ascensos se definen así (k = ascensos elegidos en el
+Modo dios):
+  * k = 1: asciende el campeón, que sale de la final entre los ganadores de cada zona.
+  * k = 2: ascienden los ganadores de cada zona.
+  * k = 3: ascienden los ganadores de zona y el ganador del partido entre los 2° de cada zona.
+  * y así hasta el límite (ASC_MAX): con k par suben los k/2 primeros de cada zona y con k impar, además, el ganador
+    del partido entre los que siguen.
+La final entre los ganadores de zona se juega siempre (define al campeón del Promocional).
 """
 
 import math
 
 import numpy as np
+import pandas as pd
 
 from motor.incidentes import revisar_liga
 from motor.nucleo import (
@@ -13,6 +24,7 @@ from motor.nucleo import (
     df_stats,
     generar_fixture,
     jugar,
+    jugar_ko,
     mods_ids,
     nuevo_partido,
     sumar_partidos,
@@ -47,15 +59,38 @@ def cfg_simple(S, clave):
 
 
 IDA_VUELTA_MAX_SIMPLE = 24                  # con 24 equipos o menos: ida y vuelta; con 25 o más: una sola vuelta
+CLAVES_ZONAS = ("pd",)                      # ligas que con 25 o más equipos se parten en dos zonas (siempre ida y vuelta)
+ZONAS_NOMBRES = ("Zona A", "Zona B")
 
 
-def hay_vuelta(n):
-    """True si la liga de n equipos se juega ida y vuelta (24 o menos); con 25 o más es una sola vuelta."""
-    return n <= IDA_VUELTA_MAX_SIMPLE
+def hay_zonas(n, clave=None):
+    """True si la liga `clave` de n equipos se juega en dos zonas (sólo el Promocional con 25 equipos o más)."""
+    return clave in CLAVES_ZONAS and n > IDA_VUELTA_MAX_SIMPLE
 
 
-def formato_simple(n):
+def hay_vuelta(n, clave=None):
+    """True si la liga de n equipos se juega ida y vuelta (24 o menos; el Promocional también con 25 o más, en dos
+    zonas). Las demás, con 25 o más, juegan una sola vuelta."""
+    return n <= IDA_VUELTA_MAX_SIMPLE or hay_zonas(n, clave)
+
+
+def formato_simple(n, clave=None):
+    if hay_zonas(n, clave):
+        return "Ida y vuelta · 2 zonas"
     return "Ida y vuelta" if hay_vuelta(n) else "Una sola vuelta"
+
+
+def descripcion_zonas(k):
+    """Cómo se reparten k ascensos entre las dos zonas (texto para la interfaz y el Modo dios)."""
+    p = k // 2
+    if k <= 0:
+        return "no hay ascensos: la final entre los ganadores de zona define al campeón"
+    if k == 1:
+        return "asciende el campeón, que sale de la final entre los ganadores de cada zona"
+    directos = "los ganadores de cada zona" if p == 1 else f"los {p} primeros de cada zona"
+    if k % 2:
+        return f"ascienden {directos} y el ganador del partido entre los {p + 1}° de cada zona"
+    return f"ascienden {directos}"
 
 
 def desc_auto(n):
@@ -73,8 +108,15 @@ def etapas_reducido(m):
     return rondas, juegan, etapas
 
 
-def plan_simple(n, directos=2, descensos=None, reducido=False, red_equipos=4):
-    """Plan de la temporada de una liga de n equipos, ya acotado para que sea posible."""
+def plan_simple(n, directos=2, descensos=None, reducido=False, red_equipos=4, zonas=False):
+    """Plan de la temporada de una liga de n equipos, ya acotado para que sea posible.
+
+    Con `zonas` (Promocional de 25 o más) "directos" son TODOS los ascensos (el reducido, si estaba elegido, cuenta como
+    un ascenso más: en zonas no hay reducido) y no hay descensos."""
+    if zonas:
+        k = max(0, min(int(directos) + int(bool(reducido)), ASC_MAX, 2 * (n // 2 - 1)))
+        return {"directos": k, "desc": 0, "reducido": False, "equipos": 0, "rondas": 0, "juegan": 0, "etapas": [],
+                "zonas": True, "por_zona": k // 2, "playoff": k % 2 == 1}
     d = max(0, min(int(directos), n - 2))
     desc = desc_auto(n) if descensos is None else int(descensos)
     desc = max(0, min(desc, n - d - 1, tope_descensos(n, DESC_MAX)))
@@ -89,7 +131,8 @@ def plan_simple(n, directos=2, descensos=None, reducido=False, red_equipos=4):
 def plan_de(L, clave=None):
     """Plan de la liga (las partidas viejas no lo tienen: 2 ascensos y descenso del 18° para abajo, sólo PB y PC)."""
     if L.get("plan") is None:
-        L["plan"] = plan_simple(len(L["nombres"]), descensos=None if clave in CON_DESCENSOS else 0)
+        L["plan"] = plan_simple(len(L["nombres"]), descensos=None if clave in CON_DESCENSOS else 0,
+                                zonas=L.get("zonas") is not None)
     return L["plan"]
 
 
@@ -102,17 +145,23 @@ def destino_liga(pos, total, plan):
 
 def nueva_estructura_liga(S_LIGA, rng, S=None, clave=None):
     n = len(S_LIGA["nombres"])
+    zonas = hay_zonas(n, clave)                                # Promocional con 25 o más: dos zonas
     if S is not None and clave in CLAVES_CFG:               # Modo dios: lo elegido para esta temporada
         c = cfg_simple(S, clave)
         S_LIGA["plan"] = plan_simple(n, c["directos"], c["descensos"] if clave in CON_DESCENSOS else 0,
-                                     c["reducido"], c["red_equipos"])
+                                     c["reducido"], c["red_equipos"], zonas=zonas)
     else:
-        S_LIGA["plan"] = plan_simple(n, descensos=None if clave in CON_DESCENSOS else 0)
+        S_LIGA["plan"] = plan_simple(n, descensos=None if clave in CON_DESCENSOS else 0, zonas=zonas)
     S_LIGA["red"], S_LIGA["bracket"], S_LIGA["asc_reducido"], S_LIGA["ascendidos"] = None, [], None, []
-    base = generar_fixture(n)
-    fechas = [[(int(a), int(b)) for a, b in pares] for pares in base]
-    if hay_vuelta(n):                                          # 24 equipos o menos: ida y vuelta
-        fechas += [[(v, l) for l, v in fecha] for fecha in fechas]
+    S_LIGA["zonas"], S_LIGA["zona_de"], S_LIGA["fechas_zona"] = None, None, None
+    S_LIGA["orden_zonas"], S_LIGA["playoffs"], S_LIGA["playoffs_pendiente"] = None, [], False
+    if zonas:
+        fechas = _fixture_zonas(S_LIGA, rng, n)
+    else:
+        base = generar_fixture(n)
+        fechas = [[(int(a), int(b)) for a, b in pares] for pares in base]
+        if hay_vuelta(n):                                      # 24 equipos o menos: ida y vuelta
+            fechas += [[(v, l) for l, v in fecha] for fecha in fechas]
     S_LIGA["fechas"] = fechas
     S_LIGA["total"] = len(fechas)
     S_LIGA["fecha"] = 0
@@ -130,8 +179,59 @@ def nueva_estructura_liga(S_LIGA, rng, S=None, clave=None):
     S_LIGA["motivos_desempate"] = []        # si no, la tabla nueva sigue marcando el desempate anterior
 
 
+# ---- Promocional en dos zonas ---------------------------------------------------------------------------
+def _fixture_zonas(L, rng, n):
+    """Sortea las dos zonas (la A se queda con el equipo de más si n es impar) y arma el fixture ida y vuelta de cada
+    una. Las dos zonas juegan en las mismas fechas; si una tiene un equipo de más, termina unas fechas después.
+    Devuelve las fechas (los cruces son ids de la liga entera)."""
+    orden = [int(i) for i in rng.permutation(n)]
+    tam_a = (n + 1) // 2
+    zonas = [sorted(orden[:tam_a]), sorted(orden[tam_a:])]
+    por_zona = []
+    for z in zonas:
+        ida = [[(z[a], z[b]) for a, b in pares] for pares in generar_fixture(len(z))]
+        por_zona.append(ida + [[(v, l) for l, v in fecha] for fecha in ida])
+    fechas = [sum((f[i] for f in por_zona if i < len(f)), []) for i in range(max(len(f) for f in por_zona))]
+    zona_de = np.zeros(n, dtype=int)
+    zona_de[zonas[1]] = 1
+    L["zonas"], L["zona_de"], L["fechas_zona"] = zonas, zona_de, len(fechas)
+    return fechas
+
+
+def destino_zona(pos, plan):
+    """Destino de la posición `pos` (1 = ganador) dentro de su zona, según los ascensos del plan."""
+    k = plan["directos"]
+    p = k // 2
+    if k == 0:
+        return "Final por el título" if pos == 1 else ""
+    if k == 1:
+        return "Final por el ascenso" if pos == 1 else ""
+    if pos <= p:
+        return "Ascenso directo"
+    if k % 2 and pos == p + 1:
+        return "Playoff por el ascenso"
+    return ""
+
+
+def tablas_zonas(L, clave="pd"):
+    """Las dos tablas (Zona A, Zona B) del Promocional en zonas, cada una con su 'Pos' y su destino. En cada zona
+    desempata la diferencia de gol (no hay partidos de desempate)."""
+    plan = plan_de(L, clave)
+    dfs = []
+    for z, ids in enumerate(L["zonas"]):
+        df = df_stats(L["nombres"], L["r"], L, np.asarray(ids))
+        df.insert(0, "Pos", df.index + 1)
+        df["Destino"] = [destino_zona(p, plan) for p in df["Pos"]]
+        df["Zona"] = ZONAS_NOMBRES[z]
+        dfs.append(df)
+    return dfs
+
+
 def tabla_liga(L, clave):
-    """Tabla de una liga simple (clave: "pb", "pc" o "pd") con su destino y los desempates marcados."""
+    """Tabla de una liga simple (clave: "pb", "pc" o "pd") con su destino y los desempates marcados. En el Promocional
+    en zonas devuelve las dos tablas juntas (columna 'Zona'; para mostrarlas por separado, `tablas_zonas`)."""
+    if L.get("zonas") is not None:
+        return pd.concat(tablas_zonas(L, clave), ignore_index=True)
     df = df_stats(L["nombres"], L["r"], L, np.arange(len(L["nombres"])))
     if L.get("orden_final") is not None:
         df = df.set_index("id").loc[L["orden_final"]].reset_index()
@@ -169,6 +269,9 @@ def simular_fecha_liga(S_LIGA, P, rng, nombre_liga, fn_tabla):
     f = S_LIGA["fecha"]
     if f >= S_LIGA["total"]:
         return
+    if S_LIGA.get("zonas") is not None:                      # Promocional en dos zonas: sin desempates
+        _simular_fecha_zonas(S_LIGA, P, rng, nombre_liga, f)
+        return
     es_desempate = S_LIGA.get("desempate_pendiente") and f == S_LIGA["total"] - 1
     if es_desempate:
         _jugar_desempates(S_LIGA, P, rng, nombre_liga, fn_tabla, f)
@@ -198,9 +301,81 @@ def _jugar_fecha_normal(S_LIGA, P, rng, nombre_liga, f):
     gh, ga = jugar(rng, r[h], r[a], **P, **mods_ids(rng, nom, h, a))
     sumar_partidos(S_LIGA, h, a, gh, ga)
     S_LIGA["historial"].append(_fila_historial(S_LIGA, [nombre_liga] * len(h), h, a, gh, ga, ""))
+    zona_de = S_LIGA.get("zona_de")
     for x, y, g1, g2 in zip(h, a, gh, ga):
-        S_LIGA["log"].append(nuevo_partido(nombre_liga, f + 1, f"Fecha {f + 1}", "Liga", nom[x], nom[y], g1, g2))
+        comp = "Liga" if zona_de is None else ZONAS_NOMBRES[zona_de[x]]
+        S_LIGA["log"].append(nuevo_partido(nombre_liga, f + 1, f"Fecha {f + 1}", comp, nom[x], nom[y], g1, g2))
     revisar_liga(S_LIGA, S_LIGA["log"][-len(h):], rng)
+
+
+def _simular_fecha_zonas(L, P, rng, nombre_liga, f):
+    """Una fecha del Promocional en zonas. Al terminar las dos zonas se arma una fecha más con las finales por el
+    ascenso (ver _armar_playoffs); al jugarla se cierra la liga."""
+    if L["playoffs_pendiente"] and f == L["total"] - 1:
+        _jugar_playoffs(L, P, rng, nombre_liga, f)
+        L["fecha"] += 1
+        _cerrar_zonas(L, nombre_liga)
+        return
+    _jugar_fecha_normal(L, P, rng, nombre_liga, f)
+    pos = np.zeros(len(L["nombres"]), dtype=int)             # posición dentro de la zona (para las flechas de la tabla)
+    for df in tablas_zonas(L, NOMBRE_CLAVE.get(nombre_liga)):
+        pos[df["id"].to_numpy()] = np.arange(1, len(df) + 1)
+    L["pos_hist"].append((1, pos))
+    L["fecha"] += 1
+    if L["fecha"] == L["fechas_zona"]:
+        _armar_playoffs(L, nombre_liga)
+
+
+def _armar_playoffs(L, nombre_liga):
+    """Terminadas las zonas: la final entre los ganadores (siempre; si hay un solo ascenso, es la final por el ascenso)
+    y, con una cantidad impar de ascensos mayor que 1, un partido entre los que siguen de cada zona por el último
+    ascenso. Pasa a cada cruce el mejor de su zona por puntos y, si hay empate, por diferencia de gol (sin desempate).
+    Se agregan como una fecha más."""
+    k = plan_de(L, NOMBRE_CLAVE.get(nombre_liga))["directos"]
+    orden = [[int(i) for i in df["id"]] for df in tablas_zonas(L, NOMBRE_CLAVE.get(nombre_liga))]
+    cruces = [{"a": orden[0][0], "b": orden[1][0], "comp": "Final",
+               "rotulo": "Final por el ascenso" if k == 1 else "Final por el campeonato"}]
+    if k > 1 and k % 2:
+        p = k // 2
+        cruces.append({"a": orden[0][p], "b": orden[1][p], "comp": "Playoff",
+                       "rotulo": f"Playoff por el ascenso ({p + 1}° de cada zona)"})
+    L["orden_zonas"], L["playoffs"], L["playoffs_pendiente"] = orden, cruces, True
+    L["fechas"].append([(c["a"], c["b"]) for c in cruces])
+    L["total"] += 1
+
+
+def _jugar_playoffs(L, P, rng, nombre_liga, f):
+    """Juega la fecha de las finales: partido único en cancha neutral, con penales si empatan."""
+    nom, r = L["nombres"], L["r"]
+    for c in L["playoffs"]:
+        a, b = c["a"], c["b"]
+        gl, gv, gana_local, pen = jugar_ko(rng, r[[a]], r[[b]], P["sorpresa"], localia=0.0,
+                                           **mods_ids(rng, nom, [a], [b]))
+        c["gana"] = a if bool(gana_local[0]) else b
+        tanda = tanda_penales(rng, bool(gana_local[0])) if bool(pen[0]) else None
+        L["log"].append(nuevo_partido(nombre_liga, f + 1, c["rotulo"], c["comp"], nom[a], nom[b], gl[0], gv[0],
+                                      tanda=tanda, gana=nom[c["gana"]], neutral=True))
+    L["playoffs_pendiente"] = False
+
+
+def _cerrar_zonas(L, nombre_liga):
+    """Campeón y ascendidos del Promocional en zonas. Con k ascensos suben los k // 2 primeros de cada zona (el campeón
+    y el otro finalista primero) y, si k es impar y mayor que 1, el ganador del partido entre los que siguen. Con un solo
+    ascenso sube el campeón de la final."""
+    k = plan_de(L, NOMBRE_CLAVE.get(nombre_liga))["directos"]
+    p = k // 2
+    final = L["playoffs"][0]
+    campeon = final["gana"]
+    L["campeon"] = campeon
+    otro = final["b"] if campeon == final["a"] else final["a"]
+    if k >= 2:
+        L["asc_directo"] = [campeon, otro] + [i for j in range(1, p) for i in (L["orden_zonas"][0][j], L["orden_zonas"][1][j])]
+    else:
+        L["asc_directo"] = []
+    L["ascendidos"] = [campeon] if k == 1 else list(L["asc_directo"])
+    if k > 1 and k % 2:
+        L["ascendidos"].append(L["playoffs"][1]["gana"])
+    L["orden_final"] = None
 
 
 def _jugar_desempates(S_LIGA, P, rng, nombre_liga, fn_tabla, f):

@@ -50,7 +50,23 @@ PRIMERA C (Equipos directamente afiliados)
 
 PROMOCIONAL AMATEUR y REGIONAL AMATEUR
   * Promocional Amateur: liga todos contra todos con la misma mecánica que la Primera B y la Primera C
-    (ligas/simples.py).
+    (ligas/simples.py), con una diferencia según la cantidad de clubes:
+      - 24 clubes o menos: un solo torneo, ida y vuelta.
+      - 25 clubes o más: DOS ZONAS (A y B, sorteadas cada temporada; la A se queda con el club de más si son impares),
+        siempre ida y vuelta dentro de cada zona. No hay desempates: si hay igualdad de puntos manda la diferencia
+        de gol (y después los goles a favor), y así se define quién pasa a las finales.
+      - Ascensos (se eligen en el Modo dios, 0 a 6 en total; con zonas el reducido no existe):
+          1 ascenso  -> asciende el campeón, que sale de la final entre los ganadores de cada zona.
+          2 ascensos -> ascienden los ganadores de cada zona.
+          3 ascensos -> los 2 ganadores de zona y el ganador del partido entre los 2° de cada zona.
+          4 ascensos -> los 2 primeros de cada zona.
+          5 ascensos -> los 2 primeros de cada zona y el ganador del partido entre los 3° de cada zona.
+          6 ascensos -> los 3 primeros de cada zona.   (con k ascensos: los k // 2 primeros de cada zona y, si k es
+          impar, el ganador del partido entre los que siguen)
+      - Las finales se juegan en una fecha extra al terminar las zonas: partido único en cancha neutral, con
+        penales si empatan. La final entre los ganadores de zona se juega siempre y define al campeón del
+        Promocional (con 1 ascenso es, además, la final por el ascenso).
+      - Sin ascensos (0) no suben clubes, pero el campeón se define igual por la final.
   * Regional Amateur: clubes repartidos en 12 regiones, con dos fases y una final por el ascenso
     (ligas/regional.py y datos/datos_regional.py).
       - Fase 1 · Subgrupos: cada región se divide en subgrupos de unos 5 clubes (entre 3 y 7, hasta 8 subgrupos por

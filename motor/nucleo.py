@@ -7,6 +7,8 @@ y cruces de eliminatorias. Solo usa numpy y pandas (nada de Streamlit).
 import numpy as np
 import pandas as pd
 
+from datos.club_propio import WO_RATING
+
 ESCALA = 20.0        # cuánto pesa la diferencia de medias en los goles esperados
 LOCALIA = 4.5        # ventaja fija de local (en puntos de media)
 GOLES_BASE = 1.16    # goles esperados por equipo en un partido parejo (~2.2 por partido)
@@ -275,7 +277,11 @@ def jugar(rng, r_local, r_visita, sorpresa, escala=ESCALA, localia=LOCALIA, mod_
     acum = np.cumsum(M.reshape(*d_ef.shape, TOPE_GOLES ** 2), axis=-1)
     u = rng.random(d_ef.shape)[..., None] * acum[..., -1:]
     idx = (acum < u).sum(axis=-1)
-    return idx // TOPE_GOLES, idx % TOPE_GOLES
+    gl, gv = idx // TOPE_GOLES, idx % TOPE_GOLES
+    wo_l, wo_v = r_local <= WO_RATING / 2, r_visita <= WO_RATING / 2     # club propio dado de baja: pierde 0-3
+    if wo_l.any() or wo_v.any():
+        gl, gv = np.where(wo_l, 0, np.where(wo_v, 3, gl)), np.where(wo_l, 3, np.where(wo_v, 0, gv))
+    return gl, gv
 
 
 def tanda_penales(rng, gana_local):

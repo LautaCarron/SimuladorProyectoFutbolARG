@@ -17,10 +17,12 @@ from datos.equipos import (
     REGIONAL,
     origen,
 )
+from motor import club_usuario
 from motor.nucleo import MAX_R, MIN_R, REVERSION
 from copas.registro import REGISTRO
 from copas.argentina import clasificados_copa, sortear_copa
 from copas.conmebol import MEDIA_EXT, fin_de_temporada, nuevas_internacionales
+from datos import club_propio as club_propio_mod
 from datos.palmares import palmares_inicial
 from ligas.federal import nueva_estructura_f
 from ligas.federal_b import (CREACION_MANTIENE_FEDERAL_A, FB_EQUIPOS, elegir_del_regional, nueva_liga_fb,
@@ -36,6 +38,7 @@ VERSION_ESTADO = 20       # cambia si se modifica la estructura del estado guard
 
 
 def crear_estado():
+    club_propio_mod.activar(None)               # una partida nueva no tiene club propio (ver motor/club_usuario.py)
     rng = np.random.default_rng(time.time_ns() % (2**32))
     S = {
         "rng": rng, "temp": 1, "campeones": [], "movimientos": None,
@@ -85,7 +88,6 @@ def crear_estado():
     # Palmarés histórico oficial de cada liga y copa hasta 2025 (ver palmares.py); cada temporada
     # simulada le suma sus campeones
     S.update(palmares_inicial())
-
     return S
 
 
@@ -140,6 +142,7 @@ def nueva_temporada(S, volatilidad):
     _aplicar_movimientos(S, cierre)
     _disciplina(S, cierre)
     _ajustar_tamanos(S, cierre)
+    club_usuario.cerrar_temporada(S, cierre.SB)         # se va el club propio dado de baja y entra el pendiente
     _evolucionar_ratings(S, cierre, volatilidad)
     _armar_nueva_temporada(S, cierre)
 

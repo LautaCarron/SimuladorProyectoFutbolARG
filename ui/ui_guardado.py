@@ -2,8 +2,7 @@
 
 Guardar: el botón descarga un archivo `.afa` con todo (ligas, copas, calendario, historial y, si se juega en
 modo Manager, la carrera). Cargar: se elige el archivo, se ve de qué partida se trata y se confirma; eso
-reemplaza la partida actual. Se puede cargar también ANTES de empezar a simular: la pantalla de inicio
-(ui/inicio.py) tiene la opción "Cargar partida", que abre el simulador directamente en esta pestaña.
+reemplaza la partida actual. Debajo está "Mi club" (ui/crear_club.py): crear un club propio o darlo de baja.
 
 Los archivos se guardan en el dispositivo de cada persona (descarga / subida) y no en el servidor: así andan
 igual en la PC, en Streamlit Cloud y en la web estática, y nadie ve las partidas de otro.
@@ -14,6 +13,7 @@ import streamlit as st
 
 from motor.guardado import (EXTENSION, ErrorPartida, desempaquetar, empaquetar, leer_encabezado,
                             nombre_archivo)
+from ui.crear_club import render_seccion as render_club
 from ui.vista import aviso, esc, seccion
 
 # Claves de session_state que dependen de la partida en curso y no tienen sentido con la partida cargada
@@ -113,10 +113,11 @@ def render(ctx):
     if _abierta(tab_pa):
         with tab_pa:
             seccion("Partidas", "Guardá tu progreso en un archivo y retomalo cuando quieras", "#2f7fd0")
-            aviso("El archivo guarda <b>todo</b>: ligas, copas, calendario, historial y, si jugás en modo Manager, "
+            aviso("El archivo guarda <b>todo</b>: ligas, copas, calendario, historial, tu club (si creaste uno) y, si jugás en modo Manager, "
                   "tu carrera. Podés cargarlo antes de empezar a simular o en cualquier momento.")
             c1, c2 = st.columns(2, gap="large")
             with c1:
                 _guardar(ctx)
             with c2:
                 _cargar(ctx)
+            render_club(ctx)

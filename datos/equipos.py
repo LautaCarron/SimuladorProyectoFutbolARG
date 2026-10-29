@@ -73,6 +73,9 @@ ORIGEN = _GEO["origen"]
 
 
 def origen(nombre):
+    from datos import club_propio
+    if (propio := club_propio.origen(nombre)):          # club propio: el que eligió la persona
+        return propio
     if nombre in EQUIPOS_FEDERAL or nombre in EQUIPOS_REGIONAL:
         return "Interior"
     if nombre in EQUIPOS_PRIMERA_B or nombre in EQUIPOS_PRIMERA_C or nombre in EQUIPOS_PRIMERA_D:
@@ -92,6 +95,9 @@ REGION.update({x["nombre"]: GRUPO_FEDERAL_REG[x["region"]] for x in REGIONAL})
 
 
 def region_de(nombre):
+    from datos import club_propio
+    if (reg := club_propio.region(nombre)):             # club propio: el grupo del Federal A de su región
+        return GRUPO_FEDERAL_REG[reg]
     return REGION.get(nombre, "Centro")
 
 
@@ -106,7 +112,8 @@ _GRUPO_A_REGION = _GEO["grupo_a_region"]
 
 
 def region_regional(nombre):
-    return REGION_REGIONAL.get(nombre) or _GRUPO_A_REGION.get(region_de(nombre), "Centro")
+    from datos import club_propio
+    return club_propio.region(nombre) or REGION_REGIONAL.get(nombre) or _GRUPO_A_REGION.get(region_de(nombre), "Centro")
 
 
 N = len(EQUIPOS)            # Primera

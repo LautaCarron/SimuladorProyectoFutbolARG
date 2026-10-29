@@ -146,13 +146,6 @@ def render(ctx):
 
             pct_b_dyn = 100 * fb / total_b(SB) if total_b(SB) else 0
                   
-            if anual:
-                motivo_anual = (f"con {n_b} equipos la B se juega todos contra todos"
-                                if n_b <= B_MAX_ANUAL else "Modo dios")
-                aviso(f"<b>{motivo_anual[0].upper() + motivo_anual[1:]}:</b> torneo anual ({'ida y vuelta' if formato_b(SB) == 'anual_ida_vuelta' else 'una rueda'}). "
-                      f"{_frase_ascensos(SB).capitalize()}; {_promo_texto(SB)} y bajan los {desc_b} últimos.")
-            elif (red_b(SB)["directos"], red_b(SB)["reducido"]) != (2, True) or descensos(S) != 3:
-                aviso(f"<b>Modo dios:</b> {_frase_ascensos(SB)}; {_promo_texto(SB)}. Bajan {descensos(S)} de Primera.")
             if b_espera_primera and k_prom(SB) > 0:
                 aviso(f"La Promoción se juega contra {_vs_primera(SB)}: terminá primero la temporada "
                       "de Primera División.")

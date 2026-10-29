@@ -23,6 +23,7 @@ if not ES_WEB:    # pantalla de inicio ("Elegí un modo"); en la web estática l
     from ui.inicio import mostrar_inicio
     mostrar_inicio()
 
+from datos import club_propio  # noqa: E402
 from datos.equipos import ERROR_DATOS, ESCUDOS_CSS  # noqa: E402
 
 if ERROR_DATOS:   # datos/equipos.py no depende de Streamlit: el aviso lo muestra la interfaz
@@ -39,6 +40,7 @@ from ui import (  # noqa: E402
     avisos as ui_avisos,
     clubes as ui_clubes,
     copa_argentina as ui_copa_argentina,
+    crear_club as ui_crear_club,
     historial as ui_historial,
     ligas_simples as ui_ligas_simples,
     manager as ui_manager,
@@ -100,7 +102,12 @@ def main():
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(LOGOS_CSS, unsafe_allow_html=True)       # logos de ligas y copas (una sola vez)
     st.markdown(ESCUDOS_CSS, unsafe_allow_html=True)     # escudos a los que se les sacó el fondo (una sola vez)
+    if st.session_state.get("afa_pantalla") == "crear_club":      # "Crear mi club" (desde la pantalla de inicio)
+        ui_crear_club.render()
+        st.stop()
     S = _estado_de_la_partida()
+    club_propio.activar(S.get("club_propio"))            # el club que creó la persona (región, liga y escudo)
+    st.markdown(club_propio.css(), unsafe_allow_html=True)
     modo_mgr = _es_modo_manager()
     if modo_mgr:
         _preparar_manager(S)

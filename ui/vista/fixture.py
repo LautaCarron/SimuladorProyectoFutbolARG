@@ -80,8 +80,9 @@ def vista_fixture(S, club, liga, region=None):
         extra = ""
     elif liga == "pd":
         total, jugadas = consultas.fechas_conocidas_simple(S["pd"]), S["pd"]["fecha"]
-        obtener, rotulo = lambda n: consultas.partidos_fecha_pd(S, n), lambda n: f"Fecha {n}"
-        extra = ""
+        obtener, rotulo = lambda n: consultas.partidos_fecha_pd(S, n), lambda n: consultas.rotulo_fecha_simple(S["pd"], n)
+        extra = (" · las finales por el ascenso se arman al terminar las zonas"
+                 if S["pd"].get("zonas") is not None and not S["pd"]["playoffs"] else "")
     elif liga == "fb":
         SFB = S["fb"]
         total, jugadas = consultas.fechas_conocidas_f(SFB), SFB["fecha"]
@@ -116,7 +117,8 @@ def vista_fixture(S, club, liga, region=None):
     estado = chip("Jugada", "#16a34a") if elegida <= jugadas else (
         chip("Próxima fecha", "#2f7fd0") if elegida == jugadas + 1 else chip("Por jugar", "#64748b"))
     liga_cal = {"p": "Primera División", "b": "Primera Nacional", "f": "Federal A", "fb": "Federal B",
-                "pb": "Primera B", "pc": "Primera C", "reg": "Regional Amateur"}.get(liga)
+                "pb": "Primera B", "pc": "Primera C", "pd": "Promocional Amateur",
+                "reg": "Regional Amateur"}.get(liga)
     dia = dia_de(S, liga_cal, elegida) if liga_cal else None
     st.markdown(f'<div class="fx-head"><b style="font-size:1.05rem">{esc(rotulo(elegida))}</b>'
                 f'{estado}<span class="m-dia">{esc(texto_dia(dia)) if dia else ""}</span></div>',

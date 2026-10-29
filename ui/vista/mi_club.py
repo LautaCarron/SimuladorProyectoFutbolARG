@@ -65,6 +65,14 @@ def zona_nacional(SB, club):
     return f"Zona {B_ZONAS2[SB['zona2_de'][i]]}"
 
 
+def zona_simple(L, club):
+    """Promocional Amateur en dos zonas (25 equipos o más): "Zona A" o "Zona B" (None si no se juega en zonas)."""
+    from ligas.simples import ZONAS_NOMBRES
+    if L.get("zonas") is None or club not in L["nombres"]:
+        return None
+    return ZONAS_NOMBRES[L["zona_de"][L["nombres"].index(club)]]
+
+
 def zona_federal(SF, club):
     """Federal A: fase 1 el grupo por cercanía; fase 2 "Campeonato" o "Descenso"."""
     from datos.equipos import F_GRUPOS_NOMBRES

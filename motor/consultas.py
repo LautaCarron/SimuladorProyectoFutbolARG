@@ -13,6 +13,7 @@ from ligas.federal import rotulo_f
 from ligas.nacional import B_ZONAS2, b_f1, b_f2, es_anual_b, rotulo_b, total_base_b
 from ligas.primera import ZONAS, fechas_f1, formato, rotulo_p, total_base
 from ligas.regional import rotulo_reg
+from ligas.simples import ZONAS_NOMBRES
 
 
 def pendiente(liga, n, rotulo, comp, local, visita):
@@ -133,11 +134,23 @@ def fechas_conocidas_simple(L):
     return L["total"]
 
 
+def rotulo_fecha_simple(L, n):
+    """Rótulo de la fecha n de una liga simple: en el Promocional en zonas, la última fecha son las finales."""
+    if L.get("fechas_zona") is not None and n > L["fechas_zona"]:
+        return "Finales por el ascenso"
+    return f"Fecha {n}"
+
+
 def partidos_fecha_simple(L, n, liga, rotulo=None, comp="Liga"):
     """Primera B, Primera C y Promocional: `rotulo` y `comp` los puede fijar quien llama (desempates de la B)."""
     if n <= L["fecha"]:
         return [p for p in L["log"] if p["fecha"] == n]
     nom = L["nombres"]
+    if L.get("zonas") is not None:                      # Promocional en dos zonas
+        if n > L["fechas_zona"]:                        # finales por el ascenso (ya con sus cruces armados)
+            return [pendiente(liga, n, c["rotulo"], c["comp"], nom[c["a"]], nom[c["b"]]) for c in L["playoffs"]]
+        return [pendiente(liga, n, rotulo or f"Fecha {n}", ZONAS_NOMBRES[L["zona_de"][x]], nom[x], nom[y])
+                for x, y in L["fechas"][n - 1]]
     return [pendiente(liga, n, rotulo or f"Fecha {n}", comp, nom[x], nom[y]) for x, y in L["fechas"][n - 1]]
 
 

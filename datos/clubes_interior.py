@@ -22,6 +22,9 @@ def datos_club(nombre):
 
     Sirve para cualquier club del interior: Primera, Primera Nacional, Federal A y Regional Amateur."""
     global _REG
+    from datos import club_propio
+    if (propio := club_propio.datos(nombre)):          # el club que creó la persona (ver datos/club_propio.py)
+        return propio
     if nombre in DATOS_INTERIOR:
         c, p, lg = DATOS_INTERIOR[nombre]
         return {"ciudad": c, "provincia": p, "liga": lg}

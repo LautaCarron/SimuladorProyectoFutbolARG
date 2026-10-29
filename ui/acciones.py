@@ -26,5 +26,5 @@ def render_acciones(S, P, progreso, modo_mgr, acumular, hoy):
         nueva_temporada(S, VOLATILIDAD)
         st.rerun()
     if g3.button(":material/restart_alt: Reiniciar", width="stretch"):
-        st.session_state.S = crear_estado()
+        st.session_state.S = crear_estado()      # partida nueva: el club propio desaparece (solo vive en la partida que lo creó)
         st.rerun()

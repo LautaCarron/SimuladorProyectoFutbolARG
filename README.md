@@ -8,7 +8,7 @@ también publicable como web estática con [stlite](https://github.com/whitphx/s
 
 | Nivel | Competencias |
 |---|---|
-| Ligas | Primera División, Primera Nacional, Federal A, Federal B (opcional, se crea desde el Modo dios), Primera B, Primera C, Promocional Amateur y Regional Amateur |
+| Ligas | Primera División, Primera Nacional, Federal A, Federal B (opcional, se crea desde el Modo dios), Primera B, Primera C, Promocional Amateur (con 25 clubes o más se juega en dos zonas) y Regional Amateur |
 | Copas nacionales | Copa Argentina (128 equipos) y Supercopa Argentina |
 | Copas internacionales | Libertadores, Sudamericana y Recopa (CONMEBOL) y Mundial de Clubes (cada 4 temporadas) |
 | Extras | Calendario con fechas reales de la temporada, historial y palmarés, incidentes (suspensiones y sanciones), avisos |
@@ -24,6 +24,29 @@ resuelven solos al terminar cada temporada.
   plantel y economía (`ui/manager.py`, `motor/ofertas.py`, `motor/eventos.py`, `motor/relaciones.py`).
 * **Modo dios**: cambia formatos, descensos, ascensos y promociones de cada liga desde la barra lateral (`ui/dios.py`).
 
+### Mi club (club propio)
+
+En la pestaña **Partidas**, debajo de guardar y cargar, está **Mi club** (`ui/crear_club.py`): se crea **un solo club** propio.
+Los campos están armados con lo que ya existe en el Regional Amateur: **provincia** y **liga** se eligen de las listas y la
+**región** se completa sola a partir de la liga (Liga Marplatense → Pampeana Sur). También se cargan nombre, ciudad, un nivel
+inicial (20 a 33, como los clubes del Regional) y una foto del **escudo** (PNG, JPG o WEBP de hasta 1 MB; se achica a 192 px).
+
+* **Entra en la temporada siguiente**: al crearlo queda pendiente (se puede cancelar) y se suma al Regional Amateur cuando
+  empieza la temporada que viene. Después aparece en *Clubes*, en las tablas y en *Elegir un equipo* del Manager.
+* **Dar de baja**: lo que le quede por jugar esta temporada (en cualquier competencia) lo pierde **3-0** y desaparece al
+  cerrar la temporada. Su lugar **no se cubre solo**: la liga queda con un club menos (si era de Primera, juega con 29) y, para
+  reponerlo, se suma un ascenso o se cambia el tamaño desde el Modo dios. Si dejó títulos, en el palmarés quedan su nombre y su
+  escudo. Mientras tanto ya se puede crear otro.
+* **Palmarés**: los títulos se anotan por nombre, así que si el club se llama como uno que ya existe (Aldosivi) entra como
+  *Aldosivi (propio)* y sus títulos no se suman a los del club real (ni a los de un club propio anterior).
+* **Es de la partida**: vive en `S` (`club_pendiente`, `club_propio`, `clubes_ex`), se guarda en el `.afa` y *Reiniciar* lo borra.
+
+Cómo está hecho: `motor/club_usuario.py` (crear, dar de baja, entrar y salir al cerrar la temporada), `datos/club_propio.py`
+(provincias, ligas, regiones, validación y escudo) y, para los 3-0, `motor.nucleo.jugar`, que le da por perdido 0-3 a quien
+tenga la media `WO_RATING`. Como las funciones de datos no reciben `S`, `club_usuario.activar(S)` deja el club disponible por
+hilo en cada pasada de la app, sin mezclar partidas de distintas personas. La web estática (`index.html`) usa los mismos
+archivos, pero no se probó ahí.
+
 ### Guardar y cargar partidas
 
 La pestaña **Partidas** (al lado de Historial) descarga la partida en un archivo `.afa` y la vuelve a cargar:
@@ -32,8 +55,7 @@ La pestaña **Partidas** (al lado de Historial) descarga la partida en un archiv
   Manager, la carrera. Se puede ponerle un nombre.
 * **Cargar**: se elige el archivo `.afa`, se ve de qué partida se trata (temporada, día, modo, club) y se confirma.
   Reemplaza la partida actual.
-* **Antes de empezar a simular**: la pantalla de inicio tiene la opción **Cargar partida**, que abre el simulador
-  directo en esa pestaña. En la web estática el simulador abre directo, así que la pestaña está a un clic.
+* **Antes de empezar a simular**: se entra al simulador y se carga desde esta pestaña.
 * Los archivos quedan en el dispositivo de cada persona (no en el servidor): andan igual en la PC, en Streamlit Cloud
   y en la web estática, y nadie ve las partidas de otro.
 * Una partida solo se puede cargar en la misma versión de datos con la que se guardó (`VERSION_ESTADO` en
@@ -71,6 +93,7 @@ motor/               Lógica de simulación pura (sin Streamlit)
   incidentes.py        suspensiones y sanciones
   ofertas.py, eventos.py, relaciones.py   modo Manager
   guardado.py          formato .afa: guardar y cargar partidas
+  club_usuario.py      club propio: crear, dar de baja y entrada / salida al cerrar la temporada
 ligas/               Una liga por módulo (formato, desempates, ascensos, cómo se juega cada fecha)
   primera.py, apertura_clausura.py, nacional.py, federal.py, federal_b.py, simples.py, regional.py
   desempates.py        piezas comunes de los desempates por puntos (bloque empatado, duelo o liguilla)
@@ -84,12 +107,14 @@ datos/               Datos separados del código: los .py solo leen datos/json/*
   json/                equipos.json (medias por categoría), escudos.json, geografia.json (origen y regiones), palmares.json,
                        logos.json, clubes_interior.json, clubes_int.json, clubes_mundial.json,
                        regional.json (clubes con zona, regiones, finales) y regional_extra.json (clubes sueltos a mano)
+  club_propio.py       el club propio: provincias, ligas y regiones disponibles, validación del nombre y del escudo
   cargador.py          cargar("nombre") lee datos/json/<nombre>.json (si está mal escrito, avisa archivo y línea)
 ui/                  Pestañas de la interfaz Streamlit; cada una expone render(ctx)
   contexto.py          clase Contexto: lo que reciben las pestañas (estado, progreso, pestañas, avisos)
   pestanas.py          arma las pestañas de arriba, las de ligas y las de copas
   acciones.py          botones globales: Próximo día, Simular todo, Nueva temporada, Reiniciar
   ui_guardado.py       pestaña Partidas (descargar / cargar)
+  crear_club.py        sección "Mi club" de la pestaña Partidas (crear y dar de baja el club propio)
   vista/               Piezas de dibujo compartidas (tablas, cuadros, fixture, ficha, CSS, calendario...)
 ```
 

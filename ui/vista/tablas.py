@@ -222,7 +222,8 @@ def colorear_pc(fila):
 def colorear_pd(fila):
     d = fila["Destino"]
     c = COLORES_B["Ascenso directo"] if d == "Ascenso directo" else (
-        "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else ""
+        "rgba(249, 115, 22, 0.3)" if d in ("Desempate Campeonato", "Desempate Ascenso") else
+        COLORES_B["Reducido"] if d in ("Final por el ascenso", "Final por el título", "Playoff por el ascenso") else ""
     )
     return [f"background-color: {c}" if c else ""] * len(fila)
 
