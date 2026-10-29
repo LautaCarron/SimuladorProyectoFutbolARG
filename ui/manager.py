@@ -49,6 +49,7 @@ from motor.ofertas import (
 )
 from motor.eventos import EVENTOS, descripcion_opcion, resolver
 from motor.nucleo import ESTILOS_JUEGO, TACTICAS, tactica_total
+from motor.temporada import crear_estado
 from motor.relaciones import (
     CAMA_ATAQUE,
     CAMA_CONTROL,
@@ -68,6 +69,8 @@ from motor.relaciones import (
     salir_club,
     umbral_despido,
 )
+from ui.crear_club import formulario as formulario_club
+from ui.crear_club import limpiar_formulario as limpiar_formulario_club
 from ui.vista import aviso, chip, crest, esc, fila_partido_html, norm, render_ficha, seccion
 
 # ---- Opciones ---------------------------------------------------------------
@@ -191,41 +194,46 @@ def alta_manager(S):
 
     # ---- Global: por reputación o a mano
     st.markdown('<div class="mlab" style="margin-top:14px">Global del manager</div>', unsafe_allow_html=True)
-    reputacion = st.segmented_control("Reputación", list(REPUTACIONES), default="Desconocido",
-                                      key="mgr_rep") or "Desconocido"
-    st.caption(REPUTACIONES[reputacion])
+    reputacion = st.segmented_control("Reputación", list(REPUTACIONES), default=None, key="mgr_rep")   # arranca sin elegir
+    st.caption(REPUTACIONES[reputacion] if reputacion else "Elegí tu reputación: define con qué global y qué relaciones arrancás.")
     modo_g = st.radio("Cómo se define el global", ["Según la reputación", "A mano"], horizontal=True,
                       key="mgr_glob_modo", label_visibility="collapsed")
     if modo_g == "A mano":
-        glob = st.slider("Global", GLOBAL_MIN, GLOBAL_MAX, PRESETS[reputacion], key="mgr_glob",
+        glob = st.slider("Global", GLOBAL_MIN, GLOBAL_MAX, PRESETS[reputacion or "Desconocido"], key="mgr_glob",
                          help="Es la misma escala que la media de los clubes: cuanto más alto, "
                               "de clubes más grandes te llaman.")
     else:
-        glob = PRESETS[reputacion]
-    st.markdown(chip(f"Global {glob} · {nivel_texto(glob)}", "#b7860b") + " " + _chips_alcance(S, glob),
-                unsafe_allow_html=True)
-    st.caption("Los clubes que te llaman son los que tienen una media parecida a tu global.")
+        glob = PRESETS[reputacion] if reputacion else None
+    if glob is not None:
+        st.markdown(chip(f"Global {glob} · {nivel_texto(glob)}", "#b7860b") + " " + _chips_alcance(S, glob),
+                    unsafe_allow_html=True)
+        st.caption("Los clubes que te llaman son los que tienen una media parecida a tu global.")
 
     # ---- Cómo arrancás
     st.markdown('<div class="mlab" style="margin-top:14px">Cómo arrancás</div>', unsafe_allow_html=True)
     inicio = st.radio("Modo de inicio", ["Libre · recibir ofertas", "Elegir un equipo"],
                       key="mgr_inicio", label_visibility="collapsed", horizontal=True)
     libre = inicio.startswith("Libre")
-    club = None
-    if libre:
-        aviso("Empezás sin club. Mientras simulás día por día te van a llegar ofertas a la <b>oficina</b>, "
-              "de clubes que encajen con tu global. Algunas son para dirigir la <b>Reserva</b>: si las "
-              "aceptás, en algún momento el club echa al DT y te sube al primer equipo.")
-    else:
-        club = _elegir_club(S)
+    club = club_nuevo = origen_club = None
+    if not libre:
+        origen_club = st.radio("Club", ["Elegir uno existente", "Crear mi club"], key="mgr_origen_club",
+                               horizontal=True, label_visibility="collapsed")
+        if origen_club == "Crear mi club":
+            club_nuevo = formulario_club(S)
+            club = club_nuevo["nombre"] if club_nuevo else None
+        else:
+            club = _elegir_club(S)
 
     errores = []
     if not nombre.strip():
         errores.append("Falta el nombre.")
     if not apellido.strip():
         errores.append("Falta el apellido.")
+    if not reputacion:
+        errores.append("Elegí tu reputación.")
     if not libre and not club:
-        errores.append("Elegí un club para arrancar.")
+        errores.append("Completá los datos de tu club." if club_nuevo is None and origen_club == "Crear mi club"
+                       else "Elegí un club para arrancar.")
     for e in errores:
         st.caption(f":material/error: {e}")
 
@@ -234,6 +242,9 @@ def alta_manager(S):
         _volver_al_inicio()
     if b2.button(":material/check: Empezar carrera", key="mgr_ok", type="primary", width="stretch",
                  disabled=bool(errores)):
+        if club_nuevo:                                # el club creado juega desde el día 1: se rearma la partida con él
+            S = st.session_state.S = crear_estado(club_nuevo)
+            limpiar_formulario_club()
         M = nuevo_manager_estado(glob)
         M.update(nombre=nombre.strip(), apellido=apellido.strip(), edad=int(edad), nacionalidad=nacionalidad,
                  formacion=formacion, estilo=estilo, reputacion=reputacion,
@@ -583,8 +594,6 @@ def _oficina(S, M):
     st.markdown(f'<div class="mlab" style="margin-top:14px">{titulo} · {len(ofertas)}</div>',
                 unsafe_allow_html=True)
     if not ofertas:
-        aviso("No tenés ofertas por ahora. Simulá días: te siguen llegando según tu global "
-              f"(<b>{M['global']}</b>). Te llaman clubes de: " + _chips_alcance(S, M["global"]))
         return
     cols = st.columns(2, gap="medium") if len(ofertas) > 1 else [st.container()]
     for i, o in enumerate(ofertas):

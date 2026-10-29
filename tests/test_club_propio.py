@@ -136,3 +136,27 @@ def test_metropolitano_entra_al_promocional_sin_datos_extra():
         assert "Los Pinos FC" not in S["promocional"] and S["club_propio"] is None
     finally:
         cp.activar(None)
+
+
+def test_club_creado_al_empezar_el_manager_juega_desde_el_dia_1():
+    """El manager que crea su club al empezar no espera a la temporada que viene: está en la liga desde el primer día."""
+    from motor.manager import primer_dia
+    from motor.ofertas import categoria_de, info_club, nuevo_manager_estado
+    from motor.relaciones import entrar_club
+    try:
+        for origen_club, lista, liga in ((cp.INTERIOR, "regional", "reg"), (cp.METROPOLITANA, "promocional", "pd")):
+            base = crear_estado()
+            kw = {} if origen_club == cp.INTERIOR else {"origen": cp.METROPOLITANA}
+            club = _club(base, **kw) if origen_club == cp.INTERIOR else cp.crear("Los Pinos FC", media=15,
+                                                                                ocupados=cu.nombres_ocupados(base), **kw)
+            S = crear_estado(club)
+            assert club["nombre"] in S[lista] and club["nombre"] in S[liga]["nombres"]
+            assert S["club_propio"]["nombre"] == club["nombre"] and not S["club_propio"]["baja"]
+            assert not S.get("club_pendiente") and S["rating"][club["nombre"]] == club["media"]
+            assert categoria_de(S, club["nombre"]) and info_club(S, club["nombre"])
+            M = nuevo_manager_estado(40)
+            M.update(hoy=primer_dia(S))
+            entrar_club(S, M, club["nombre"])
+        assert "club_propio" not in crear_estado()                      # una partida nueva sigue sin club
+    finally:
+        cp.activar(None)

@@ -120,4 +120,5 @@ def render(ctx):
                 _guardar(ctx)
             with c2:
                 _cargar(ctx)
-            render_club(ctx)
+            if not ctx.modo_mgr:                      # en modo Manager el club (si lo creaste al empezar) no se toca más
+                render_club(ctx)

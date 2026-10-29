@@ -18,7 +18,7 @@ from ui.vista import aviso, chip, esc
 _TIPOS = ["png", "jpg", "jpeg", "webp"]
 
 
-def _tarjeta(club, etiqueta):
+def tarjeta(club, etiqueta):
     img = (f'<img class="crest-img" src="{esc(club["escudo"])}" width="64" height="64" alt="">' if club["escudo"]
            else '<span class="crest" style="width:64px;height:66px;font-size:23px;background:linear-gradient(160deg,'
                 'hsl(214,62%,44%),hsl(240,58%,28%))">'
@@ -30,12 +30,12 @@ def _tarjeta(club, etiqueta):
            f'{esc(club["liga"])}</div>' if club.get("ciudad") else ""), unsafe_allow_html=True)
 
 
-def _limpiar_formulario():
+def limpiar_formulario():
     for k in [k for k in st.session_state if str(k).startswith("cc_")]:
         del st.session_state[k]
 
 
-def _formulario(S):
+def formulario(S):
     """Campos del club nuevo. Devuelve el club armado, o None si falta algo (y muestra qué)."""
     errores = []
     origen = st.radio("¿De dónde es el club?", [cp.INTERIOR, cp.METROPOLITANA], key="cc_origen", horizontal=True,
@@ -91,7 +91,7 @@ def _formulario(S):
         aviso(f"Ya existe un <b>{esc(' '.join(nombre.split()))}</b> en el palmarés: tu club entra como "
               f"<b>{esc(club['nombre'])}</b> para que sus títulos no se mezclen con los de ese club.")
     with st.container(border=True):
-        _tarjeta(club, "Promocional Amateur" if metro else "Regional Amateur")
+        tarjeta(club, "Promocional Amateur" if metro else "Regional Amateur")
     return club
 
 
@@ -103,7 +103,7 @@ def render_seccion(ctx):
 
     if propio and not propio.get("baja"):
         with st.container(border=True):
-            _tarjeta(propio, "Mi club")
+            tarjeta(propio, "Mi club")
             if en_manager:
                 st.caption("Lo estás dirigiendo en el modo Manager: no se puede dar de baja.")
             else:
@@ -120,7 +120,7 @@ def render_seccion(ctx):
 
     if pendiente:
         with st.container(border=True):
-            _tarjeta(pendiente, f"Entra en la temporada {S['temp'] + 1}")
+            tarjeta(pendiente, f"Entra en la temporada {S['temp'] + 1}")
             if st.button(":material/close: Cancelar", key="cc_cancelar", width="stretch"):
                 cu.cancelar_pendiente(S)
                 st.rerun()
@@ -129,9 +129,9 @@ def render_seccion(ctx):
     elif cu.puede_crear(S):
         st.caption("Un solo club. Si es del interior entra al Regional Amateur; si es metropolitano, directo al Promocional "
                    "Amateur. Se suma cuando empieza la temporada que viene.")
-        club = _formulario(S)
+        club = formulario(S)
         if st.button(":material/add: Crear mi club", key="cc_crear", type="primary", width="stretch",
                      disabled=club is None):
             cu.crear_pendiente(S, club)
-            _limpiar_formulario()
+            limpiar_formulario()
             st.rerun()

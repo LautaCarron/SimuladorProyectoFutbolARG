@@ -37,8 +37,15 @@ from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 VERSION_ESTADO = 20       # cambia si se modifica la estructura del estado guardado
 
 
-def crear_estado():
-    club_propio_mod.activar(None)               # una partida nueva no tiene club propio (ver motor/club_usuario.py)
+def crear_estado(club_propio=None):
+    """Partida nueva. Sin argumentos no tiene club propio (ver motor/club_usuario.py). El modo Manager le puede pasar el club
+    que creó la persona (datos/club_propio.crear): en ese caso el club juega desde la primera temporada, en el Regional
+    Amateur si es del interior o en el Promocional Amateur si es metropolitano, y ya no queda pendiente."""
+    club_propio_mod.activar(club_propio)
+    reg, promo = dict(EQUIPOS_REGIONAL), dict(EQUIPOS_PRIMERA_D)
+    if club_propio:
+        metro = club_propio.get("origen", club_propio_mod.INTERIOR) == club_propio_mod.METROPOLITANA
+        (promo if metro else reg)[club_propio["nombre"]] = float(club_propio["media"])
     rng = np.random.default_rng(time.time_ns() % (2**32))
     S = {
         "rng": rng, "temp": 1, "campeones": [], "movimientos": None,
@@ -47,16 +54,19 @@ def crear_estado():
                    **{k: float(v) for k, v in EQUIPOS_FEDERAL.items()},
                    **{k: float(v) for k, v in EQUIPOS_PRIMERA_B.items()},
                    **{k: float(v) for k, v in EQUIPOS_PRIMERA_C.items()},
-                   **{k: float(v) for k, v in EQUIPOS_REGIONAL.items()}},
+                   **{k: float(v) for k, v in reg.items()}},
         "nombres": list(EQUIPOS),
         "r": np.array(list(EQUIPOS.values()), dtype=float),
         "federal": list(EQUIPOS_FEDERAL),
         "primera_b": list(EQUIPOS_PRIMERA_B),
         "primera_c": list(EQUIPOS_PRIMERA_C),
-        "regional": list(EQUIPOS_REGIONAL),
+        "regional": list(reg),
         "federal_b": [], "fb": None,          # Federal B: se crea desde el Modo dios (ver ligas/federal_b.py)
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
+    if club_propio:                             # su media no está en las tablas de datos: se suma a mano
+        S["club_propio"] = {**club_propio, "baja": False}
+        S["rating"][club_propio["nombre"]] = float(club_propio["media"])
     nueva_estructura(S)
     SB = {"nombres": list(EQUIPOS_B), "r": np.array(list(EQUIPOS_B.values()), dtype=float)}
     nueva_estructura_b(SB, rng, S)
@@ -70,11 +80,11 @@ def crear_estado():
     SPC = {"nombres": list(EQUIPOS_PRIMERA_C), "r": np.array(list(EQUIPOS_PRIMERA_C.values()), dtype=float)}
     nueva_estructura_liga(SPC, rng, S, "pc")
     S["pc"] = SPC
-    SPD = {"nombres": list(EQUIPOS_PRIMERA_D), "r": np.array(list(EQUIPOS_PRIMERA_D.values()), dtype=float)}
+    SPD = {"nombres": list(promo), "r": np.array(list(promo.values()), dtype=float)}
     nueva_estructura_liga(SPD, rng, S, "pd")
     S["pd"] = SPD
-    S["promocional"] = list(EQUIPOS_PRIMERA_D)
-    SREG = {"nombres": list(EQUIPOS_REGIONAL), "r": np.array(list(EQUIPOS_REGIONAL.values()), dtype=float)}
+    S["promocional"] = list(promo)
+    SREG = {"nombres": list(reg), "r": np.array(list(reg.values()), dtype=float)}
     nueva_estructura_reg(SREG, rng)
     S["reg"] = SREG
     S["copa"] = sortear_copa(S, rng)    # temporada 1: clasifican los de mejor media de cada liga
