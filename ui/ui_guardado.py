@@ -55,6 +55,9 @@ def _descripcion(enc):
     return "<br>".join(lineas)
 
 
+descripcion_partida = _descripcion          # la usa también la pantalla de inicio (ui/inicio.py)
+
+
 def _guardar(ctx):
     S = ctx.S
     M = st.session_state.get("manager") if ctx.modo_mgr else None

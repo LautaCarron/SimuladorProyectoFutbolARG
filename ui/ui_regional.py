@@ -87,11 +87,11 @@ def render(ctx):
             c1.markdown(chip(f"Regional Amateur · {len(SR['nombres'])} clubes", "#0e7490") + " "
                         + chip(f"12 regiones · 6 ascensos al {sube}", "#475569") + " "
                         + chip(fase_reg(SR), "#16a34a"), unsafe_allow_html=True)
-            if c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
+            if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima fecha", key="reg_next", width="stretch", type="primary",
                          disabled=terminada_reg):
                 simular_fecha_reg(SR, P, S["rng"])
                 st.rerun()
-            if c3.button(":material/fast_forward: Hasta el final", key="reg_all", width="stretch",
+            if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key="reg_all", width="stretch",
                          disabled=terminada_reg):
                 while SR["fecha"] < SR["total"]:
                     simular_fecha_reg(SR, P, S["rng"])

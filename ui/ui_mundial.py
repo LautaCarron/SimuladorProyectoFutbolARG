@@ -80,11 +80,11 @@ def render(ctx):
         terminado = M["ronda"] >= M["total"]
         c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
         c1.markdown(chip(f"Mundial de Clubes {M['anio']} · 32 equipos", color), unsafe_allow_html=True)
-        if c2.button(":material/skip_next: Próxima ronda", key="mun_next", width="stretch", type="primary",
+        if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima ronda", key="mun_next", width="stretch", type="primary",
                      disabled=terminado):
             simular_ronda_mundial(S, P, S["rng"])
             st.rerun()
-        if c3.button(":material/fast_forward: Hasta el final", key="mun_all", width="stretch", disabled=terminado):
+        if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key="mun_all", width="stretch", disabled=terminado):
             while not mundial_terminado(S):
                 simular_ronda_mundial(S, P, S["rng"])
             st.rerun()

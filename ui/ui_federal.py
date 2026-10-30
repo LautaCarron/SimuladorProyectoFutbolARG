@@ -69,11 +69,11 @@ def render_liga_f(ctx, SF, tab_f, terminada_f, pct_f, clave):
             c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
             c1.markdown(chip(f"{nombre} · {len(nom_f)} equipos") + " " +
                         chip(f"Fase {fase_txt_f}", "#475569"), unsafe_allow_html=True)
-            if c2.button(":material/skip_next: Próxima fecha", key=f"{clave}_next", width="stretch", type="primary",
+            if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima fecha", key=f"{clave}_next", width="stretch", type="primary",
                          disabled=terminada_f):
                 simular_fecha_f(SF, P, S["rng"])
                 st.rerun()
-            if c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch", disabled=terminada_f):
+            if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch", disabled=terminada_f):
                 while SF["fecha"] < SF["total"]:
                     simular_fecha_f(SF, P, S["rng"])
                 st.rerun()

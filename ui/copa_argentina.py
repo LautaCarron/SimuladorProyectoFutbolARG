@@ -49,11 +49,11 @@ def render(ctx):
             c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
             c1.markdown(logo_img("Copa Argentina", 30) + " " + chip("Copa Argentina · 128 equipos", "#1e5aa8") + " "
                         + chip("Partido único · cancha neutral", "#475569"), unsafe_allow_html=True)
-            if c2.button(":material/skip_next: Próxima ronda", key="ca_next", width="stretch", type="primary",
+            if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima ronda", key="ca_next", width="stretch", type="primary",
                          disabled=not SC["sorteada"] or terminada_copa):
                 simular_ronda_copa(SC, P, S["rng"])
                 st.rerun()
-            if c3.button(":material/fast_forward: Hasta el final", key="ca_all", width="stretch",
+            if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key="ca_all", width="stretch",
                          disabled=not SC["sorteada"] or terminada_copa):
                 while SC["ronda"] < SC["total"]:
                     simular_ronda_copa(SC, P, S["rng"])

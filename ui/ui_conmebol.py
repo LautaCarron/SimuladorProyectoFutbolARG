@@ -39,11 +39,11 @@ def render(ctx):
         c1.markdown(logo_img(nombre, 30) + " " + chip(f"{nombre} · {len(C['via'])} equipos", color),
                     unsafe_allow_html=True)
         espera = not terminada_c and not listo(S, clave)
-        if c2.button(":material/skip_next: Próxima ronda", key=f"{clave}_next", width="stretch", type="primary",
+        if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima ronda", key=f"{clave}_next", width="stretch", type="primary",
                      disabled=terminada_c or espera):
             simular_ronda_int(S, clave, P, S["rng"])
             st.rerun()
-        if c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch",
+        if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key=f"{clave}_all", width="stretch",
                      disabled=terminada_c or espera):
             while listo(S, clave):
                 simular_ronda_int(S, clave, P, S["rng"])

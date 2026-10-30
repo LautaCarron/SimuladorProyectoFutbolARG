@@ -94,11 +94,11 @@ def render(ctx):
             total_p = total_primera(S)
             terminada_p_dyn = primera_terminada(S)
 
-            if c2.button(":material/skip_next: Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
+            if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima fecha", key="p_next", disabled=terminada_p_dyn, width="stretch",
                          type="primary"):
                 simular_fecha(S, P, acumular)
                 st.rerun()
-            if c3.button(":material/fast_forward: Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
+            if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key="p_all", disabled=terminada_p_dyn, width="stretch"):
                 while S["fecha"] < total_primera(S):
                     simular_fecha(S, P, acumular)
                 st.rerun()

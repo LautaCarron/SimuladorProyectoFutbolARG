@@ -133,12 +133,12 @@ def render(ctx):
             c1.markdown(chip(f"Primera Nacional · {n_b} equipos") + " " + chip(f"Fase {fase_txt}", "#475569"),
                         unsafe_allow_html=True)
     
-            if c2.button(":material/skip_next: Próxima fecha", key="b_next", width="stretch", type="primary",
+            if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima fecha", key="b_next", width="stretch", type="primary",
                          disabled=terminada_b or b_espera_primera):
                 simular_fecha_b(S, P)
                 st.rerun()
         
-            if c3.button(":material/fast_forward: Hasta el final", key="b_all", width="stretch",
+            if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key="b_all", width="stretch",
                          disabled=terminada_b or b_espera_primera):
                 while SB["fecha"] < total_b(SB) and not (SB["fecha"] == total_b(SB) - 1 and not primera_terminada(S)):
                     simular_fecha_b(S, P)

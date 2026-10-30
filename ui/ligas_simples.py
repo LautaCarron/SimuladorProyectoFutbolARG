@@ -120,11 +120,11 @@ def _render_liga(ctx, cfg):
         c1.markdown(chip(f"{nombre} · {len(L['nombres'])} equipos", cfg["chip_color"]) + " "
                     + chip("Dos zonas · ida y vuelta" if en_zonas else "Todos contra todos", "#475569"),
                     unsafe_allow_html=True)
-        if c2.button(":material/skip_next: Próxima fecha", key=f"{k}_next", width="stretch", type="primary",
+        if not ctx.modo_mgr and c2.button(":material/skip_next: Próxima fecha", key=f"{k}_next", width="stretch", type="primary",
                      disabled=terminada):
             simular_fecha_liga(L, P, S["rng"], nombre, tabla)
             st.rerun()
-        if c3.button(":material/fast_forward: Hasta el final", key=f"{k}_all", width="stretch",
+        if not ctx.modo_mgr and c3.button(":material/fast_forward: Hasta el final", key=f"{k}_all", width="stretch",
                      disabled=terminada):
             while L["fecha"] < L["total"]:
                 simular_fecha_liga(L, P, S["rng"], nombre, tabla)

@@ -308,6 +308,48 @@ def _entrar_manager():
     st.session_state.pop("afa_tab_inicial", None)
 
 
+def _pedir_manager():
+    """"Crear manager": antes de entrar se pregunta si se arranca de cero o se carga una partida."""
+    st.session_state["afa_dlg_manager"] = True
+
+
+# La intro es una capa a pantalla completa: la ventana tiene que quedar por encima
+_CSS_DIALOGO = ("<style>div[data-testid=\"stDialog\"], [data-baseweb=\"modal\"] { z-index: 1000100 !important; }"
+                " .st-key-afa_dlg_nuevo button { min-height: 3rem; }</style>")
+
+
+@st.dialog("Manager Falopa")
+def _dialogo_manager():
+    from motor.guardado import ErrorPartida, desempaquetar, leer_encabezado
+    from ui.ui_guardado import descripcion_partida, instalar_partida
+
+    st.caption("¿Cómo querés arrancar?")
+    if st.button(":material/add: Crear un manager nuevo", key="afa_dlg_nuevo", type="primary", width="stretch"):
+        _entrar_manager()
+        st.rerun()
+    st.markdown("**o cargar una partida guardada**")
+    arch = st.file_uploader("Archivo de partida (.afa)", type=["afa"], key="afa_dlg_up")
+    if arch is None:
+        return
+    datos = arch.getvalue()
+    try:
+        enc = leer_encabezado(datos)
+    except ErrorPartida as e:
+        st.error(str(e), icon=":material/error:")
+        return
+    st.markdown(f'<div class="aviso">{descripcion_partida(enc)}</div>', unsafe_allow_html=True)
+    if st.button(":material/upload: Cargar esta partida", key="afa_dlg_cargar", width="stretch"):
+        try:
+            carga = desempaquetar(datos)
+        except ErrorPartida as e:
+            st.error(str(e), icon=":material/error:")
+            return
+        instalar_partida(carga)
+        e = carga["encabezado"]
+        st.session_state["afa_msg_partida"] = f"Partida cargada: temporada {e.get('temp')} ({e.get('anio')})."
+        st.rerun()
+
+
 def _correr_js(js):
     """Corre el script en la página de la app (ver ui/js.py)."""
     from ui.js import inyectar_js
@@ -321,6 +363,9 @@ def mostrar_inicio():
         return
     st.html(_CSS + _HTML)
     st.button("Entrar al simulador", key="afa_entrar", on_click=_entrar)
-    st.button("Crear manager", key="afa_ir_manager", on_click=_entrar_manager)
+    st.button("Crear manager", key="afa_ir_manager", on_click=_pedir_manager)
+    if st.session_state.pop("afa_dlg_manager", False):
+        st.markdown(_CSS_DIALOGO, unsafe_allow_html=True)
+        _dialogo_manager()
     _correr_js(_JS.replace("__SOLES__", json.dumps({"lleno": _SOL_LLENO, "linea": _SOL_LINEA, "flecha": _FLECHA, "candado": _CANDADO})))
     st.stop()
