@@ -1,4 +1,4 @@
-"""Registro de competencias por rondas: Copa Argentina, Supercopa Argentina y Mundial de Clubes.
+"""Registro de competencias por rondas: Copa Argentina, Supercopa Argentina, Regionales y Mundial de Clubes.
 
 Cada competencia declara en UN solo lugar cómo se juega: cuál es su estado en S, qué ronda toca,
 cómo se juega, qué día cae cada ronda, qué partidos muestra el calendario y cómo se cierra la
@@ -15,6 +15,9 @@ import datetime as dt
 from copas.argentina import (COPA_RONDAS, nueva_supercopa, rivales_supercopa, simular_ronda_copa, simular_supercopa,
                    supercopa_lista)
 from motor.fechas import desde as _desde, dia_liga, total_liga
+from copas.regionales import (campeones as campeones_regionales, cruces_ronda as cruces_regionales,
+                              regionales_vacios, rotulo_ronda as rotulo_regionales, simular_ronda_regionales,
+                              sortear_regionales)
 from copas.mundial import (RONDAS as RONDAS_MUNDIAL, actualizar_ratings, cerrar_temporada, es_temporada_mundial,
                      nuevo_mundial, partidos_ronda, simular_ronda_mundial, sortear_mundial)
 
@@ -178,6 +181,40 @@ class SupercopaArgentina(Competencia):
         return S["supercopa"]["campeon"]
 
 
+class Regionales(PorRondas):
+    """Torneos regionales por zona (estilo Campeonato Carioca). Es opcional: sólo se juega si la persona los activó
+    (S["regionales_on"]). Hay muchos campeones por temporada (uno por torneo), así que el historial y el palmarés
+    los anota `cerrar` y no las columnas genéricas del registro (ver copas/regionales.py)."""
+    nombre = "Regionales"
+    clave = "regionales"
+    crea_estado = True
+    DIA_INICIAL = (1, 7)                               # arrancan el 7 de enero; una ronda cada 3 días
+
+    def nueva(self, S, rng):
+        return sortear_regionales(S, rng) if S.get("regionales_on") else regionales_vacios()
+
+    def activa(self, S):
+        return bool(S.get("regionales", {}).get("activo"))
+
+    def jugar(self, S, P, rng):
+        simular_ronda_regionales(S, P, rng)
+
+    def cruces(self, S, n):
+        return cruces_regionales(S, n)
+
+    def rotulo(self, S, n):
+        return rotulo_regionales(S, n)
+
+    def dia(self, S, n):
+        return dt.date(_anio(S), *self.DIA_INICIAL) + dt.timedelta(days=3 * (n - 1))
+
+    def cerrar(self, S, rng):
+        """Anota los campeones de cada torneo en el Historial (S["campeones"]); el palmarés por torneo sale de ahí."""
+        camps = campeones_regionales(S)
+        if camps:
+            S["campeones"][-1]["Regionales"] = camps
+
+
 class MundialDeClubes(PorRondas):
     nombre = "Mundial de Clubes"
     clave = "mundial"
@@ -217,7 +254,7 @@ class MundialDeClubes(PorRondas):
 
 
 # El orden importa: es el orden en que "Simular todo" las juega y en que el calendario las lista.
-REGISTRO = [CopaArgentina(), SupercopaArgentina(), MundialDeClubes()]
+REGISTRO = [CopaArgentina(), SupercopaArgentina(), Regionales(), MundialDeClubes()]
 _POR_NOMBRE = {c.nombre: c for c in REGISTRO}
 
 

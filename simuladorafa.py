@@ -54,6 +54,7 @@ from ui import (  # noqa: E402
     ui_nacional,
     ui_primera,
     ui_regional,
+    ui_regionales,
 )
 from ui.acciones import render_acciones  # noqa: E402
 from ui.contexto import Contexto  # noqa: E402
@@ -65,7 +66,7 @@ from ui.vista.mi_club import competencias_club, estilo_mi_club  # noqa: E402
 
 # Pestañas de la interfaz, en el orden en que se dibujan
 PESTANAS_UI = (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional,
-               ui_copa_argentina, ui_supercopa, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos,
+               ui_copa_argentina, ui_supercopa, ui_regionales, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos,
                ui_historial, ui_guardado)
 
 

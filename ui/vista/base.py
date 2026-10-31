@@ -7,6 +7,7 @@ import re
 import streamlit as st
 import unicodedata
 
+from copas.regionales import TORNEOS as TORNEOS_REGIONALES
 from datos import club_propio
 from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS, ESCUDOS_SIN_FONDO
 from datos.imagenes import slug
@@ -54,6 +55,8 @@ COLORES_F = {
 
 COLOR_COMP = [
     ("Mundial de Clubes", "#be185d"),
+    *[(t["nombre"], t["color"]) for t in TORNEOS_REGIONALES],     # cada torneo de los Regionales con su color
+    ("Regionales", "#0d9488"),
     ("Campeonato", "#16a34a"), ("Intermedia", "#d97706"), ("Descenso", "#dc2626"),
     ("Zona A", "#4f46e5"), ("Zona B", "#0891b2"), ("Octavos", "#2563eb"),
     ("Cuartos", "#1d4ed8"), ("Semifinal", "#7c3aed"), ("Final", "#b7860b"),

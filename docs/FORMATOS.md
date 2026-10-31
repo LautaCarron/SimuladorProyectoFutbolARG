@@ -86,6 +86,13 @@ COPAS
   * Copa Argentina y Supercopa Argentina (copas/argentina.py).
   * Libertadores, Sudamericana y Recopa de la CONMEBOL (copas/conmebol.py).
   * Mundial de Clubes, cada 4 temporadas (copas/mundial.py).
+  * Regionales (copas/regionales.py): copa OPCIONAL, se activa en Copas > Regionales (rige ya si la temporada no
+    empezó, si no desde la que viene). Torneos por zona al estilo de los estaduales de Brasil, con los clubes de
+    Primera, B Nacional, Federal A, Federal B, Primera B y Primera C (no Promocional ni Regional Amateur):
+    Porteño, Sur y La Plata, Norte y Oeste, Bonaerense, Cordobés, Cuyano, Litoral, Nordeste, Noroeste y Patagónico
+    (zona de cada club en datos/json/regionales.json). Fase de grupos a una rueda (1 grupo hasta 8 clubes, 2 hasta
+    16, 3 hasta 24, 4 desde 25) y llave de 2, 4 u 8 clasificados a partido único (final en cancha neutral, penales
+    si empatan). Se juega una ronda cada 3 días desde el 7 de enero; un torneo con menos de 4 clubes no se juega.
   * Las copas por rondas se registran en copas/registro.py; el calendario de todo está en motor/calendario.py.
 
 PARTIDAS GUARDADAS: la pestaña "Partidas" (al lado de Historial) descarga la partida en un archivo .afa y la carga

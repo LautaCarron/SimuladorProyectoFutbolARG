@@ -9,7 +9,7 @@ también publicable como web estática con [stlite](https://github.com/whitphx/s
 | Nivel | Competencias |
 |---|---|
 | Ligas | Primera División, Primera Nacional, Federal A, Federal B (opcional, se crea desde el Modo dios), Primera B, Primera C, Promocional Amateur (con 25 clubes o más se juega en dos zonas) y Regional Amateur |
-| Copas nacionales | Copa Argentina (128 equipos) y Supercopa Argentina |
+| Copas nacionales | Copa Argentina (128 equipos), Supercopa Argentina y Regionales (opcional: torneos por zona, estilo estaduales de Brasil) |
 | Copas internacionales | Libertadores, Sudamericana y Recopa (CONMEBOL) y Mundial de Clubes (cada 4 temporadas) |
 | Extras | Calendario con fechas reales de la temporada, historial y palmarés, incidentes (suspensiones y sanciones), avisos |
 
@@ -99,6 +99,7 @@ ligas/               Una liga por módulo (formato, desempates, ascensos, cómo 
   desempates.py        piezas comunes de los desempates por puntos (bloque empatado, duelo o liguilla)
 copas/               Competencias por rondas y copas internacionales
   argentina.py         Copa Argentina y Supercopa
+  regionales.py        Regionales (copa opcional): torneos por zona con grupos y llaves
   conmebol.py          Libertadores, Sudamericana y Recopa
   mundial.py           Mundial de Clubes
   registro.py          Registro de competencias por rondas (clases Competencia, PorRondas, CopaArgentina,

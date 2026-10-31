@@ -148,6 +148,20 @@ def render(ctx):
                                             ("Copa Sudamericana", "Copa Sudamericana", "hist_sud"),
                                             ("Recopa Sudamericana", "Recopa Sudamericana", "hist_rec"))) + '</div>',
                         unsafe_allow_html=True)
+            # Regionales: un palmarés por torneo (sale de los campeones de cada temporada), en un desplegable
+            from copas.regionales import TORNEOS as _TORN
+            if S.get("regionales_on") or any(x.get("Regionales") for x in S["campeones"]):
+                with st.expander(":material/emoji_events: Palmarés de los Regionales (por torneo)", expanded=False):
+                    def _titulos(nombre):
+                        cuenta = {}
+                        for x in S["campeones"]:
+                            club = x.get("Regionales", {}).get(nombre)
+                            if club:
+                                cuenta[club] = cuenta.get(club, 0) + 1
+                        return cuenta
+                    st.markdown('<div class="pal-grid">' + "".join(
+                        tabla_ranking_html(tt["nombre"], tt["nombre"], _titulos(tt["nombre"]), {}) for tt in _TORN)
+                        + '</div>', unsafe_allow_html=True)
             st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
                        "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "
                        "El Federal B suma desde que se crea en el Modo dios. "

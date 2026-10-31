@@ -27,6 +27,7 @@ class Pestanas:
     tab_pd: object
     tab_ca: object
     tab_sup: object
+    tab_rgs: object
     tab_lib: object
     tab_sud: object
     tab_rec: object
@@ -78,9 +79,10 @@ def _pestanas_de_ligas(S, competencias, kclub):
 
 
 def _pestanas_de_copas(competencias, kclub):
-    claves = ["ca", "sup", "lib", "sud", "rec", "mun"]
+    claves = ["ca", "sup", "rgs", "lib", "sud", "rec", "mun"]
     etiquetas = [_etiqueta("Copa Argentina", "Copa Argentina", "ca", competencias),
                  _etiqueta("Supercopa Argentina", "Supercopa", "sup", competencias),
+                 _etiqueta("Regionales", "Regionales", "rgs", competencias),
                  _etiqueta("Copa Libertadores", "Libertadores", "lib", competencias),
                  _etiqueta("Copa Sudamericana", "Sudamericana", "sud", competencias),
                  _etiqueta("Recopa Sudamericana", "Recopa", "rec", competencias),
@@ -106,10 +108,10 @@ def crear_pestanas(S, modo_mgr, competencias, kclub, sin_leer, pestana_inicial=N
     with tab_ligas, st.container(key="menu_ligas"):
         ligas = _pestanas_de_ligas(S, competencias, kclub)
     with tab_copas, st.container(key="menu_copas"):
-        tab_ca, tab_sup, tab_lib, tab_sud, tab_rec, tab_mun = _pestanas_de_copas(competencias, kclub)
+        tab_ca, tab_sup, tab_rgs, tab_lib, tab_sud, tab_rec, tab_mun = _pestanas_de_copas(competencias, kclub)
     return Pestanas(
         tab_ligas=tab_ligas, tab_copas=tab_copas, tab_cal=tab_cal, tab_c=tab_c, tab_av=tab_av, tab_h=tab_h,
         tab_pa=tab_pa, tab_p=ligas["p"], tab_b=ligas["b"], tab_f=ligas["f"], tab_reg=ligas["reg"],
-        tab_pb=ligas["pb"], tab_pc=ligas["pc"], tab_pd=ligas["pd"], tab_ca=tab_ca, tab_sup=tab_sup,
+        tab_pb=ligas["pb"], tab_pc=ligas["pc"], tab_pd=ligas["pd"], tab_ca=tab_ca, tab_sup=tab_sup, tab_rgs=tab_rgs,
         tab_lib=tab_lib, tab_sud=tab_sud, tab_rec=tab_rec, tab_mun=tab_mun,
         tab_mgr=tab_mgr, tab_fb=ligas.get("fb"))

@@ -34,7 +34,7 @@ from ligas.simples import nueva_estructura_liga
 from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
-VERSION_ESTADO = 20       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 21       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado(club_propio=None):
@@ -62,6 +62,7 @@ def crear_estado(club_propio=None):
         "primera_c": list(EQUIPOS_PRIMERA_C),
         "regional": list(reg),
         "federal_b": [], "fb": None,          # Federal B: se crea desde el Modo dios (ver ligas/federal_b.py)
+        "regionales_on": False,               # Regionales: copa opcional, se activa desde Copas > Regionales
         "cerrada_ambas": False, "version": VERSION_ESTADO,
     }
     if club_propio:                             # su media no está en las tablas de datos: se suma a mano

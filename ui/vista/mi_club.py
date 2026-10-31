@@ -129,6 +129,9 @@ def competencias_club(S, club):
                     out.add("sup")
         except Exception:
             pass
+    from copas.regionales import torneo_del_club
+    if torneo_del_club(S, club):
+        out.add("rgs")
     for clave in ("lib", "sud", "rec"):
         if _en_copa_int((S.get("int") or {}).get(clave), club):
             out.add(clave)
