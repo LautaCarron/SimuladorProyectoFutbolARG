@@ -148,7 +148,7 @@
   "Talleres (RE)": "sur",
   "Dock Sud": "sur",
   "Brown de Adrogué": "sur",
-  "San Martin (Burzaco)": "sur",
+  "San Martín (Burzaco)": "sur",
   "Tristán Suárez": "sur",
   "Claypole": "sur",
   "Berazategui": "sur",
@@ -189,7 +189,7 @@
   "Yupanqui": "norte_oeste",
   "Atlas": "norte_oeste",
   "J.J. Urquiza": "norte_oeste",
-  "Muniz": "norte_oeste",
+  "Muñiz": "norte_oeste",
   "Deportivo Laferrere": "norte_oeste",
   "Sportivo Italiano": "norte_oeste",
   "Acassuso": "norte_oeste",
@@ -197,7 +197,7 @@
   "Luján": "norte_oeste",
   "Deportivo Armenio": "norte_oeste",
   "Atlético Escobar": "norte_oeste",
-  "Nautico Hacoaj": "norte_oeste",
+  "Náutico Hacoaj": "norte_oeste",
   "Mercedes": "bonaerense",
   "Sarmiento (Junín)": "bonaerense",
   "Aldosivi": "bonaerense",
@@ -205,9 +205,8 @@
   "Newell's": "litoral",
   "Unión": "litoral",
   "Colón": "litoral",
-  "Argentinos de Rosario": "litoral",
-  "Central Cordoba de Rosario": "litoral",
-  "Tiro Federal (Rosario)": "litoral",
+  "Argentino de Rosario": "litoral",
+  "Central Córdoba de Rosario": "litoral",
   "Leones de Rosario FC": "litoral"
  }
 }

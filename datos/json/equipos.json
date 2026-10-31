@@ -130,7 +130,7 @@
     "Sportivo Italiano": 44,
     "Flandria": 43,
     "Deportivo Armenio": 42,
-    "San Martin (Burzaco)": 40,
+    "San Martín (Burzaco)": 40,
     "Ituzaingó": 38
   },
   "primera_c": {
@@ -146,34 +146,39 @@
     "El Porvenir": 35,
     "Puerto Nuevo": 31,
     "Sacachispas": 38,
-    "Argentinos de Rosario": 25,
-    "Central Cordoba de Rosario": 30,
+    "Argentino de Rosario": 25,
+    "Central Córdoba de Rosario": 30,
     "Paraguayo": 25,
     "Lugano": 25,
     "Claypole": 30,
     "Luján": 34,
     "Mercedes": 25,
     "Sportivo Barracas": 29,
-    "Muniz": 24,
+    "Muñiz": 24,
     "General Lamadrid": 30,
     "Leandro N.Alem": 25,
     "Centro Español": 25,
-    "J.J. Urquiza": 25
+    "J.J. Urquiza": 25,
+    "Estrella del Sur": 31,
+    "Leones de Rosario FC": 25
   },
   "primera_d": {
-    "Estrella del Sur": 31,
     "SAT": 25,
     "Metalúrgico": 23,
     "Defensores de Glew": 22,
-    "Nautico Hacoaj": 22,
+    "Náutico Hacoaj": 22,
     "Estrella de Berisso": 20,
     "Barrancas": 20,
     "FC Ezeiza": 20,
     "Bs.As. City FC": 20,
     "Alumni (Los Hornos)": 19,
     "Everton (LP)": 19,
-    "Tiro Federal (Rosario)": 20,
-    "Leones de Rosario FC": 25,
-    "Las Mandarinas": 18
+    "Las Mandarinas": 18,
+    "Provincial de Lobos": 20,
+    "Atlético Pilar": 22,
+    "Juventud de Bernal": 19,
+    "Control Orientado": 18,
+    "Belgrano (Zárate)": 20,
+    "Uribelarrea FC": 18
   }
 }
