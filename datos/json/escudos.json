@@ -163,7 +163,13 @@
     "Leandro N.Alem": "https://api.promiedos.com.ar/images/team/bbjac/1",
     "Centro Español": "https://api.promiedos.com.ar/images/team/bbjee/1",
     "J.J. Urquiza": "https://api.promiedos.com.ar/images/team/bfjej/1",
-    "Las Mandarinas": "https://futbolfundaciones.wordpress.com/wp-content/uploads/2026/04/las-mandarinas-brandsen-buenos-aires.png"
+    "Las Mandarinas": "https://api.promiedos.com.ar/images/team/jbiaj/1",
+    "Provincial de Lobos": "https://api.promiedos.com.ar/images/team/hjbff/1",
+    "Atlético Pilar": "https://api.promiedos.com.ar/images/team/hjbei/1",
+    "Juventud de Bernal": "https://api.promiedos.com.ar/images/team/hjbfe/1",
+    "Control Orientado": "https://api.promiedos.com.ar/images/team/jdjed/1",
+    "Belgrano (Zárate)": "https://api.promiedos.com.ar/images/team/hjbeg/1",
+    "Uribelarrea FC": "https://api.promiedos.com.ar/images/team/jbiaf/1"
   },
   "oscuros": ["Atlético Escobar", "Atlético Regina (Villa Regina)", "Atlético San Julián", "Central Norte", "Ciudad de Bolívar", "Colocasi (San Francisco del Monte de Oro)", "Defensores de Belgrano", "Deportivo Español", "Deportivo Municipal (La Leonesa)", "Deportivo Norte (Mar del Plata)", "Deportivo Trancas", "El Fortín (Olavarría)", "Embajadores (Olavarría)", "FADEP", "Huracán (Corrientes)", "Jorge Newbery (Comodoro Rivadavia)", "La Cantera (Posadas)", "Montecaseros", "Parque Sur (Concepción del Uruguay)", "Patronato", "Río Grande (Neuquén)", "San Lorenzo (Villa Castells)", "San Luis de la Puntilla (Belén)", "San Martín (San Juan)", "Santa Cruz Futbol Club (Río Turbio)", "Social Pinto", "Talleres (Nueva Esperanza)", "Unión (Oncativo)", "Villa Dálmine"],
   "sin_fondo": ["Acción Juvenil (General Deheza)", "Argentino Peñarol", "Sarmiento (Leones)"]
