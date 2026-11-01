@@ -136,7 +136,7 @@ def render(ctx):
                 for titulo, logo, clave in (*_ligas_pal,
                                             ("Primera B Metropolitana", "Primera B", "hist_pb"),
                                             ("Primera C Metropolitana", "Primera C", "hist_pc"),
-                                            ("Promocional Amateur", "Promocional Amateur", "hist_pd"))) + '</div>',
+                                            ("Promocional Amateur (Ex Primera D)", "Promocional Amateur", "hist_pd"))) + '</div>',
                         unsafe_allow_html=True)
             st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas</div>', unsafe_allow_html=True)
             st.markdown('<div class="pal-grid">' + "".join(
