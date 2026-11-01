@@ -292,7 +292,6 @@ def render(ctx):
                     aviso("Las definiciones aparecen acá cuando termina el torneo." if anual else
                           "Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
                 else:
-                    st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
                     e1, e2 = st.columns(2)
                     with e1:
                         with st.expander(":material/emoji_events: Campeón de la Primera Nacional", expanded=False):

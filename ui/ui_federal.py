@@ -195,7 +195,6 @@ def render_liga_f(ctx, SF, tab_f, terminada_f, pct_f, clave):
                 if SF["campeon"] is None:
                     aviso(f"Las definiciones aparecen acá cuando termina la fase 2 del {nombre}.")
                 else:
-                    st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
                     with st.expander(f":material/emoji_events: Campeón del {nombre}", expanded=False):
                         cf = nom_f[SF["campeon"]]
                         st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'

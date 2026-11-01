@@ -120,8 +120,7 @@ def vista_fixture(S, club, liga, region=None):
                 "pb": "Primera B", "pc": "Primera C", "pd": "Promocional Amateur",
                 "reg": "Regional Amateur"}.get(liga)
     dia = dia_de(S, liga_cal, elegida) if liga_cal else None
-    st.markdown(f'<div class="fx-head"><b style="font-size:1.05rem">{esc(rotulo(elegida))}</b>'
-                f'{estado}<span class="m-dia">{esc(texto_dia(dia)) if dia else ""}</span></div>',
+    st.markdown(f'<div class="fx-head">{estado}<span class="m-dia">{esc(texto_dia(dia)) if dia else ""}</span></div>',
                 unsafe_allow_html=True)
     partidos = obtener(elegida)
     if not partidos:

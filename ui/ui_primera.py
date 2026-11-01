@@ -234,7 +234,6 @@ def render(ctx):
                         sel = final[final["Pos"].isin(list(posiciones))]
                         return lista_equipos_html([(r.Equipo, f"{r.Pos}°") for r in sel.itertuples()])
 
-                    st.caption("Están cerradas para no spoilear: tocá cada una para verla.")
                     e1, e2 = st.columns(2)
                     with e1:
                         if fmt == "apertura_clausura":

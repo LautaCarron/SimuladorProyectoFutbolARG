@@ -169,10 +169,6 @@ def render(ctx):
                 if not campeones_ya:
                     aviso("Los cruces se completan con los campeones de cada región.")
                 st.markdown(finales_reg_html(S), unsafe_allow_html=True)
-                if SR["ascendidos"]:
-                    st.markdown(f'<div class="mlab up">▲ Ascienden al {sube}</div>'
-                                + lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
-                                                      for i in SR["ascendidos"]]), unsafe_allow_html=True)
 
             with tab_r["Movimientos"]:
                 render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
