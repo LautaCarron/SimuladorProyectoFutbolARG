@@ -39,7 +39,7 @@ def fila_partido_html(S, club, p, abierto=False):
     """Partido en formato tarjeta; `club` es el club que dirige el manager (None si no hay): se marca en amarillo."""
     wl = " w" if p["gana"] == p["local"] else ""
     wv = " w" if p["gana"] == p["visita"] else ""
-    dia = dia_partido(S, p)
+    dia = p.get("dia") or dia_partido(S, p)       # los de temporadas viejas guardan su día
     mio = " mio" if club and club in (p["local"], p["visita"]) else ""     # partido de mi club (amarillo)
     meta = (chip(p["liga"]) + (chip(p["comp"]) if p["comp"] != p["liga"] else "")
             + f'<span style="opacity:.7;font-weight:600">{esc(p["rotulo"])}</span>'

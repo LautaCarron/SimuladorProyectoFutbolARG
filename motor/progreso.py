@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from copas.conmebol import terminadas as conmebol_terminadas
 from copas.registro import REGISTRO
+from datos.paises import PAIS_BASE, avisos_del_pais
 from ligas.nacional import total_b
 from ligas.primera import primera_terminada, total_primera
 
@@ -77,3 +78,26 @@ def avisos_de_temporada(S):
     """Avisos (suspensiones y sanciones) de esta temporada, de todas las competencias."""
     ligas = (S, S["b"], S["f"], *([S["fb"]] if S.get("fb") else []), S["pb"], S["pc"], S["reg"], S["copa"])
     return [a for L in ligas for a in L.get("alertas", [])]
+
+
+# ---- Avisos por país (pestaña Avisos) --------------------------------------------------------------------
+# Argentina sigue usando S["avisos_leidos"] (así las partidas guardadas no cambian); los demás países, S["avisos_leidos_pais"].
+def avisos_leidos(S, pais):
+    if pais == PAIS_BASE:
+        return S.get("avisos_leidos", 0)
+    return S.get("avisos_leidos_pais", {}).get(pais, 0)
+
+
+def marcar_avisos_leidos(S, pais, total):
+    if pais == PAIS_BASE:
+        S["avisos_leidos"] = total
+    else:
+        S.setdefault("avisos_leidos_pais", {})[pais] = total
+
+
+def avisos_del_pais_en(S, avisos, pais):
+    """Avisos de `pais`: (los de esta temporada, los de temporadas anteriores, cuántos hay sin leer).
+    `avisos` son los de esta temporada de todo el simulador (avisos_de_temporada)."""
+    actuales = avisos_del_pais(avisos, pais)
+    previos = avisos_del_pais(S.get("alertas_hist", []), pais)
+    return actuales, previos, max(0, len(actuales) + len(previos) - avisos_leidos(S, pais))

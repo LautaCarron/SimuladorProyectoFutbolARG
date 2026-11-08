@@ -5,6 +5,8 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 """
 
 import streamlit as st
+from datos import paises
+from motor.progreso import marcar_avisos_leidos
 from ui.vista import aviso, avisos_html, seccion
 
 
@@ -16,19 +18,22 @@ def render(ctx):
     # ============================================================================
     if _abierta(tab_av):
         with tab_av:
-            seccion("Avisos", "Partidos suspendidos y sanciones del Tribunal de Disciplina", "#b83a2e")
+            seccion("Avisos", f"Partidos suspendidos y sanciones del Tribunal de Disciplina · {paises.etiqueta(ctx.pais)}",
+                    "#b83a2e")
             if _sin_leer:
                 c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
                 c1.markdown(f'<div class="aviso-banner">🚨 <span><b>{_sin_leer} aviso{"s" if _sin_leer > 1 else ""} '
                             f'nuevo{"s" if _sin_leer > 1 else ""}</b></span></div>', unsafe_allow_html=True)
                 if c2.button(":material/done_all: Marcar como leídos", key="avisos_leidos_btn", width="stretch"):
-                    S["avisos_leidos"] = _total_avisos
+                    marcar_avisos_leidos(S, ctx.pais, _total_avisos)
                     st.rerun()
             if _avisos:
                 st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
                 st.markdown(avisos_html(S, _avisos), unsafe_allow_html=True)
             else:
-                aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones.")
-            if S.get("alertas_hist"):
+                aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones."
+                      if ctx.es_base else f"Todavía no hay avisos de {ctx.pais}: el Tribunal de Disciplina "
+                      "(suspensiones y sanciones) por ahora sólo funciona en Argentina.")
+            if ctx.avisos_hist:
                 st.markdown('<div class="mlab" style="margin-top:18px">Temporadas anteriores</div>', unsafe_allow_html=True)
-                st.markdown(avisos_html(S, S["alertas_hist"], con_temporada=True), unsafe_allow_html=True)
+                st.markdown(avisos_html(S, ctx.avisos_hist, con_temporada=True), unsafe_allow_html=True)

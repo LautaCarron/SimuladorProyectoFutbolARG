@@ -7,7 +7,7 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 """
 
 import streamlit as st
-from datos.equipos import F_GRUPOS_NOMBRES, region_de, region_regional
+from datos.equipos import F_GRUPOS_NOMBRES
 from ligas.federal import F_DESC, plan_de_f, simular_fecha_f, tabla_f_f2, tabla_f_grupo
 from ligas.federal_b import destino_descenso_federal_a
 from ui.vista.editor_medias import editar_medias
@@ -19,11 +19,8 @@ from ui.vista import (
     bracket_html_f,
     chip,
     colorear_f,
-    crest,
-    esc,
     fila_partido_html,
     leyenda,
-    lista_equipos_html,
     mostrar_tabla,
     render_movimientos,
     seccion,
@@ -99,7 +96,7 @@ def render_liga_f(ctx, SF, tab_f, terminada_f, pct_f, clave):
             desempate_fd = SF.get("desempate_desc")
             titulos_f = ["Posiciones", "Fixture y resultados"]
             if desempate_f or desempate_fd: titulos_f.append("Desempate")
-            titulos_f.extend(["Reducido", "Movimientos", "Definiciones"])
+            titulos_f.extend(["Reducido", "Movimientos"])
             tab_f = dict(zip(titulos_f, st.tabs(titulos_f)))
                        
             with tab_f["Posiciones"]:
@@ -190,36 +187,3 @@ def render_liga_f(ctx, SF, tab_f, terminada_f, pct_f, clave):
             with tab_f["Movimientos"]:
                 render_movimientos(SF["log"], SF["pos_hist"], nom_f, "#0f766e")
         
-            with tab_f["Definiciones"]:
-                seccion("Definiciones de la temporada", color="#b7860b")
-                if SF["campeon"] is None:
-                    aviso(f"Las definiciones aparecen acá cuando termina la fase 2 del {nombre}.")
-                else:
-                    with st.expander(f":material/emoji_events: Campeón del {nombre}", expanded=False):
-                        cf = nom_f[SF["campeon"]]
-                        st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
-                                    f'</div><div style="margin-top:10px">{crest(cf, 64)}</div>'
-                                    f'<div class="nm">{esc(cf)}</div><div class="s">Asciende '
-                                    f'{"al Federal A" if es_b else "a la Primera Nacional"}</div></div>',
-                                    unsafe_allow_html=True)
-                        if SF.get("desempate_camp"):
-                            dc = SF["desempate_camp"]
-                            st.markdown(f'<div class="mlab" style="margin-top:14px">Título definido por '
-                                        f'desempate · igualaron en puntos: {esc(", ".join(dc["equipos"]))}'
-                                        f'</div>' + "".join(fila_partido_html(S, ctx.club, p) for p in dc["partidos"]),
-                                        unsafe_allow_html=True)
-                    with st.expander(":material/north: Clasificados · Ascensos", expanded=False):
-                        asc_f = [(nom_f[i], "campeón" if k == 0 else f"{k + 1}°") for k, i in enumerate(SF["asc_directo"])]
-                        if SF["asc_reducido"] is not None:
-                            asc_f.append((nom_f[SF["asc_reducido"]], "reducido"))
-                        st.markdown(lista_equipos_html(asc_f) + (
-                            '' if SF["asc_reducido"] is not None or not plan_de_f(SF)["reducido"] else
-                            '<div style="font-size:.8rem;opacity:.65">El último ascenso sale del '
-                            'reducido.</div>'), unsafe_allow_html=True)
-                    with st.expander(f":material/south: Descensos al {baja_a}", expanded=False):
-                        a_regional = baja_a == "Regional Amateur"
-                        st.markdown(f'<div class="mlab">Descienden los {n_desc} últimos de Zona Descenso'
-                                    + (' (a la región de su provincia)' if a_regional else '') + '</div>'
-                                    + lista_equipos_html([(nom_f[i], region_regional(nom_f[i]) if a_regional
-                                                          else region_de(nom_f[i]))
-                                                          for i in SF["descendidos"]]), unsafe_allow_html=True)

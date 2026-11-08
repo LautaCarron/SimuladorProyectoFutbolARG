@@ -1,0 +1,23 @@
+{
+  "ligas": [
+    {
+      "clave": "uy",
+      "nombre": "Liga AUF Uruguaya",
+      "pais": "Uruguay",
+      "formato": "uruguay",
+      "descensos": 2,
+      "ascensos": 2,
+      "calendario": {
+        "Apertura": [2, 7, 5],
+        "Intermedio": [6, 13, 5],
+        "Clausura": [8, 8, 5],
+        "Definiciones": [11, 21, 5]
+      },
+      "clubes": [
+        "Albion FC", "Boston River", "Central Español", "Cerro", "Cerro Largo", "Danubio", "Defensor Sporting",
+        "Deportivo Maldonado", "Juventud", "Liverpool", "Montevideo City Torque", "Montevideo Wanderers", "Nacional",
+        "Peñarol", "Progreso", "Racing (Montevideo)"
+      ]
+    }
+  ]
+}

@@ -6,11 +6,15 @@ from config import VOLATILIDAD
 from motor.calendario import jugar_proximo_dia, texto_dia
 from motor.simulacion import simular_todo
 from motor.temporada import crear_estado, nueva_temporada
+from ui import ui_mundo
 
 
-def render_acciones(S, P, progreso, modo_mgr, acumular, hoy):
+def render_acciones(S, P, progreso, modo_mgr, acumular, hoy, pais=None):
     """`hoy`: próximo día con partidos (None si no queda nada por jugar)."""
     g0, gd, g1, g2, g3 = st.container(key="acciones").columns([1.6, 1.4, 1.3, 1.5, 1.1], vertical_alignment="center")
+    if pais:                                       # el país activo, a la izquierda de los botones (en el celular va aparte)
+        with g0:
+            ui_mundo.indicador(pais)
     if gd.button(":material/calendar_today: Próximo día", disabled=hoy is None, width="stretch",
                  help=f"Juega todo lo del {texto_dia(hoy)}" if hoy else None):
         jugar_proximo_dia(S, P, acumular)

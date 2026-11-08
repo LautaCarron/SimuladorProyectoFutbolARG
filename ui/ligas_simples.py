@@ -20,7 +20,6 @@ from ligas.simples import (
     tabla_pd,
     tablas_zonas,
 )
-from ui.vista.cuadros import bracket_html_simple
 from ui.vista.editor_medias import editar_medias
 from ui.vista.liguilla import html_tabla_liguilla
 from ui.vista.mi_club import marcar, tabs_con_default, zona_simple
@@ -31,7 +30,6 @@ from ui.vista import (
     colorear_pb,
     colorear_pc,
     colorear_pd,
-    crest,
     esc,
     fila_partido_html,
     leyenda,
@@ -144,7 +142,7 @@ def _render_liga(ctx, cfg):
         titulos = ["Posiciones", "Fixture y resultados"]
         if mostrar_desempate:
             titulos.append("Desempate")
-        titulos.extend(["Movimientos", "Definiciones"])
+        titulos.append("Movimientos")
         tabs = st.tabs(titulos)
         idx = 0
 
@@ -197,28 +195,3 @@ def _render_liga(ctx, cfg):
             render_movimientos(L["log"], L["pos_hist"], L["nombres"], "#0f766e")
         idx += 1
 
-        with tabs[idx]:
-            seccion("Definiciones de la temporada", color="#b7860b")
-            if L["campeon"] is None:
-                aviso("Las definiciones aparecen acá cuando termina la liga.")
-            else:
-                with st.expander(f":material/emoji_events: {cfg['expander_campeon']}", expanded=False):
-                    campeon = L["nombres"][L["campeon"]]
-                    st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">'
-                                f'{crest(campeon, 64)}</div><div class="nm">{esc(campeon)}</div></div>',
-                                unsafe_allow_html=True)
-                if L.get("bracket"):
-                    with st.expander(":material/account_tree: Reducido por el ascenso", expanded=False):
-                        st.markdown(bracket_html_simple(L, SUBE_A[k]), unsafe_allow_html=True)
-                if en_zonas:
-                    with st.expander(":material/sports_soccer: Finales por el ascenso", expanded=False):
-                        for p in L["log"]:
-                            if p["comp"] in ("Final", "Playoff"):
-                                st.markdown(fila_partido_html(S, ctx.club, p, abierto=True), unsafe_allow_html=True)
-                    with st.expander(f":material/trending_up: Ascienden a {SUBE_A[k]}", expanded=False):
-                        if L["ascendidos"]:
-                            for i in L["ascendidos"]:
-                                st.markdown(f'<div style="margin:4px 0">{crest(L["nombres"][i], 28)} '
-                                            f'<b>{esc(L["nombres"][i])}</b></div>', unsafe_allow_html=True)
-                        else:
-                            st.write("Esta temporada no hay ascensos.")

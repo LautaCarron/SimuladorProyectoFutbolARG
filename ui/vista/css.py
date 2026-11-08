@@ -489,7 +489,7 @@ table.rk{width:100%;border-collapse:collapse;font-size:.84rem;}
 @media (prefers-color-scheme:dark){:root:not([data-tema]) .crest-img.crest-osc{filter:drop-shadow(0 0 .7px rgba(255,255,255,.9)) drop-shadow(0 0 .7px rgba(255,255,255,.6));}}
 /* menús de Ligas y Copas: logos en las pestañas */
 [role="tab"] img{height:22px !important;width:22px !important;max-height:none !important;object-fit:contain;margin-right:7px;vertical-align:middle;}
-.st-key-menu_ligas>[data-testid="stTabs"]>div>[role="tablist"],.st-key-menu_copas>[data-testid="stTabs"]>div>[role="tablist"]{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:0 10px;margin-top:-4px;}
+.st-key-menu_ligas>[data-testid="stTabs"]>div>[role="tablist"],.st-key-menu_mundo>[data-testid="stTabs"]>div>[role="tablist"],.st-key-menu_copas>[data-testid="stTabs"]>div>[role="tablist"]{background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:0 10px;margin-top:-4px;}
 .catgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:8px;}
 /* ---------- entrada suave del contenido al cambiar de pestaña ---------- */
 .stTabs [role="tabpanel"]>div{animation:afa-in .45s var(--ease) both;}
@@ -521,6 +521,7 @@ table.rk{width:100%;border-collapse:collapse;font-size:.84rem;}
 .bt{padding:8px 10px;}
 .bt .nm{white-space:normal;overflow:visible;line-height:1.2;}
 }
+.pais-ind-movil{display:none;}
 /* ---------- mobile ---------- */
 @media (max-width:640px){
 .block-container{padding-left:16px;padding-right:16px;padding-top:.6rem;}
@@ -530,6 +531,7 @@ table.rk{width:100%;border-collapse:collapse;font-size:.84rem;}
 .st-key-acciones [data-testid="stColumn"]{min-width:0 !important;width:auto !important;flex:1 1 0 !important;}
 .st-key-acciones [data-testid="stColumn"]:first-child{display:none;}
 .st-key-acciones button{padding:6px 4px !important;min-height:40px;}
+.pais-ind-movil{display:block !important;}
 .st-key-acciones button p{font-size:.76rem;white-space:normal;line-height:1.15;text-align:center;overflow:visible;}
 /* acciones de cada liga: rótulos arriba, "Próxima fecha" y "Hasta el final" lado a lado */
 [data-testid="stHorizontalBlock"]:has([class*="_next"]):has([class*="_all"]){flex-wrap:wrap !important;flex-direction:row !important;gap:8px !important;}

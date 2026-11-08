@@ -88,7 +88,7 @@ def render(ctx):
             while not mundial_terminado(S):
                 simular_ronda_mundial(S, P, S["rng"])
             st.rerun()
-        titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Ranking CONMEBOL", "Definiciones"]
+        titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Ranking CONMEBOL"]
         t = dict(zip(titulos, st.tabs(titulos)))
         with t["Grupos"]:
             seccion("Fase de grupos", color=color)
@@ -117,16 +117,6 @@ def render(ctx):
             st.markdown('<div class="mlab" style="margin-top:22px">Camino al próximo Mundial</div>',
                         unsafe_allow_html=True)
             ranking_sudamerica(M["temp"] + CADA, color)
-        with t["Definiciones"]:
-            seccion("Definiciones", color="#b7860b")
-            if M["campeon"] is None:
-                aviso("El campeón aparece acá cuando se juega la final.")
-            else:
-                cc = M["campeon"]
-                st.markdown(f'<div class="champ"><div class="t">Campeón · Mundial de Clubes {M["anio"]}</div>'
-                            f'<div style="margin-top:10px">{crest(cc, 64)}</div><div class="nm">{esc(cc)}</div>'
-                            f'<div class="s">{bandera(pais_club(cc), 18)} {esc(pais_club(cc))} · finalista: '
-                            f'{esc(M["subcampeon"])}</div></div>', unsafe_allow_html=True)
 
 
     if _abierta(tab_copas, tab_mun):

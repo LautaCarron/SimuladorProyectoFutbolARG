@@ -27,7 +27,6 @@ from ui.vista import (
     fila_partido_html,
     finales_reg_html,
     leyenda,
-    lista_equipos_html,
     mostrar_tabla,
     render_movimientos,
     seccion,
@@ -108,7 +107,7 @@ def render(ctx):
             titulos_r = ["Regiones", "Fixture y resultados"]
             if SR["desempate_pendiente"] or desempates_r:
                 titulos_r.append("Desempate")
-            titulos_r += ["Final por el ascenso", "Movimientos", "Definiciones"]
+            titulos_r += ["Final por el ascenso", "Movimientos"]
             tab_r = dict(zip(titulos_r, st.tabs(titulos_r)))
 
             with tab_r["Regiones"]:
@@ -173,16 +172,3 @@ def render(ctx):
             with tab_r["Movimientos"]:
                 render_movimientos(SR["log"], SR["pos_hist"], SR["nombres"], "#0f766e")
 
-            with tab_r["Definiciones"]:
-                seccion("Definiciones de la temporada", color="#b7860b")
-                if not any(c is not None for c in SR["campeones"].values()):
-                    aviso("Las definiciones aparecen acá cuando termina la liga de cada región.")
-                else:
-                    with st.expander(":material/emoji_events: Campeones regionales", expanded=False):
-                        st.markdown(lista_equipos_html([(SR["nombres"][c], reg) for reg, c in
-                                                        SR["campeones"].items() if c is not None]),
-                                    unsafe_allow_html=True)
-                    if SR["ascendidos"]:
-                        with st.expander(f":material/arrow_upward: Ascensos al {sube}", expanded=False):
-                            st.markdown(lista_equipos_html([(SR["nombres"][i], SR["region_de"][i])
-                                                            for i in SR["ascendidos"]]), unsafe_allow_html=True)

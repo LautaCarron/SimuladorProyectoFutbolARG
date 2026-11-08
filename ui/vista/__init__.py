@@ -94,6 +94,7 @@ from ui.vista.cuadros import (
     _kb_final,
     _kb,
     cuadro_llave_html,
+    cuadro_campeonato_html,
     cuadro_final_copa_html,
     _ICONO_AVISO,
     avisos_html,

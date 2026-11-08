@@ -61,8 +61,8 @@ def render(ctx):
                             + '</div>', unsafe_allow_html=True)
             return
         es_lib = clave == "lib"
-        titulos = (["Fase previa"] if es_lib else []) + ["Grupos"] + ([] if es_lib else ["Playoffs"]) + [
-            "Eliminatorias", "Partidos", "Clasificados", "Definiciones"]
+        titulos = ["Fase previa", "Grupos"] + ([] if es_lib else ["Playoffs"]) + [
+            "Eliminatorias", "Partidos", "Clasificados"]
         t = dict(zip(titulos, st.tabs(titulos)))
         if es_lib:
             with t["Fase previa"]:
@@ -77,6 +77,12 @@ def render(ctx):
                     st.markdown(series_int_html(C, fase_sel), unsafe_allow_html=True)
                 else:
                     aviso(f"La {fase_sel} se arma cuando termina la fase anterior.")
+        else:
+            with t["Fase previa"]:
+                seccion("Fase 1", "32 clubes (4 por país, menos Argentina y Brasil) en cruces entre clubes del mismo país "
+                        "a ida y vuelta · los 16 que ganan van a los grupos con los 12 de Argentina y Brasil, que "
+                        "entran directo", color)
+                st.markdown(series_int_html(C, "Fase 1"), unsafe_allow_html=True)
         with t["Grupos"]:
             seccion("Fase de grupos", color=color)
             if C["grupos"] is None:
@@ -117,17 +123,6 @@ def render(ctx):
             filas.sort(key=lambda x: (x["País"] != "Argentina", x["País"], -x["Media"]))
             df_i = pd.DataFrame(filas)
             st.markdown(tabla_html(df_i, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
-        with t["Definiciones"]:
-            seccion("Definiciones", color="#b7860b")
-            if C["campeon"] is None:
-                aviso("El campeón aparece acá cuando se juega la final.")
-            else:
-                cc = C["campeon"]
-                st.markdown(f'<div class="champ"><div class="t">Campeón · {esc(nombre)} {anio(S)}</div>'
-                            f'<div style="margin-top:10px">{crest(cc, 64)}</div><div class="nm">{esc(cc)}</div>'
-                            f'<div class="s">{bandera(pais_de(cc), 18)} {esc(pais_de(cc))} · finalista: '
-                            f'{esc(C["subcampeon"])}</div></div>', unsafe_allow_html=True)
-                st.caption("Clasifica a la Recopa y a la próxima Libertadores.")
 
 
     if _abierta(tab_copas, tab_lib):

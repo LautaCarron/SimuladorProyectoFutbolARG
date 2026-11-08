@@ -1,0 +1,81 @@
+{
+  "clave": "uy",
+  "nombre": "Liga AUF Uruguaya",
+  "pais": "Uruguay",
+  "formato": "uruguay",
+  "descensos": 3,
+  "ascensos": 3,
+  "calendario": {
+    "Apertura": [2, 7, 5],
+    "Intermedio": [6, 13, 5],
+    "Clausura": [8, 8, 5],
+    "Definiciones": [11, 21, 5]
+  },
+  "segunda_liga": {
+    "nombre": "Segunda División Profesional",
+    "formato": "uruguay_segunda",
+    "descensos": 2,
+    "calendario": {
+      "Competencia": [3, 7, 5],
+      "Regular": [5, 9, 5],
+      "Definiciones": [11, 14, 5]
+    }
+  },
+  "oscuros": ["Nacional"],
+  "primera": [
+    {"nombre": "Albion FC", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21403.png&h=96&w=96"},
+    {"nombre": "Boston River", "media": 62, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9999.png&h=96&w=96"},
+    {"nombre": "Central Español", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/131688.png&h=96&w=96"},
+    {"nombre": "Cerro", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5490.png&h=96&w=96"},
+    {"nombre": "Cerro Largo", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9902.png&h=96&w=96"},
+    {"nombre": "Danubio", "media": 63, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4817.png&h=96&w=96"},
+    {"nombre": "Defensor Sporting", "media": 65, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/1007.png&h=96&w=96"},
+    {"nombre": "Deportivo Maldonado", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10000.png&h=96&w=96"},
+    {"nombre": "Juventud", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8416.png&h=96&w=96"},
+    {"nombre": "Liverpool", "media": 64, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5492.png&h=96&w=96"},
+    {"nombre": "Montevideo City Torque", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19002.png&h=96&w=96"},
+    {"nombre": "Montevideo Wanderers", "media": 62, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5501.png&h=96&w=96"},
+    {"nombre": "Nacional", "media": 72, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2684.png&h=96&w=96"},
+    {"nombre": "Peñarol", "media": 72, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2683.png&h=96&w=96"},
+    {"nombre": "Progreso", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6866.png&h=96&w=96"},
+    {"nombre": "Racing (Montevideo)", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9903.png&h=96&w=96"}
+  ],
+  "segunda": [
+    {"nombre": "Plaza Colonia", "media": 58, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5495.png&h=96&w=96"},
+    {"nombre": "Miramar Misiones", "media": 57, "escudo": "https://img.a.transfermarkt.technology/wappen/head/7477.png?lm=1789459555"},
+    {"nombre": "Fénix (Montevideo)", "media": 57, "escudo": "https://img.a.transfermarkt.technology/wappen/head/3829.png?lm=1789459366"},
+    {"nombre": "River Plate (Montevideo)", "media": 57, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/20/Club_Atletico_River_Plate.svg/1280px-Club_Atletico_River_Plate.svg.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail"},
+    {"nombre": "Rentistas", "media": 55, "escudo": "https://upload.wikimedia.org/wikipedia/commons/4/46/CA_Rentistas_2020.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "Oriental (La Paz)", "media": 52, "escudo": "https://img.a.transfermarkt.technology/wappen/head/45741.png?lm=1789461971"},
+    {"nombre": "Uruguay Montevideo FC", "media": 45, "escudo": "https://img.a.transfermarkt.technology/wappen/head/41308.png?lm=1789461646"},
+    {"nombre": "Colón (Montevideo)", "media": 51, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d7/Fic_Logo_Col%C3%B3n.png/330px-Fic_Logo_Col%C3%B3n.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Tacuarembó FC", "media": 51, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/27/Tacuarembo_FC.svg/330px-Tacuarembo_FC.svg.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Atenas de San Carlos", "media": 50, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Escudo_Club_Atl%C3%A9tico_Atenas.png/250px-Escudo_Club_Atl%C3%A9tico_Atenas.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Cerrito", "media": 50, "escudo": "https://upload.wikimedia.org/wikipedia/commons/1/17/Cscerrito.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "La Luz", "media": 50, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dc/Escudo_La_Luz_FC.png/330px-Escudo_La_Luz_FC.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Huracán FC", "media": 49, "escudo": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Huracandelpaso.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "Paysandú FC", "media": 49, "escudo": "https://img.a.transfermarkt.technology/wappen/head/92668.png?lm=1789465396"}
+  ],
+  "tercera": [
+    {"nombre": "Rampla Juniors", "media": 49, "escudo": "https://img.a.transfermarkt.technology/wappen/head/14598.png?lm=1789459893"},
+    {"nombre": "Sud América", "media": 44, "escudo": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Escudo_actual_IASA.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "Villa Española", "media": 44, "escudo": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Escudo_liso_Villa_Espa%C3%B1ola.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "Villa Teresa", "media": 43, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4e/C.A.V.T.png/500px-C.A.V.T.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Bella Vista", "media": 43, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Escudo_Club_Atl%C3%A9tico_Bella_Vista.png/250px-Escudo_Club_Atl%C3%A9tico_Bella_Vista.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Basáñez", "media": 42, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/Escudo_Club_Atl%C3%A9tico_Bas%C3%A1%C3%B1ez.png/250px-Escudo_Club_Atl%C3%A9tico_Bas%C3%A1%C3%B1ez.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Real Montevideo", "media": 42, "escudo": "https://img.a.transfermarkt.technology/wappen/head/134553.png?lm=1789468503"},
+    {"nombre": "Rincón (Uru)", "media": 41, "escudo": "https://upload.wikimedia.org/wikipedia/commons/6/62/Rincon_FC.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail_unscaled"},
+    {"nombre": "Rocha FC", "media": 44, "escudo": "https://img.a.transfermarkt.technology/wappen/head/18129.png?lm=1789460031"},
+    {"nombre": "Salto FC", "media": 44, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6e/Escudo_Salto_FC.png/250px-Escudo_Salto_FC.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Artigas FC", "media": 37, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c2/Escudo_Artigas_SAD.png/250px-Escudo_Artigas_SAD.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Durazno FC", "media": 37, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fd/Imagen_Durazno_FC_2022_v2.png/330px-Imagen_Durazno_FC_2022_v2.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Frontera Rivera FC", "media": 42, "escudo": "https://img.a.transfermarkt.technology/wappen/head/57882.png?lm=1789462872"},
+    {"nombre": "Húracan Treinta y Tres", "media": 41, "escudo": "https://img.a.transfermarkt.technology/wappen/head/113807.png?lm=1789466948"},
+    {"nombre": "Atlético Florida", "media": 41, "escudo": "https://img.a.transfermarkt.technology/wappen/head/35163.png?lm=1789461206"},
+    {"nombre": "Canelones FC", "media": 40, "escudo": "https://www.ofi.org.uy/news/images/escudos_ligas_titulos/57948.png"},
+    {"nombre": "Soriano FC", "media": 35, "escudo": "https://delaplatea.com/assets/uploads/escudos/img_512db8059c8be859b4f59ba49cc2204b.png"},
+    {"nombre": "Central de San José", "media": 39, "escudo": "https://img.a.transfermarkt.technology/wappen/head/99714.png?lm=1789473108"},
+    {"nombre": "Flores FC", "media": 39, "escudo": "https://img.a.transfermarkt.technology/wappen/head/143023.png?lm=1789469128"},
+    {"nombre": "Lavalleja FC", "media": 38, "escudo": "https://img.a.transfermarkt.technology/wappen/head/83219.png?lm=1789464719"}
+  ]
+}

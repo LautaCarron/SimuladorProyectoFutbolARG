@@ -6,10 +6,10 @@ Clasifican por la temporada anterior (como en la vida real):
     Copa Argentina + 6°-8° y 12°-13°; con los otros formatos, 6°-11°). Si el campeón de la Copa Argentina ya estaba
     clasificado a la Libertadores, su lugar de la Sudamericana pasa al mejor ubicado que todavía no entró. Los
     campeones de la Libertadores y la Sudamericana van a los grupos de la Libertadores siguiente.
-  * Los otros 9 países: Libertadores con 6 cupos Brasil y 4 cada uno de los demás (más el lugar extra del campeón
-    vigente), Sudamericana con 6 Brasil y 2 cada uno de los demás. Qué club ocupa cada cupo se sortea cada
-    temporada entre los de primera división de ese país (los más fuertes entran más seguido). Todos con licencia
-    (ver datos/clubes_int.py).
+  * Los otros 9 países: Libertadores con 7 cupos Brasil (6 + el del campeón vigente si es brasileño, que entra aparte)
+    y 4 cada uno de los demás; Sudamericana con 6 Brasil y 4 cada uno de los demás. Qué club ocupa cada cupo sale de
+    la tabla final de su liga si la liga está simulada (Uruguay: ligas/uruguay.py) y, si no, se sortea cada temporada
+    entre los de primera división de ese país (los más fuertes entran más seguido). Todos con licencia (datos/).
   * Temporada 1: la tabla de Primera se toma por media; campeones 2025: Flamengo
     (Libertadores), Lanús (Sudamericana) e Independiente Rivadavia (Copa Argentina).
 
@@ -19,8 +19,11 @@ Formato:
     la Fase 3 van a los grupos y los 4 que pierden, a los grupos de la Sudamericana. Grupos:
     8 de 4, ida y vuelta; 1° y 2° a octavos, 3° a los playoffs de la Sudamericana. Octavos,
     cuartos y semis a ida y vuelta (si el global empata, penales); final única en cancha neutral.
-  * Sudamericana: 8 grupos de 4 (28 clasificados + 4 de la Libertadores); 1° a octavos, 2°
-    a los playoffs contra los 3° de la Libertadores; después igual que la Libertadores.
+  * Sudamericana (44 equipos): Fase 1 con los 32 clubes de los países que no son Argentina ni Brasil (4 por país),
+    en cruces entre clubes del mismo país a ida y vuelta (desde 2027; antes era partido único); los 16 que ganan
+    pasan a los grupos junto con los 6 de Argentina y los 6 de Brasil, que entran directo. Grupos: 8 de 4
+    (28 clasificados + 4 de la Libertadores); 1° a octavos, 2° a los playoffs contra los 3° de la Libertadores;
+    después igual que la Libertadores.
   * Recopa: campeón de la Libertadores vs. campeón de la Sudamericana, ida y vuelta.
 """
 
@@ -38,25 +41,28 @@ LIB_RONDAS = (["Fase 1 · ida", "Fase 1 · vuelta", "Fase 2 · ida", "Fase 2 · 
               + [f"Grupos · fecha {k}" for k in range(1, 7)]
               + ["Octavos · ida", "Octavos · vuelta", "Cuartos · ida", "Cuartos · vuelta",
                  "Semifinal · ida", "Semifinal · vuelta", "Final"])
-SUD_RONDAS = ([f"Grupos · fecha {k}" for k in range(1, 7)]
+SUD_RONDAS = (["Fase 1 · ida", "Fase 1 · vuelta"] + [f"Grupos · fecha {k}" for k in range(1, 7)]
               + ["Playoffs · ida", "Playoffs · vuelta", "Octavos · ida", "Octavos · vuelta",
                  "Cuartos · ida", "Cuartos · vuelta", "Semifinal · ida", "Semifinal · vuelta", "Final"])
 REC_RONDAS = ["Ida", "Vuelta"]
 
-# Cupos de los otros países (Argentina sale de la tabla de Primera). Brasil absorbe la diferencia
-# para que siempre sean 28 en los grupos, 6 en la Fase 1, 13 entrando directo a la Fase 2 (con el de Argentina)
-# y 28 en la Sudamericana. Por país, en la Libertadores: Brasil 6 (+1 del campeón vigente) y los demás 4
-# (grupos + Fase 2 + Fase 1); Argentina 6 (5 a grupos y 1 a la Fase 2).
-CUPOS_LIB_GRUPOS = {"Brasil": 6, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
+# Cupos de los otros países (Argentina sale de la tabla de Primera). Libertadores: Colombia absorbe la diferencia
+# para que siempre sean 28 en los grupos, 6 en la Fase 1 y 13 entrando directo a la Fase 2 (con el de Argentina);
+# por país: Brasil 5 directos al no haber Copa de Brasil + 1 a fase previa (6°), 6 a Sudamericana (7° al 12°);
+# los demás 4 (grupos + Fase 2 + Fase 1); Argentina 6 (5 a grupos y 1 a la Fase 2).
+# Sudamericana: Brasil 6 (directo a los grupos, como Argentina) y los demás 4 (a la Fase 1 de la Sudamericana): 12 directos + 32 en la Fase 1 = 44.
+CUPOS_LIB_GRUPOS = {"Brasil": 5, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
                     "Ecuador": 2, "Bolivia": 2, "Venezuela": 2}
-CUPOS_LIB_PREVIA = {"Brasil": 2, "Colombia": 2, "Paraguay": 1, "Perú": 1, "Chile": 2, "Uruguay": 1,
+CUPOS_LIB_PREVIA = {"Brasil": 1, "Colombia": 2, "Paraguay": 1, "Perú": 1, "Chile": 2, "Uruguay": 1,
                     "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # entran directo a la Fase 2 (12 + 1 de Argentina)
 CUPOS_LIB_FASE1 = {"Brasil": 0, "Colombia": 0, "Paraguay": 1, "Perú": 1, "Chile": 0, "Uruguay": 1,
                    "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # los 6 de la Fase 1
 LIB_FASE3_FIN = LIB_RONDAS.index("Fase 3 · vuelta") + 1             # la Sudamericana espera a los que pierden la Fase 3
 LIB_GRUPOS_FIN = LIB_RONDAS.index("Grupos · fecha 6") + 1           # y a los 3° de los grupos
-CUPOS_SUD = {"Brasil": 6, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
-             "Ecuador": 2, "Bolivia": 2, "Venezuela": 2}
+CUPOS_SUD = {"Brasil": 6, "Colombia": 4, "Paraguay": 4, "Perú": 4, "Chile": 4, "Uruguay": 4,
+             "Ecuador": 4, "Bolivia": 4, "Venezuela": 4}
+SUD_GRUPOS_INI = SUD_RONDAS.index("Grupos · fecha 1")             # la Sudamericana espera a los que pierden la Fase 3
+SUD_GRUPOS_FIN = SUD_RONDAS.index("Grupos · fecha 6")             # y, al cerrar los grupos, a los 3° de la Libertadores
 GRUPOS = "ABCDEFGH"
 # fixture de un grupo de 4 (ida y vuelta)
 FIX4 = [[(0, 1), (2, 3)], [(3, 0), (1, 2)], [(0, 2), (3, 1)],
@@ -131,8 +137,20 @@ def medias_ext(S):
     return out
 
 
-def _sortear_pais(rng, S, pais, k, excluir):
+def _sortear_pais(rng, S, pais, k, excluir, primero=None):
+    """Clubes de `pais` que clasifican. Con liga simulada y ya cerrada una temporada (S["ext_mov"]) salen de su tabla
+    final, en orden y salteando a los que ya clasificaron por otra vía (ligas/exterior.py, `asignar_cupos`); si no,
+    se sortean con más chances los de mejor media. `primero` es el club con derecho al primer cupo (el campeón de la
+    copa del país): si ya clasificó por otra vía, el cupo sigue por la tabla."""
+    mov = S.get("ext_mov", {}).get(pais)
+    if primero and k > 0 and primero not in excluir:
+        return [primero] + _sortear_pais(rng, S, pais, k - 1, set(excluir) | {primero})
+    if mov:
+        return [n for n in mov["orden"] if n not in excluir][:max(k, 0)]
     pool = [n for n, p, _, _ in CLUBES_INT if p == pais and n not in excluir]
+    juegan = S.get("ext_clubes", {}).get(pais)        # país con liga simulada: sólo clasifican los que hoy juegan en ella
+    if juegan:
+        pool = [n for n in pool if n in juegan]
     if k <= 0 or not pool:
         return []
     m = np.array([S["rating_int"].get(n, MEDIA_EXT[n]) for n in pool])
@@ -143,7 +161,7 @@ def _sortear_pais(rng, S, pais, k, excluir):
 
 def _ajustar_cupos(cupos, total):
     c = dict(cupos)
-    c["Brasil"] = max(0, c["Brasil"] + total - sum(cupos.values()))
+    c["Colombia"] = max(0, c["Colombia"] + total - sum(cupos.values()))
     return c
 
 
@@ -194,14 +212,20 @@ def nuevas_internacionales(S, rng):
             ya.add(n)
     lib_f1 = []
     for pais in PAISES:
-        for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya):
+        # el Uruguay 4 (Fase 1) es del campeón de la Copa AUF Uruguay (copas/uruguay.py); si ya clasificó, sigue la Anual
+        for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya, primero=S.get("ext_copa", {}).get(pais)):
             lib_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)
-    sud = list(arg_s)
-    ext_s = _ajustar_cupos(CUPOS_SUD, 28 - len(sud))
+    sud = list(arg_s)                                  # Argentina (6) y Brasil (6) entran directo a los grupos
+    for n in _sortear_pais(rng, S, "Brasil", CUPOS_SUD["Brasil"], ya):
+        sud.append((n, "Brasil · Sudamericana"))
+        ya.add(n)
+    sud_f1 = []                                        # los otros 8 países: 4 cada uno, a la Fase 1
     for pais in PAISES:
-        for n in _sortear_pais(rng, S, pais, ext_s[pais], ya):
-            sud.append((n, f"{pais} · Sudamericana"))
+        if pais == "Brasil":
+            continue
+        for n in _sortear_pais(rng, S, pais, CUPOS_SUD[pais], ya):
+            sud_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)
 
     L = _copa(LIB, LIB_RONDAS, medias, lib_g + lib_p + lib_f1)
@@ -209,8 +233,9 @@ def nuevas_internacionales(S, rng):
     L["f2_directos"] = [n for n, _ in lib_p]               # entran directo a la Fase 2 (esperan a los de la Fase 1)
     L["cabeza"] = c.get("campeon_lib")
     L["llaves"]["Fase 1"] = _cruces_bombos(rng, [n for n, _ in lib_f1], L["r"])
-    U = _copa(SUD, SUD_RONDAS, medias, sud)
+    U = _copa(SUD, SUD_RONDAS, medias, sud + sud_f1)
     U["directos"] = [n for n, _ in sud]
+    U["llaves"]["Fase 1"] = _cruces_mismo_pais(rng, [n for n, _ in sud_f1], U["r"])
     rec = [(c.get("campeon_lib"), "Campeón de la Libertadores"), (c.get("campeon_sud"), "Campeón de la Sudamericana")]
     rec = [(n, v) for n, v in rec if n]
     R = _copa(REC, REC_RONDAS if len(rec) == 2 else [], medias, rec)
@@ -223,6 +248,20 @@ def nuevas_internacionales(S, rng):
 def _serie(a, b):
     """Serie a ida y vuelta: `a` cierra de local."""
     return {"a": a, "b": b, "ida": None, "vuelta": None, "ga": 0, "gb": 0, "pen": None, "gana": None}
+
+
+def _cruces_mismo_pais(rng, equipos, r):
+    """Fase 1 de la Sudamericana: los clubes de cada país se cruzan entre sí (al azar de a dos); el de mejor media
+    cierra de local."""
+    por_pais = {}
+    for n in equipos:
+        por_pais.setdefault(pais_de(n), []).append(n)
+    out = []
+    for pais in PAISES:
+        club = [str(x) for x in rng.permutation(por_pais.get(pais, []))]
+        for a, b in zip(club[0::2], club[1::2]):
+            out.append(_serie(*sorted((a, b), key=lambda n: -r[n])))
+    return out
 
 
 def _cruces_bombos(rng, equipos, r):
@@ -352,9 +391,9 @@ def listo(S, clave):
         return False
     if clave == "sud":
         L = S["int"]["lib"]
-        if C["ronda"] == 0 and L["ronda"] < LIB_FASE3_FIN:          # necesita los que pierden la Fase 3
+        if C["ronda"] == SUD_GRUPOS_INI and L["ronda"] < LIB_FASE3_FIN:    # necesita los que pierden la Fase 3
             return False
-        if C["ronda"] >= 5 and L["ronda"] < LIB_GRUPOS_FIN:         # necesita los 3° de los grupos
+        if C["ronda"] >= SUD_GRUPOS_FIN and L["ronda"] < LIB_GRUPOS_FIN:   # necesita los 3° de los grupos
             return False
     return True
 
@@ -406,7 +445,7 @@ def _armar_grupos(S, C, rng):
         for n in perd:
             C["r"][n] = L["r"][n]
             C["via"][n] = "Perdió la Fase 3 de la Libertadores"
-        equipos = C["directos"] + perd
+        equipos = C["directos"] + [x["gana"] for x in C["llaves"]["Fase 1"]] + perd
         primero = None
     C["grupos"] = _sorteo_grupos(rng, equipos, C["r"], primero)
     C["gstats"] = {n: {"pj": 0, "g": 0, "e": 0, "p": 0, "gf": 0, "gc": 0} for g in C["grupos"] for n in g}
@@ -434,9 +473,10 @@ def _cierre_grupos(S, C, rng):
 
 def _cierre_serie(S, C, fase, rng):
     series = C["llaves"][fase]
-    if fase == "Fase 1":                              # los 3 que ganan se suman a los 13 que entran directo a la Fase 2
+    if fase == "Fase 1" and C["nombre"] == LIB:       # los 3 que ganan se suman a los 13 que entran directo a la Fase 2
         ganadores = [x["gana"] for x in series]
         C["llaves"]["Fase 2"] = _cruces_bombos(rng, C["f2_directos"] + ganadores, C["r"])
+    # (en la Sudamericana los ganadores de la Fase 1 pasan a los grupos: los toma _armar_grupos)
     elif fase == "Fase 2":
         ganadores = [x["gana"] for x in series]
         C["llaves"]["Fase 3"] = [_serie(*sorted(par, key=lambda n: -C["r"][n]))

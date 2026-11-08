@@ -34,7 +34,8 @@ from ligas.simples import nueva_estructura_liga
 from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
-VERSION_ESTADO = 21       # cambia si se modifica la estructura del estado guardado
+REVERSION_EXT = 0.15      # clubes del exterior (Uruguay...): cuánto vuelve cada año su media hacia la inicial
+VERSION_ESTADO = 24       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado(club_propio=None):
@@ -537,7 +538,7 @@ def _armar_nueva_temporada(S, cierre):
     # clubes del exterior: su media cambia un poco cada año (vuelve hacia la de su club)
     ri = S.setdefault("rating_int", dict(MEDIA_EXT))
     for n, base in MEDIA_EXT.items():
-        ri[n] = float(np.clip(ri.get(n, base) + 0.3 * (base - ri.get(n, base)) + rng.normal(0, 1.5), MIN_R, MAX_R))
+        ri[n] = float(np.clip(ri.get(n, base) + REVERSION_EXT * (base - ri.get(n, base)) + rng.normal(0, 1.5), MIN_R, MAX_R))
     nuevas_internacionales(S, rng)
     for comp in REGISTRO:               # Supercopa y Mundial de Clubes (el Mundial se sortea cada 4 temporadas)
         if comp.crea_estado:

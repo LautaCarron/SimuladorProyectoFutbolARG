@@ -6,6 +6,8 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 
 import pandas as pd
 import streamlit as st
+from copas.registro import LIGAS_EXTERIOR, REGISTRO
+from datos import ligas_ext, paises
 from datos.equipos import region_regional
 from datos.logos import logo_img
 from datos.datos_regional import REGIONES_REG
@@ -104,53 +106,81 @@ def render(ctx):
 
     if _abierta(tab_h):
         with tab_h:
-            seccion("Historial", "Campeones de cada temporada y rankings históricos", "#b7860b")
+            es_base, pais = ctx.es_base, ctx.pais
+            ligas_pais = [c for c in LIGAS_EXTERIOR if c.cfg["pais"] == pais]          # ligas simuladas de otro país
+            seccion("Historial", f"Campeones de cada temporada y rankings históricos · {paises.etiqueta(pais)}", "#b7860b")
 
             if S["campeones"]:
-                ligas_c = ["Primera División", "Primera Nacional", "Federal A"]
-                if any("Federal B" in x for x in S["campeones"]) or S.get("fb") is not None:
-                    ligas_c.append("Federal B")                  # la columna aparece recién cuando existe el Federal B
-                ligas_c += ["Primera B", "Primera C",
-                            "Promocional Amateur", "Copa Argentina", "Supercopa", "Libertadores", "Sudamericana", "Recopa", "Mundial"]
+                if es_base:
+                    ligas_c = ["Primera División", "Primera Nacional", "Federal A"]
+                    if any("Federal B" in x for x in S["campeones"]) or S.get("fb") is not None:
+                        ligas_c.append("Federal B")                  # la columna aparece recién cuando existe el Federal B
+                    ligas_c += ["Primera B", "Primera C", "Promocional Amateur", "Copa Argentina", "Supercopa"]
+                else:
+                    ligas_c = [c.col_historial for c in ligas_pais] + paises.copas_nacionales_de(pais)
+                ligas_c += ["Libertadores", "Sudamericana", "Recopa", "Mundial"]      # internacionales: van en todos los países
                 with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                     df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
-                    st.markdown(tabla_html(df_c, clubes=tuple(ligas_c)), unsafe_allow_html=True)
-                with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
-                    df_r = pd.DataFrame([{"Temporada": x["Temporada"],
-                                          **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
-                                         for x in S["campeones"]])
-                    st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
+                    nombres_col = {c.col_historial: c.nombre for c in ligas_pais}      # "Uruguay" -> "Liga AUF Uruguaya"
+                    st.markdown(tabla_html(df_c.rename(columns=nombres_col),
+                                           clubes=tuple(nombres_col.get(c, c) for c in ligas_c)), unsafe_allow_html=True)
+                if es_base:
+                    with st.expander(":material/emoji_events: Campeones del Regional Amateur (por región)", expanded=False):
+                        df_r = pd.DataFrame([{"Temporada": x["Temporada"],
+                                              **{reg: x.get("Regional", {}).get(reg) or None for reg in REGIONES_REG}}
+                                             for x in S["campeones"]])
+                        st.markdown(tabla_html(df_r, clubes=tuple(REGIONES_REG)), unsafe_allow_html=True)
             else:
                 aviso("Los campeones de cada liga aparecen acá al pasar a la temporada siguiente.")
 
             # Palmarés histórico: títulos oficiales hasta 2025 (palmares.py) + los de las temporadas simuladas
             from datos.palmares import PALMARES
-            st.markdown('<div class="mlab" style="margin-top:20px">Palmarés histórico · ligas</div>', unsafe_allow_html=True)
-            _ligas_pal = [("Primera División", "Primera División", "hist_primera"),
-                          ("Primera Nacional", "Primera Nacional", "hist_nacional"),
-                          ("Federal A", "Federal A", "hist_federal")]
-            if S.get("fb") is not None:                      # palmarés oculto hasta que se crea el Federal B
-                _ligas_pal.append(("Federal B", "Federal B", "hist_federalB"))
-            st.markdown('<div class="pal-grid">' + "".join(
-                tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
-                for titulo, logo, clave in (*_ligas_pal,
-                                            ("Primera B Metropolitana", "Primera B", "hist_pb"),
-                                            ("Primera C Metropolitana", "Primera C", "hist_pc"),
-                                            ("Promocional Amateur (Ex Primera D)", "Promocional Amateur", "hist_pd"))) + '</div>',
+            if es_base:
+                st.markdown('<div class="mlab" style="margin-top:20px">Palmarés histórico · ligas</div>', unsafe_allow_html=True)
+                _ligas_pal = [("Primera División", "Primera División", "hist_primera"),
+                              ("Primera Nacional", "Primera Nacional", "hist_nacional"),
+                              ("Federal A", "Federal A", "hist_federal")]
+                if S.get("fb") is not None:                      # palmarés oculto hasta que se crea el Federal B
+                    _ligas_pal.append(("Federal B", "Federal B", "hist_federalB"))
+                st.markdown('<div class="pal-grid">' + "".join(
+                    tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
+                    for titulo, logo, clave in (*_ligas_pal,
+                                                ("Primera B Metropolitana", "Primera B", "hist_pb"),
+                                                ("Primera C Metropolitana", "Primera C", "hist_pc"),
+                                                ("Promocional Amateur (Ex Primera D)", "Promocional Amateur", "hist_pd"))) + '</div>',
+                            unsafe_allow_html=True)
+            elif ligas_pais:                                 # ligas de otros países: sólo cuentan las temporadas simuladas
+                st.markdown('<div class="mlab" style="margin-top:20px">Palmarés · ligas</div>', unsafe_allow_html=True)
+                st.markdown('<div class="pal-grid">' + "".join(
+                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), {}) for c in ligas_pais) + '</div>',
+                    unsafe_allow_html=True)
+            copas_ext = [c for c in REGISTRO if not es_base and c.hist and c.nombre in paises.copas_nacionales_de(pais)]
+            if copas_ext:                                    # copas nacionales de otro país: sólo cuentan las temporadas simuladas
+                st.markdown('<div class="mlab" style="margin-top:18px">Palmarés · copas nacionales</div>',
+                            unsafe_allow_html=True)
+                st.markdown('<div class="pal-grid">' + "".join(
+                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), {}) for c in copas_ext) + '</div>',
+                    unsafe_allow_html=True)
+            if es_base:                                      # copas del país
+                st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas nacionales</div>',
+                            unsafe_allow_html=True)
+                st.markdown('<div class="pal-grid">' + "".join(
+                    tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
+                    for titulo, logo, clave in (("Copa Argentina", "Copa Argentina", "hist_copa"),
+                                                ("Supercopa Argentina", "Supercopa Argentina", "hist_super"))) + '</div>',
+                            unsafe_allow_html=True)
+            st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas internacionales</div>',
                         unsafe_allow_html=True)
-            st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas</div>', unsafe_allow_html=True)
             st.markdown('<div class="pal-grid">' + "".join(
                 tabla_ranking_html(titulo, logo, S.get(clave, {}), PALMARES.get(clave, {}))
-                for titulo, logo, clave in (("Copa Argentina", "Copa Argentina", "hist_copa"),
-                                            ("Supercopa Argentina", "Supercopa Argentina", "hist_super"),
-                                            ("Mundial de Clubes", "Mundial de Clubes", "hist_mundial"),
+                for titulo, logo, clave in (("Mundial de Clubes", "Mundial de Clubes", "hist_mundial"),
                                             ("Copa Libertadores", "Copa Libertadores", "hist_lib"),
                                             ("Copa Sudamericana", "Copa Sudamericana", "hist_sud"),
                                             ("Recopa Sudamericana", "Recopa Sudamericana", "hist_rec"))) + '</div>',
                         unsafe_allow_html=True)
             # Regionales: un palmarés por torneo (sale de los campeones de cada temporada), en un desplegable
             from copas.regionales import TORNEOS as _TORN
-            if S.get("regionales_on") or any(x.get("Regionales") for x in S["campeones"]):
+            if es_base and (S.get("regionales_on") or any(x.get("Regionales") for x in S["campeones"])):
                 with st.expander(":material/emoji_events: Palmarés de los Regionales (por torneo)", expanded=False):
                     def _titulos(nombre):
                         cuenta = {}
@@ -162,13 +192,44 @@ def render(ctx):
                     st.markdown('<div class="pal-grid">' + "".join(
                         tabla_ranking_html(tt["nombre"], tt["nombre"], _titulos(tt["nombre"]), {}) for tt in _TORN)
                         + '</div>', unsafe_allow_html=True)
-            st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
-                       "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "
-                       "El Federal B suma desde que se crea en el Modo dios. "
-                       "En verde (+n), los ganados en las temporadas simuladas. Tocá un club para ver su ficha.")
+            if es_base:
+                st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
+                           "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "
+                           "El Federal B suma desde que se crea en el Modo dios. "
+                           "En verde (+n), los ganados en las temporadas simuladas. Tocá un club para ver su ficha.")
+            else:
+                st.caption(f"La liga y las copas de {pais} sólo cuentan las temporadas simuladas (todavía no tiene palmarés histórico real). "
+                           "Las copas internacionales traen los títulos oficiales hasta 2025 (CONMEBOL), con los ganados en las "
+                           "temporadas simuladas en verde (+n). Tocá un club para ver su ficha.")
 
-            if S["movimientos"]:
+            if es_base and S["movimientos"]:
                 mv = S["movimientos"]
                 with st.expander(f":material/swap_vert: Cambios de categoría para la temporada {S['temp']}",
                                  expanded=False):
                     st.markdown(movimientos_html(mv), unsafe_allow_html=True)
+            for comp in (c for c in ligas_pais if c.divisional == 1):     # ascensos y descensos de la liga de otro país
+                mov = S.get("ext_mov", {}).get(comp.clubes_key)
+                abajo = ligas_ext.CONFIG.get(comp.cfg.get("inferior"))
+                if mov:
+                    with st.expander(f":material/swap_vert: Cambios de categoría tras la temporada {mov['temp']}",
+                                     expanded=False):
+                        st.markdown(f'<div class="mv-grid"><div class="mv-card"><div class="mv-h"><span>{esc(comp.nombre)}'
+                                    f'</span></div><div class="mv-sec"><div class="mv-lab up">▲ Suben<b>{len(mov["suben"])}</b></div>'
+                                    f'<div class="mv-lista">{_mov_clubes([(n, "") for n in mov["suben"]])}</div></div>'
+                                    f'<div class="mv-sec"><div class="mv-lab down">▼ Bajan a {esc(abajo["nombre"] if abajo else "la Segunda División")}'
+                                    f'<b>{len(mov["bajan"])}</b></div><div class="mv-lista">'
+                                    f'{_mov_clubes([(n, "") for n in mov["bajan"]])}</div></div></div></div>',
+                                    unsafe_allow_html=True)
+                mov3 = S.get("ext_mov3", {}).get(comp.cfg["pais"])
+                if mov3:                                       # segunda división <-> tercera (falsa, no se simula)
+                    with st.expander(f":material/swap_vert: Segunda y tercera división tras la temporada {mov3['temp']}",
+                                     expanded=False):
+                        st.markdown(f'<div class="mv-grid"><div class="mv-card"><div class="mv-h"><span>'
+                                    f'{esc(abajo["nombre"] if abajo else "Segunda División")}</span></div>'
+                                    f'<div class="mv-sec"><div class="mv-lab up">▲ Suben de la tercera división'
+                                    f'<b>{len(mov3["suben"])}</b></div><div class="mv-lista">'
+                                    f'{_mov_clubes([(n, "") for n in mov3["suben"]])}</div></div>'
+                                    f'<div class="mv-sec"><div class="mv-lab down">▼ Bajan a la tercera división'
+                                    f'<b>{len(mov3["bajan"])}</b></div><div class="mv-lista">'
+                                    f'{_mov_clubes([(n, "") for n in mov3["bajan"]])}</div></div></div></div>',
+                                    unsafe_allow_html=True)

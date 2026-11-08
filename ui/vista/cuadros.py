@@ -298,6 +298,69 @@ def cuadro_final_copa_html(SC):
     return _kb(cols, 4 * 84)
 
 
+# ---- Campeonato de una liga del exterior (Uruguay): semifinal, final y campeón, con llaves como la Copa ----
+def _kb_nombre(n):
+    n = esc(n)
+    return f'<span class="kb-n" role="button" tabindex="0" data-club="{n}" title="{n}">{n}</span>'
+
+
+def _kb_pie(p):
+    dia = texto_dia(p.get("dia"), False) if p.get("dia") else ""
+    extra = " · cancha neutral" if p.get("neutral") else ""
+    return (f'<div style="font-size:.66rem;opacity:.65;padding:2px 9px 4px">{esc(dia)}{extra}</div>'
+            if dia or extra else "")
+
+
+def _kb_partido(p):
+    """Un partido a eliminación directa (dict de partido jugado): dos renglones, el que pasa resaltado."""
+    filas = ""
+    for k, (n, g) in enumerate(((p["local"], p["gl"]), (p["visita"], p["gv"]))):
+        cls = " win" if p["gana"] == n else " lose" if p["gana"] else ""
+        pk = f'<span class="kb-p">({p["pen"][k]})</span>' if p.get("pen") else ""
+        filas += f'<div class="kb-t{cls}">{crest(n, 20)}{_kb_nombre(n)}{pk}<b class="kb-g">{g}</b></div>'
+    return f'<div class="kb-m">{filas}{_kb_pie(p)}</div>'
+
+
+def _kb_serie(ida, vuelta, ganador):
+    """Final a ida y vuelta en una sola tarjeta: goles de la ida, de la vuelta y global (penales si hubo)."""
+    filas = ""
+    for k, n in enumerate((ida["local"], ida["visita"])):
+        g_ida = ida["gl"] if k == 0 else ida["gv"]
+        g_vta = vuelta["gv"] if k == 0 else vuelta["gl"]
+        pk = f'<span class="kb-p">({vuelta["pen"][1 - k]})</span>' if vuelta.get("pen") else ""
+        cls = " win" if n == ganador else " lose" if ganador else ""
+        filas += (f'<div class="kb-t{cls}">{crest(n, 20)}{_kb_nombre(n)}'
+                  f'<span style="font-size:.7rem;opacity:.7">{g_ida} · {g_vta}</span>{pk}'
+                  f'<b class="kb-g">{g_ida + g_vta}</b></div>')
+    return f'<div class="kb-m">{filas}{_kb_pie(vuelta)}</div>'
+
+
+def _kb_solo(titulo, tarjeta, conecta=True):
+    return _kb_col(titulo, f'<div class="kb-slot{" kb-solo" if conecta else ""}">{tarjeta}</div>')
+
+
+def cuadro_campeonato_html(reg):
+    """Cuadro por llaves de cómo se definió un título (registro de `LigaExterior.definiciones`): semifinal, final a ida
+    y vuelta y campeón. La final del Intermedio y los desempates van aparte. Sin finales, sólo el campeón."""
+    ps = reg["partidos"]
+    semis = [p for p in ps if p["comp"] == "Semifinal"]
+    ida = next((p for p in ps if p["comp"] == "Final" and p["rotulo"].endswith("ida")), None)
+    vuelta = next((p for p in ps if p["comp"] == "Final" and p["rotulo"].endswith("vuelta")), None)
+    otros = [p for p in ps if p["comp"] == "Final del Intermedio" or p["comp"].startswith("Desempate")]
+    cols = []
+    if semis:
+        cols.append(_kb_solo("Semifinal", _kb_partido(semis[0]), conecta=True))
+    if ida and vuelta:
+        cols.append(_kb_solo("Final · ida y vuelta", _kb_serie(ida, vuelta, reg["campeon"]), conecta=True))
+    cols.append(_kb_final("Campeón", "Campeón", reg["campeon"], f"Subcampeón: {reg['subcampeon']}"
+                          if reg.get("subcampeon") else ""))
+    html = _kb(cols, 120)
+    if otros:
+        extra = [_kb_solo(p["rotulo"], _kb_partido(p), conecta=False) for p in otros]
+        html += (f'<div class="mlab" style="margin-top:6px">Otras definiciones</div>{_kb(extra, 120)}')
+    return html
+
+
 # ---- Avisos (Tribunal de Disciplina, suspensiones) ----
 _ICONO_AVISO = {"clima": "⛈", "luz": "💡", "bengalas": "🔥", "invasion": "🏃", "micro": "🚌",
                 "huelga": "✋", "arbitro": "🟥", "corrupcion": "⚖", "gravisimo": "🚨",

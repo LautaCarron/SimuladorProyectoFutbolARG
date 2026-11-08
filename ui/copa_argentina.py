@@ -72,7 +72,7 @@ def render(ctx):
                                              ("Primera C", terminada_pc), ("Regional", terminada_reg)) if not t]
                 st.caption("Faltan terminar: " + ", ".join(pendientes))
             else:
-                titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Cupos", "Definiciones"]
+                titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Cupos"]
                 tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
                 with tab_ca_t["Cuadro"]:
                     seccion("Cuadro de la Copa Argentina", color="#1e5aa8")
@@ -106,16 +106,3 @@ def render(ctx):
                 with tab_ca_t["Cupos"]:
                     seccion("Cupos", "Cuántos equipos de cada liga clasificaron a la Copa de esta temporada", "#1e5aa8")
                     _tabla_cupos(list(zip(SC["nombres"], SC["criterio"])))
-                with tab_ca_t["Definiciones"]:
-                    seccion("Definiciones", color="#b7860b")
-                    if SC["campeon"] is None:
-                        aviso("El campeón aparece acá cuando se juega la final.")
-                    else:
-                        fin = SC["cuadro"][-1][0]
-                        sub = fin["b"] if fin["gana"] == fin["a"] else fin["a"]
-                        cc = SC["nombres"][SC["campeon"]]
-                        st.markdown(f'<div class="champ"><div class="t">Campeón · Copa Argentina · Temporada {S["temp"]}'
-                                    f'</div><div style="margin-top:10px">{crest(cc, 64)}</div>'
-                                    f'<div class="nm">{esc(cc)}</div><div class="s">{esc(SC["origen"][SC["campeon"]])}'
-                                    f' · finalista: {esc(SC["nombres"][sub])}</div></div>', unsafe_allow_html=True)
-                        st.markdown(fila_partido_html(S, ctx.club, fin["p"], abierto=True), unsafe_allow_html=True)

@@ -9,7 +9,6 @@ Modo manager: se abre sola (y se marca con ⭐) la zona donde juega el club que 
 
 import streamlit as st
 from ligas import apertura_clausura as ac
-from ligas.primera import promos
 from ligas.primera import (
     fechas_f1,
     fechas_f2,
@@ -18,7 +17,6 @@ from ligas.primera import (
     formato,
     primera_terminada,
     simular_fecha,
-    tabla_final,
     tabla_general,
     tabla_zona,
     total_primera,
@@ -32,11 +30,8 @@ from ui.vista import (
     chip,
     colorear_destino,
     colorear_fase1,
-    crest,
-    esc,
     fila_partido_html,
     leyenda,
-    lista_equipos_html,
     mostrar_tabla,
     render_movimientos,
     seccion,
@@ -125,7 +120,7 @@ def render(ctx):
                 titulos_p.append("Desempate")
             if fmt == "apertura_clausura":
                 titulos_p.append("Llaves")
-            titulos_p.extend(["Movimientos", "Definiciones"])
+            titulos_p.extend(["Movimientos"])
 
             sp = dict(zip(titulos_p, st.tabs(titulos_p)))
 
@@ -213,70 +208,6 @@ def render(ctx):
             with sp["Movimientos"]:
                 render_movimientos(S["log"], S["pos_hist"], S["nombres"], "#1e5aa8")
 
-            # ------------------------------------------------------------ DEFINICIONES
-            with sp["Definiciones"]:
-                seccion("Definiciones de la temporada", color="#b7860b")
-                N = len(S["nombres"])                     # equipos de Primera esta temporada
-                prom = N - k
-                if not terminada_p_dyn:
-                    aviso("Las definiciones aparecen acá cuando termina la temporada de Primera. "
-                          + ("Destinos: 1°-5° Libertadores · 6°-8° y 12°-13° Sudamericana · 11° fase previa "
-                             "de Libertadores · "
-                             if fmt == "actual" else
-                             "Destinos: 1°-5° Libertadores · 6° fase previa de Libertadores · 7°-11° Sudamericana · ")
-                          + (f"{prom - promos(S) + 1}°-{prom}° Promoción · " if promos(S) > 1 else
-                             f"{prom}° Promoción · " if promos(S) == 1 else "")
-                          + (f"{prom + 1}°-{N}° descienden." if k else "no desciende nadie directo."))
-                else:
-                    final = tabla_final(S)
-
-                    def equipos(posiciones):
-                        sel = final[final["Pos"].isin(list(posiciones))]
-                        return lista_equipos_html([(r.Equipo, f"{r.Pos}°") for r in sel.itertuples()])
-
-                    e1, e2 = st.columns(2)
-                    with e1:
-                        if fmt == "apertura_clausura":
-                            with st.expander(":material/emoji_events: Campeones del Apertura, del Clausura y de la Liga",
-                                             expanded=False):
-                                for rotulo_t, nombre_t in (
-                                        ("Campeón del Apertura", S["nombres"][S["ac"]["T"][0]["campeon"]]),
-                                        ("Campeón del Clausura", S["nombres"][S["ac"]["T"][1]["campeon"]]),
-                                        ("Campeón de Liga (tabla anual)", final.iloc[0]["Equipo"])):
-                                    st.markdown(f'<div class="champ"><div class="t">{rotulo_t} · Temporada {S["temp"]}'
-                                                f'</div><div style="margin-top:10px">{crest(nombre_t, 64)}</div>'
-                                                f'<div class="nm">{esc(nombre_t)}</div></div>', unsafe_allow_html=True)
-                        else:
-                            with st.expander(":material/emoji_events: Campeón de Primera División", expanded=False):
-                                campeon = final.iloc[0]["Equipo"]
-                                st.markdown(f'<div class="champ"><div class="t">Campeón · Temporada {S["temp"]}'
-                                            f'</div><div style="margin-top:10px">{crest(campeon, 64)}</div>'
-                                            f'<div class="nm">{esc(campeon)}</div></div>', unsafe_allow_html=True)
-                        with st.expander(":material/public: Clasificados · Copa Libertadores", expanded=False):
-                            st.markdown('<div class="mlab">Fase de grupos (1° al 5°)</div>'
-                                        + equipos(range(1, 6)) + '<div class="mlab">Fase previa (11°)</div>'
-                                        + equipos([11]), unsafe_allow_html=True)
-                        with st.expander(":material/public: Copa Sudamericana", expanded=False):
-                            st.markdown('<div class="mlab">6° al 8° y 12°-13°</div>'
-                                        + equipos(list(range(6, 9)) + [12, 13]), unsafe_allow_html=True)
-                    with e2:
-                        with st.expander(":material/swap_vert: Promoción", expanded=False):
-                            pp = promos(S)
-                            if pp == 0:
-                                st.caption("Esta temporada no hay promoción.")
-                            else:
-                                pos_p = list(range(prom - pp + 1, prom + 1))
-                                txt = ('<div class="mlab">Juegan la Promoción contra equipos de la B ('
-                                       + ", ".join(f"{p}°" for p in pos_p) + ')</div>' + equipos(pos_p))
-                                for pm in SB.get("promo_partidos") or []:
-                                    txt += fila_partido_html(S, ctx.club, pm)
-                                st.markdown(txt, unsafe_allow_html=True)
-                        with st.expander(":material/south: Descensos", expanded=False):
-                            if k:
-                                st.markdown(f'<div class="mlab">Descienden a la Primera Nacional ({prom + 1}° al {N}°)</div>'
-                                            + equipos(range(prom + 1, N + 1)), unsafe_allow_html=True)
-                            else:
-                                st.caption("Esta temporada no desciende nadie directo (sólo se juega la promoción).")
 
     # -----------------
     # Recordá que, ARRIBA DE TODO, el botón general ("Simular todo")

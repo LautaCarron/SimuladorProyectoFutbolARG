@@ -51,6 +51,39 @@ def test_app_simulador():
     assert at.session_state["S"]["temp"] == 2
 
 
+def test_app_cambia_de_pais_en_mundo():
+    """Mundo elige el país: Ligas y Copas arman sólo las pestañas de ese país (Uruguay no tiene Copa Argentina)."""
+    at = _app()
+    at.run()
+    assert not at.exception
+    etiquetas = lambda: " ".join(t.label for t in at.tabs)       # noqa: E731
+    assert "Copa Argentina" in etiquetas() and "Libertadores" in etiquetas()
+    at.button(key="mundo_pais_Uruguay").click()
+    at.run()
+    assert not at.exception
+    assert at.session_state["afa_pais"] == "Uruguay"
+    assert "Copa Argentina" not in etiquetas() and "Libertadores" in etiquetas()
+    assert "Liga AUF Uruguaya" in etiquetas()
+    at.button(key="mundo_pais_Argentina").click()
+    at.run()
+    assert not at.exception
+    assert "Copa Argentina" in etiquetas() and "Liga AUF Uruguaya" not in etiquetas()
+
+
+def test_app_uruguay_temporada_completa():
+    """Con Uruguay activo todas las pestañas se dibujan, también con campeones y cambios de categoría."""
+    at = _app()
+    at.session_state["afa_pais"] = "Uruguay"
+    at.run()
+    assert not at.exception
+    for paso in ("Próximo día", "Simular todo", "Nueva temporada"):
+        _boton(at, paso).click()
+        at.run()
+        assert not at.exception, paso
+    assert at.session_state["S"]["temp"] == 2
+    assert at.session_state["afa_pais"] == "Uruguay"
+
+
 def test_app_manager():
     from motor.manager import primer_dia
     from motor.ofertas import categoria_de, nuevo_manager_estado

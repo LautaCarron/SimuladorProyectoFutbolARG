@@ -5,12 +5,15 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 Modo manager: si dirigís un club, el calendario se ve en grilla mensual con SUS partidos (escudo del
 rival, competencia y resultado). Con "Todos los equipos" se vuelve a la lista de siempre.
 Tocando un día (desde el próximo en adelante) el botón pasa a "Simular hasta esa fecha".
+Muestra las competencias del país activo (se elige en Mundo) más las copas internacionales; el botón de arriba
+sigue jugando el próximo día de todo el simulador. Con un club dirigido (Argentina), "Mis partidos" muestra todo lo suyo.
 """
 
 import datetime as dt
 
 import streamlit as st
 from motor.calendario import anio, jugar_proximo_dia, nombre_mes, proximos, texto_dia
+from datos import paises
 from datos.logos import logo_img
 from ui.vista import calendario_mes_html, esc, eventos_calendario, seccion
 from ui.vista.vista_calendario import calendario_grilla_html
@@ -67,10 +70,20 @@ def render(ctx):
                 sel = None
                 st.session_state.pop("cal_dia_sel", None)
 
+            propias = paises.competencias_de(ctx.pais) | set(paises.COPAS_INTERNACIONALES)   # del país activo + internacionales
+            prox_pais = {c: dn for c, dn in _prox.items() if c in propias}
+            hoy_pais = min((d for d, _ in prox_pais.values()), default=None)
             c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
-            texto_prox = ((f'Próximo día: <b>{esc(texto_dia(_hoy))}</b> · ' + " ".join(
-                logo_img(c, 18) for c, (d, _) in _prox.items() if d == _hoy)) if _hoy else
-                "Terminó la temporada: pasá a la siguiente desde <b>Nueva temporada</b>.")
+            if hoy_pais:
+                texto_prox = (f'Próximo día de {esc(ctx.pais)}: <b>{esc(texto_dia(hoy_pais))}</b> · ' + " ".join(
+                    logo_img(c, 18) for c, (d, _) in prox_pais.items() if d == hoy_pais))
+            elif _hoy:
+                texto_prox = f'No quedan partidos de {esc(ctx.pais)} esta temporada.'
+            else:
+                texto_prox = "Terminó la temporada: pasá a la siguiente desde <b>Nueva temporada</b>."
+            if _hoy and _hoy != hoy_pais:           # el botón juega el próximo día de todo el simulador
+                texto_prox += (f'<br><span style="opacity:.65">El simulador juega primero el {esc(texto_dia(_hoy))} '
+                               f'(de otro país).</span>')
             if sel:
                 texto_prox += (f'<br>Elegiste: <b>{esc(texto_dia(sel))}</b> · tocá el día de nuevo para quitarlo')
             elif _hoy:
@@ -79,14 +92,17 @@ def render(ctx):
             c2.button(":material/fast_forward: Simular hasta esa fecha" if sel
                       else ":material/calendar_today: Jugar ese día", key="cal_next", width="stretch",
                       type="primary", disabled=_hoy is None, on_click=_cb_simular, args=(S, ctx.manager, P, acumular, sel))
-            club = ctx.club                     # modo manager: club que dirigís (None si no hay)
+            club = ctx.club if ctx.es_base else None    # modo manager: club que dirigís (sólo existe en Argentina)
             vista = VISTA_TODOS
             if club:
                 vista = st.segmented_control("Vista", [VISTA_MIS, VISTA_TODOS], default=VISTA_MIS,
                                              key="cal_vista", label_visibility="collapsed") or VISTA_MIS
             eventos = eventos_calendario(S)
+            if not (club and vista == VISTA_MIS):       # "Mis partidos" muestra todo lo de mi club
+                eventos = [e for e in eventos if e[1] in propias]
             meses = sorted({d.month for d, *_ in eventos})
-            mes_def = (_hoy or eventos[-1][0]).month
+            pendientes = [d for d, _, _, jugada in eventos if not jugada]
+            mes_def = (min(pendientes) if pendientes else eventos[-1][0]).month    # el mes del próximo partido del país
 
             if club and vista == VISTA_MIS:
                 # ---- grilla mensual con los partidos de mi club, con flechas para cambiar de mes

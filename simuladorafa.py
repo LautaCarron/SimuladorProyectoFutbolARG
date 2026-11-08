@@ -18,6 +18,7 @@ st.set_page_config(page_title="Proyecto AFA · Simulador Fútbol Argentino", pag
                    initial_sidebar_state="collapsed")
 
 from config import ACUMULAR_PUNTOS, ES_WEB, parametros_partido  # noqa: E402
+from datos.paises import PAIS_BASE  # noqa: E402
 
 if not ES_WEB:    # pantalla de inicio ("Elegí un modo"); en la web estática la muestra index.html
     from ui.inicio import mostrar_inicio
@@ -34,7 +35,7 @@ from datos.logos import LOGOS_CSS  # noqa: E402
 from motor.calendario import proximos  # noqa: E402
 from motor.manager import sincronizar_manager  # noqa: E402
 from motor.nucleo import con_tacticas  # noqa: E402
-from motor.progreso import Progreso, avisos_de_temporada  # noqa: E402
+from motor.progreso import Progreso, avisos_de_temporada, avisos_del_pais_en  # noqa: E402
 from motor.temporada import VERSION_ESTADO, crear_estado  # noqa: E402
 from ui import (  # noqa: E402
     avisos as ui_avisos,
@@ -47,10 +48,13 @@ from ui import (  # noqa: E402
     supercopa as ui_supercopa,
     ui_calendario,
     ui_conmebol,
+    ui_copa_uruguay,
     ui_federal,
     ui_federal_b,
     ui_guardado,
+    ui_ligas_ext,
     ui_mundial,
+    ui_mundo,
     ui_nacional,
     ui_primera,
     ui_regional,
@@ -59,6 +63,7 @@ from ui import (  # noqa: E402
 from ui.acciones import render_acciones  # noqa: E402
 from ui.contexto import Contexto  # noqa: E402
 from ui.dios import panel_dios  # noqa: E402
+from ui.pais_activo import pais_activo  # noqa: E402
 from ui.pestanas import crear_pestanas  # noqa: E402
 from ui.vista import CSS, puente_clubes  # noqa: E402
 from ui.vista.cabecera import render_cabecera  # noqa: E402
@@ -66,8 +71,8 @@ from ui.vista.mi_club import competencias_club, estilo_mi_club  # noqa: E402
 
 # Pestañas de la interfaz, en el orden en que se dibujan
 PESTANAS_UI = (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional,
-               ui_copa_argentina, ui_supercopa, ui_regionales, ui_conmebol, ui_mundial, ui_calendario, ui_clubes, ui_avisos,
-               ui_historial, ui_guardado)
+               ui_copa_argentina, ui_supercopa, ui_regionales, ui_copa_uruguay, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
+               ui_clubes, ui_avisos, ui_historial, ui_guardado)
 
 
 def _estado_de_la_partida():
@@ -110,10 +115,18 @@ def main():
     club_propio.activar(S.get("club_propio"))            # el club que creó la persona (región, liga y escudo)
     st.markdown(club_propio.css(), unsafe_allow_html=True)
     modo_mgr = _es_modo_manager()
+    pais = pais_activo()                                 # el que se elige en Mundo
     if modo_mgr:
         _preparar_manager(S)
     else:
-        panel_dios(S)                                    # Modo dios (sólo modo simulación): formatos desde la barra lateral
+        if pais == PAIS_BASE:
+            panel_dios(S)                                # Modo dios (sólo modo simulación): formatos desde la barra lateral
+        else:                                            # por ahora el Modo dios es sólo de Argentina
+            with st.sidebar:
+                st.divider()
+                st.header("Modo dios")
+                st.caption(f"Por ahora el Modo dios es sólo de Argentina. Elegí Argentina en la pestaña Mundo para "
+                           f"cambiar sus formatos (estás viendo {pais}).")
         if getattr(S["rng"], "tacticas", None):          # modo simulación: nadie juega con táctica
             S["rng"] = con_tacticas(S["rng"], {})
 
@@ -130,17 +143,19 @@ def main():
     prox = proximos(S)
     hoy = min((d for d, _ in prox.values()), default=None)     # próximo día con partidos
     render_cabecera(S, progreso, hoy)
-    render_acciones(S, P, progreso, modo_mgr, ACUMULAR_PUNTOS, hoy)
+    render_acciones(S, P, progreso, modo_mgr, ACUMULAR_PUNTOS, hoy, pais)
 
-    # Avisos (suspensiones y sanciones): los de esta temporada y los anteriores; los nuevos se cuentan en la pestaña Avisos
-    avisos = avisos_de_temporada(S)
-    total_avisos = len(S.get("alertas_hist", [])) + len(avisos)
-    sin_leer = max(0, total_avisos - S.get("avisos_leidos", 0))
+    # Avisos (suspensiones y sanciones) del país activo: los de esta temporada y los anteriores; los nuevos se cuentan
+    # en la pestaña Avisos
+    avisos, avisos_hist, sin_leer = avisos_del_pais_en(S, avisos_de_temporada(S), pais)
+    total_avisos = len(avisos_hist) + len(avisos)
 
+    ui_mundo.indicador(pais, movil=True)                         # qué país se está viendo (se cambia en Mundo)
     pestanas = crear_pestanas(S, modo_mgr, competencias, kclub, sin_leer,
-                              pestana_inicial=st.session_state.get("afa_tab_inicial"))
+                              pestana_inicial=st.session_state.get("afa_tab_inicial"), pais=pais)
     ctx = Contexto(S=S, P=P, acumular=ACUMULAR_PUNTOS, modo_mgr=modo_mgr, manager=manager, progreso=progreso, pestanas=pestanas,
-                   avisos=avisos, total_avisos=total_avisos, sin_leer=sin_leer, prox=prox, hoy=hoy)
+                   avisos=avisos, total_avisos=total_avisos, sin_leer=sin_leer, prox=prox, hoy=hoy,
+                   pais=pais, avisos_hist=avisos_hist)
     for modulo in PESTANAS_UI:
         modulo.render(ctx)
 

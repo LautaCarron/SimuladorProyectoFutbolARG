@@ -11,6 +11,7 @@ también publicable como web estática con [stlite](https://github.com/whitphx/s
 | Ligas | Primera División, Primera Nacional, Federal A, Federal B (opcional, se crea desde el Modo dios), Primera B, Primera C, Promocional Amateur (con 25 clubes o más se juega en dos zonas) y Regional Amateur |
 | Copas nacionales | Copa Argentina (128 equipos), Supercopa Argentina y Regionales (opcional: torneos por zona, estilo estaduales de Brasil) |
 | Copas internacionales | Libertadores, Sudamericana y Recopa (CONMEBOL) y Mundial de Clubes (cada 4 temporadas) |
+| Ligas de otros países | Liga AUF Uruguaya (Apertura, Intermedio, Clausura, Tabla Anual y finales) y Segunda División Profesional (Torneo Competencia, fase regular y playoff por el tercer ascenso), en la pestaña Ligas cuando el país activo es Uruguay. Brasil y las demás se suman con datos: ver `docs/LIGAS_EXTERIOR.md`. Uruguay también simula la **Copa AUF Uruguay** (40 clubes: grupos y llaves; el campeón se lleva el Uruguay 4 de la Libertadores) y una tercera división falsa que no se juega (de ahí suben 2 clubes al azar a la Segunda y ahí bajan sus 2 últimos) |
 | Extras | Calendario con fechas reales de la temporada, historial y palmarés, incidentes (suspensiones y sanciones), avisos |
 
 La temporada 1 es 2026. Cada equipo tiene una "media" que cambia de una temporada a otra; los partidos se simulan con
@@ -23,6 +24,24 @@ resuelven solos al terminar cada temporada.
 * **Manager (Manager Falopa)**: se dirige un club, llegan ofertas y eventos, y hay relaciones con hinchada, dirigencia,
   plantel y economía (`ui/manager.py`, `motor/ofertas.py`, `motor/eventos.py`, `motor/relaciones.py`).
 * **Modo dios**: cambia formatos, descensos, ascensos y promociones de cada liga desde la barra lateral (`ui/dios.py`).
+  Por ahora es sólo de Argentina: con otro país activo la barra lateral lo avisa y no muestra los controles.
+
+### Países (pestaña Mundo)
+
+**Mundo** elige el *país activo* (Argentina por defecto, Uruguay y los que se sumen). El resto de la pantalla lo sigue:
+
+| Pestaña | Qué muestra del país activo |
+|---|---|
+| Ligas | Todas sus ligas (Argentina: Primera hasta el Regional Amateur; Uruguay: la Liga AUF y la Segunda División) |
+| Copas | Sus copas nacionales (Copa Argentina, Supercopa y Regionales; Uruguay: la Copa AUF Uruguay) **más** las internacionales: Libertadores, Sudamericana, Recopa y Mundial de Clubes |
+| Calendario | Las ligas y copas del país más las copas internacionales. Con un club dirigido en el Manager, "Mis partidos" muestra todo lo suyo |
+| Clubes | Los clubes del país (Argentina por categoría y región; Uruguay: primera, segunda y la tercera falsa), con buscador y ficha |
+| Historial | Campeones por temporada y palmarés del país (ligas y copas nacionales) **más** los de las copas internacionales |
+| Avisos | Los avisos del país, con sus propios "no leídos" (Uruguay todavía no tiene Tribunal de Disciplina) |
+
+Lo que no cambia con el país: la barra de arriba (Próximo día, Simular todo y Nueva temporada juegan **todo** el simulador) y
+Partidas. El país activo es de la pantalla, no de la partida: no se guarda en el `.afa`.
+Qué competencia es de qué país está en `datos/paises.py`; para sumar un país alcanza con cargar su liga (ver abajo).
 
 ### Mi club (club propio)
 
@@ -85,7 +104,7 @@ motor/               Lógica de simulación pura (sin Streamlit)
   nucleo.py            goles, penales, fixtures, tablas y cruces genéricos
   temporada.py         estado de la partida y paso de una temporada a la siguiente
   simulacion.py        cómo se juega cada competencia (tabla de despacho) y "Simular todo"
-  progreso.py          qué terminó, porcentajes y avisos de la temporada (clase Progreso)
+  progreso.py          qué terminó, porcentajes y avisos de la temporada (clase Progreso); avisos y "leídos" por país
   calendario.py        qué día se juega cada fecha / ronda
   consultas.py         partidos jugados y por jugar de cada competencia (reciben S por parámetro)
   manager.py           lógica del modo Manager sin interfaz (sincronización, relaciones, simular día por día)
@@ -96,23 +115,28 @@ motor/               Lógica de simulación pura (sin Streamlit)
   club_usuario.py      club propio: crear, dar de baja y entrada / salida al cerrar la temporada
 ligas/               Una liga por módulo (formato, desempates, ascensos, cómo se juega cada fecha)
   primera.py, apertura_clausura.py, nacional.py, federal.py, federal_b.py, simples.py, regional.py
+  exterior.py, uruguay.py, uruguay_segunda.py  Ligas de otros países: motor genérico por rondas y formatos uruguayos (docs/LIGAS_EXTERIOR.md)
   desempates.py        piezas comunes de los desempates por puntos (bloque empatado, duelo o liguilla)
 copas/               Competencias por rondas y copas internacionales
   argentina.py         Copa Argentina y Supercopa
   regionales.py        Regionales (copa opcional): torneos por zona con grupos y llaves
+  uruguay.py           Copa AUF Uruguay (40 clubes: grupos y llaves)
   conmebol.py          Libertadores, Sudamericana y Recopa
   mundial.py           Mundial de Clubes
   registro.py          Registro de competencias por rondas (clases Competencia, PorRondas, CopaArgentina,
-                       SupercopaArgentina y MundialDeClubes)
+                       SupercopaArgentina, MundialDeClubes y LigaExterior)
 datos/               Datos separados del código: los .py solo leen datos/json/*.json y exponen los mismos nombres de siempre
   json/                equipos.json (medias por categoría), escudos.json, geografia.json (origen y regiones), palmares.json,
                        logos.json, clubes_interior.json, clubes_int.json, clubes_mundial.json,
                        regional.json (clubes con zona, regiones, finales) y regional_extra.json (clubes sueltos a mano)
   club_propio.py       el club propio: provincias, ligas y regiones disponibles, validación del nombre y del escudo
   cargador.py          cargar("nombre") lee datos/json/<nombre>.json (si está mal escrito, avisa archivo y línea)
+  paises.py            países (Argentina, Uruguay...) y qué ligas, copas y avisos son de cada uno
 ui/                  Pestañas de la interfaz Streamlit; cada una expone render(ctx)
   contexto.py          clase Contexto: lo que reciben las pestañas (estado, progreso, pestañas, avisos)
-  pestanas.py          arma las pestañas de arriba, las de ligas y las de copas
+  pestanas.py          arma las pestañas de arriba, las de ligas y las de copas del país activo
+  pais_activo.py       el país activo (st.session_state): se elige en Mundo
+  ui_mundo.py          pestaña Mundo: tarjetas de países y selector del país activo
   acciones.py          botones globales: Próximo día, Simular todo, Nueva temporada, Reiniciar
   ui_guardado.py       pestaña Partidas (descargar / cargar)
   crear_club.py        sección "Mi club" de la pestaña Partidas (crear y dar de baja el club propio)
@@ -145,6 +169,10 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
 
 * **Una liga nueva que se juega por fechas**: sumarla a `_JUGADORES` en `motor/simulacion.py` (y a `_LIGAS_RESTANTES`
   para que entre en "Simular todo"). "Próximo día" y "Simular todo" usan esa misma tabla.
+* **Una liga de otro país**: un archivo `datos/json/liga_<país>.json` con su formato, calendario y clubes de primera y de segunda
+  (registrarlo en `datos/ligas_ext.py` e `index.html`); si el formato no
+  existe, una clase en `ligas/` (ver `docs/LIGAS_EXTERIOR.md`). El país aparece solo en Mundo y sus pestañas
+  (Ligas, Calendario, Historial, Avisos) se arman con `datos/paises.py`.
 * **Una competencia por rondas nueva**: escribir su lógica en un módulo de `copas/`, agregar una clase en
   `copas/registro.py` (hereda de `PorRondas` o de `Competencia`) y sumarla a `REGISTRO`.
 * **Cambiar planteles, medias o escudos**: `datos/json/equipos.json` (medias por categoría) y `datos/json/escudos.json`.

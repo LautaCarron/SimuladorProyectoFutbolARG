@@ -174,12 +174,18 @@ _ISO = {"Argentina": "ar", "Brasil": "br", "Colombia": "co", "Paraguay": "py", "
         "Estados Unidos": "us", "Canadá": "ca", "Nueva Zelanda": "nz"}
 
 
-def bandera(pais, ancho=18):
+def bandera(pais, ancho=18, sola=False):
+    """Bandera del país como imagen (flagcdn.com), o "" si no se la conoce. Sirve en cualquier sistema: los emojis de
+    bandera (🇺🇾) en Windows se ven como dos letras. `sola`: sin el margen izquierdo de las banderas que van pegadas a un
+    nombre. Para ancho > 20 se pide la imagen más grande (y al doble para pantallas de alta densidad)."""
     iso = _ISO.get(pais)
     if not iso:
         return ""
-    return (f'<img class="bandera" src="https://flagcdn.com/w40/{iso}.png" width="{ancho}" '
-            f'height="{round(ancho * 2 / 3)}" alt="{esc(pais)}" title="{esc(pais)}" loading="lazy">')
+    w = 40 if ancho <= 20 else 80 if ancho <= 40 else 160
+    estilo = ' style="margin-left:0"' if sola else ""
+    return (f'<img class="bandera" src="https://flagcdn.com/w{w}/{iso}.png" '
+            f'srcset="https://flagcdn.com/w{w * 2}/{iso}.png 2x" width="{ancho}" '
+            f'height="{round(ancho * 2 / 3)}" alt="{esc(pais)}" title="{esc(pais)}" loading="lazy"{estilo}>')
 
 
 def barra_estado(items, progreso):
