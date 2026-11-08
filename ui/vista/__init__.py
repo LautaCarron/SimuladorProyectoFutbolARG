@@ -96,9 +96,12 @@ from ui.vista.cuadros import (
     cuadro_llave_html,
     cuadro_campeonato_html,
     cuadro_llaves_html,
+    cuadro_llaves_cruces_html,
+    grilla_cruces_html,
     llaves_desde_partidos,
     dieciseisavos_html,
     cuadro_final_copa_html,
+    cuadro_copa_completo_html,
     _ICONO_AVISO,
     avisos_html,
 )

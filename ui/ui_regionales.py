@@ -135,7 +135,6 @@ def _tabla_de_formato(filas):
 
 
 def _pestana_formato(R):
-    seccion("Formato", "cómo se juega cada torneo", COLOR)
     st.markdown(
         f"* **Quiénes juegan**: Primera, B Nacional, Federal A, Federal B (si existe), Primera B y Primera C. No juegan el "
         f"Promocional Amateur ni el Regional Amateur.\n"
@@ -153,7 +152,6 @@ def _pestana_formato(R):
 def _vista_previa(ctx):
     """Con los Regionales desactivados: cómo quedarían los torneos con los clubes de hoy."""
     S = ctx.S
-    seccion("Regionales", "torneos por zona al estilo de los estaduales de Brasil", COLOR)
     aviso("Los Regionales están <b>desactivados</b>. Activalos con el interruptor de arriba: juegan los clubes de "
           "Primera, B Nacional, Federal A, Federal B, Primera B y Primera C, cada uno en el torneo de su zona.")
     juegan = plan(S)

@@ -111,7 +111,6 @@ def render(ctx):
             tab_r = dict(zip(titulos_r, st.tabs(titulos_r)))
 
             with tab_r["Regiones"]:
-                seccion("Regiones", color="#0e7490")
                 region = st.pills("Región", REGIONES_REG, default=mi_reg or REGIONES_REG[0],
                                   key=f"reg_region{_k}", format_func=_fmt,
                                   label_visibility="collapsed") or (mi_reg or REGIONES_REG[0])
@@ -163,7 +162,6 @@ def render(ctx):
                 vista_fixture(S, ctx.club, "reg", region_fx)
 
             with tab_r["Final por el ascenso"]:
-                seccion("Final por el ascenso", color="#b7860b")
                 campeones_ya = [(SR["nombres"][c], reg) for reg, c in SR["campeones"].items() if c is not None]
                 if not campeones_ya:
                     aviso("Los cruces se completan con los campeones de cada región.")

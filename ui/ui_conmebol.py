@@ -18,7 +18,6 @@ from ui.vista import (
     esc,
     fila_partido_html,
     grupos_int_html,
-    seccion,
     serie_int_html,
     series_int_html,
     tabla_html,
@@ -52,8 +51,6 @@ def render(ctx):
             aviso("La Sudamericana espera a la Libertadores: sus grupos se arman con los que pierden la Fase 3 "
                   "y los playoffs, con los terceros de los grupos. Avanzá la Libertadores (o usá Próximo día).")
         if clave == "rec":
-            seccion("Recopa Sudamericana", "Campeón de la Libertadores vs. campeón de la Sudamericana · ida y "
-                    "vuelta (si el global empata, penales)", color)
             if not C["llaves"].get("Final"):
                 aviso("Esta temporada no hay Recopa.")
             else:
@@ -66,9 +63,6 @@ def render(ctx):
         t = dict(zip(titulos, st.tabs(titulos)))
         if es_lib:
             with t["Fase previa"]:
-                seccion("Fase previa", "Fase 1 (6 equipos), Fase 2 (16: 13 directos + 3 de la Fase 1) y Fase 3 (8) a ida "
-                        "y vuelta · los 4 que ganan la Fase 3 van a los grupos; los 4 que pierden, a la Sudamericana",
-                        color)
                 fases_previa = ("Fase 1", "Fase 2", "Fase 3")
                 actual = max((i for i, f in enumerate(fases_previa) if C["llaves"].get(f)), default=0)
                 fase_sel = st.radio("Fase", fases_previa, index=actual, horizontal=True,
@@ -79,12 +73,8 @@ def render(ctx):
                     aviso(f"La {fase_sel} se arma cuando termina la fase anterior.")
         else:
             with t["Fase previa"]:
-                seccion("Fase 1", "32 clubes (4 por país, menos Argentina y Brasil) en cruces entre clubes del mismo país "
-                        "a ida y vuelta · los 16 que ganan van a los grupos con los 12 de Argentina y Brasil, que "
-                        "entran directo", color)
                 st.markdown(series_int_html(C, "Fase 1"), unsafe_allow_html=True)
         with t["Grupos"]:
-            seccion("Fase de grupos", color=color)
             if C["grupos"] is None:
                 aviso("Los grupos se sortean cuando termina la fase previa de la Libertadores.")
             else:
@@ -93,13 +83,11 @@ def render(ctx):
                 st.markdown(grupos_int_html(C, destinos), unsafe_allow_html=True)
         if not es_lib:
             with t["Playoffs"]:
-                seccion("Playoffs", color=color)
                 if C["llaves"].get("Playoffs"):
                     st.markdown(series_int_html(C, "Playoffs"), unsafe_allow_html=True)
                 else:
                     aviso("Se arman cuando terminan los grupos de las dos copas.")
         with t["Eliminatorias"]:
-            seccion("Eliminatorias", color=color)
             st.markdown(cuadro_int_html(C), unsafe_allow_html=True)
             fases = [f for f in ("Octavos", "Cuartos", "Semifinal") if C["llaves"].get(f)]
             if fases:
@@ -117,7 +105,6 @@ def render(ctx):
                 for p in [p for p in C["log"] if p["fecha"] == r_sel]:
                     st.markdown(fila_partido_html(S, ctx.club, p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
         with t["Clasificados"]:
-            seccion("Clasificados", color=color)
             filas = [{"Equipo": n, "País": pais_de(n), "Cómo clasificó": v, "Media": round(C["r"][n], 1)}
                      for n, v in C["via"].items()]
             filas.sort(key=lambda x: (x["País"] != "Argentina", x["País"], -x["Media"]))

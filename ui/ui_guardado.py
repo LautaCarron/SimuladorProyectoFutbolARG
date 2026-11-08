@@ -14,7 +14,7 @@ import streamlit as st
 from motor.guardado import (EXTENSION, ErrorPartida, desempaquetar, empaquetar, leer_encabezado,
                             nombre_archivo)
 from ui.crear_club import render_seccion as render_club
-from ui.vista import aviso, esc, seccion
+from ui.vista import aviso, esc
 
 # Claves de session_state que dependen de la partida en curso y no tienen sentido con la partida cargada
 _CLAVES_PARTIDA = ("mgr_msg", "mgr_ultimo", "cal_dia_sel", "_dia_a_elegir", "_club_a_abrir", "puente_dia",
@@ -115,7 +115,6 @@ def render(ctx):
     # ============================================================================
     if _abierta(tab_pa):
         with tab_pa:
-            seccion("Partidas", "Guardá tu progreso en un archivo y retomalo cuando quieras", "#2f7fd0")
             aviso("El archivo guarda <b>todo</b>: ligas, copas, calendario, historial, tu club (si creaste uno) y, si jugás en modo Manager, "
                   "tu carrera. Podés cargarlo antes de empezar a simular o en cualquier momento.")
             c1, c2 = st.columns(2, gap="large")

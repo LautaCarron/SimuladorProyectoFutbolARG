@@ -5,9 +5,16 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 """
 
 import streamlit as st
-from datos import paises
+from motor import incidentes
 from motor.progreso import marcar_avisos_leidos
-from ui.vista import aviso, avisos_html, seccion
+from ui.vista import aviso, avisos_html
+
+
+def _cb_tribunal(S, clave):
+    """Al mover el interruptor rige ya: apagado, los partidos que se jueguen no tienen incidentes ni sanciones."""
+    S["tribunal_on"] = bool(st.session_state[clave])
+    incidentes.fijar(S)
+    st.toast("Tribunal de Disciplina " + ("activado." if S["tribunal_on"] else "desactivado."))
 
 
 def render(ctx):
@@ -18,8 +25,11 @@ def render(ctx):
     # ============================================================================
     if _abierta(tab_av):
         with tab_av:
-            seccion("Avisos", f"Partidos suspendidos y sanciones del Tribunal de Disciplina · {paises.etiqueta(ctx.pais)}",
-                    "#b83a2e")
+            encendido = bool(S.get("tribunal_on", True))
+            st.toggle("Tribunal de Disciplina", value=encendido, key=f"tribunal_on_{S['temp']}_{int(encendido)}",
+                      on_change=_cb_tribunal, args=(S, f"tribunal_on_{S['temp']}_{int(encendido)}"),
+                      help="Encendido, de vez en cuando hay partidos suspendidos y sanciones. Apagado, no se genera "
+                           "ninguno nuevo (los que ya ocurrieron quedan en los avisos).")
             if _sin_leer:
                 c1, c2 = st.columns([3, 1.4], vertical_alignment="center")
                 c1.markdown(f'<div class="aviso-banner">🚨 <span><b>{_sin_leer} aviso{"s" if _sin_leer > 1 else ""} '
@@ -31,7 +41,9 @@ def render(ctx):
                 st.markdown(f'<div class="mlab" style="margin-top:8px">Temporada {S["temp"]}</div>', unsafe_allow_html=True)
                 st.markdown(avisos_html(S, _avisos), unsafe_allow_html=True)
             else:
-                aviso("Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones."
+                aviso("El Tribunal de Disciplina está desactivado: no habrá partidos suspendidos ni sanciones."
+                      if not encendido else
+                      "Esta temporada, por ahora, no hubo partidos suspendidos ni sanciones."
                       if ctx.es_base else f"Todavía no hay avisos de {ctx.pais}: el Tribunal de Disciplina "
                       "(suspensiones y sanciones) por ahora sólo funciona en Argentina.")
             if ctx.avisos_hist:

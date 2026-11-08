@@ -13,6 +13,7 @@ from ligas.nacional import simular_fecha_b, total_b
 from ligas.primera import primera_terminada, simular_fecha
 from ligas.regional import simular_fecha_reg
 from ligas.simples import simular_fecha_liga, tabla_pb, tabla_pc, tabla_pd
+from motor import incidentes
 
 MAX_PASOS = 10_000            # tope de seguridad: si una competencia no avanza, se corta en vez de colgar la app
 
@@ -40,6 +41,7 @@ _LIGAS_RESTANTES = (("Federal A", "f"), ("Federal B", "fb"), ("Primera B", "pb")
 
 def jugar_competencia(S, P, nombre, acumular=True):
     """Juega la próxima fecha / ronda de la competencia `nombre` (liga, copa del registro o CONMEBOL)."""
+    incidentes.fijar(S)
     jugador = _JUGADORES.get(nombre)
     if jugador:
         jugador(S, P, acumular)
@@ -62,6 +64,7 @@ def _repetir(terminado, paso, nombre):
 
 def simular_todo(S, P, acumular=True):
     """Juega todo lo que falta de la temporada, categoría por categoría (el modo Manager usa otro camino: día por día)."""
+    incidentes.fijar(S)
     # 1. Primera con sus desempates: la B Nacional necesita saber el 27° definitivo para la Promoción
     _repetir(lambda: primera_terminada(S), lambda: simular_fecha(S, P, acumular), "Primera División")
     # 2. Primera Nacional

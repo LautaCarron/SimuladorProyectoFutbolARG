@@ -7,7 +7,7 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 import streamlit as st
 from copas.argentina import rivales_supercopa, simular_supercopa, supercopa_lista
 from datos.logos import logo_img
-from ui.vista import aviso, chip, crest, esc, fila_partido_html, lista_equipos_html, seccion
+from ui.vista import aviso, chip, crest, esc, fila_partido_html, lista_equipos_html
 
 
 def render(ctx):
@@ -27,8 +27,6 @@ def render(ctx):
                          type="primary", disabled=not listo_sup):
                 simular_supercopa(S, P, S["rng"])
                 st.rerun()
-            seccion("Supercopa Argentina", "Campeón de Primera vs. campeón de la Copa Argentina · partido único "
-                    "en cancha neutral, penales si empatan", "#b7860b")
             if SS["jugada"]:
                 cc = SS["campeon"]
                 sub = SS["b"] if cc == SS["a"] else SS["a"]

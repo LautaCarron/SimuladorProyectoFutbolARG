@@ -11,7 +11,7 @@ from ligas.nacional import es_anual_b, rotulo_b
 from ligas.primera import fechas_f2
 from ligas.primera import formato, rotulo_p
 from ligas.regional import rotulo_reg
-from ui.vista.base import chip, esc, norm, seccion
+from ui.vista.base import chip, esc, norm
 from motor import consultas
 from ui.vista.partidos import marcador_html, tanda_html
 from ui.vista.ficha import ver_equipo
@@ -99,7 +99,6 @@ def vista_fixture(S, club, liga, region=None):
         obtener, rotulo = lambda n: consultas.partidos_fecha_f(SF, n), lambda n: rotulo_f(SF, n)
         extra = ("" if SF["zonas2"] is not None else
                  " · la fase 2 se arma al terminar la fase 1")
-    seccion("Fixture y resultados", color="#1e5aa8")
     if total == 0:
         st.info("Todavía no hay fechas programadas.")
         return

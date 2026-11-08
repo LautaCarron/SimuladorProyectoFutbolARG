@@ -48,7 +48,9 @@ from ui import (  # noqa: E402
     supercopa as ui_supercopa,
     ui_calendario,
     ui_conmebol,
+    ui_copa_brasil,
     ui_copa_uruguay,
+    ui_supercopa_br,
     ui_supercopa_uy,
     ui_federal,
     ui_federal_b,
@@ -63,6 +65,7 @@ from ui import (  # noqa: E402
 )
 from ui.acciones import render_acciones  # noqa: E402
 from ui.contexto import Contexto  # noqa: E402
+from motor import incidentes  # noqa: E402
 from ui.dios import panel_dios  # noqa: E402
 from ui.pais_activo import pais_activo  # noqa: E402
 from ui.pestanas import crear_pestanas  # noqa: E402
@@ -72,7 +75,7 @@ from ui.vista.mi_club import competencias_club, estilo_mi_club  # noqa: E402
 
 # Pestañas de la interfaz, en el orden en que se dibujan
 PESTANAS_UI = (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional,
-               ui_copa_argentina, ui_supercopa, ui_regionales, ui_copa_uruguay, ui_supercopa_uy, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
+               ui_copa_argentina, ui_supercopa, ui_regionales, ui_copa_brasil, ui_supercopa_br, ui_copa_uruguay, ui_supercopa_uy, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
                ui_clubes, ui_avisos, ui_historial, ui_guardado)
 
 
@@ -113,6 +116,7 @@ def main():
         ui_crear_club.render()
         st.stop()
     S = _estado_de_la_partida()
+    incidentes.fijar(S)                                  # Tribunal de Disciplina encendido o apagado (Avisos)
     club_propio.activar(S.get("club_propio"))            # el club que creó la persona (región, liga y escudo)
     st.markdown(club_propio.css(), unsafe_allow_html=True)
     modo_mgr = _es_modo_manager()

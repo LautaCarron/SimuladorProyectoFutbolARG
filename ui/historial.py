@@ -11,7 +11,7 @@ from datos import ligas_ext, paises
 from datos.equipos import region_regional
 from datos.logos import logo_img
 from datos.datos_regional import REGIONES_REG
-from ui.vista import aviso, crest, esc, seccion, tabla_html
+from ui.vista import aviso, crest, esc, tabla_html
 
 
 def _mov_clubes(items):
@@ -108,7 +108,6 @@ def render(ctx):
         with tab_h:
             es_base, pais = ctx.es_base, ctx.pais
             ligas_pais = [c for c in LIGAS_EXTERIOR if c.cfg["pais"] == pais]          # ligas simuladas de otro país
-            seccion("Historial", f"Campeones de cada temporada y rankings históricos · {paises.etiqueta(pais)}", "#b7860b")
 
             if S["campeones"]:
                 if es_base:

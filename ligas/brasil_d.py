@@ -23,11 +23,11 @@ from ligas.exterior import (FORMATOS, Formato, dias_semanales, espejo, partidos_
 from ligas.uruguay import _completa, _indices, _jugada, _penales_del_global
 
 GRUPOS = "Fase de grupos"
-POR_GRUPO = 6                                    # clubes por grupo
-PASAN = 4                                        # pasan de cada grupo
+POR_GRUPO = 6
+PASAN = 4
 NOMBRE_FASE = {32: "Segunda fase", 16: "Tercera fase", 8: "Octavos de final", 4: "Cuartos de final", 2: "Semifinales",
-               1: "Final"}                       # por cantidad de cruces
-EN_LLAVES = ("Octavos de final", "Cuartos de final", "Semifinales", "Final")    # las que dibuja el cuadro
+               1: "Final"}
+EN_LLAVES = ("Octavos de final", "Cuartos de final", "Semifinales", "Final")
 CRUCES_DE = {v: k for k, v in NOMBRE_FASE.items()}
 
 
@@ -56,8 +56,6 @@ class BrasilD(Formato):
                    "de eliminación directa a ida y vuelta (segunda fase, tercera fase, octavos, cuartos, semifinales y "
                    "final). Ascienden a la Série C los 4 semifinalistas. No hay descenso.")
     etapas_definicion = (_ida("Semifinales"), _vuelta("Semifinales"), _ida("Final"), _vuelta("Final"))
-
-    # ---- armado de la temporada ---------------------------------------------------------------------------
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         grupos = [list(range(i, min(i + POR_GRUPO, n))) for i in range(0, n, POR_GRUPO)]
@@ -78,7 +76,7 @@ class BrasilD(Formato):
             R = ronda(GRUPOS, f"Fase de grupos · fecha {k + 1}", GRUPOS, dias[k], pares=f, suma=GRUPOS)
             R["grupo_de"] = grupo_de
             rondas.append(R)
-        for j, fase in enumerate(fases):             # los cruces se conocen cuando termina la fase anterior
+        for j, fase in enumerate(fases):
             d0 = len(fechas) + 2 * j
             rondas.append(ronda(_ida(fase), f"{fase} · ida", fase, dias[d0], ida_vuelta="ida"))
             rondas.append(ronda(_vuelta(fase), f"{fase} · vuelta", fase, dias[d0 + 1], ida_vuelta="vuelta"))
@@ -90,10 +88,8 @@ class BrasilD(Formato):
             "grupos": grupos, "fases": fases, "hecho": {GRUPOS: False}, "clasificados": [], "semillas": {},
             "cruces": {}, "series": {}, "campeon": None, "subcampeon": None, "suben": [], "via": "", "ganadores": {},
         }
-
-    # ---- lo que viene después de cada ronda ---------------------------------------------------------------
     def avanzar(self, L, rng):
-        for _ in range(len(L["fases"]) + 3):     # cada paso deja listo el siguiente; corta cuando hay que jugar
+        for _ in range(len(L["fases"]) + 3):
             if not self._paso(L, rng):
                 return
 
@@ -126,7 +122,7 @@ class BrasilD(Formato):
             if fase in L["series"]:
                 continue
             if fase not in L["cruces"] or not _jugada(L, _vuelta(fase)):
-                return False                     # todavía hay que jugar esta fase
+                return False
             ida = partidos_de_ronda(L, _indices(L, _ida(fase))[0] + 1)
             vta = partidos_de_ronda(L, _indices(L, _vuelta(fase))[0] + 1)
             res = []
@@ -152,8 +148,6 @@ class BrasilD(Formato):
                             f"{', '.join(L['suben'])}.")
             return True
         return False
-
-    # ---- orden final de la temporada ---------------------------------------------------------------------------
     def _orden_final(self, L):
         """Los 96 clubes del mejor al peor: campeón, subcampeón, semifinalistas, cuartofinalistas... y, entre los que no
         pasaron de grupo, por su puesto en el grupo (puntos, diferencia de gol, goles a favor)."""
@@ -173,8 +167,6 @@ class BrasilD(Formato):
         pasaron = set(L["clasificados"])
         return [nom[i] for i in sorted(range(len(nom)), key=lambda i: (
             profundidad.get(i, len(L["fases"]) + 1 + (i not in pasaron)), campania.get(i, (9, 0, 0, 0)), i))]
-
-    # ---- cuadro para la interfaz ---------------------------------------------------------------------------------
     def llaves(self, L):
         """Cuadro de octavos a la final: [(título, [cruce o None])]. Un cruce es un dict con local, visita, gl, gv (goles del
         global), gana, pen, neutral y dia (con gl, gv y gana vacíos si todavía no se jugó). Local: el mejor sembrado."""
@@ -206,8 +198,6 @@ class BrasilD(Formato):
                 "Cuadro por siembra a ida y vuelta (el número es el global; entre paréntesis, los penales). Local: el mejor "
                 "sembrado. Se muestran desde octavos; la segunda y la tercera fase están en Fixture y resultados. "
                 "Ascienden los 4 semifinalistas.")
-
-    # ---- tablas para la interfaz ---------------------------------------------------------------------------
     def tablas(self, L):
         out = []
         pasan = set(L["clasificados"]) if L["hecho"][GRUPOS] else None
@@ -232,8 +222,6 @@ class BrasilD(Formato):
                                  + ("" if L["hecho"][GRUPOS] else "Destinos provisorios por la posición de hoy. ")
                                  + "Ascienden a la Série C los 4 semifinalistas.") if k == 0 else ""})
         return out
-
-    # ---- fin de temporada ------------------------------------------------------------------------------------
     def cierre(self, L):
         """Campeón, orden final de los 96 clubes, puntos de la fase de grupos y los que suben (los semifinalistas). Si se
         cierra antes de tiempo, suben los primeros de ese orden."""
@@ -244,9 +232,6 @@ class BrasilD(Formato):
             t.update({x["Equipo"]: (int(x["Pts"]), int(x["PJ"])) for _, x in df.iterrows()})
         return {"campeon": L["campeon"] or orden[0], "orden": orden, "puntos": t, "descienden": [],
                 "suben": list(L["suben"]) or orden[:int(L.get("ascensos", 4))]}
-
-    def reglas(self):
-        return self.descripcion
 
 
 FORMATOS[BrasilD.nombre] = BrasilD()

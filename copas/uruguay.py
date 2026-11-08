@@ -88,7 +88,7 @@ def sortear(L, rng, pro, r_pro, amateurs, r_amat):
     orden = np.argsort(-np.asarray(r_pro, dtype=float), kind="stable")
     grupos = [[] for _ in range(GRUPOS)]
     por_bombo = n_pro // 4
-    for b in range(4):                                  # un club de cada bombo en cada grupo
+    for b in range(4):
         for g, i in zip(rng.permutation(GRUPOS), orden[b * por_bombo:(b + 1) * por_bombo]):
             grupos[int(g)].append(int(i))
     L["grupos"] = [sorted(g) for g in grupos]
@@ -100,9 +100,6 @@ def sortear(L, rng, pro, r_pro, amateurs, r_amat):
         R["grupo_de"] = grupo_de
     L["sorteada"] = True
     return L
-
-
-# ---------------------------------------------------------------------------------------- lo que viene después
 def _ganadores(L, n):
     """Ids de los ganadores de la ronda n (1, 2, ...), en el orden de los cruces."""
     return [L["nombres"].index(p["gana"]) for p in partidos_de_ronda(L, n)]
@@ -127,7 +124,7 @@ def clasificados_grupos(L):
 
 def _armar_dieciseisavos(L, rng):
     pro = clasificados_grupos(L)
-    cruces = [(pro[k], pro[len(pro) - 1 - k]) for k in range(len(pro) // 2)]     # 1° vs 16°, 2° vs 15°...
+    cruces = [(pro[k], pro[len(pro) - 1 - k]) for k in range(len(pro) // 2)]
     amat = [int(i) for i in rng.permutation([i for i, o in enumerate(L["origen"]) if o == "Amateur"])]
     cruces += list(zip(amat[0::2], amat[1::2]))
     L["rondas"][FECHAS_GRUPOS]["pares"] = cruces
@@ -137,12 +134,12 @@ def avanzar(L, rng):
     """Se llama después de cada ronda jugada: arma los cruces de la que sigue o, al terminar la final, define al campeón."""
     if not L["sorteada"]:
         return
-    n = L["fecha"]                                   # rondas jugadas
+    n = L["fecha"]
     if n == FECHAS_GRUPOS and L["rondas"][n]["pares"] is None:
         _armar_dieciseisavos(L, rng)
     elif FECHAS_GRUPOS < n < TOTAL_RONDAS and L["rondas"][n]["pares"] is None:
         gana = _ganadores(L, n)
-        if n == FECHAS_GRUPOS + 1:                   # octavos: sorteo libre entre los 16 que siguen
+        if n == FECHAS_GRUPOS + 1:
             gana = [int(i) for i in rng.permutation(gana)]
         L["rondas"][n]["pares"] = list(zip(gana[0::2], gana[1::2]))
     elif n >= TOTAL_RONDAS and L["campeon"] is None:
@@ -161,7 +158,7 @@ def llaves(L, desde_etapa=1):
             continue
         i = FECHAS_GRUPOS + k
         R = L["rondas"][i]
-        n = 2 ** (len(ETAPAS_KO) - 1 - k)                  # 16, 8, 4, 2, 1 cruces
+        n = 2 ** (len(ETAPAS_KO) - 1 - k)
         if not L["sorteada"] or R["pares"] is None:
             ms = [None] * n
         elif i < L["fecha"]:

@@ -52,7 +52,7 @@ def _rondas_de_grupo(m):
 
 
 def _grupo_a(n):
-    return [i for i in range(n) if i % 4 in (0, 3)]          # posiciones 1°, 4°, 5°, 8°...
+    return [i for i in range(n) if i % 4 in (0, 3)]
 
 
 def _indices(L, etapa):
@@ -145,8 +145,6 @@ class Uruguay(Formato):
                    "el campeonato. Descienden los tres de peor promedio de dos temporadas.")
     etapas_definicion = (FINAL_INTERMEDIO, DESEMPATE + "Apertura", DESEMPATE + "Clausura", DESEMPATE + "Anual",
                          SEMIFINAL, FINAL_IDA, FINAL_VUELTA)
-
-    # ---- armado de la temporada ---------------------------------------------------------------------------
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         cal = cfg["calendario"]
@@ -175,10 +173,8 @@ class Uruguay(Formato):
             "desempates": {}, "hecho": {"Apertura": False, "Intermedio": False, "Clausura": False, "Anual": False},
             "campeon_corto": None, "campeon": None, "subcampeon": None, "via": "",
         }
-
-    # ---- lo que viene después de cada ronda ---------------------------------------------------------------
     def avanzar(self, L, rng):
-        for _ in range(12):                      # cada paso deja listo el siguiente; corta cuando hay que jugar
+        for _ in range(12):
             if not self._paso(L, rng):
                 return
 
@@ -276,8 +272,6 @@ class Uruguay(Formato):
         else:
             L["via"] = f"Ganó la final a ida y vuelta como campeón de la Tabla Anual (global {g_y}-{g_s})."
         return True
-
-    # ---- tablas para la interfaz ---------------------------------------------------------------------------
     def tablas(self, L):
         H, G = L["hecho"], L["ganadores"]
         out = []
@@ -334,8 +328,6 @@ class Uruguay(Formato):
         df.insert(0, "Pos", df.index + 1)
         df["Destino"] = ["Desciende" if d and p > n - d else "" for p in df["Pos"]]
         return df[["Pos", "Equipo", "Pts", "PJ", "Prom", "Destino"]]
-
-    # ---- fin de temporada ------------------------------------------------------------------------------------
     def cierre(self, L):
         anual = _tabla_anual(L)
         prom = self._promedios(L)
@@ -344,9 +336,6 @@ class Uruguay(Formato):
         return {"campeon": L["campeon"], "orden": orden,
                 "puntos": {x["Equipo"]: (int(x["Pts"]), int(x["PJ"])) for _, x in anual.iterrows()},
                 "descienden": list(prom["Equipo"])[len(prom) - d:] if d else []}
-
-    def reglas(self):
-        return self.descripcion
 
 
 FORMATOS[Uruguay.nombre] = Uruguay()

@@ -24,7 +24,6 @@ from ui.vista import (
     leyenda,
     mostrar_tabla,
     render_fecha,
-    seccion,
     tabla_html,
 )
 from ui.vista.editor_medias import editar_medias
@@ -96,8 +95,6 @@ def _render_item_tabla(t):
                     unsafe_allow_html=True)
     else:
         mostrar_tabla(t["df"], _colorear)
-    if t["df"] is not None and t["nota"]:
-        st.caption(t["nota"])
 
 
 def _tablas(ctx, comp, L):
@@ -150,12 +147,10 @@ def _llaves(comp, L):
         aviso(aviso_txt)
     st.markdown(cuadro_llaves_html(comp.formato.llaves(L), L["campeon"], f"Campeón · {L['nombre']}", subtitulo),
                 unsafe_allow_html=True)
-    st.caption(pie)
 
 
 def _fixture(ctx, comp, L):
     S = ctx.S
-    seccion("Fixture y resultados", color="#1e5aa8")
     rondas = L["rondas"]
     jugadas = L["fecha"]
     key = f"fx_sel_{comp.clave}_{S['temp']}_{jugadas}"
@@ -233,10 +228,8 @@ def _render_liga(ctx, comp):
                                           width="stretch", disabled=terminada):
             comp.jugar_todo(S, P, S["rng"])
             st.rerun()
-        st.caption(comp.formato.reglas())
         sub = st.tabs(["Posiciones", "Fixture y resultados"])
         with sub[0]:
-            seccion("Tablas de posiciones", color="#4f46e5")
             _tablas(ctx, comp, L)
             if L["fecha"] == 0 and not ctx.modo_mgr:       # en modo manager no se tocan las medias
                 with st.expander(f":material/tune: Editar medias internas de esta temporada ({L['nombre']})"):

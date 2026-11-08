@@ -13,8 +13,7 @@ from ui.vista import (
     aviso,
     chip,
     crest,
-    cuadro_final_copa_html,
-    cuadro_llave_html,
+    cuadro_copa_completo_html,
     esc,
     fila_partido_html,
     seccion,
@@ -62,8 +61,6 @@ def render(ctx):
                          else COPA_RONDAS[SC["ronda"]])
 
             if not SC["sorteada"]:
-                seccion("Copa Argentina", "128 equipos · desde 64avos de final · partido único en cancha "
-                        "neutral, penales si empatan", "#1e5aa8")
                 aviso("La Copa se sortea al empezar la temporada.")
                 _tabla_cupos(S.get("copa_clasif") or clasificados_inicial(S))
                 pendientes = [n for n, t in (("Primera", terminada), ("B Nacional", terminada_b),
@@ -75,14 +72,8 @@ def render(ctx):
                 titulos_ca = ["Cuadro", "Partidos", "Clasificados", "Cupos"]
                 tab_ca_t = dict(zip(titulos_ca, st.tabs(titulos_ca)))
                 with tab_ca_t["Cuadro"]:
-                    seccion("Cuadro de la Copa Argentina", color="#1e5aa8")
-                    opciones = [f"Llave {x}" for x in COPA_LLAVES] + ["Fase final"]
-                    vista_llave = st.segmented_control("Llave", opciones, default="Llave A", key="ca_llave",
-                                                       label_visibility="collapsed") or "Llave A"
-                    if vista_llave == "Fase final":
-                        st.markdown(cuadro_final_copa_html(SC), unsafe_allow_html=True)
-                    else:
-                        st.markdown(cuadro_llave_html(SC, vista_llave[-1]), unsafe_allow_html=True)
+                    seccion("Llaves · 64avos a la final", color="#1e5aa8")
+                    st.markdown(cuadro_copa_completo_html(SC), unsafe_allow_html=True)
                 with tab_ca_t["Partidos"]:
                     if not SC["log"]:
                         aviso("Todavía no se jugó ninguna ronda. Los cruces de 64avos están en el <b>Cuadro</b>.")
@@ -93,8 +84,6 @@ def render(ctx):
                         for m in SC["cuadro"][ronda_sel]:
                             st.markdown(fila_partido_html(S, ctx.club, m["p"]), unsafe_allow_html=True)
                 with tab_ca_t["Clasificados"]:
-                    seccion("Clasificados", "Los 128 equipos y por qué entraron (por la temporada anterior; "
-                            "en la temporada 1, por media)", "#1e5aa8")
                     df_cl = pd.DataFrame({"Equipo": SC["nombres"], "Liga": SC["origen"],
                                           "Clasificó como": SC["criterio"],
                                           "Media": np.round(SC["r"], 1)})
@@ -104,5 +93,4 @@ def render(ctx):
                     df_cl = df_cl.sort_values(["_o", "Media"], ascending=[True, False]).drop(columns="_o")
                     st.markdown(tabla_html(df_cl, formatos={"Media": "{:.1f}"}), unsafe_allow_html=True)
                 with tab_ca_t["Cupos"]:
-                    seccion("Cupos", "Cuántos equipos de cada liga clasificaron a la Copa de esta temporada", "#1e5aa8")
                     _tabla_cupos(list(zip(SC["nombres"], SC["criterio"])))

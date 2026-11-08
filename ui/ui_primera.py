@@ -128,7 +128,6 @@ def render(ctx):
             with sp["Posiciones"]:
                 if fmt == "actual":
                     if S["fase"] == 1:
-                        seccion("Tabla de posiciones", color="#475569")
                         mostrar_tabla(tabla_general(S), colorear_fase1(S), S["pos_hist"])
                         leyenda(LEY_ZONAS)
                     else:

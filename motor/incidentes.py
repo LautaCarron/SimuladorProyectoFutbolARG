@@ -17,6 +17,15 @@ import numpy as np
 
 PROB = 0.001              # por partido de liga o de Copa
 
+ACTIVO = True             # Tribunal de Disciplina encendido: lo fija `fijar(S)` desde S["tribunal_on"] (apagado: no hay incidentes nuevos)
+
+
+def fijar(S):
+    """Toma de la partida si el Tribunal está encendido. Se llama al crear o cargar la partida, al moverse el interruptor y
+    antes de simular."""
+    global ACTIVO
+    ACTIVO = bool(S.get("tribunal_on", True))
+
 # (clave, peso, sanción) · sanción: None (sólo suspensión), "pierde", "pierde+3", "pierde+6",
 # "quita9", "gravisimo"
 TIPOS = [
@@ -191,6 +200,8 @@ def revisar_liga(L, partidos, rng):
     """Después de jugar una fecha de liga: con probabilidad bajísima, un partido tiene un
     incidente. Si el club responsable pierde el partido, se corrige la tabla (3 puntos para el
     rival). `partidos` son los recién agregados al log de la liga L."""
+    if not ACTIVO:
+        return
     for p in partidos:
         if not _es_regular(p) or rng.random() >= PROB:
             continue
@@ -235,6 +246,8 @@ def revisar_liga(L, partidos, rng):
 def revisar_copa(SC, llaves, rng):
     """Copa: si hay un incidente con sanción, el responsable queda eliminado y pasa el rival.
     `llaves` son los cruces recién jugados (con 'p' y 'gana')."""
+    if not ACTIVO:
+        return
     nom = SC["nombres"]
     for m in llaves:
         p = m["p"]

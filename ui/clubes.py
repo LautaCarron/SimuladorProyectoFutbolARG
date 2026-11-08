@@ -6,9 +6,9 @@ compartidos de la interfaz (S, P, las pestañas, las banderas terminada_*, etc.)
 
 import streamlit as st
 from copas.registro import LIGAS_EXTERIOR
-from datos import ligas_ext, paises
+from datos import ligas_ext
 from datos.datos_regional import REGIONES_REG
-from ui.vista import crest, esc, norm, render_ficha, seccion, ver_equipo
+from ui.vista import crest, esc, norm, render_ficha, ver_equipo
 
 
 def render(ctx):
@@ -19,7 +19,6 @@ def render(ctx):
     # ============================================================================
     if _abierta(tab_c):
         with tab_c:
-            seccion("Clubes", f"Elegí un club para ver su ficha y buscar sus partidos · {paises.etiqueta(ctx.pais)}", "#1e5aa8")
             # Buscador global: cualquier club de cualquier categoría (y de cualquier región del Regional).
             # Al elegir uno se salta a su categoría / región, así la grilla de abajo queda parada donde está.
             es_base = ctx.es_base                         # país activo (se elige en Mundo)

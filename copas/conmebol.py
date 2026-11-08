@@ -6,8 +6,9 @@ Clasifican por la temporada anterior (como en la vida real):
     Copa Argentina + 6°-8° y 12°-13°; con los otros formatos, 6°-11°). Si el campeón de la Copa Argentina ya estaba
     clasificado a la Libertadores, su lugar de la Sudamericana pasa al mejor ubicado que todavía no entró. Los
     campeones de la Libertadores y la Sudamericana van a los grupos de la Libertadores siguiente.
-  * Los otros 9 países: Libertadores con 7 cupos Brasil (6 + el del campeón vigente si es brasileño, que entra aparte)
-    y 4 cada uno de los demás; Sudamericana con 6 Brasil y 4 cada uno de los demás. Qué club ocupa cada cupo sale de
+  * Los otros 9 países: Libertadores con 7 cupos Brasil (5 de la Série A + 2 de la Copa do Brasil: el campeón a los
+    grupos y el subcampeón a la Fase 2; más el del campeón vigente si es brasileño, que entra aparte) y 4 cada uno de
+    los demás; Sudamericana con 6 Brasil y 4 cada uno de los demás. Qué club ocupa cada cupo sale de
     la tabla final de su liga si la liga está simulada (Uruguay: ligas/uruguay.py) y, si no, se sortea cada temporada
     entre los de primera división de ese país (los más fuertes entran más seguido). Todos con licencia (datos/).
   * Temporada 1: la tabla de Primera se toma por media; campeones 2025: Flamengo
@@ -48,15 +49,32 @@ REC_RONDAS = ["Ida", "Vuelta"]
 
 # Cupos de los otros países (Argentina sale de la tabla de Primera). Libertadores: Colombia absorbe la diferencia
 # para que siempre sean 28 en los grupos, 6 en la Fase 1 y 13 entrando directo a la Fase 2 (con el de Argentina);
-# por país: Brasil 5 directos al no haber Copa de Brasil + 1 a fase previa (6°), 6 a Sudamericana (7° al 12°);
+# por país: Brasil 5 a grupos (1°-4° de la Série A + el campeón de la Copa do Brasil) y 2 a la Fase 2 (5° de la Série A +
+# el subcampeón de la Copa do Brasil), 6 a Sudamericana (6° al 11° de la Série A);
 # los demás 4 (grupos + Fase 2 + Fase 1); Argentina 6 (5 a grupos y 1 a la Fase 2).
 # Sudamericana: Brasil 6 (directo a los grupos, como Argentina) y los demás 4 (a la Fase 1 de la Sudamericana): 12 directos + 32 en la Fase 1 = 44.
 CUPOS_LIB_GRUPOS = {"Brasil": 5, "Colombia": 2, "Paraguay": 2, "Perú": 2, "Chile": 2, "Uruguay": 2,
                     "Ecuador": 2, "Bolivia": 2, "Venezuela": 2}
-CUPOS_LIB_PREVIA = {"Brasil": 1, "Colombia": 2, "Paraguay": 1, "Perú": 1, "Chile": 2, "Uruguay": 1,
+CUPOS_LIB_PREVIA = {"Brasil": 2, "Colombia": 2, "Paraguay": 1, "Perú": 1, "Chile": 2, "Uruguay": 1,
                     "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # entran directo a la Fase 2 (12 + 1 de Argentina)
 CUPOS_LIB_FASE1 = {"Brasil": 0, "Colombia": 0, "Paraguay": 1, "Perú": 1, "Chile": 0, "Uruguay": 1,
                    "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # los 6 de la Fase 1
+# Cupos de la Libertadores que da la copa del país (están dentro de los de arriba; la liga pone el resto): el campeón va a
+# los grupos y el subcampeón a la Fase 2 (Copa do Brasil). Si ya clasificaron por la liga, el cupo sigue por la tabla.
+CUPOS_COPA = {"Brasil": {"grupos": 1, "previa": 1}}
+NOTA_COPA = {"Brasil": "Además, la Copa do Brasil da dos cupos a la Libertadores: el campeón (fase de grupos) y el "
+                       "subcampeón (Fase 2). Si ya clasificaron por la liga, el cupo pasa al que sigue en esta tabla."}
+
+
+def cupos_liga(pais):
+    """Cupos CONMEBOL que reparte la tabla de la liga de `pais`: [(etiqueta, cantidad)] en el orden en que se asignan. Es
+    el total del país menos lo que da su copa (CUPOS_COPA)."""
+    c = CUPOS_COPA.get(pais, {})
+    return [("Libertadores", CUPOS_LIB_GRUPOS[pais] - c.get("grupos", 0)),
+            ("Libertadores · Fase 2", CUPOS_LIB_PREVIA[pais] - c.get("previa", 0)),
+            ("Libertadores · Fase 1", CUPOS_LIB_FASE1[pais]), ("Sudamericana", CUPOS_SUD[pais])]
+
+
 LIB_FASE3_FIN = LIB_RONDAS.index("Fase 3 · vuelta") + 1             # la Sudamericana espera a los que pierden la Fase 3
 LIB_GRUPOS_FIN = LIB_RONDAS.index("Grupos · fecha 6") + 1           # y a los 3° de los grupos
 CUPOS_SUD = {"Brasil": 6, "Colombia": 4, "Paraguay": 4, "Perú": 4, "Chile": 4, "Uruguay": 4,
@@ -201,19 +219,23 @@ def nuevas_internacionales(S, rng):
                 ya.add(n)
     ext_g = _ajustar_cupos(CUPOS_LIB_GRUPOS, 28 - len(lib_g))
     for pais in PAISES:
-        for n in _sortear_pais(rng, S, pais, ext_g[pais], ya):
+        # el campeón de la copa del país (Copa do Brasil) va primero; si ya clasificó, sigue la tabla de la liga
+        primero = S.get("ext_copa", {}).get(pais) if CUPOS_COPA.get(pais, {}).get("grupos") else None
+        for n in _sortear_pais(rng, S, pais, ext_g[pais], ya, primero=primero):
             lib_g.append((n, f"{pais} · grupos"))
             ya.add(n)
     lib_p = list(arg_p)
     ext_p = _ajustar_cupos(CUPOS_LIB_PREVIA, 13 - len(lib_p))
     for pais in PAISES:
-        for n in _sortear_pais(rng, S, pais, ext_p[pais], ya):
+        primero = S.get("ext_copa_sub", {}).get(pais) if CUPOS_COPA.get(pais, {}).get("previa") else None
+        for n in _sortear_pais(rng, S, pais, ext_p[pais], ya, primero=primero):
             lib_p.append((n, f"{pais} · Fase 2"))
             ya.add(n)
     lib_f1 = []
     for pais in PAISES:
         # el Uruguay 4 (Fase 1) es del campeón de la Copa AUF Uruguay (copas/uruguay.py); si ya clasificó, sigue la Anual
-        for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya, primero=S.get("ext_copa", {}).get(pais)):
+        primero = None if CUPOS_COPA.get(pais) else S.get("ext_copa", {}).get(pais)      # (Brasil: su copa va a grupos)
+        for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya, primero=primero):
             lib_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)
     sud = list(arg_s)                                  # Argentina (6) y Brasil (6) entran directo a los grupos

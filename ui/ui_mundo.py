@@ -11,7 +11,7 @@ from copas.registro import LIGAS_EXTERIOR
 from datos import paises
 from datos.paises import PAIS_BASE
 from ui.pais_activo import elegir_pais
-from ui.vista import bandera, chip, esc, seccion
+from ui.vista import bandera, chip, esc
 
 POR_FILA = 3
 
@@ -69,12 +69,9 @@ def render(ctx):
     if not ctx.abierta(tab):
         return
     with tab:
-        seccion("Mundo", "Elegí un país: Ligas, Copas, Calendario, Historial y Avisos muestran lo suyo", "#1e5aa8")
         lista = paises.PAISES
         for i in range(0, len(lista), POR_FILA):
             fila = lista[i:i + POR_FILA]
             for col, pais in zip(st.columns(POR_FILA), fila):
                 with col:
                     _tarjeta(ctx.S, pais, pais == ctx.pais)
-        st.caption("Cada país muestra sus ligas, sus copas (más las internacionales donde pueden jugar sus clubes), su "
-                   "calendario, su palmarés y sus avisos. El Modo dios, por ahora, es sólo de Argentina.")

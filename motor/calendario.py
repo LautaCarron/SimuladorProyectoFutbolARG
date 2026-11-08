@@ -16,6 +16,7 @@ from copas.registro import REGISTRO, por_nombre
 from ligas.nacional import total_b
 from ligas.primera import primera_terminada
 from motor.fechas import INICIO, anio, desde, dia_liga, ligas_de, total_liga  # noqa: F401  (INICIO, ligas_de y total_liga se reexportan)
+from motor import incidentes
 from motor.simulacion import jugar_competencia
 
 MAX_FECHAS_POR_DIA = 4          # por si una liga tiene dos fechas el mismo día
@@ -91,6 +92,7 @@ def proximos(S):
 
 def jugar_proximo_dia(S, P, acumular=True):
     """Juega todo lo programado para el próximo día del calendario (ligas y copas). Devuelve ese día."""
+    incidentes.fijar(S)
     prox = proximos(S)
     if not prox:
         return None

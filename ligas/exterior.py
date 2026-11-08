@@ -27,9 +27,6 @@ from motor.nucleo import (LOCALIA, STATS, df_stats, generar_fixture, jugar, juga
                           tanda_penales)
 
 UNA_SEMANA = dt.timedelta(weeks=1)
-
-
-# ---------------------------------------------------------------------------------------- cruces y estadísticas
 def stats_vacias(n):
     """Estadísticas en cero de un torneo de n equipos (las mismas claves que usan df_stats y sumar_partidos)."""
     return {k: np.zeros(n, dtype=int) for k in STATS}
@@ -57,9 +54,6 @@ def dias_semanales(anio, inicio, cantidad):
     """`cantidad` días, uno por semana, desde la primera fecha de `inicio` = [mes, día, día de la semana]."""
     primero = desde(anio, inicio[0], inicio[1], inicio[2])
     return [primero + k * UNA_SEMANA for k in range(cantidad)]
-
-
-# ---------------------------------------------------------------------------------------- rondas
 def ronda(etapa, rotulo, comp, dia, pares=None, suma=None, ko=False, neutral=False, ida_vuelta=None):
     """Una ronda de la liga.
 
@@ -117,9 +111,6 @@ def jugar_ronda(L, P, rng):
 def partidos_de_ronda(L, n):
     """Partidos ya jugados de la ronda n."""
     return [p for p in L["log"] if p["fecha"] == n]
-
-
-# ---------------------------------------------------------------------------------------- tablas
 def tabla(L, E, ids=None):
     """Tabla ordenada (puntos, diferencia de gol, goles a favor) de los equipos `ids` (todos si no se pasa) según las
     estadísticas `E`, con columna 'Pos'. Misma forma que las tablas de las ligas argentinas, así se dibuja igual."""
@@ -148,9 +139,6 @@ def lideres_empatados(df):
     """Posiciones de la tabla `df` (ya ordenada) que empatan en puntos con el líder, de 0 en adelante."""
     pts = df["Pts"].to_numpy()
     return [i for i in range(len(pts)) if pts[i] == pts[0]]
-
-
-# ---------------------------------------------------------------------------------------- formatos
 class Formato:
     """Interfaz que cumple cada formato de liga. Todos los métodos reciben el estado de la liga `L` (un dict)."""
     nombre = ""            # clave que se escribe en ligas_ext.json
@@ -176,20 +164,13 @@ class Formato:
         "descienden": [nombres]} (orden = posición final de cada club en la tabla que manda en ese país)."""
         raise NotImplementedError
 
-    def reglas(self):
-        """Texto con el formato, para la pestaña de la liga."""
-        return self.descripcion
-
 
 def _cupos_de_pais(pais):
     """Cupos CONMEBOL del país si están definidos en copas/conmebol.py."""
     try:
-        from copas.conmebol import CUPOS_LIB_FASE1, CUPOS_LIB_GRUPOS, CUPOS_LIB_PREVIA, CUPOS_SUD
+        from copas.conmebol import CUPOS_LIB_GRUPOS, cupos_liga
         if pais in CUPOS_LIB_GRUPOS:
-            return [("Libertadores", CUPOS_LIB_GRUPOS[pais]),
-                    ("Libertadores · Fase 2", CUPOS_LIB_PREVIA[pais]),
-                    ("Libertadores · Fase 1", CUPOS_LIB_FASE1[pais]),
-                    ("Sudamericana", CUPOS_SUD[pais])]
+            return cupos_liga(pais)
     except ImportError:
         pass
     return []
@@ -297,6 +278,11 @@ class TodosContraTodos(Formato):
             df["Destino"] = [_destino_primera(p, eq) for p, eq in zip(df["Pos"], df["Equipo"])]
             nota = ("Cupos a copas internacionales y descensos por la posición en la tabla. "
                     + ("" if L.get("campeon") else "Destinos provisorios por la posición de hoy.")) if (cupos or d) else ""
+            try:
+                from copas.conmebol import NOTA_COPA
+                nota = (nota + " " + NOTA_COPA.get(L.get("pais", ""), "")).strip()
+            except ImportError:
+                pass
 
         return [{"titulo": "Posiciones", "df": df, "tipo": "liga", "nota": nota}]
 

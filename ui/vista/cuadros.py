@@ -7,7 +7,7 @@ from datos.logos import logo_img
 from datos.datos_regional import FINALES_REG
 from ui.vista.base import chip, crest, esc
 from ui.vista.partidos import tanda_html
-from copas.argentina import COPA_CORTO, COPA_LLAVES
+from copas.argentina import COPA_CORTO, COPA_LLAVES, COPA_RONDAS
 
 
 # ---- Cuadro del reducido ----------------------------------------------------
@@ -275,27 +275,49 @@ def cuadro_llave_html(SC, letra):
     return _kb(cols, 8 * 74)
 
 
+def _kb_cuartos_vacios():
+    """Cuartos todavía sin cruce: cada uno dice qué llaves (A-H) se enfrentan."""
+    return "".join(
+        '<div class="kb-pair">' + "".join(
+            f'<div class="kb-slot"><div class="kb-m">'
+            f'<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">Ganador llave '
+            f'{COPA_LLAVES[2 * j2]}</span></div><div class="kb-t tbd"><span class="kb-vacio"></span>'
+            f'<span class="kb-n">Ganador llave {COPA_LLAVES[2 * j2 + 1]}</span></div></div></div>'
+            for j2 in (2 * j, 2 * j + 1)) + '</div>' for j in range(2))
+
+
 def cuadro_final_copa_html(SC):
     """Fase final: cuartos (ganadores de las llaves A-H), semifinales, final y campeón."""
     cols = []
     for k, n in ((4, 4), (5, 2), (6, 1)):
         if k < len(SC["cuadro"]):
             cols.append(_kb_ronda(SC, COPA_CORTO[k], SC["cuadro"][k]))
-        elif k == 4:                                    # qué llaves se cruzan en cuartos
-            vacias = "".join(
-                f'<div class="kb-pair">' + "".join(
-                    f'<div class="kb-slot"><div class="kb-m">'
-                    f'<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">Ganador llave '
-                    f'{COPA_LLAVES[2 * j2]}</span></div><div class="kb-t tbd"><span class="kb-vacio"></span>'
-                    f'<span class="kb-n">Ganador llave {COPA_LLAVES[2 * j2 + 1]}</span></div></div></div>'
-                    for j2 in (2 * j, 2 * j + 1)) + '</div>' for j in range(2))
-            cols.append(_kb_col(COPA_CORTO[k], vacias))
+        elif k == 4:
+            cols.append(_kb_col(COPA_CORTO[k], _kb_cuartos_vacios()))
         else:
             cols.append(_kb_ronda(SC, COPA_CORTO[k], [None] * n))
     c = SC["campeon"]
     cols.append(_kb_final("Campeón · Copa Argentina", "Campeón", SC["nombres"][c] if c is not None else None,
                           SC["origen"][c] if c is not None else ""))
     return _kb(cols, 4 * 84)
+
+
+def cuadro_copa_completo_html(SC, alto_por_cruce=70):
+    """Cuadro entero de la Copa Argentina, de izquierda a derecha: 64avos, 32avos, 16avos, octavos, cuartos, semifinal,
+    final y campeón. Los 8 grupos de 8 cruces de los 64avos son las llaves A-H (cada una llega a un cruce de octavos)."""
+    cols = []
+    for k in range(len(COPA_RONDAS)):
+        n = 64 >> k
+        if k < len(SC["cuadro"]):
+            cols.append(_kb_ronda(SC, COPA_CORTO[k], SC["cuadro"][k]))
+        elif k == 4:
+            cols.append(_kb_col(COPA_CORTO[k], _kb_cuartos_vacios()))
+        else:
+            cols.append(_kb_ronda(SC, COPA_CORTO[k], [None] * n))
+    c = SC["campeon"]
+    cols.append(_kb_final("Campeón · Copa Argentina", "Campeón", SC["nombres"][c] if c is not None else None,
+                          SC["origen"][c] if c is not None else ""))
+    return _kb(cols, 64 * alto_por_cruce)
 
 
 # ---- Campeonato de una liga del exterior (Uruguay): semifinal, final y campeón, con llaves como la Copa ----
@@ -367,10 +389,11 @@ def _kb_vacio():
     return f'<div class="kb-m">{fila}{fila}</div>'
 
 
-def _kb_ronda_partidos(titulo, partidos):
+def _kb_ronda_partidos(titulo, partidos, dibujar=None):
     """Una ronda del cuadro con partidos a eliminación directa (dict de partido, o None si todavía no se conoce el cruce):
-    de a pares, así la línea une a los dos que se enfrentan después."""
-    tarjeta = lambda p: _kb_partido(p) if p else _kb_vacio()
+    de a pares, así la línea une a los dos que se enfrentan después. `dibujar` reemplaza a `_kb_partido` (ver `_kb_cruce`)."""
+    dibujar = dibujar or _kb_partido
+    tarjeta = lambda p: dibujar(p) if p else _kb_vacio()
     if len(partidos) == 1:
         return _kb_col(titulo, f'<div class="kb-slot kb-solo">{tarjeta(partidos[0])}</div>')
     cuerpo = "".join(f'<div class="kb-pair"><div class="kb-slot">{tarjeta(partidos[j])}</div>'
@@ -385,6 +408,45 @@ def cuadro_llaves_html(rondas, campeon, titulo_campeon, subtitulo="", alto_por_c
     cols = [_kb_ronda_partidos(t, ms) for t, ms in rondas]
     cols.append(_kb_final(titulo_campeon, "Campeón", campeon, subtitulo if campeon else ""))
     return _kb(cols, len(rondas[0][1]) * alto_por_cruce)
+
+
+def _kb_cruce(c):
+    """Cruce de la Copa do Brasil (dict de `copas.brasil.cruces_de_fase`): un partido único o una serie a ida y vuelta (goles de
+    cada partido y global; sólo la ida si todavía no se jugó la vuelta)."""
+    ida, vuelta = c["ida"], c["vuelta"]
+    if vuelta is None:
+        return _kb_partido(ida)
+    if ida["gl"] != "" and vuelta["gl"] != "":
+        return _kb_serie(ida, vuelta, c["gana"])
+    return _kb_partido({**ida, "gana": None})
+
+
+def _kb_col_previa(titulo, cruces, alto):
+    """Fase previa (Copa do Brasil) como columna a la izquierda del cuadro: sus cruces van uno debajo del otro, sin líneas
+    (el sorteo es libre, no hay un cuadro fijo), y la columna se desplaza si no entran en el alto del cuadro."""
+    if cruces:
+        cuerpo = "".join(f'<div class="kb-lista-i">{_kb_cruce(c)}</div>' for c in cruces)
+    else:
+        cuerpo = f'<div class="kb-lista-i">{_kb_vacio()}</div>'
+    return (f'<div class="kb-col kb-previa"><div class="kb-h">{chip(titulo, "#4f46e5")}</div>'
+            f'<div class="kb-lista" style="max-height:{alto}px">{cuerpo}</div></div>')
+
+
+def cuadro_llaves_cruces_html(rondas, campeon, titulo_campeon, subtitulo="", alto_por_cruce=92, previas=None):
+    """Como `cuadro_llaves_html`, pero con cruces (`_kb_cruce`) en vez de partidos: sirve para fases a ida y vuelta.
+    `previas` [(título, [cruce])] son las fases anteriores al cuadro: van a su izquierda, en columnas sin líneas."""
+    alto = len(rondas[0][1]) * alto_por_cruce
+    cols = [_kb_col_previa(t, cs, alto) for t, cs in (previas or [])]
+    cols += [_kb_ronda_partidos(t, cs, _kb_cruce) for t, cs in rondas]
+    cols.append(_kb_final(titulo_campeon, "Campeón", campeon, subtitulo if campeon else ""))
+    return _kb(cols, alto)
+
+
+def grilla_cruces_html(cruces):
+    """Tarjetas de los cruces de una fase previa (Copa do Brasil), en una grilla que se acomoda al ancho."""
+    tarjetas = "".join(f'<div>{_kb_cruce(c)}</div>' for c in cruces)
+    return (f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;'
+            f'margin-bottom:10px">{tarjetas}</div>')
 
 
 def llaves_desde_partidos(partidos):

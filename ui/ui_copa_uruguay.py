@@ -1,7 +1,7 @@
 """Pestaña Copas · Copa AUF Uruguay (sólo cuando el país activo es Uruguay).
 
-Tiene tres partes: Grupos (una tabla por grupo), Fixture y resultados (por ronda) y Llaves (el cuadro de octavos a la
-final, como el de la Libertadores, más los dieciseisavos).
+Tiene tres partes: Grupos (una tabla por grupo), Fixture y resultados (por ronda) y Llaves (el cuadro de los dieciseisavos a
+la final, como el de la Libertadores).
 Todo sale de la copa (`copas.registro.CopaUruguay`) y de copas/uruguay.py; la copa se sortea cuando termina el Torneo
 Competencia de la Segunda División, así que hasta entonces la pantalla avisa que todavía no hay cuadro.
 """
@@ -13,7 +13,7 @@ from copas.registro import REGISTRO, CopaUruguay
 from datos.logos import logo_img
 from motor import consultas
 from motor.calendario import texto_dia
-from ui.vista import (COLORES_B, aviso, chip, crest, cuadro_llaves_html, dieciseisavos_html, esc, leyenda, mostrar_tabla,
+from ui.vista import (COLORES_B, aviso, chip, crest, cuadro_llaves_html, esc, leyenda, mostrar_tabla,
                       render_fecha, seccion)
 
 COPA = next(c for c in REGISTRO if isinstance(c, CopaUruguay))
@@ -42,13 +42,10 @@ def _grupos(L):
                     df["Destino"] = ["Pasa" if p <= 2 else "" for p in df["Pos"]]
                 mostrar_tabla(df, _color)
     leyenda([("Pasa a dieciseisavos", COLORES_B["Ascenso directo"]), ("Uno de los 4 mejores terceros", COLORES_B["Reducido"])])
-    st.caption("Pasan los dos primeros de cada grupo y los cuatro mejores terceros (puntos, diferencia de gol y goles a "
-               "favor). Los amateurs no juegan grupos: entran directo a los dieciseisavos.")
 
 
 def _fixture(ctx, L):
     S = ctx.S
-    seccion("Fixture y resultados", color="#1e5aa8")
     rondas, jugadas = L["rondas"], L["fecha"]
     key = f"fx_sel_{COPA.clave}_{S['temp']}_{jugadas}"
     if key not in st.session_state:
@@ -67,21 +64,15 @@ def _fixture(ctx, L):
 
 
 def _llaves(L):
-    """Cuadro de eliminación: octavos, cuartos, semifinales, final y campeón (de izquierda a derecha), y abajo los
-    dieciseisavos que lo anteceden (profesionales entre sí y amateurs entre sí)."""
-    seccion("Llaves · octavos a la final", color="#1e5aa8")
-    st.markdown(cuadro_llaves_html(copa_uy.llaves(L, 1), L["campeon"], f"Campeón · {COPA.nombre}",
-                                   "Uruguay 4 · Libertadores", alto_por_cruce=92), unsafe_allow_html=True)
-    st.caption("Los octavos se sortean entre los 16 que pasan de dieciseisavos. Desde ahí, el cuadro se lee de izquierda a "
-               "derecha: cada par de cruces se une en la ronda siguiente. Semifinales y final, en cancha neutral.")
-    seccion("Dieciseisavos de final", color="#4f46e5")
-    ms = copa_uy.llaves(L, 0)[0][1]
-    st.markdown(dieciseisavos_html(ms[:8], ms[8:]), unsafe_allow_html=True)
+    """Cuadro de eliminación de izquierda a derecha: dieciseisavos, octavos, cuartos, semifinal, final y campeón."""
+    seccion("Llaves · dieciseisavos a la final", color="#1e5aa8")
+    st.markdown(cuadro_llaves_html(copa_uy.llaves(L, 0), L["campeon"], f"Campeón · {COPA.nombre}",
+                                   "Uruguay 4 · Libertadores", alto_por_cruce=84), unsafe_allow_html=True)
 
 
 def render(ctx):
     S, P = ctx.S, ctx.P
-    tab = ctx.pestanas.tab_cuy                         # sólo existe si el país activo es Uruguay
+    tab = ctx.pestanas.tab_cuy
     if not ctx.abierta(ctx.pestanas.tab_copas, tab):
         return
     L = S[COPA.clave]
@@ -99,15 +90,11 @@ def render(ctx):
                                           disabled=COPA.pendiente(S) is None):
             COPA.jugar_todo(S, P, S["rng"])
             st.rerun()
-        st.caption("16 de la Liga AUF Uruguaya, los 8 mejores de la Segunda División (Torneo Competencia) y 16 amateurs. "
-                   "Fase de grupos entre los 24 profesionales; dieciseisavos entre profesionales y entre amateurs; desde "
-                   "octavos, un solo cuadro (pestaña Llaves). Se sortea cuando termina el Torneo Competencia de la Segunda.")
         if not activa:
             aviso("Todavía no está sorteada: se sortea cuando la Segunda División termina el Torneo Competencia.")
             return
         sub = st.tabs(["Grupos", "Fixture y resultados", "Llaves"])
         with sub[0]:
-            seccion("Fase de grupos", color="#4f46e5")
             _grupos(L)
             st.markdown(" ".join(chip(f"{o}: {sum(x == o for x in L['origen'])}", "#475569")
                                  for o in ("Profesional", "Amateur")), unsafe_allow_html=True)

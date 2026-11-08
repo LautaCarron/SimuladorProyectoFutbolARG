@@ -21,11 +21,11 @@ Série D). Cada una cuelga de la de arriba, sube y baja la misma cantidad de clu
 
 from datos.cargador import cargar
 
-ARCHIVOS = ["liga_uruguay", "liga_brasil", "liga_chile"]          # un archivo por país (datos/json/<nombre>.json)
+ARCHIVOS = ["liga_uruguay", "liga_brasil", "liga_chile"]
 
 LIGAS_EXT = []                       # configuración de cada liga; "clubes" = los que la juegan, "reserva" = segunda sin simular
-CLUBES_LIGAS = []                    # (nombre, país, media, escudo) de todos los clubes de estos archivos
-OSCUROS_LIGAS = []                   # escudos de borde oscuro
+CLUBES_LIGAS = []
+OSCUROS_LIGAS = []
 for _nombre in ARCHIVOS:
     _d = cargar(_nombre)
     _cfg = {k: v for k, v in _d.items() if k not in ("primera", "segunda", "tercera", "cuarta", "segunda_liga", "tercera_liga",
@@ -36,18 +36,18 @@ for _nombre in ARCHIVOS:
     _cfg["cuarta"] = [c["nombre"] for c in _d.get("cuarta", [])]        # cuarta división: lista (se simula si hay cuarta_liga)
     _cfg["divisional"] = 1
     LIGAS_EXT.append(_cfg)
-    if _d.get("segunda_liga"):       # segunda simulada: una liga más, que cuelga de la primera
+    if _d.get("segunda_liga"):
         _seg = {"clave": _cfg["clave"] + "2", "pais": _d["pais"], "ascensos": int(_cfg.get("ascensos", 0)),
                 **_d["segunda_liga"], "clubes": list(_cfg["reserva"]), "reserva": [], "divisional": 2,
                 "superior": _cfg["clave"], "tercera": list(_cfg["tercera"]), "cuarta": list(_cfg["cuarta"])}
         _cfg["inferior"] = _seg["clave"]
         LIGAS_EXT.append(_seg)
-        if _d.get("tercera_liga") and _cfg["tercera"]:      # tercera simulada: cuelga de la segunda (Primera Amateur)
+        if _d.get("tercera_liga") and _cfg["tercera"]:
             _ter = {"clave": _cfg["clave"] + "3", "pais": _d["pais"], **_d["tercera_liga"], "clubes": list(_cfg["tercera"]),
                     "reserva": [], "divisional": 3, "superior": _seg["clave"], "cuarta": list(_cfg["cuarta"])}
             _seg["inferior"] = _ter["clave"]
             LIGAS_EXT.append(_ter)
-            if _d.get("cuarta_liga") and _cfg["cuarta"]:    # cuarta simulada: cuelga de la tercera (Série D)
+            if _d.get("cuarta_liga") and _cfg["cuarta"]:
                 _cua = {"clave": _cfg["clave"] + "4", "pais": _d["pais"], **_d["cuarta_liga"], "clubes": list(_cfg["cuarta"]),
                         "reserva": [], "divisional": 4, "superior": _ter["clave"]}
                 _ter["inferior"] = _cua["clave"]
@@ -88,14 +88,14 @@ def errores():
     out, vistos = [], {}
     for cfg in LIGAS_EXT:
         k = cfg["clave"]
-        if cfg.get("divisional", 1) > 1:             # liga de abajo: sus clubes ya se contaron en la de arriba
+        if cfg.get("divisional", 1) > 1:
             arriba = CONFIG_POR_CLAVE.get(cfg.get("superior"))
             if arriba is None:
                 out.append(f"{k}: su liga de arriba ('{cfg.get('superior')}') no existe")
             elif cfg["divisional"] in (3, 4):             # tercera / cuarta simulada: sus clubes son los de `tercera` / `cuarta`
                 nombre_lista = "tercera" if cfg["divisional"] == 3 else "cuarta"
                 primera = arriba
-                while primera.get("divisional", 1) > 1:               # sube por la cadena hasta la primera división
+                while primera.get("divisional", 1) > 1:
                     primera = CONFIG_POR_CLAVE.get(primera.get("superior"), {})
                 if set(cfg["clubes"]) != set(primera.get(nombre_lista, [])):
                     out.append(f"{k}: sus clubes no son los de la {nombre_lista} división de '{primera.get('clave')}'")

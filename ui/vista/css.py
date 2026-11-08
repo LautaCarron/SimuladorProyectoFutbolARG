@@ -347,6 +347,9 @@ th .tb-f .tb-pos,th .tb-f .tb-mov{font-size:inherit;color:inherit;font-weight:in
 .kb-t.win .kb-n{font-weight:800;}
 .kb-t.lose{opacity:.48;}
 .kb-t.tbd .kb-n{font-style:italic;font-weight:500;color:var(--tinta-3);cursor:default;}
+.kb-previa{border-right:1.5px dashed var(--line-2);padding-right:15px;}
+.kb-lista{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-right:4px;scrollbar-width:thin;}
+.kb-lista-i{flex:none;}
 .kb-vacio{width:20px;height:20px;flex:none;border:1.5px dashed var(--line-2);border-radius:50%;}
 .kb-inc{position:absolute;right:4px;top:-1px;font-size:.62rem;color:var(--lose);}
 .kb-champ{border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:6px;background:var(--papel);padding:14px 10px;text-align:center;}

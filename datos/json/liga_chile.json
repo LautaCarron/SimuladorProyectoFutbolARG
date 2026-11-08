@@ -1,4 +1,5 @@
-{"clave": "cl", "nombre": "Liga de Primera", "pais": "Chile", "formato": "todos_contra_todos", "descensos": 2, "ascensos": 2, "calendario": {"Liga": [1, 30, 4]}, "segunda_liga": {"nombre": "Primera B de Chile", "formato": "todos_contra_todos", "descensos": 0, "calendario": {"Liga": [2, 20, 4]}},
+{"clave": "cl", "nombre": "Liga de Primera", "pais": "Chile", "formato": "todos_contra_todos", "descensos": 2, "ascensos": 2, "calendario": {"Liga": [1, 30, 4]}, "segunda_liga": {"nombre": "Primera B de Chile", "formato": "todos_contra_todos", "descensos": 1, "calendario": {"Liga": [2, 20, 4]}},
+  "tercera_liga": {"nombre": "Segunda División Profesional de Chile", "formato": "todos_contra_todos", "ascensos": 1, "descensos": 0, "calendario": {"Liga": [3, 21, 5]}},
   "primera": [
     {"nombre": "Audax Italiano", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4138.png&h=96&w=96"},
     {"nombre": "Cobresal", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4133.png&h=96&w=96"},
@@ -34,5 +35,21 @@
     {"nombre": "Santiago Wanderers", "media": 56, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/3552.png&h=200&w=200"},
     {"nombre": "Unión Española", "media": 58, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4132.png&h=200&w=200"},
     {"nombre": "Unión San Felipe", "media": 50, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4130.png&h=200&w=200"}
+  ],
+  "tercera": [
+    {"nombre": "Atlético Colina", "media": 41, "escudo": "https://img.a.transfermarkt.technology/wappen/head/71953.png?lm=1789463898"},
+    {"nombre": "Brujas de Salamanca", "media": 43, "escudo": "https://img.a.transfermarkt.technology/wappen/head/76406.png?lm=1789464227"},
+    {"nombre": "Concón National", "media": 44, "escudo": "https://img.a.transfermarkt.technology/wappen/head/95053.png?lm=1789465568"},
+    {"nombre": "Provincial Ovalle", "media": 42, "escudo": "https://img.a.transfermarkt.technology/wappen/head/66291.png?lm=1789463491"},
+    {"nombre": "Real San Joaquín", "media": 42, "escudo": "https://img.a.transfermarkt.technology/wappen/head/77217.png?lm=1789464287"},
+    {"nombre": "Trasandino", "media": 45, "escudo": "https://img.a.transfermarkt.technology/wappen/head/20748.png?lm=1789460183"},
+    {"nombre": "Santiago City", "media": 44, "escudo": "https://img.a.transfermarkt.technology/wappen/head/95713.png?lm=1789465615"},
+    {"nombre": "Deportes Colchagua", "media": 43, "escudo": "https://img.a.transfermarkt.technology/wappen/head/24425.png?lm=1789460440"},
+    {"nombre": "Deportes Linares", "media": 44, "escudo": "https://img.a.transfermarkt.technology/wappen/head/25689.png?lm=1789460532"},
+    {"nombre": "Deportes Rengo", "media": 43, "escudo": "https://img.a.transfermarkt.technology/wappen/head/31295.png?lm=1789460930"},
+    {"nombre": "General Velásquez", "media": 43, "escudo": "https://img.a.transfermarkt.technology/wappen/head/64176.png?lm=1789463331"},
+    {"nombre": "Lota Schwager", "media": 46, "escudo": "https://img.a.transfermarkt.technology/wappen/head/19009.png?lm=1789460077"},
+    {"nombre": "Provincial Osorno", "media": 47, "escudo": "https://img.a.transfermarkt.technology/wappen/head/14753.png?lm=1789459901"},
+    {"nombre": "Santiago Morning", "media": 48, "escudo": "https://img.a.transfermarkt.technology/wappen/head/13337.png?lm=1789459840"}
   ]
 }

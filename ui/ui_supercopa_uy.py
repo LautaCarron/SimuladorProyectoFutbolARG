@@ -8,15 +8,14 @@ import streamlit as st
 
 from copas.registro import REGISTRO, SupercopaUruguaya
 from datos.logos import logo_img
-from motor.calendario import texto_dia
-from ui.vista import aviso, chip, crest, esc, fila_partido_html, lista_equipos_html, seccion
+from ui.vista import aviso, chip, crest, esc, fila_partido_html, lista_equipos_html
 
 COPA = next(c for c in REGISTRO if isinstance(c, SupercopaUruguaya))
 
 
 def render(ctx):
     S, P = ctx.S, ctx.P
-    tab = ctx.pestanas.tab_scuy                         # sólo existe si el país activo es Uruguay
+    tab = ctx.pestanas.tab_scuy
     if not ctx.abierta(ctx.pestanas.tab_copas, tab):
         return
     E = S[COPA.clave]
@@ -30,7 +29,6 @@ def render(ctx):
                                           type="primary", disabled=not lista):
             COPA.jugar(S, P, S["rng"])
             st.rerun()
-        seccion(COPA.nombre, "Campeón de la Liga AUF vs. ganador del Intermedio · penales si empatan", "#1e5aa8")
         if E["jugada"]:
             cc = E["campeon"]
             sub = E["b"] if cc == E["a"] else E["a"]
@@ -41,7 +39,5 @@ def render(ctx):
         elif lista:
             st.markdown(lista_equipos_html([(riv[0], "Campeón de la Liga AUF"), (riv[1], "Ganador del Intermedio")]),
                         unsafe_allow_html=True)
-            st.caption(f"Se juega el {texto_dia(COPA.dia(S, 1))} (ver Calendario). Si el mismo club ganó la liga y el "
-                       "Intermedio, el rival es el subcampeón de la liga.")
         else:
             aviso("Se juega cuando termina la Liga AUF Uruguaya (campeón vs. ganador del Intermedio).")

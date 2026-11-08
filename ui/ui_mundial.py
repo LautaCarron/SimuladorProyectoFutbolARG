@@ -91,10 +91,8 @@ def render(ctx):
         titulos = ["Grupos", "Eliminatorias", "Partidos", "Clasificados", "Ranking CONMEBOL"]
         t = dict(zip(titulos, st.tabs(titulos)))
         with t["Grupos"]:
-            seccion("Fase de grupos", color=color)
             st.markdown(grupos_mundial_html(M), unsafe_allow_html=True)
         with t["Eliminatorias"]:
-            seccion("Eliminatorias", color=color)
             st.markdown(cuadro_mundial_html(M), unsafe_allow_html=True)
         with t["Partidos"]:
             if not M["log"]:
@@ -106,7 +104,6 @@ def render(ctx):
                 for p in [p for p in M["log"] if p["fecha"] == r_sel]:
                     st.markdown(fila_partido_html(S, ctx.club, p, abierto=p["comp"] == "Final"), unsafe_allow_html=True)
         with t["Clasificados"]:
-            seccion("Clasificados", "UEFA 12 · CONMEBOL 6 · AFC 4 · CAF 4 · Concacaf 4 · OFC 1 · anfitrión 1", color)
             orden_conf = ["UEFA", "CONMEBOL", "AFC", "CAF", "CONCACAF", "OFC"]
             filas = [{"Equipo": n, "País": pais_club(n), "Confederación": M["conf"][n], "Cómo clasificó": M["via"][n],
                       "Media": round(M["r"][n], 1)} for n in M["nombres"]]

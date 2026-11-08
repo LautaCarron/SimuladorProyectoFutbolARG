@@ -97,5 +97,59 @@
       "Volta Redonda": 1,
       "XV de Piracicaba": 1
     }
+  },
+  "hist_ext_br4": {
+    "descripcion": "Campeonato Brasileiro Série D (2009-2025).",
+    "titulos": {
+      "São Raimundo-PA": 1,
+      "Guarany de Sobral": 1,
+      "Tupi": 1,
+      "Sampaio Corrêa": 1,
+      "Botafogo-PB": 1,
+      "Tombense": 1,
+      "Botafogo-SP": 1,
+      "Volta Redonda": 1,
+      "Operário-PR": 1,
+      "Ferroviário": 2,
+      "Brusque": 1,
+      "Mirassol": 1,
+      "Aparecidense": 1,
+      "América-RN": 1,
+      "Retrô": 1,
+      "Barra-SC": 1
+    }
+  },
+  "hist_copa_br": {
+    "descripcion": "Copa do Brasil, 1989-2025 (cargado de memoria: verificar contra la CBF).",
+    "titulos": {
+      "Cruzeiro": 6,
+      "Grêmio": 5,
+      "Flamengo": 5,
+      "Corinthians": 4,
+      "Palmeiras": 4,
+      "Atlético-MG": 2,
+      "Internacional": 1,
+      "Criciúma": 1,
+      "Juventude": 1,
+      "Santo André": 1,
+      "Paulista": 1,
+      "Fluminense": 1,
+      "Sport Club Recife": 1,
+      "Santos": 1,
+      "Vasco da Gama": 1,
+      "Athletico-PR": 1,
+      "São Paulo": 1
+    }
+  },
+  "hist_supercopa_br": {
+    "descripcion": "Supercopa do Brasil, 9 ediciones (1990, 1991 y 2020-2026: campeón de la Série A vs. campeón de la Copa do Brasil). Cargado de fuentes periodísticas (Gazeta Esportiva, Placar): verificar contra la CBF.",
+    "titulos": {
+      "Flamengo": 3,
+      "Corinthians": 2,
+      "Grêmio": 1,
+      "Atlético-MG": 1,
+      "Palmeiras": 1,
+      "São Paulo": 1
+    }
   }
 }

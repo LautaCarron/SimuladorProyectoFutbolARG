@@ -39,6 +39,8 @@ class Pestanas:
     tab_mgr: object = None
     tab_scuy: object = None            # Supercopa Uruguaya (sólo si el país activo es Uruguay)
     tab_cuy: object = None             # Copa AUF Uruguay (sólo si el país activo es Uruguay)
+    tab_cbr: object = None             # Copa do Brasil (sólo si el país activo es Brasil)
+    tab_sbr: object = None             # Supercopa do Brasil (sólo si el país activo es Brasil)
     tab_fb: object = None
     tab_mundo: object = None            # selector de país (pestaña madre)
     tabs_ligas_ext: dict = None         # {clave de la liga: su pestaña} (las ligas del país activo si no es Argentina)
@@ -67,6 +69,7 @@ def _globito_avisos(sin_leer, posicion):
 
 
 CLAVES_INTERNACIONALES = ("lib", "sud", "rec", "mun")
+CLAVE_COPA_EXT = {"Copa AUF Uruguay": "cuy", "Supercopa Uruguaya": "scuy", "Copa do Brasil": "cbr", "Supercopa do Brasil": "sbr"}   # copas nacionales de otros países
 
 
 def _sufijo(pais):
@@ -109,12 +112,16 @@ def _pestanas_de_copas(competencias, kclub, pais):
              ("rgs", _etiqueta("Regionales", "Regionales", "rgs", competencias)),
              ("cuy", _etiqueta("Copa AUF Uruguay", "Copa AUF Uruguay", "cuy", competencias)),
              ("scuy", _etiqueta("Supercopa Uruguaya", "Supercopa Uruguaya", "scuy", competencias)),
+             ("cbr", _etiqueta("Copa do Brasil", "Copa do Brasil", "cbr", competencias)),
+             ("sbr", _etiqueta("Supercopa do Brasil", "Supercopa do Brasil", "sbr", competencias)),
              ("lib", _etiqueta("Copa Libertadores", "Libertadores", "lib", competencias)),
              ("sud", _etiqueta("Copa Sudamericana", "Sudamericana", "sud", competencias)),
              ("rec", _etiqueta("Recopa Sudamericana", "Recopa", "rec", competencias)),
              ("mun", _etiqueta("Mundial de Clubes", "Mundial de Clubes", "mun", competencias))]
+    propias = tuple(CLAVE_COPA_EXT[c] for c in paises.copas_nacionales_de(pais) if c in CLAVE_COPA_EXT)
+    ajenas = set(CLAVE_COPA_EXT.values()) - set(propias)
+    todas = [(c, e) for c, e in todas if c not in ajenas]
     if pais != PAIS_BASE:           # las de su país (si simula alguna) y las internacionales
-        propias = ("cuy", "scuy") if "Copa AUF Uruguay" in paises.copas_nacionales_de(pais) else ()
         todas = [(c, e) for c, e in todas if c in CLAVES_INTERNACIONALES + propias]
     claves, etiquetas = [c for c, _ in todas], [e for _, e in todas]
     return dict(zip(claves, tabs_con_default(
@@ -151,4 +158,5 @@ def crear_pestanas(S, modo_mgr, competencias, kclub, sin_leer, pestana_inicial=N
         tab_pb=ligas.get("pb"), tab_pc=ligas.get("pc"), tab_pd=ligas.get("pd"), tab_ca=copas.get("ca"),
         tab_sup=copas.get("sup"), tab_rgs=copas.get("rgs"), tab_lib=copas.get("lib"), tab_sud=copas.get("sud"),
         tab_rec=copas.get("rec"), tab_mun=copas.get("mun"), tab_cuy=copas.get("cuy"), tab_scuy=copas.get("scuy"),
+        tab_cbr=copas.get("cbr"), tab_sbr=copas.get("sbr"),
         tab_mgr=tab_mgr, tab_fb=ligas.get("fb"), tab_mundo=tab_mundo, tabs_ligas_ext=ligas_ext)

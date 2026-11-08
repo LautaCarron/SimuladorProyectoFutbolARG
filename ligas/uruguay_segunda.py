@@ -38,8 +38,8 @@ FINAL_COMPETENCIA = "Final de la Competencia"
 PLAYOFF_SEMIS = "Playoff · semifinales"
 PLAYOFF_FINAL = "Playoff · final"
 TORNEOS = ("Competencia", "Regular")
-DIRECTOS = 2                  # ascensos directos (los dos primeros de la Tabla Anual)
-CUPOS_PLAYOFF = 4             # del 3° al 6° de la Tabla Anual
+DIRECTOS = 2
+CUPOS_PLAYOFF = 4
 
 
 def _tabla_anual(L):
@@ -52,8 +52,6 @@ class UruguaySegunda(Formato):
                    "Ascienden los dos primeros y el ganador del playoff entre el 3° y el 6°; descienden los últimos "
                    "de la Tabla Anual a la Primera Amateur (la tercera división).")
     etapas_definicion = (FINAL_COMPETENCIA, PLAYOFF_SEMIS, PLAYOFF_FINAL)
-
-    # ---- armado de la temporada ---------------------------------------------------------------------------
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         cal = cfg["calendario"]
@@ -88,10 +86,8 @@ class UruguaySegunda(Formato):
             "ganadores": {"Competencia": None}, "hecho": {"Competencia": False, "Regular": False, "Playoff": False},
             "directos": [], "playoff": None, "campeon": None, "subcampeon": None, "suben": [], "via": "",
         }
-
-    # ---- lo que viene después de cada ronda ---------------------------------------------------------------
     def avanzar(self, L, rng):
-        for _ in range(12):                      # cada paso deja listo el siguiente; corta cuando hay que jugar
+        for _ in range(12):
             if not self._paso(L):
                 return
 
@@ -157,8 +153,6 @@ class UruguaySegunda(Formato):
         L["suben"] = [nom[i] for i in L["directos"]] + [nom[P["ganador"]]]
         L["hecho"]["Playoff"] = True
         return True
-
-    # ---- tablas para la interfaz ---------------------------------------------------------------------------
     def tablas(self, L):
         out = []
         fin = L["finalistas_competencia"]
@@ -209,8 +203,6 @@ class UruguaySegunda(Formato):
                 d = "Líder" if p == 1 else d
             out.append(d)
         return out
-
-    # ---- fin de temporada ------------------------------------------------------------------------------------
     def cierre(self, L):
         """Campeón, orden final, puntos (para el promedio) y los que suben. Si se cierra antes de tiempo, suben los
         tres primeros de la Tabla Anual de hoy."""
@@ -221,9 +213,6 @@ class UruguaySegunda(Formato):
         return {"campeon": L["campeon"] or orden[0], "orden": orden,
                 "puntos": {x["Equipo"]: (int(x["Pts"]), int(x["PJ"])) for _, x in anual.iterrows()},
                 "descienden": orden[len(orden) - d:] if d else [], "suben": suben}
-
-    def reglas(self):
-        return self.descripcion
 
 
 FORMATOS[UruguaySegunda.nombre] = UruguaySegunda()

@@ -148,7 +148,6 @@ def _render_liga(ctx, cfg):
 
         with tabs[idx]:
             sub, ley = _textos(k, plan_de(L, k), len(L["nombres"]))
-            seccion("Tabla de posiciones", color="#4f46e5")
             if en_zonas:
                 etiq, ini = marcar(list(ZONAS_NOMBRES), zona_simple(L, ctx.club))   # modo manager: abre la zona de mi club
                 for tab_zona, df_zona in zip(tabs_con_default(etiq, ini), tablas_zonas(L, k)):

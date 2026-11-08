@@ -24,8 +24,8 @@ PRIMERA = "Primera fase"
 CUADRANGULARES = "Cuadrangulares"
 FINAL_IDA = "Final · ida"
 FINAL_VUELTA = "Final · vuelta"
-CLASIFICAN = 8                       # pasan a los cuadrangulares
-POR_GRUPO = 2                        # ascienden por cuadrangular
+CLASIFICAN = 8
+POR_GRUPO = 2
 GRUPOS = ("Cuadrangular A", "Cuadrangular B")
 SEMILLAS_A = (0, 3, 4, 7)            # puestos de la primera fase que juegan el cuadrangular A (1°, 4°, 5° y 8°)
 SEMILLAS_B = (1, 2, 5, 6)            # ... y el B (2°, 3°, 6° y 7°)
@@ -42,16 +42,14 @@ class BrasilC(Formato):
                    "Ascienden a la Série B los 2 primeros de cada cuadrangular y los ganadores juegan la final a ida y "
                    "vuelta por el título. Descienden a la Série D los 4 últimos de la primera fase.")
     etapas_definicion = (FINAL_IDA, FINAL_VUELTA)
-
-    # ---- armado de la temporada ---------------------------------------------------------------------------
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         ida = rueda(rng, range(n))
-        k_cuad = 2 * (len(SEMILLAS_A) - 1)                     # 6 fechas: grupos de 4 a doble rueda
+        k_cuad = 2 * (len(SEMILLAS_A) - 1)
         dias = dias_semanales(anio, cfg["calendario"][PRIMERA], len(ida) + k_cuad + 2)
         rondas = [ronda(PRIMERA, f"Primera fase · fecha {k + 1}", PRIMERA, dias[k], pares=f, suma=PRIMERA)
                   for k, f in enumerate(ida)]
-        for k in range(k_cuad):                                # los cruces se conocen al terminar la primera fase
+        for k in range(k_cuad):
             rondas.append(ronda(CUADRANGULARES, f"Cuadrangulares · fecha {k + 1}", CUADRANGULARES, dias[len(ida) + k],
                                 suma=CUADRANGULARES))
         rondas.append(ronda(FINAL_IDA, "Final · ida", "Final", dias[-2], ida_vuelta="ida"))
@@ -65,10 +63,8 @@ class BrasilC(Formato):
             "grupos": None, "clasificados": [], "hecho": {PRIMERA: False, CUADRANGULARES: False},
             "ganadores": {}, "finalistas": None, "campeon": None, "subcampeon": None, "suben": [], "via": "",
         }
-
-    # ---- lo que viene después de cada ronda ---------------------------------------------------------------
     def avanzar(self, L, rng):
-        for _ in range(4):                       # cada paso deja listo el siguiente; corta cuando hay que jugar
+        for _ in range(4):
             if not self._paso(L, rng):
                 return
 
@@ -113,8 +109,6 @@ class BrasilC(Formato):
                         f"{'' if g_a != g_b else ', por penales'}). Ascienden a la Série B: {', '.join(L['suben'])}.")
             return True
         return False
-
-    # ---- tablas para la interfaz ---------------------------------------------------------------------------
     def tablas(self, L):
         out = []
         df = tabla(L, L["E"][PRIMERA])
@@ -153,8 +147,6 @@ class BrasilC(Formato):
                         "nota": f"Ascienden a la Série B los {POR_GRUPO} primeros; los ganadores de cada cuadrangular "
                                 f"juegan la final a ida y vuelta."})
         return out
-
-    # ---- fin de temporada ------------------------------------------------------------------------------------
     def cierre(self, L):
         """Campeón, orden final (campeón, subcampeón, otros ascendidos, el resto de los cuadrangulares y después la
         primera fase), puntos de la primera fase, los que bajan (últimos de la primera fase) y los que suben. Si se cierra
@@ -176,9 +168,6 @@ class BrasilC(Formato):
         return {"campeon": L["campeon"] or orden[0], "orden": orden,
                 "puntos": {x["Equipo"]: (int(x["Pts"]), int(x["PJ"])) for _, x in reg.iterrows()},
                 "descienden": base[len(base) - d:] if d else [], "suben": suben}
-
-    def reglas(self):
-        return self.descripcion
 
 
 FORMATOS[BrasilC.nombre] = BrasilC()

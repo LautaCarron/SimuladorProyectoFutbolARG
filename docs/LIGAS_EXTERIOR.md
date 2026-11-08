@@ -104,22 +104,30 @@ más `tercera_liga` y `cuarta_liga`. La cadena queda A (20) → B (20) → C (20
 * La Série B de `liga_brasil.json` tenía a Paysandu, que en 2026 juega la C: se lo pasó a la C y entró São Bernardo (subió de la C).
 * Se guarda en el `.afa` (subió `VERSION_ESTADO` a 26: las partidas guardadas con la versión anterior ya no se cargan).
 
-## Chile: Liga de Primera y Primera B (`datos/json/liga_chile.json`)
+## Chile: Liga de Primera, Primera B y Segunda División Profesional (`datos/json/liga_chile.json`)
 
-Dos ligas con el motor `todos_contra_todos` (sin formato nuevo ni código nuevo: sólo datos). La Liga de Primera tiene los 16 clubes de 2026 y la
-Primera B de Chile (`clave` `cl2`) los 16 de su temporada 2026; la pirámide está cerrada: bajan y suben 2.
+Tres ligas con el motor `todos_contra_todos` (sin formato nuevo ni código nuevo: sólo datos). La Liga de Primera tiene los 16 clubes de 2026, la
+Primera B de Chile (`clave` `cl2`) los 16 de su temporada 2026 y la Segunda División Profesional (`clave` `cl3`, tercera categoría) los 14 de 2026; la pirámide está cerrada: entre Primera y B bajan y suben 2, entre B y Segunda baja y sube 1.
 
 * **Liga de Primera** (clave `cl`): doble rueda, 30 fechas, viernes desde el 30/1. Campeón el que más puntos suma; bajan los 2 últimos.
   Columna del Historial: `"Chile"`.
-* **Primera B de Chile** (clave `cl2`): doble rueda, 30 fechas, viernes desde el 20/2. Suben los 2 primeros. No baja nadie (la tercera, la
-  Segunda División, no se simula). Columna del Historial: `"Chile · D2"`.
+* **Primera B de Chile** (clave `cl2`): doble rueda, 30 fechas, viernes desde el 20/2. Suben los 2 primeros y baja el último a la Segunda División
+  Profesional. Columna del Historial: `"Chile · D2"`.
+* **Segunda División Profesional de Chile** (clave `cl3`, `divisional` 3): 14 clubes de 2026 (Zona Norte: Atlético Colina, Brujas de Salamanca, Concón National,
+  Provincial Ovalle, Real San Joaquín, Trasandino y Santiago City; Zona Sur: Deportes Colchagua, Deportes Linares, Deportes Rengo, General Velásquez,
+  Lota Schwager, Provincial Osorno y Santiago Morning), `tercera` y `tercera_liga` en el JSON. Doble rueda, 26 fechas, sábados desde el 21/3. Sube el
+  campeón a la Primera B y ocupa su lugar el último de la B. No baja nadie (la Tercera División A no se simula). Columna del Historial: `"Chile · D3"`.
 * **Cupos CONMEBOL**: salen de las constantes que ya tenía Chile en `copas/conmebol.py` (2 a grupos, 2 a la Fase 2 y 4 a la Sudamericana) y se
   reparten por la tabla final, no por sorteo. Los clubes de Primera salieron de `clubes_int.json`: siguen jugando las copas con la misma media.
 * **Simplificaciones a revisar**: en la realidad la Primera B da un ascenso directo (el 1°) y otro por la Liguilla de Ascenso (2° a 8°); acá suben
   los 2 primeros. Los cupos reales son 1°-2° a grupos, 3° contra el campeón de la Copa Chile por la Fase 2 y 4°-6° a la Sudamericana (no hay Copa
-  Chile). El calendario es semanal y no copia las fechas reales. Los de la Primera B tienen medias orientativas (49 a 58) y no tienen escudo
-  (se dibujan las iniciales). Palmarés histórico en `palmares_cl.json` (Primera 1933-2025 y Primera B 1952-2025; los conteos de la B cambian según la fuente) y logos de las dos ligas en `logos.json`.
+  Chile). El calendario es semanal y no copia las fechas reales. Los de la Primera B tienen medias orientativas (49 a 58) y los de la Segunda División Profesional (41 a 48) también; estos últimos no tienen
+  escudo (se dibujan las iniciales). El formato real de la Segunda 2026 es otro: dos zonas de 7 (Norte y Sur) a doble rueda, una llave entre los
+  cuartos de cada zona, y después Liguilla de Campeón (3 primeros de cada zona + el ganador de la llave) y Liguilla de Descenso (los demás), cada
+  una a doble rueda; el campeón de la Liguilla sube y los 2 peores de la de Descenso bajan a la Tercera A. Acá es una sola tabla de 14 con todos
+  contra todos a ida y vuelta, y no hay descenso. Palmarés histórico en `palmares_cl.json` (Primera 1933-2025 y Primera B 1952-2025; los conteos de la B cambian según la fuente) y logos de las dos ligas en `logos.json`.
 * Se guarda en el `.afa` (subió `VERSION_ESTADO` a 27: las partidas guardadas con la versión anterior ya no se cargan).
+* Al sumar la Segunda División Profesional `VERSION_ESTADO` subió a 29 (nueva liga en el estado): las partidas guardadas con la versión anterior ya no se cargan.
 
 ## Qué falta (próximos pasos)
 
@@ -180,3 +188,20 @@ pestaña, calendario, historial y palmarés. Al cerrar la temporada, `LigaExteri
 suben (`cierre()["suben"]`) y manda a los que bajan; tienen que subir y bajar la misma cantidad. En `S["ext_clubes"]` la segunda
 se guarda como `"Uruguay|2"` y su columna del Historial es `"Uruguay · D2"`. Sin `segunda_liga`, la segunda sigue siendo una
 reserva de la que suben clubes al azar.
+
+## Copa do Brasil (`copas/brasil.py`, `copas/registro.py::CopaBrasil`, `ui/ui_copa_brasil.py`)
+
+Formato 2026 de la CBF: 126 clubes y nueve fases. Primera (28 clubes → 14), segunda (14 + 74 = 88 → 44), tercera (44 + 4 = 48 → 24)
+y cuarta (24 → 12) a partido único; quinta (12 + los 20 de la Série A = 32 → 16), octavos, cuartos y semifinales a ida y vuelta
+(global empatado: penales); final única en cancha neutral.
+
+Simplificaciones: no hay estaduales, Copa Verde ni Copa do Nordeste. Los 106 clubes que no son de la Série A salen de la B, la C y
+la D (los de mejor media; los 28 peores abren en la primera fase). A la tercera fase entran los campeones de la C y de la D del
+año anterior y los dos de mejor media que quedan. Cruces al azar; local el de menor media (en las series, la ida).
+
+Cupos internacionales: campeón → grupos de la Libertadores; subcampeón → Fase 2. La Série A queda con 4 a grupos + 1 a Fase 2 y 6 a
+Sudamericana (6° al 11°). Si el campeón o el subcampeón ya clasificaron por la liga, el cupo pasa al que sigue en la tabla
+(`copas/conmebol.py`: `CUPOS_COPA`, `cupos_liga`, `primero=` en `_sortear_pais`). Brasil sigue teniendo 7 cupos en la Libertadores.
+
+Estado: `S["copa_br"]`; al cerrar escribe `S["ext_copa"]["Brasil"]` y `S["ext_copa_sub"]["Brasil"]`. `VERSION_ESTADO` subió a 28
+(las partidas guardadas anteriores no cargan).

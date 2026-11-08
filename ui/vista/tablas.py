@@ -13,7 +13,6 @@ from ui.vista.base import (
     COLOR_ORO,
     crest,
     esc,
-    seccion,
 )
 from ui.vista.partidos import resultado_para
 
@@ -267,8 +266,6 @@ def partido_corto(p):
 
 
 def render_movimientos(log, hist, nombres, color):
-    seccion("Movimientos de la temporada", "Cambios en la tabla, rachas y partidos destacados",
-            color)
     log = [p for p in log if p["local"] in nombres or p["visita"] in nombres]
     if not log:
         st.info("Simulá una fecha para ver los movimientos de la temporada.")

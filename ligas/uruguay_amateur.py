@@ -68,8 +68,6 @@ class UruguayAmateur(Formato):
                    "(cuartos, semifinales y final, a partido único). Ascienden a la Segunda División el campeón y el "
                    "subcampeón. No hay descenso: los que bajan de la Segunda ocupan los lugares de los que suben.")
     etapas_definicion = ETAPAS_FINALES
-
-    # ---- armado de la temporada ---------------------------------------------------------------------------
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         cal = cfg["calendario"]
@@ -99,10 +97,8 @@ class UruguayAmateur(Formato):
             "grupos": [A, B], "hecho": {REGULAR: False}, "ganadores": {},
             "campeon": None, "subcampeon": None, "suben": [], "via": "",
         }
-
-    # ---- lo que viene después de cada ronda ---------------------------------------------------------------
     def avanzar(self, L, rng):
-        for _ in range(8):                       # cada paso deja listo el siguiente; corta cuando hay que jugar
+        for _ in range(8):
             if not self._paso(L):
                 return
 
@@ -130,8 +126,6 @@ class UruguayAmateur(Formato):
                         f"{' y '.join(L['suben'])}.")
             return True
         return False
-
-    # ---- llaves para la interfaz ----------------------------------------------------------------------------
     def llaves(self, L):
         """Datos del cuadro de la fase final: [(título, [partido o None])] de cuartos a final. Un partido es un dict con
         local, visita, gl, gv, gana, pen, neutral y dia (con gl, gv y gana vacíos si todavía no se jugó)."""
@@ -148,8 +142,6 @@ class UruguayAmateur(Formato):
                        "pen": None, "neutral": R["neutral"], "dia": R["dia"]} for a, b in R["pares"]]
             out.append((TITULOS_FINALES[etapa], ms))
         return out
-
-    # ---- tablas para la interfaz ---------------------------------------------------------------------------
     def tablas(self, L):
         out = []
         pasan = set(clasificados(L)) if L["hecho"][REGULAR] else None
@@ -171,8 +163,6 @@ class UruguayAmateur(Formato):
                                  + ("" if L["hecho"][REGULAR] else "Destinos provisorios por la posición de hoy. ")
                                  + f"Ascienden a la Segunda División el campeón y el subcampeón.")})
         return out
-
-    # ---- fin de temporada ------------------------------------------------------------------------------------
     def cierre(self, L):
         """Campeón, orden final (campeón, subcampeón, semifinalistas, cuartofinalistas y el resto por la tabla de la fase
         regular), puntos y los que suben. Si se cierra antes de tiempo, suben los dos primeros de ese orden."""
@@ -192,9 +182,6 @@ class UruguayAmateur(Formato):
         return {"campeon": L["campeon"] or orden[0], "orden": orden,
                 "puntos": {x["Equipo"]: (int(x["Pts"]), int(x["PJ"])) for _, x in reg.iterrows()},
                 "descienden": [], "suben": suben}
-
-    def reglas(self):
-        return self.descripcion
 
 
 FORMATOS[UruguayAmateur.nombre] = UruguayAmateur()

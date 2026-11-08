@@ -287,7 +287,6 @@ def render(ctx):
             idx_b += 1
         
             with sb[idx_b]:
-                seccion("Definiciones de la temporada", color="#b7860b")
                 if SB["campeon"] is None:
                     aviso("Las definiciones aparecen acá cuando termina el torneo." if anual else
                           "Las definiciones aparecen acá cuando termina la fase 2 de la Primera Nacional.")
