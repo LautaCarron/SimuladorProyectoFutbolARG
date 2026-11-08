@@ -1,0 +1,38 @@
+{"clave": "cl", "nombre": "Liga de Primera", "pais": "Chile", "formato": "todos_contra_todos", "descensos": 2, "ascensos": 2, "calendario": {"Liga": [1, 30, 4]}, "segunda_liga": {"nombre": "Primera B de Chile", "formato": "todos_contra_todos", "descensos": 0, "calendario": {"Liga": [2, 20, 4]}},
+  "primera": [
+    {"nombre": "Audax Italiano", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4138.png&h=96&w=96"},
+    {"nombre": "Cobresal", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4133.png&h=96&w=96"},
+    {"nombre": "Colo Colo", "media": 72, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2688.png&h=96&w=96"},
+    {"nombre": "Coquimbo Unido", "media": 64, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8186.png&h=96&w=96"},
+    {"nombre": "Deportes Concepción", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8110.png&h=96&w=96"},
+    {"nombre": "Deportes Limache", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19195.png&h=96&w=96"},
+    {"nombre": "Everton CD", "media": 62, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4129.png&h=96&w=96"},
+    {"nombre": "Huachipato", "media": 63, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4134.png&h=96&w=96"},
+    {"nombre": "La Serena", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4137.png&h=96&w=96"},
+    {"nombre": "O'Higgins", "media": 63, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6072.png&h=96&w=96"},
+    {"nombre": "Palestino", "media": 64, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4422.png&h=96&w=96"},
+    {"nombre": "Universidad Católica", "media": 70, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/885.png&h=96&w=96"},
+    {"nombre": "Universidad de Chile", "media": 71, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4139.png&h=96&w=96"},
+    {"nombre": "Universidad de Concepción", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5362.png&h=96&w=96"},
+    {"nombre": "Unión La Calera", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10144.png&h=96&w=96"},
+    {"nombre": "Ñublense", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7427.png&h=96&w=96"}
+  ],
+  "segunda": [
+    {"nombre": "Cobreloa", "media": 58, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2678.png&h=200&w=200"},
+    {"nombre": "Curicó Unido", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17365.png&h=200&w=200"},
+    {"nombre": "Deportes Antofagasta", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6071.png&h=200&w=200"},
+    {"nombre": "Deportes Copiapó", "media": 51, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10139.png&h=200&w=200"},
+    {"nombre": "Deportes Iquique", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10142.png&h=200&w=200"},
+    {"nombre": "Deportes Puerto Montt", "media": 52, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4423.png&h=200&w=200"},
+    {"nombre": "Deportes Santa Cruz", "media": 49, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19198.png&h=200&w=200"},
+    {"nombre": "Deportes Temuco", "media": 54, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4128.png&h=200&w=200"},
+    {"nombre": "Magallanes", "media": 54, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17363.png&h=200&w=200"},
+    {"nombre": "Rangers de Talca", "media": 52, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4135.png&h=200&w=200"},
+    {"nombre": "Recoleta", "media": 50, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19197.png&h=200&w=200"},
+    {"nombre": "San Luis de Quillota", "media": 52, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/LOGO_SAN_LUIS_DE_QUILLOTA_OFICIAL.png/330px-LOGO_SAN_LUIS_DE_QUILLOTA_OFICIAL.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "San Marcos de Arica", "media": 51, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10138.png&h=200&w=200"},
+    {"nombre": "Santiago Wanderers", "media": 56, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/3552.png&h=200&w=200"},
+    {"nombre": "Unión Española", "media": 58, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4132.png&h=200&w=200"},
+    {"nombre": "Unión San Felipe", "media": 50, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4130.png&h=200&w=200"}
+  ]
+}

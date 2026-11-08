@@ -1,6 +1,6 @@
 # Ligas de otros países
 
-Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay** y **Brasil**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
+Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil** y **Chile**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
 
 ## Plan (cómo está pensado)
 
@@ -103,6 +103,23 @@ más `tercera_liga` y `cuarta_liga`. La cadena queda A (20) → B (20) → C (20
   Las medias son orientativas (C: 52 a 62, D: 38 a 54) y los clubes nuevos no tienen escudo (se dibujan las iniciales).
 * La Série B de `liga_brasil.json` tenía a Paysandu, que en 2026 juega la C: se lo pasó a la C y entró São Bernardo (subió de la C).
 * Se guarda en el `.afa` (subió `VERSION_ESTADO` a 26: las partidas guardadas con la versión anterior ya no se cargan).
+
+## Chile: Liga de Primera y Primera B (`datos/json/liga_chile.json`)
+
+Dos ligas con el motor `todos_contra_todos` (sin formato nuevo ni código nuevo: sólo datos). La Liga de Primera tiene los 16 clubes de 2026 y la
+Primera B de Chile (`clave` `cl2`) los 16 de su temporada 2026; la pirámide está cerrada: bajan y suben 2.
+
+* **Liga de Primera** (clave `cl`): doble rueda, 30 fechas, viernes desde el 30/1. Campeón el que más puntos suma; bajan los 2 últimos.
+  Columna del Historial: `"Chile"`.
+* **Primera B de Chile** (clave `cl2`): doble rueda, 30 fechas, viernes desde el 20/2. Suben los 2 primeros. No baja nadie (la tercera, la
+  Segunda División, no se simula). Columna del Historial: `"Chile · D2"`.
+* **Cupos CONMEBOL**: salen de las constantes que ya tenía Chile en `copas/conmebol.py` (2 a grupos, 2 a la Fase 2 y 4 a la Sudamericana) y se
+  reparten por la tabla final, no por sorteo. Los clubes de Primera salieron de `clubes_int.json`: siguen jugando las copas con la misma media.
+* **Simplificaciones a revisar**: en la realidad la Primera B da un ascenso directo (el 1°) y otro por la Liguilla de Ascenso (2° a 8°); acá suben
+  los 2 primeros. Los cupos reales son 1°-2° a grupos, 3° contra el campeón de la Copa Chile por la Fase 2 y 4°-6° a la Sudamericana (no hay Copa
+  Chile). El calendario es semanal y no copia las fechas reales. Los de la Primera B tienen medias orientativas (49 a 58) y no tienen escudo
+  (se dibujan las iniciales). Palmarés histórico en `palmares_cl.json` (Primera 1933-2025 y Primera B 1952-2025; los conteos de la B cambian según la fuente) y logos de las dos ligas en `logos.json`.
+* Se guarda en el `.afa` (subió `VERSION_ESTADO` a 27: las partidas guardadas con la versión anterior ya no se cargan).
 
 ## Qué falta (próximos pasos)
 

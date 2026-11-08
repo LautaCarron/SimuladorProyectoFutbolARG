@@ -1,0 +1,58 @@
+{
+  "hist_ext_cl": {
+    "descripcion": "Campeonato Nacional de Primera División de Chile (1933-2025).",
+    "titulos": {
+      "Colo Colo": 34,
+      "Universidad de Chile": 18,
+      "Universidad Católica": 16,
+      "Cobreloa": 8,
+      "Unión Española": 7,
+      "Audax Italiano": 4,
+      "Magallanes": 4,
+      "Everton CD": 4,
+      "Santiago Wanderers": 3,
+      "Huachipato": 3,
+      "Palestino": 2,
+      "Coquimbo Unido": 1,
+      "Santiago Morning": 1,
+      "Cobresal": 1,
+      "O'Higgins": 1,
+      "Green Cross": 1,
+      "Unión San Felipe": 1
+    }
+  },
+  "hist_ext_cl2": {
+    "descripcion": "Segunda División / Primera B de Chile (1952-2025). Los conteos varían según la fuente: revisar.",
+    "titulos": {
+      "Deportes Temuco": 5,
+      "La Serena": 4,
+      "San Luis de Quillota": 4,
+      "Coquimbo Unido": 4,
+      "Rangers de Talca": 3,
+      "Unión San Felipe": 3,
+      "Santiago Morning": 3,
+      "Deportes Iquique": 3,
+      "Unión La Calera": 3,
+      "Santiago Wanderers": 3,
+      "San Marcos de Arica": 3,
+      "Provincial Osorno": 3,
+      "Curicó Unido": 2,
+      "Deportes Antofagasta": 2,
+      "Palestino": 2,
+      "Cobresal": 2,
+      "Ñublense": 2,
+      "Deportes Concepción": 2,
+      "Universidad Católica": 2,
+      "Universidad de Concepción": 2,
+      "Deportes Melipilla": 2,
+      "Lota Schwager": 2,
+      "Green Cross": 2,
+      "O'Higgins": 2,
+      "Cobreloa": 1,
+      "Magallanes": 1,
+      "Deportes Puerto Montt": 1,
+      "Everton CD": 1,
+      "Universidad de Chile": 1
+    }
+  }
+}
