@@ -29,6 +29,7 @@ Módulo para simular la primera división de otros países junto con el fútbol 
    las listas `primera` y `segunda`, cada club con `nombre`, `media` y `escudo` (el escudo puede ir vacío: se dibujan las
    iniciales). Es el único lugar donde viven esos clubes: si estaban en `clubes_int.json`, se sacan de ahí.
 2. **Registro**: sumar el nombre del archivo a `ARCHIVOS` en `datos/ligas_ext.py` y a `ARCHIVOS` de `index.html`.
+3. **Palmarés histórico (opcional)**: crear `datos/json/palmares_<clave>.json` (por ejemplo, `palmares_uy.json` para la clave `uy`). Cada entrada usa como clave el identificador de historial de la competencia (`hist_ext_uy`, `hist_copa_uy`, etc.) y contiene `descripcion` y `titulos` (club: cantidad). El cargador lo incorpora automáticamente; si el archivo no existe, el palmarés empieza vacío. Agregar también el JSON a `ARCHIVOS` en `index.html` para que esté disponible en la versión web.
 3. **Formato**: si es de los que ya existen (`todos_contra_todos`), nada más. Si no, una clase que herede de `Formato` en
    `ligas/<pais>.py`, registrada en `FORMATOS`, e importada en `formato_de` (`ligas/exterior.py`).
 4. La prueba `test_datos.py` avisa si falta un JSON en `index.html`, y `tests/test_ligas_ext.py` si los datos de la liga no cierran.
@@ -78,28 +79,59 @@ Ejemplo de cabecera (Brasil, bajan 4; el calendario sólo necesita la primera fe
   primero de la Anual. Suben directo los 2 primeros; del 3° al 6° juegan el playoff por el tercer ascenso (semifinales 3° vs 6°
   y 4° vs 5° en cancha del mejor ubicado, final neutral; si el ganador de la Competencia quedó afuera, ocupa el lugar del 6°).
   Descenso: el real de 2026 se anuló (repechaje con la Divisional C), pero acá bajan los 2 últimos de la Tabla Anual a una
-  **tercera división falsa** (ver más abajo) y suben 2 de ella al azar. Las series se sortean al azar.
+  **tercera división falsa** (ver más abajo) y suben 2 de ella (el campeón y el subcampeón de la Primera Amateur). Las series se sortean al azar.
   Los clubes están en `segunda` de `liga_uruguay.json` con medias de 49 a 55 (orientativas, sin escudo); Rampla Juniors,
   Sud América y Villa Española se sacaron porque en 2026 no están en la Segunda.
 * El calendario usa sábados fijos (Apertura desde el 7/2, Intermedio desde el 13/6, Clausura desde el 8/8, definiciones desde
   el 21/11); no copia las fechas reales.
 
+## Brasil: Série C y Série D (`ligas/brasil_d.py`)
+
+`liga_brasil.json` trae `tercera` (20 clubes de la Série C 2026) y `cuarta` (96 de la Série D 2026, con su grupo A1 a A16),
+más `tercera_liga` y `cuarta_liga`. La cadena queda A (20) → B (20) → C (20) → D (96): bajan y suben 4 en cada escalón
+(`datos/ligas_ext.py` arma las ligas de `divisional` 3 y 4; `LigaExterior.cerrar` mueve a las cuatro; los cambios C↔D van a
+`S["ext_mov4"]`). Columnas del Historial: `"Brasil · D3"` y `"Brasil · D4"`.
+
+* **Série C**: formato simple, todos contra todos a ida y vuelta (38 fechas, desde el 29/3) con el motor `todos_contra_todos`. Suben los 4 primeros y bajan los 4 últimos. (El real de 2026 es primera fase + cuadrangulares + final, y baja sólo 2.)
+* **Série D** (formato real 2026): 16 grupos de 6 a doble rueda; pasan 4 de cada uno (64) a un cuadro de eliminación directa a ida y
+  vuelta (segunda fase, tercera fase, octavos, cuartos, semifinales, final). Suben los 4 semifinalistas. La Llaves muestra de octavos a
+  la final; lo anterior está en Fixture y resultados.
+* **Grupos de la D**: la primera temporada son los reales; el club que sube a la C deja su lugar al que baja (`mover_clubes_en_lugar`),
+  sin criterio geográfico.
+* **Simplificaciones**: el real de 2026 baja 2 de la C y sube 6 de la D (la C crece a 24 en 2027 y a 28 en 2028, y la D tiene un
+  playoff entre los eliminados en cuartos); acá la pirámide está cerrada y son 4 y 4. El cuadro de la D es fijo por siembra.
+  Las medias son orientativas (C: 52 a 62, D: 38 a 54) y los clubes nuevos no tienen escudo (se dibujan las iniciales).
+* La Série B de `liga_brasil.json` tenía a Paysandu, que en 2026 juega la C: se lo pasó a la C y entró São Bernardo (subió de la C).
+* Se guarda en el `.afa` (subió `VERSION_ESTADO` a 26: las partidas guardadas con la versión anterior ya no se cargan).
+
 ## Qué falta (próximos pasos)
 
-* **Brasil** (`datos/json/liga_brasil.json`): Série A y Série B de 20 clubes, todos contra todos a doble rueda; bajan y suben 4. La A arranca el 31/1 y la B el 28/3 (semanal, sin copiar fechas reales). Los clubes de la B que no tenían datos (Ceará, Botafogo-SP, Vila Nova, etc.) van con medias orientativas y sin escudo. Sin Copa do Brasil ni estaduales.
+* **Brasil** (`datos/json/liga_brasil.json`): Série A y Série B de 20 clubes, todos contra todos a doble rueda; bajan y suben 4 (la C y la D, más abajo). La A arranca el 31/1 y la B el 28/3 (semanal, sin copiar fechas reales). Los clubes de la B que no tenían datos (Ceará, Botafogo-SP, Vila Nova, etc.) van con medias orientativas y sin escudo. Sin Copa do Brasil ni estaduales.
 * **Supercopa Uruguaya** (campeón vs. ganador del Intermedio): sin simular.
 * En la primera temporada de la partida las copas siguen armándose con el sorteo ponderado por media: todavía no hay tabla.
 * Palmarés histórico real: las ligas del exterior sólo cuentan las temporadas simuladas.
 * Modo Manager: sólo se dirigen clubes argentinos; las ligas del exterior se juegan solas con el calendario.
 * Se guarda en el `.afa` (subió `VERSION_ESTADO` a 22: las partidas guardadas con la versión anterior ya no se cargan).
 
-## Tercera división falsa (Uruguay)
+## Primera Amateur (tercera división de Uruguay)
 
-`datos/json/liga_uruguay.json` trae `tercera`: 20 clubes (nombre, media, escudo) que **no se simulan**. Es la reserva de la
-Segunda División: al cerrar la temporada bajan los últimos de su Tabla Anual (`descensos` de `segunda_liga`, hoy 2) y suben, al
-azar, la misma cantidad de la tercera (con un poco más de chances los de mejor media, `LigaExterior._sortear_tercera`). La lista
-vive en `S["ext_clubes"]["Uruguay|3"]` y lo último que pasó, en `S["ext_mov3"]["Uruguay"]` (Historial). Sus clubes también son
-los **amateurs de la Copa AUF Uruguay**. Los nombres y las medias (38 a 46) son orientativos: hay que revisarlos.
+`datos/json/liga_uruguay.json` trae `tercera` (20 clubes con nombre, media y escudo) y `tercera_liga` (`nombre` "Primera Amateur",
+`formato` `uruguay_amateur`, `ascensos`, `descensos` y `calendario`). `datos/ligas_ext.py` suma una tercera liga (`clave` + "3",
+`divisional` 3, `superior` = la segunda). Sin `tercera_liga`, la tercera sigue siendo una lista de clubes que no se juega y de la que
+suben al azar (`LigaExterior._sortear_tercera`).
+
+Formato (`ligas/uruguay_amateur.py`, propio del simulador: el real de la AUF es otro):
+
+* **Fase regular**: dos series de 10 clubes (se sortean cada temporada), todos contra todos a doble rueda (18 fechas, domingos desde el 5/4).
+* **Fase final**: pasan los 4 primeros de cada serie. Cuartos (1° contra 4° y 2° contra 3° de la otra serie), semifinales y final,
+  todo a partido único con penales si empatan. Local el mejor ubicado de la tabla general de la fase regular; la final es en cancha neutral.
+* **Campeón**: el ganador de la final. **Ascienden a la Segunda** el campeón y el subcampeón. No hay descenso.
+* **Con la Segunda**: bajan sus 2 últimos de la Tabla Anual y ocupan los lugares de los 2 que suben, así la Primera Amateur sigue con
+  20 clubes (`LigaExterior.cerrar` de la primera). Lo último que pasó vive en `S["ext_mov3"]["Uruguay"]` (Historial) y la lista, en
+  `S["ext_clubes"]["Uruguay|3"]`. Su columna del Historial es `"Uruguay · D3"`.
+* **Interfaz**: pestaña Ligas con Serie A, Serie B y **Llaves** (cuadro de cuartos a la final, como el de la Libertadores).
+* Sus clubes también son los **amateurs de la Copa AUF Uruguay**. Los nombres y las medias (35 a 49) son orientativos: hay que revisarlos.
+* Se guarda en el `.afa` (subió `VERSION_ESTADO` a 25: las partidas guardadas con la versión anterior ya no se cargan).
 
 ## Copa AUF Uruguay (`copas/uruguay.py`, `CopaUruguay` en `copas/registro.py`)
 
@@ -113,6 +145,9 @@ Formato 2026 (nuevo formato anunciado por la AUF; fuente: Montevideo Portal, lan
   `copas/conmebol.py`). Si ya clasificó, el cupo sigue por la Tabla Anual.
 * **Cuándo**: se sortea cuando la Segunda termina el Torneo Competencia (hasta entonces no figura en el calendario) y se juega
   desde el primer miércoles de agosto, cada dos semanas (8 fechas; la final, el 11/11 de 2026).
+* **Llaves**: la pestaña Llaves de la copa dibuja el cuadro de octavos a la final (como el de la Libertadores) y, debajo, los
+  dieciseisavos de profesionales y de amateurs (`copas/uruguay.py`, `llaves`; `cuadro_llaves_html` en `ui/vista/cuadros.py`).
+* **Logo**: `datos/json/logos.json` (clave "Copa AUF Uruguay"); se ve en la cabecera de la copa y en la pestaña.
 * Estado: `S["copa_uy"]` con la misma forma que una liga del exterior (se juega con `jugar_ronda`). Campeones en
   `S["ext_def"]["copa_uy"]` y palmarés en `S["hist_copa_uy"]`.
 * **Simplificaciones a revisar**: los amateurs no tienen clasificatoria (en la realidad 10 son de la OFI, 4 de la C y 2 de la D);

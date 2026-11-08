@@ -361,6 +361,53 @@ def cuadro_campeonato_html(reg):
     return html
 
 
+# ---- Llaves de una copa o de una fase final con rondas de partido único (Copa AUF Uruguay, Primera Amateur) ----
+def _kb_vacio():
+    fila = '<div class="kb-t tbd"><span class="kb-vacio"></span><span class="kb-n">A definir</span></div>'
+    return f'<div class="kb-m">{fila}{fila}</div>'
+
+
+def _kb_ronda_partidos(titulo, partidos):
+    """Una ronda del cuadro con partidos a eliminación directa (dict de partido, o None si todavía no se conoce el cruce):
+    de a pares, así la línea une a los dos que se enfrentan después."""
+    tarjeta = lambda p: _kb_partido(p) if p else _kb_vacio()
+    if len(partidos) == 1:
+        return _kb_col(titulo, f'<div class="kb-slot kb-solo">{tarjeta(partidos[0])}</div>')
+    cuerpo = "".join(f'<div class="kb-pair"><div class="kb-slot">{tarjeta(partidos[j])}</div>'
+                     f'<div class="kb-slot">{tarjeta(partidos[j + 1])}</div></div>'
+                     for j in range(0, len(partidos), 2))
+    return _kb_col(titulo, cuerpo)
+
+
+def cuadro_llaves_html(rondas, campeon, titulo_campeon, subtitulo="", alto_por_cruce=92):
+    """Cuadro por llaves de las `rondas` [(título, [partido o None])] (la primera con 2^k cruces y cada una con la mitad
+    que la anterior), con el campeón al final. Las llaves se leen de izquierda a derecha."""
+    cols = [_kb_ronda_partidos(t, ms) for t, ms in rondas]
+    cols.append(_kb_final(titulo_campeon, "Campeón", campeon, subtitulo if campeon else ""))
+    return _kb(cols, len(rondas[0][1]) * alto_por_cruce)
+
+
+def llaves_desde_partidos(partidos):
+    """Rondas del cuadro de un título ya definido (registro de `definiciones`: partidos con comp "Cuartos de final",
+    "Semifinal" y "Final", en el orden en que se jugaron)."""
+    out = []
+    for comp, titulo in (("Cuartos de final", "Cuartos"), ("Semifinal", "Semifinales"), ("Final", "Final")):
+        ms = [p for p in partidos if p["comp"] == comp]
+        if ms:
+            out.append((titulo, ms))
+    return out
+
+
+def dieciseisavos_html(partidos_pro, partidos_amateur):
+    """Tarjetas de una ronda previa (dieciseisavos de la Copa AUF Uruguay): profesionales por un lado y amateurs por otro."""
+    def grilla(ps):
+        tarjetas = "".join(f'<div>{_kb_partido(p) if p else _kb_vacio()}</div>' for p in ps)
+        return (f'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;'
+                f'margin-bottom:10px">{tarjetas}</div>')
+    return (f'<div class="mlab">Profesionales</div>{grilla(partidos_pro)}'
+            f'<div class="mlab">Amateurs</div>{grilla(partidos_amateur)}')
+
+
 # ---- Avisos (Tribunal de Disciplina, suspensiones) ----
 _ICONO_AVISO = {"clima": "⛈", "luz": "💡", "bengalas": "🔥", "invasion": "🏃", "micro": "🚌",
                 "huelga": "✋", "arbitro": "🟥", "corrupcion": "⚖", "gravisimo": "🚨",

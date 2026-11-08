@@ -149,17 +149,17 @@ def render(ctx):
                                                 ("Primera C Metropolitana", "Primera C", "hist_pc"),
                                                 ("Promocional Amateur (Ex Primera D)", "Promocional Amateur", "hist_pd"))) + '</div>',
                             unsafe_allow_html=True)
-            elif ligas_pais:                                 # ligas de otros países: sólo cuentan las temporadas simuladas
+            elif ligas_pais:                                 # palmarés histórico + títulos de las temporadas simuladas
                 st.markdown('<div class="mlab" style="margin-top:20px">Palmarés · ligas</div>', unsafe_allow_html=True)
                 st.markdown('<div class="pal-grid">' + "".join(
-                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), {}) for c in ligas_pais) + '</div>',
+                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), PALMARES.get(c.hist, {})) for c in ligas_pais) + '</div>',
                     unsafe_allow_html=True)
             copas_ext = [c for c in REGISTRO if not es_base and c.hist and c.nombre in paises.copas_nacionales_de(pais)]
-            if copas_ext:                                    # copas nacionales de otro país: sólo cuentan las temporadas simuladas
+            if copas_ext:                                    # palmarés histórico + títulos de las temporadas simuladas
                 st.markdown('<div class="mlab" style="margin-top:18px">Palmarés · copas nacionales</div>',
                             unsafe_allow_html=True)
                 st.markdown('<div class="pal-grid">' + "".join(
-                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), {}) for c in copas_ext) + '</div>',
+                    tabla_ranking_html(c.nombre, c.nombre, S.get(c.hist, {}), PALMARES.get(c.hist, {})) for c in copas_ext) + '</div>',
                     unsafe_allow_html=True)
             if es_base:                                      # copas del país
                 st.markdown('<div class="mlab" style="margin-top:18px">Palmarés histórico · copas nacionales</div>',
@@ -198,7 +198,7 @@ def render(ctx):
                            "El Federal B suma desde que se crea en el Modo dios. "
                            "En verde (+n), los ganados en las temporadas simuladas. Tocá un club para ver su ficha.")
             else:
-                st.caption(f"La liga y las copas de {pais} sólo cuentan las temporadas simuladas (todavía no tiene palmarés histórico real). "
+                st.caption(f"El palmarés de {pais} combina los títulos históricos cargados con los ganados durante las temporadas simuladas. "
                            "Las copas internacionales traen los títulos oficiales hasta 2025 (CONMEBOL), con los ganados en las "
                            "temporadas simuladas en verde (+n). Tocá un club para ver su ficha.")
 
@@ -221,15 +221,31 @@ def render(ctx):
                                     f'{_mov_clubes([(n, "") for n in mov["bajan"]])}</div></div></div></div>',
                                     unsafe_allow_html=True)
                 mov3 = S.get("ext_mov3", {}).get(comp.cfg["pais"])
-                if mov3:                                       # segunda división <-> tercera (falsa, no se simula)
-                    with st.expander(f":material/swap_vert: Segunda y tercera división tras la temporada {mov3['temp']}",
+                tercera = ligas_ext.CONFIG.get(abajo.get("inferior")) if abajo else None
+                nom3 = tercera["nombre"] if tercera else "la tercera división"
+                if mov3:                                       # segunda división <-> tercera (Primera Amateur)
+                    with st.expander(f":material/swap_vert: Segunda División y {nom3} tras la temporada {mov3['temp']}",
                                      expanded=False):
                         st.markdown(f'<div class="mv-grid"><div class="mv-card"><div class="mv-h"><span>'
                                     f'{esc(abajo["nombre"] if abajo else "Segunda División")}</span></div>'
-                                    f'<div class="mv-sec"><div class="mv-lab up">▲ Suben de la tercera división'
+                                    f'<div class="mv-sec"><div class="mv-lab up">▲ Suben de {esc(nom3)}'
                                     f'<b>{len(mov3["suben"])}</b></div><div class="mv-lista">'
                                     f'{_mov_clubes([(n, "") for n in mov3["suben"]])}</div></div>'
-                                    f'<div class="mv-sec"><div class="mv-lab down">▼ Bajan a la tercera división'
+                                    f'<div class="mv-sec"><div class="mv-lab down">▼ Bajan a {esc(nom3)}'
                                     f'<b>{len(mov3["bajan"])}</b></div><div class="mv-lista">'
                                     f'{_mov_clubes([(n, "") for n in mov3["bajan"]])}</div></div></div></div>',
+                                    unsafe_allow_html=True)
+                mov4 = S.get("ext_mov4", {}).get(comp.cfg["pais"])
+                cuarta = ligas_ext.CONFIG.get(tercera.get("inferior")) if tercera else None
+                if mov4 and cuarta:                            # tercera división <-> cuarta (Série C y Série D)
+                    with st.expander(f":material/swap_vert: {esc(tercera['nombre'])} y {esc(cuarta['nombre'])} tras la temporada {mov4['temp']}",
+                                     expanded=False):
+                        st.markdown(f'<div class="mv-grid"><div class="mv-card"><div class="mv-h"><span>'
+                                    f'{esc(tercera["nombre"])}</span></div>'
+                                    f'<div class="mv-sec"><div class="mv-lab up">▲ Suben de {esc(cuarta["nombre"])}'
+                                    f'<b>{len(mov4["suben"])}</b></div><div class="mv-lista">'
+                                    f'{_mov_clubes([(n, "") for n in mov4["suben"]])}</div></div>'
+                                    f'<div class="mv-sec"><div class="mv-lab down">▼ Bajan a {esc(cuarta["nombre"])}'
+                                    f'<b>{len(mov4["bajan"])}</b></div><div class="mv-lista">'
+                                    f'{_mov_clubes([(n, "") for n in mov4["bajan"]])}</div></div></div></div>',
                                     unsafe_allow_html=True)

@@ -11,9 +11,9 @@ Formato 2026 (nuevo formato anunciado por la AUF; fuente: Montevideo Portal, lan
     Anual (copas/conmebol.py, `_sortear_pais`).
 
 Simplificaciones (a revisar contra el reglamento de la AUF; ver docs/LIGAS_EXTERIOR.md):
-  * Los amateurs son 16 clubes que salen de la "tercera división" falsa del país (datos/json/liga_uruguay.json, `tercera`;
-    no se simula): se sortean al arrancar la copa, con un poco más de chances los de mejor media. No se juega la
-    clasificatoria del interior ni de la C.
+  * Los amateurs son 16 clubes de la Primera Amateur (la tercera división, ligas/uruguay_amateur.py; sus clubes salen de
+    datos/json/liga_uruguay.json, `tercera`): se sortean al arrancar la copa, con un poco más de chances los de mejor
+    media. No se juega la clasificatoria del interior ni de la C.
   * Grupos: sorteo por 4 bombos según la media. El real puede tener otras reglas (por ejemplo, separar a los del interior).
   * Todas las rondas son a partido único (con penales si empatan); el local es el mejor sembrado en dieciseisavos
     de los profesionales y el primero que sale en el sorteo en octavos y cuartos. El real puede prever otra cosa.
@@ -66,7 +66,7 @@ def nueva_copa(anio):
 
 
 def sortear_amateurs(rng, pool, r_de, k=EQUIPOS_AMATEUR):
-    """k clubes de la tercera división falsa que juegan la copa: al azar, con un poco más de chances los de mejor media."""
+    """k clubes de la Primera Amateur (tercera división) que juegan la copa: al azar, con un poco más de chances los de mejor media."""
     pool = list(pool)
     k = min(k, len(pool))
     m = np.array([r_de(n) for n in pool], dtype=float)
@@ -149,6 +149,28 @@ def avanzar(L, rng):
         p = partidos_de_ronda(L, TOTAL_RONDAS)[0]
         L["campeon"] = p["gana"]
         L["subcampeon"] = p["local"] if p["gana"] == p["visita"] else p["visita"]
+
+
+def llaves(L, desde_etapa=1):
+    """Datos del cuadro de eliminación: [(rótulo de la ronda, [partido o None])], de la etapa `desde_etapa` (0 =
+    dieciseisavos, 1 = octavos) a la final. Un partido es un dict con local, visita, gl, gv, gana, pen, neutral y dia
+    (con gl, gv y gana vacíos si todavía no se jugó); None si el cruce no se conoce."""
+    out = []
+    for k, (etapa, rotulo, neutral) in enumerate(ETAPAS_KO):
+        if k < desde_etapa:
+            continue
+        i = FECHAS_GRUPOS + k
+        R = L["rondas"][i]
+        n = 2 ** (len(ETAPAS_KO) - 1 - k)                  # 16, 8, 4, 2, 1 cruces
+        if not L["sorteada"] or R["pares"] is None:
+            ms = [None] * n
+        elif i < L["fecha"]:
+            ms = [{**p, "dia": R["dia"]} for p in partidos_de_ronda(L, i + 1)]
+        else:
+            ms = [{"local": L["nombres"][a], "visita": L["nombres"][b], "gl": "", "gv": "", "gana": None, "pen": None,
+                   "neutral": R["neutral"], "dia": R["dia"]} for a, b in R["pares"]]
+        out.append((rotulo, ms))
+    return out
 
 
 def definicion(L, temp):

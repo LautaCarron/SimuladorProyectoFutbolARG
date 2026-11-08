@@ -9,7 +9,8 @@ tabla suma. El motor sabe:
   * llevar las estadísticas de cada torneo y armar sus tablas (`stats_vacias`, `tabla`),
   * elegir el formato según la configuración de la liga (`FORMATOS`).
 
-Cada FORMATO (ligas/uruguay.py y ligas/uruguay_segunda.py, `TodosContraTodos` más abajo, el de Brasil que viene) decide qué rondas hay, qué tablas
+Cada FORMATO (ligas/uruguay.py, ligas/uruguay_segunda.py, ligas/uruguay_amateur.py, ligas/brasil_d.py y
+`TodosContraTodos` más abajo, el de las Séries A y B de Brasil) decide qué rondas hay, qué tablas
 muestra y quién sale campeón, asciende y desciende. El estado de la liga (`L`) es un diccionario común y corriente
 (números, textos, listas, arrays y fechas), así que se guarda en el `.afa` sin tocar motor/guardado.py.
 
@@ -155,6 +156,7 @@ class Formato:
     nombre = ""            # clave que se escribe en ligas_ext.json
     descripcion = ""       # una línea para la interfaz
     etapas_definicion = ()  # etapas (campo "etapa" de las rondas) que definen títulos y ascensos: semifinales, finales...
+    lugares_fijos = False   # True: el que sube deja su lugar en la lista al que baja (grupos fijos, ver `mover_clubes_en_lugar`)
 
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         """Estado de la temporada que empieza. `previo` = {club: (puntos, partidos)} de la temporada anterior."""
@@ -270,8 +272,13 @@ class TodosContraTodos(Formato):
                 return ""
 
             df["Destino"] = [_destino_segunda(p) for p in df["Pos"]]
-            nota = (f"Ascienden a Primera División los {a} primeros." if L.get("campeon")
-                    else f"Ascienden a Primera División los {a} primeros (posiciones provisorias).") if a else ""
+            try:                                       # a qué liga ascienden: la de arriba (Série A, Série B...)
+                from datos import ligas_ext
+                sup = ligas_ext.CONFIG[ligas_ext.CONFIG[L["clave"]]["superior"]]["nombre"]
+            except Exception:
+                sup = "Primera División"
+            nota = (f"Ascienden a {sup} los {a} primeros." if L.get("campeon")
+                    else f"Ascienden a {sup} los {a} primeros (posiciones provisorias).") if a else ""
         else:
             cupos = _cupos_de_pais(L.get("pais", "")) or L.get("cupos")
             if cupos:
@@ -310,7 +317,7 @@ FORMATOS = {TodosContraTodos.nombre: TodosContraTodos()}
 
 def formato_de(cfg):
     """El formato de la liga `cfg` (una entrada de ligas_ext.json)."""
-    from ligas import uruguay, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
+    from ligas import brasil_d, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
     try:
         return FORMATOS[cfg["formato"]]
     except KeyError:
@@ -320,3 +327,17 @@ def formato_de(cfg):
 def mover_clubes(nombres, descienden, ascienden):
     """Plantel de la temporada que viene: los que se quedan (en su orden) y después los que suben."""
     return [n for n in nombres if n not in set(descienden)] + list(ascienden)
+
+
+def mover_clubes_en_lugar(nombres, salen, entran):
+    """Como `mover_clubes`, pero cada club que sale deja su lugar en la lista al que entra (en orden). Sirve para las ligas
+    con grupos fijos (Série D): los grupos salen de cortar la lista de a 6, así que quien entra hereda el grupo de quien sale.
+    Si entran más de los que salen, los que sobran van al final; si salen más, los lugares sobrantes se borran."""
+    salen, entran = set(salen), list(entran)
+    out = []
+    for n in nombres:
+        if n not in salen:
+            out.append(n)
+        elif entran:
+            out.append(entran.pop(0))
+    return out + entran

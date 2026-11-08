@@ -1,0 +1,94 @@
+{
+  "hist_ext_uy": {
+    "descripcion": "Liga AUF Uruguaya · completar y verificar títulos históricos oficiales.",
+    "titulos": {
+      "Peñarol": 52,
+      "Nacional": 50,
+      "Defensor Sporting": 4,
+      "Danubio": 4,
+      "River Plate (Montevideo)": 4,
+      "Montevideo Wanderers": 3,
+      "Central Español": 1,
+      "Rampla Juniors": 1,
+      "Bella Vista": 1,
+      "Liverpool": 1,
+      "Progreso": 1
+    }
+  },
+    "hist_ext_uy2": {
+    "descripcion": "Segunda División Profesional",
+    "titulos": {
+      "Sud América": 7,
+      "Central Español": 3,
+      "Fénix (Montevideo)": 7,
+      "Danubio": 3,
+      "Defensor Sporting": 2,
+      "Liverpool": 4,
+      "Racing (Montevideo)": 6,
+      "Juventud": 1,
+      "Cerro Largo": 1,
+      "Miramar Misiones": 4,
+      "Plaza Colonia": 1,
+      "Rampla Juniors": 4,
+      "River Plate (Montevideo)": 6,
+      "Bella Vista": 5,
+      "Rentistas": 4,
+      "Montevideo Wanderers": 4,
+      "El Tanque Sisley": 4,
+      "Progreso": 3,
+      "Cerro": 2,
+      "Cerrito": 2,
+      "Huracán Buceo": 2,
+      "Albion FC": 2,
+      "Colón (Montevideo)": 2,
+      "Villa Española": 1,
+      "Tacuarembó FC": 1,
+      "Basáñez": 1
+    }
+  },
+  "hist_ext_uy3": {
+    "descripcion": "Primera División Amateur",
+    "titulos":{
+      "Villa Española": 5,
+      "La Luz": 4,
+      "Oriental (La Paz)": 4,
+      "Huracán FC": 3,
+      "Cerrito": 3,
+      "Villa Teresa": 3,
+      "Colón (Montevideo)": 3,
+      "Uruguay Montevideo FC": 3,
+      "Platense (Uru)": 3,
+      "Salus": 2,
+      "El Tanque Sisley": 2,
+      "Progreso": 2,
+      "Basáñez": 1,
+      "Bella Vista": 1,
+      "Miramar Misiones": 1,
+      "Fénix (Montevideo)": 1,
+      "Juventud": 1,
+      "Universidad Mayor": 1,
+      "Boston River": 1,
+      "Rocha FC": 1,
+      "Tacuarembó FC": 1,
+      "Montevideo City Torque": 1,
+      "Albion FC": 1,
+      "Artigas FC": 1,
+      "Paysandú FC": 1
+    }
+  },
+  "hist_copa_uy": {
+    "descripcion": "Copa AUF Uruguay · completar y verificar títulos históricos oficiales.",
+    "titulos": {
+      "Defensor Sporting": 3,
+      "Peñarol": 1
+    }
+  },
+  "hist_supercopa_uy": {
+    "descripcion": "Supercopa Uruguaya · completar y verificar títulos históricos oficiales.",
+    "titulos": {
+      "Nacional": 3,
+      "Peñarol": 3,
+      "Liverpool": 3
+    }
+  }
+}

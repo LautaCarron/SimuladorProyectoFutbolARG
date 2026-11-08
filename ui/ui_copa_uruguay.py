@@ -1,6 +1,7 @@
 """Pestaña Copas · Copa AUF Uruguay (sólo cuando el país activo es Uruguay).
 
-Tiene tres partes: Grupos (una tabla por grupo), Fixture y resultados (por ronda, con el cuadro de las llaves) y Campeones.
+Tiene tres partes: Grupos (una tabla por grupo), Fixture y resultados (por ronda) y Llaves (el cuadro de octavos a la
+final, como el de la Libertadores, más los dieciseisavos).
 Todo sale de la copa (`copas.registro.CopaUruguay`) y de copas/uruguay.py; la copa se sortea cuando termina el Torneo
 Competencia de la Segunda División, así que hasta entonces la pantalla avisa que todavía no hay cuadro.
 """
@@ -12,7 +13,8 @@ from copas.registro import REGISTRO, CopaUruguay
 from datos.logos import logo_img
 from motor import consultas
 from motor.calendario import texto_dia
-from ui.vista import COLORES_B, aviso, chip, crest, esc, leyenda, mostrar_tabla, render_fecha, seccion
+from ui.vista import (COLORES_B, aviso, chip, crest, cuadro_llaves_html, dieciseisavos_html, esc, leyenda, mostrar_tabla,
+                      render_fecha, seccion)
 
 COPA = next(c for c in REGISTRO if isinstance(c, CopaUruguay))
 
@@ -64,33 +66,17 @@ def _fixture(ctx, L):
     render_fecha(S, ctx.club, partidos, f"{COPA.clave}{S['temp']}_{elegida}")
 
 
-def _campeones(ctx, L):
-    S = ctx.S
-    registros = list(reversed(S.get("ext_def", {}).get(COPA.clave, [])))
-    if L["campeon"] is not None:                         # la temporada en curso, si ya se definió
-        registros.insert(0, {**copa_uy.definicion(L, S["temp"]), "en_curso": True})
-    if not registros:
-        aviso("Todavía no hay campeones: se define al terminar la final de la copa.")
-        return
-    titulos = S.get(COPA.hist, {})
-    for k, reg in enumerate(registros):
-        en_curso = reg.get("en_curso", False)
-        with st.expander(f":material/emoji_events: Temporada {reg['temp']} · {reg['campeon']}"
-                         + (" · en curso" if en_curso else ""), expanded=k == 0):
-            st.markdown(f'<div class="champ"><div class="t">Campeón</div><div style="margin-top:10px">'
-                        f'{crest(reg["campeon"], 64)}</div><div class="nm">{esc(reg["campeon"])}</div></div>',
-                        unsafe_allow_html=True)
-            if reg.get("subcampeon"):
-                st.caption(f"Subcampeón: {reg['subcampeon']}")
-            for p in reg["partidos"]:
-                pen = f" ({p['pen'][0]}-{p['pen'][1]} en los penales)" if p.get("pen") else ""
-                st.markdown(f"**{p['comp']}** · {esc(texto_dia(p['dia']))}: {esc(p['local'])} {p['gl']} - {p['gv']} "
-                            f"{esc(p['visita'])}{pen}")
-            n = titulos.get(reg["campeon"], 0)
-            st.caption(("Suma un título al palmarés cuando termina la temporada. " if en_curso else "")
-                       + f"Títulos de {reg['campeon']} en la {COPA.nombre} (temporadas simuladas): {n}.")
-    st.caption("El campeón se queda con el cupo Uruguay 4 de la Copa Libertadores (Fase 1). Si ya clasificó por la liga, "
-               "el cupo pasa al mejor ubicado de la Tabla Anual que todavía no clasificó.")
+def _llaves(L):
+    """Cuadro de eliminación: octavos, cuartos, semifinales, final y campeón (de izquierda a derecha), y abajo los
+    dieciseisavos que lo anteceden (profesionales entre sí y amateurs entre sí)."""
+    seccion("Llaves · octavos a la final", color="#1e5aa8")
+    st.markdown(cuadro_llaves_html(copa_uy.llaves(L, 1), L["campeon"], f"Campeón · {COPA.nombre}",
+                                   "Uruguay 4 · Libertadores", alto_por_cruce=92), unsafe_allow_html=True)
+    st.caption("Los octavos se sortean entre los 16 que pasan de dieciseisavos. Desde ahí, el cuadro se lee de izquierda a "
+               "derecha: cada par de cruces se une en la ronda siguiente. Semifinales y final, en cancha neutral.")
+    seccion("Dieciseisavos de final", color="#4f46e5")
+    ms = copa_uy.llaves(L, 0)[0][1]
+    st.markdown(dieciseisavos_html(ms[:8], ms[8:]), unsafe_allow_html=True)
 
 
 def render(ctx):
@@ -115,12 +101,11 @@ def render(ctx):
             st.rerun()
         st.caption("16 de la Liga AUF Uruguaya, los 8 mejores de la Segunda División (Torneo Competencia) y 16 amateurs. "
                    "Fase de grupos entre los 24 profesionales; dieciseisavos entre profesionales y entre amateurs; desde "
-                   "octavos, un solo cuadro. Se sortea cuando termina el Torneo Competencia de la Segunda.")
+                   "octavos, un solo cuadro (pestaña Llaves). Se sortea cuando termina el Torneo Competencia de la Segunda.")
         if not activa:
             aviso("Todavía no está sorteada: se sortea cuando la Segunda División termina el Torneo Competencia.")
-            _campeones(ctx, L)
             return
-        sub = st.tabs(["Grupos", "Fixture y resultados", "Campeones"])
+        sub = st.tabs(["Grupos", "Fixture y resultados", "Llaves"])
         with sub[0]:
             seccion("Fase de grupos", color="#4f46e5")
             _grupos(L)
@@ -129,4 +114,4 @@ def render(ctx):
         with sub[1]:
             _fixture(ctx, L)
         with sub[2]:
-            _campeones(ctx, L)
+            _llaves(L)

@@ -11,7 +11,7 @@ también publicable como web estática con [stlite](https://github.com/whitphx/s
 | Ligas | Primera División, Primera Nacional, Federal A, Federal B (opcional, se crea desde el Modo dios), Primera B, Primera C, Promocional Amateur (con 25 clubes o más se juega en dos zonas) y Regional Amateur |
 | Copas nacionales | Copa Argentina (128 equipos), Supercopa Argentina y Regionales (opcional: torneos por zona, estilo estaduales de Brasil) |
 | Copas internacionales | Libertadores, Sudamericana y Recopa (CONMEBOL) y Mundial de Clubes (cada 4 temporadas) |
-| Ligas de otros países | Liga AUF Uruguaya (Apertura, Intermedio, Clausura, Tabla Anual y finales) y Segunda División Profesional (Torneo Competencia, fase regular y playoff por el tercer ascenso), en la pestaña Ligas cuando el país activo es Uruguay. Brasil y las demás se suman con datos: ver `docs/LIGAS_EXTERIOR.md`. Uruguay también simula la **Copa AUF Uruguay** (40 clubes: grupos y llaves; el campeón se lleva el Uruguay 4 de la Libertadores) y una tercera división falsa que no se juega (de ahí suben 2 clubes al azar a la Segunda y ahí bajan sus 2 últimos) |
+| Ligas de otros países | Liga AUF Uruguaya (Apertura, Intermedio, Clausura, Tabla Anual y finales) y Segunda División Profesional (Torneo Competencia, fase regular y playoff por el tercer ascenso), en la pestaña Ligas cuando el país activo es Uruguay. Brasil y las demás se suman con datos: ver `docs/LIGAS_EXTERIOR.md`. Uruguay también simula la **Copa AUF Uruguay** (40 clubes: grupos y llaves de octavos a la final; el campeón se lleva el Uruguay 4 de la Libertadores) la **Supercopa Uruguaya** (campeón de la liga vs. ganador del Intermedio) y la **Primera Amateur** (tercera división, 20 clubes: dos series, fase final por llaves; suben el campeón y el subcampeón a la Segunda y ahí bajan sus 2 últimos) |
 | Extras | Calendario con fechas reales de la temporada, historial y palmarés, incidentes (suspensiones y sanciones), avisos |
 
 La temporada 1 es 2026. Cada equipo tiene una "media" que cambia de una temporada a otra; los partidos se simulan con
@@ -35,7 +35,7 @@ resuelven solos al terminar cada temporada.
 | Ligas | Todas sus ligas (Argentina: Primera hasta el Regional Amateur; Uruguay: la Liga AUF y la Segunda División) |
 | Copas | Sus copas nacionales (Copa Argentina, Supercopa y Regionales; Uruguay: la Copa AUF Uruguay) **más** las internacionales: Libertadores, Sudamericana, Recopa y Mundial de Clubes |
 | Calendario | Las ligas y copas del país más las copas internacionales. Con un club dirigido en el Manager, "Mis partidos" muestra todo lo suyo |
-| Clubes | Los clubes del país (Argentina por categoría y región; Uruguay: primera, segunda y la tercera falsa), con buscador y ficha |
+| Clubes | Los clubes del país (Argentina por categoría y región; Uruguay: primera, segunda y la Primera Amateur), con buscador y ficha |
 | Historial | Campeones por temporada y palmarés del país (ligas y copas nacionales) **más** los de las copas internacionales |
 | Avisos | Los avisos del país, con sus propios "no leídos" (Uruguay todavía no tiene Tribunal de Disciplina) |
 
@@ -186,7 +186,6 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
   no leer `st.session_state.S` desde la vista. Lo mismo con el club del manager
   (`ctx.club`) y el modo (`ctx.modo_mgr`): viajan por parámetro, no por claves ocultas de la sesión.
 * **Un archivo `.py` o `.json` nuevo**: sumarlo a `ARCHIVOS` de `index.html` (si no, la web estática no lo carga).
-  `tests/test_datos.py` avisa si falta algún JSON de datos.
 * **Cambió la estructura del estado guardado**: subir `VERSION_ESTADO` en `motor/temporada.py` (las partidas `.afa`
   guardadas con la versión anterior dejan de poder cargarse).
 * **Un tipo nuevo dentro del estado** (algo que no sea número, texto, lista, diccionario, fecha, array o DataFrame):
@@ -195,7 +194,5 @@ La lógica queda con su nombre original: `copas/conmebol.py`, `copas/mundial.py`
 ## Más documentación y pruebas
 
 * `docs/FORMATOS.md`: cómo funciona cada competencia (formatos, ascensos, descensos, copas).
-* `tests/golden.py`: herramienta para refactorizar el motor sin cambiar su comportamiento (compara el estado completo
-  de dos versiones con la misma semilla; ver el docstring).
-* `tests/test_humo.py`: prueba rápida (una temporada del motor y la app completa con el test headless de Streamlit).
+* `tests/test_primera_amateur.py`: pruebas de la Primera Amateur, las llaves de la Copa AUF Uruguay y la Supercopa Uruguaya (las pruebas anteriores se eliminaron).
   Correr con `python -m pip install -r requirements-dev.txt` y `python -m pytest`.

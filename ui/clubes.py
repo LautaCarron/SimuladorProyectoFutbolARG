@@ -30,13 +30,15 @@ def render(ctx):
             else:                                         # ligas de otro país: los clubes de cada una (y la reserva, si no se simula)
                 orden = []
                 tercera_item = None
+                comps_pais = [c for c in LIGAS_EXTERIOR if c.cfg["pais"] == ctx.pais]
+                tercera_simulada = any(c.divisional == 3 for c in comps_pais)
                 for comp in sorted((c for c in LIGAS_EXTERIOR if c.cfg["pais"] == ctx.pais), key=lambda c: c.divisional):
                     juegan = list(S[comp.clave]["nombres"])
                     orden.append((comp.nombre, juegan))
                     reserva = [n for n in comp.cfg["reserva"] if n not in set(juegan)]
                     if reserva and not comp.cfg.get("inferior"):      # segunda división que no se juega: sólo la lista
                         orden.append((f"Segunda · {ctx.pais}", reserva))
-                    if comp.divisional == 1 and comp.cfg.get("tercera"):     # tercera división falsa: sólo la lista
+                    if comp.divisional == 1 and comp.cfg.get("tercera") and not tercera_simulada:   # tercera sin simular: sólo la lista
                         tercera_item = (f"Tercera división · {ctx.pais}",
                                         list(S["ext_clubes"].get(ligas_ext.clave_tercera(comp.cfg), comp.cfg["tercera"])))
                 if tercera_item:

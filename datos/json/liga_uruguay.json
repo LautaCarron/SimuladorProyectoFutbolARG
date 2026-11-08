@@ -21,6 +21,16 @@
       "Definiciones": [11, 14, 5]
     }
   },
+  "tercera_liga": {
+    "nombre": "Primera Amateur",
+    "formato": "uruguay_amateur",
+    "ascensos": 2,
+    "descensos": 0,
+    "calendario": {
+      "Regular": [4, 5, 6],
+      "Definiciones": [8, 16, 6]
+    }
+  },
   "oscuros": ["Nacional"],
   "primera": [
     {"nombre": "Albion FC", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21403.png&h=96&w=96"},
@@ -76,6 +86,9 @@
     {"nombre": "Soriano FC", "media": 35, "escudo": "https://delaplatea.com/assets/uploads/escudos/img_512db8059c8be859b4f59ba49cc2204b.png"},
     {"nombre": "Central de San José", "media": 39, "escudo": "https://img.a.transfermarkt.technology/wappen/head/99714.png?lm=1789473108"},
     {"nombre": "Flores FC", "media": 39, "escudo": "https://img.a.transfermarkt.technology/wappen/head/143023.png?lm=1789469128"},
-    {"nombre": "Lavalleja FC", "media": 38, "escudo": "https://img.a.transfermarkt.technology/wappen/head/83219.png?lm=1789464719"}
+    {"nombre": "Lavalleja FC", "media": 38, "escudo": "https://img.a.transfermarkt.technology/wappen/head/83219.png?lm=1789464719"},
+    {"nombre": "El Tanque Sisley", "media": 30, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Escudo_CCyD_El_Tanque_Sisley.png/330px-Escudo_CCyD_El_Tanque_Sisley.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Húracan Buceo", "media": 30, "escudo": "https://upload.wikimedia.org/wikipedia/commons/3/30/Hurac%C3%A1n_Buceo.nuevo.logo.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"},
+    {"nombre": "Platense (Uru)", "media": 30, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/20/Club_Atl%C3%A9tico_Platense_nuevo.png/250px-Club_Atl%C3%A9tico_Platense_nuevo.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"}
   ]
 }

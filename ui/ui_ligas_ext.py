@@ -20,6 +20,7 @@ from ui.vista import (
     crest,
     esc,
     cuadro_campeonato_html,
+    cuadro_llaves_html,
     leyenda,
     mostrar_tabla,
     render_fecha,
@@ -44,7 +45,8 @@ def _color_destino(txt):
         return COLOR_ORO
     if "Asciende" in txt:                      # segunda división: ascenso directo o por el playoff
         return COLORES_B["Ascenso directo"]
-    if "Playoff" in txt:
+    if "Playoff" in txt or "Fase final" in txt or "Segunda fase" in txt:
+        # playoff de la segunda / fase final de la Primera Amateur / segunda fase de la Série D
         return COLORES_B["Reducido"]
     if "Libertadores · Fase" in txt:
         return COLORES_DESTINO["Fase previa Libertadores"]
@@ -63,6 +65,12 @@ def _colorear(fila):
 
 
 def _leyenda_comp(comp, L):
+    if comp.formato.nombre == "brasil_d":
+        return [("Campeón / líder", COLOR_ORO), ("Asciende a la Série C", COLORES_B["Ascenso directo"]),
+                ("Pasa a la segunda fase", COLORES_B["Reducido"])]
+    if comp.formato.nombre == "uruguay_amateur":
+        return [("Campeón / líder", COLOR_ORO), ("Asciende a la Segunda", COLORES_B["Ascenso directo"]),
+                ("Pasa a la fase final", COLORES_B["Reducido"])]
     if comp.divisional > 1:
         if comp.formato.nombre == "todos_contra_todos":
             ley = [("Campeón / líder", COLOR_ORO), ("Asciende", COLORES_B["Ascenso directo"])]
@@ -95,21 +103,54 @@ def _render_item_tabla(t):
 def _tablas(ctx, comp, L):
     """Una pestaña por tabla del formato (Apertura, Intermedio, Clausura, Anual, Descenso...). En una primera división
     con definiciones por llaves (Uruguay) se suma "Campeones" justo antes de Descenso; en ligas regulares por puntos
-    como Brasil no se muestra."""
-    items = [(t["titulo"], t) for t in comp.formato.tablas(L)]
+    como Brasil no se muestra. Las tablas con "agrupa" (los 16 grupos de la Série D) comparten una sola pestaña."""
+    items = []                                         # (nombre de la pestaña, [tablas] | None | "llaves")
+    for t in comp.formato.tablas(L):
+        destino = t.get("agrupa") or t["titulo"]
+        previo = next((it for it in items if it[0] == destino and isinstance(it[1], list)), None)
+        if previo and t.get("agrupa"):
+            previo[1].append(t)
+        else:
+            items.append((destino, [t]))
     if comp.divisional == 1 and bool(comp.formato.etapas_definicion):
         i = next((k for k, (n, _) in enumerate(items) if n == "Descenso"), len(items))
         items.insert(i, ("Campeones", None))
+    elif hasattr(comp.formato, "llaves"):              # fase final por llaves (Primera Amateur, Série D)
+        items.append(("Llaves", "llaves"))
     if len(items) == 1:
-        _render_item_tabla(items[0][1])
+        for t in items[0][1]:
+            _render_item_tabla(t)
     else:
-        for tab, (titulo, t) in zip(st.tabs([n for n, _ in items]), items):
+        for tab, (titulo, ts) in zip(st.tabs([n for n, _ in items]), items):
             with tab:
-                if t is None:
+                if ts is None:
                     _campeones(ctx, comp, L)
-                    continue
-                _render_item_tabla(t)
+                elif ts == "llaves":
+                    _llaves(comp, L)
+                else:
+                    for t in ts:
+                        if len(ts) > 1:
+                            st.markdown(f"**{esc(t['titulo'])}**")
+                        _render_item_tabla(t)
     leyenda(_leyenda_comp(comp, L))
+
+
+def _llaves(comp, L):
+    """Cuadro de la fase final de una liga con llaves (Primera Amateur, Série D): rondas, final y campeón."""
+    info = getattr(comp.formato, "llaves_info", None)
+    if info:                                           # el formato dice qué mostrar (Série D)
+        aviso_txt, subtitulo, pie = info(L)
+    else:                                              # Primera Amateur
+        aviso_txt = None if L["hecho"]["Regular"] else \
+            "La fase final se arma cuando termina la fase regular: pasan los 4 primeros de cada serie."
+        subtitulo = "Asciende a la Segunda División"
+        pie = ("Cuartos: 1° contra 4° y 2° contra 3° de la otra serie. Juega de local el mejor ubicado de la fase regular; "
+               "la final, en cancha neutral. Ascienden el campeón y el subcampeón.")
+    if aviso_txt:
+        aviso(aviso_txt)
+    st.markdown(cuadro_llaves_html(comp.formato.llaves(L), L["campeon"], f"Campeón · {L['nombre']}", subtitulo),
+                unsafe_allow_html=True)
+    st.caption(pie)
 
 
 def _fixture(ctx, comp, L):

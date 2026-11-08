@@ -13,9 +13,9 @@ Ascensos (3 en total, los mismos que bajan de la Liga AUF Uruguaya):
     Si el campeón de la Competencia quedó afuera de esos puestos, ocupa el lugar del 6°.
 
 Descenso: en 2026 el reglamento real anuló los descensos directos a la Primera Divisional C (hay un repechaje con
-clubes de la C que acá no se simula). Acá la tercera división es una lista de clubes que NO se juega ("tercera" en
-datos/json/liga_uruguay.json): bajan los últimos de la Tabla Anual (`descensos`, hoy 2) y suben, al azar, la misma
-cantidad de clubes de esa lista, así que la Segunda sigue con 14.
+clubes de la C que acá no se simula). Acá bajan los últimos de la Tabla Anual (`descensos`, hoy 2) a la Primera Amateur
+(ligas/uruguay_amateur.py, la tercera división, que sí se simula) y suben de ella su campeón y su subcampeón, así que la
+Segunda sigue con 14.
 
 Simplificaciones (a revisar contra el reglamento de la AUF; ver docs/LIGAS_EXTERIOR.md):
   * Las series de la Competencia se arman al azar (el sorteo real separa a los clubes del interior).
@@ -50,7 +50,7 @@ class UruguaySegunda(Formato):
     nombre = "uruguay_segunda"
     descripcion = ("Torneo Competencia (dos series de 7 y final) y fase regular a doble rueda; la Tabla Anual los suma. "
                    "Ascienden los dos primeros y el ganador del playoff entre el 3° y el 6°; descienden los últimos "
-                   "de la Tabla Anual a la tercera división (que no se simula).")
+                   "de la Tabla Anual a la Primera Amateur (la tercera división).")
     etapas_definicion = (FINAL_COMPETENCIA, PLAYOFF_SEMIS, PLAYOFF_FINAL)
 
     # ---- armado de la temporada ---------------------------------------------------------------------------
@@ -178,8 +178,8 @@ class UruguaySegunda(Formato):
         nota = ("Competencia + Fase regular. Los dos primeros ascienden y el campeón es el primero. Del 3° al 6° juegan "
                 "el playoff por el tercer ascenso (si el ganador de la Competencia quedó afuera, ocupa el lugar del 6°). "
                 + ("" if listo else "Destinos provisorios por la posición de hoy. ")
-                + (f"Los {d} últimos descienden a la tercera división, que no se simula: la misma cantidad de clubes "
-                   "suben al azar de ella." if d else "No hay descenso."))
+                + (f"Los {d} últimos descienden a la Primera Amateur (la tercera división): la misma cantidad de clubes "
+                   "suben de ella (su campeón y su subcampeón)." if d else "No hay descenso."))
         out.append({"titulo": "Tabla Anual", "df": anual, "tipo": "liga", "nota": nota})
         return out
 
