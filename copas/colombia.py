@@ -18,8 +18,8 @@ Formato 2026 de la Dimayor (fuentes: Wikipedia "2026 Copa Colombia", RTVC, Vangu
 Cuenta de clubes: 36 -> 20 (fase 1A) + 16 (fase 1B) -> 8 + 8 = 16 -> 8 -> 4 -> 2 -> 1.
 
 Simplificaciones (ver docs/LIGAS_EXTERIOR.md):
-  * El simulador no tiene Apertura ni Finalización, así que no se sabe quién llega a las fases finales: van a la fase 1B los 8 clubes de
-    Primera y los 8 del Torneo de mayor media; los demás juegan la fase de grupos. La copa se sortea al armar la temporada.
+  * El sorteo se difiere hasta que terminen el Apertura de Primera y el Torneo BetPlay I: los ocho clasificados de cada división van a Fase 1B;
+    los restantes juegan la fase de grupos.
   * Grupos: sorteo libre (tres de Primera y dos del Torneo por grupo). El real los arma por zonas geográficas.
   * Series de la fase 1B: cada club de Primera contra uno del Torneo, al azar. Octavos: los 8 de la fase 1A contra los 8 de la fase 1B,
     al azar (el 1° y el 2° de un mismo grupo quedan en mitades distintas del cuadro); desde ahí el cuadro es fijo (el ganador del cruce
@@ -46,16 +46,16 @@ CLUBES_TORNEO = 16
 N_GRUPOS = 4
 LETRAS = "ABCD"
 POR_GRUPO_PRIMERA, POR_GRUPO_TORNEO = 3, 2          # cinco por grupo
-A_FASE_1B = 8                                       # de cada división: los de mayor media van a las series
+A_FASE_1B = 8                                       # clasificados del primer semestre que entran a Fase 1B
 MIERCOLES = 2
 
-# Cinco fechas de grupos (una por semana desde la primera semana de mayo)
-FECHAS_GRUPOS = [(5, 6), (5, 13), (5, 20), (5, 27), (6, 3)]
+# Cinco fechas de grupos (una por semana desde agosto, tras definir los clasificados del primer semestre)
+FECHAS_GRUPOS = [(8, 5), (8, 12), (8, 19), (8, 26), (9, 2)]
 # (fase, partidos por llave, [(mes, a partir del día)] de cada partido): miércoles
 FASES_KO = [
-    ("Fase 1B", 2, [(7, 22), (8, 5)]),
-    ("Octavos de final", 1, [(9, 2)]),
-    ("Cuartos de final", 1, [(10, 14)]),
+    ("Fase 1B", 2, [(9, 9), (9, 23)]),
+    ("Octavos de final", 1, [(10, 7)]),
+    ("Cuartos de final", 1, [(10, 21)]),
     ("Semifinales", 2, [(11, 11), (11, 18)]),
     ("Final", 2, [(11, 25), (12, 2)]),
 ]
@@ -76,7 +76,7 @@ def _ronda_ko(f):
 
 
 def nueva_copa(anio):
-    """Copa de la temporada, todavía sin sortear (se sortea al armar la temporada, cuando ya se sabe quién juega la Liga y el Torneo)."""
+    """Copa de la temporada, todavía sin sortear; la clase CopaColombia la sortea al terminar las fases clasificatorias semestrales."""
     rondas = [ronda("Fase de grupos", f"Grupos · fecha {k + 1}", "Fase de grupos", desde(anio, mes, dia, MIERCOLES), suma="Grupos")
               for k, (mes, dia) in enumerate(FECHAS_GRUPOS)]
     for fase, piernas, dias in FASES_KO:
@@ -107,7 +107,7 @@ def _local_ida(L, a, b):
     return (a, b) if L["r"][a] <= L["r"][b] else (b, a)
 
 
-def sortear(L, rng, primera, torneo, media):
+def sortear(L, rng, primera, torneo, media, clasificados_primera=None, clasificados_torneo=None):
     """Sortea la copa con los 20 clubes de la Liga BetPlay y los 16 del Torneo BetPlay: arma los cuatro grupos (fase 1A, cinco fechas) y
     las ocho series de la fase 1B."""
     if len(primera) != CLUBES_PRIMERA or len(torneo) != CLUBES_TORNEO:
@@ -117,8 +117,14 @@ def sortear(L, rng, primera, torneo, media):
     ids = {n: i for i, n in enumerate(nombres)}
     mejores = lambda lista: sorted(lista, key=lambda n: (-media(n), n))                   # noqa: E731
     p_orden, t_orden = mejores(primera), mejores(torneo)
-    series_p, series_t = p_orden[:A_FASE_1B], t_orden[:A_FASE_1B]                        # los que llegarían a las fases finales del Apertura
-    grupos_p, grupos_t = p_orden[A_FASE_1B:], t_orden[A_FASE_1B:]
+    # Fase 1B: los ocho clasificados a las fases finales del Apertura/cuadrangulares.
+    series_p = list(clasificados_primera) if clasificados_primera is not None else p_orden[:A_FASE_1B]
+    series_t = list(clasificados_torneo) if clasificados_torneo is not None else t_orden[:A_FASE_1B]
+    if (len(series_p) != A_FASE_1B or len(series_t) != A_FASE_1B
+            or not set(series_p).issubset(primera) or not set(series_t).issubset(torneo)):
+        raise ValueError("La clasificación de la fase inicial debe aportar ocho clubes de cada división")
+    grupos_p = [n for n in primera if n not in set(series_p)]
+    grupos_t = [n for n in torneo if n not in set(series_t)]
     p = [ids[n] for n in rng.permutation(grupos_p)]
     t = [ids[n] for n in rng.permutation(grupos_t)]
     grupos = [p[POR_GRUPO_PRIMERA * j:POR_GRUPO_PRIMERA * (j + 1)] + t[POR_GRUPO_TORNEO * j:POR_GRUPO_TORNEO * (j + 1)]

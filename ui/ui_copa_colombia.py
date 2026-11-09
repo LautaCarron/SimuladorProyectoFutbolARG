@@ -2,8 +2,8 @@
 
 Tiene cuatro partes: Grupos (las cuatro tablas de cinco de la fase 1A), Llaves (la fase 1B, a la izquierda, y de octavos a la final),
 Fixture y resultados (por ronda) y Clubes (los 36 participantes, su grupo y hasta dónde llegaron). El palmarés está en la pestaña
-Historial. Todo sale de la copa (`copas.registro.CopaColombia`) y de copas/colombia.py; la copa se sortea al armar la temporada con los
-clubes de la Liga BetPlay y del Torneo BetPlay.
+Historial. Todo sale de la copa (`copas.registro.CopaColombia`) y de copas/colombia.py; el sorteo se realiza cuando terminan las fases
+clasificatorias del primer semestre de la Liga BetPlay y el Torneo BetPlay.
 """
 
 import pandas as pd
@@ -50,7 +50,7 @@ def _grupos(L):
         with cols[k % 2]:
             st.markdown(f"{chip('Grupo ' + letra, COLOR)}", unsafe_allow_html=True)
             st.markdown(tabla_html(df, estilo=estilo), unsafe_allow_html=True)
-    st.caption("Los 16 clubes de mayor media (8 de la Liga y 8 del Torneo) juegan la fase 1B, en la columna de la izquierda de Llaves.")
+    st.caption("Fase 1B: los ocho primeros del Apertura de Primera y los ocho clasificados a cuadrangulares del Torneo BetPlay I.")
 
 
 def _llaves(L):
@@ -78,6 +78,7 @@ def render(ctx):
     if not ctx.abierta(ctx.pestanas.tab_copas, tab):
         return
     L = S[COPA.clave]
+    COPA.activa(S)  # intenta sortearla cuando ya están definidas las clasificaciones del primer semestre
     with tab:
         c1, c2, c3 = st.columns([3, 1.4, 1.4], vertical_alignment="center")
         c1.markdown(logo_img(COPA.nombre, 30) + " " + chip(f"{COPA.nombre} · 36 equipos", COLOR) + " "
@@ -91,7 +92,12 @@ def render(ctx):
             COPA.jugar_todo(S, P, S["rng"])
             st.rerun()
         if not L["sorteada"]:
-            aviso("La copa no se pudo sortear: hacen falta 20 clubes en la Liga BetPlay y 16 en el Torneo BetPlay.")
+            L1, L2 = S.get(COPA.LIGA_1), S.get(COPA.LIGA_2)
+            if L1 and L2:
+                aviso("La Copa Colombia se sorteará cuando terminen el Apertura de la Liga BetPlay y el Torneo BetPlay I. "
+                      "Los ocho clasificados de cada división entrarán a la Fase 1B; los demás jugarán la Fase 1A.")
+            else:
+                aviso("La Copa Colombia necesita los 20 clubes de la Liga BetPlay y los 16 del Torneo BetPlay.")
             return
         sub_tabs = st.tabs(["Grupos", "Llaves", "Fixture y resultados", "Clubes"])
         with sub_tabs[0]:

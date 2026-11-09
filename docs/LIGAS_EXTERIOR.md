@@ -141,20 +141,26 @@ día y la final cuatro días después. Palmarés: `hist_supercopa_cl` en `palmar
 
 ## Colombia: Liga BetPlay y Torneo BetPlay (`datos/json/liga_colombia.json`)
 
-Dos ligas con el motor `todos_contra_todos` (sólo datos, sin código nuevo). La **Liga BetPlay** (clave `co`) tiene los 20 clubes de 2026 y el
-**Torneo BetPlay** (clave `co2`, segunda división) los 16 de su temporada 2026. Los 20 de Primera ya estaban en `clubes_int.json` y se movieron
-al archivo del país con su media y su escudo; los de la Torneo BetPlay tienen medias orientativas (49 a 57) y no tienen escudo (se dibujan las iniciales).
+La **Liga BetPlay** (clave `co`) tiene los 20 clubes de 2026 y el **Torneo BetPlay** (clave `co2`, segunda división) tiene 16 clubes.
+Los de Primera ya estaban en `clubes_int.json` y se movieron al archivo del país; los de segunda tienen medias orientativas (49 a 57).
 
-* **Liga BetPlay**: doble rueda, 38 fechas, sábados desde el 24/1. Campeón: el primero de la tabla. Bajan los 2 últimos y suben los 2 primeros del Torneo.
-  Columna del Historial: `"Colombia · D1"`.
-* **Torneo BetPlay**: doble rueda, 30 fechas, viernes desde el 23/1. No baja nadie (la tercera no se simula). Columna del Historial: `"Colombia · D2"`.
-* **Copas CONMEBOL**: sale de la tabla, como en Chile: Libertadores 2 a grupos y 2 a la Fase 2; Sudamericana 4 (`CUPOS_*` de `copas/conmebol.py`).
-* Simplificaciones: el formato real son dos torneos por año (Apertura y Finalización, cada uno con todos contra todos, cuartos, semifinales y final), con dos
-  campeones por temporada; los cupos internacionales salen de la tabla acumulada (reclasificación) y el descenso del promedio de tres temporadas. Acá es una
-  sola tabla a doble rueda, con un campeón por año y descenso por tabla. En la Torneo BetPlay el real también son dos torneos con cuadrangulares y suben 2.
-  Un club figura como "Independiente Yumbo" (el ex Atlético Huila) según la fuente de marzo de 2026; una nota de octubre lo llama "Independiente Valle del Cauca".
-* No hay Superliga. La Copa Colombia (Copa BetPlay) está más abajo.
-* `VERSION_ESTADO` subió a 31 (nuevas ligas en el estado; después subió a 32 con la Copa Colombia): las partidas guardadas con la versión anterior ya no se cargan.
+* **Apertura 2026**: todos contra todos a una rueda (19 fechas); los ocho primeros disputan cuartos, semifinales y final, todas las series a ida y vuelta.
+* **Clausura 2026**: todos contra todos a una rueda (19 fechas); los ocho primeros se dividen en dos cuadrangulares a ida y vuelta (seis fechas), y los
+  ganadores de grupo juegan la final a ida y vuelta.
+* **Campeón anual del simulador**: partido único en cancha neutral entre los campeones del Apertura y del Clausura. Si el mismo club gana ambos torneos,
+  no se juega esa final y queda como campeón anual. Sólo este campeón suma un título anual en `hist_ext_co`; los ganadores semestrales se guardan en Campeones.
+* **Descenso**: dos clubes por el promedio de puntos/partidos, con hasta las tres últimas temporadas que el simulador tenga registradas para cada club.
+  Los recién ascendidos empiezan a acumular promedio al llegar a Primera. La tabla se ve como **Tabla de descenso · promedio**. Como la partida no trae
+  resultados históricos reales 2024-25, una partida nueva comienza acumulando temporadas simuladas; al tercer año ya dispone de tres temporadas completas.
+* **Reclasificación y copas**: la tabla **Reclasificación total · cupos internacionales** suma los partidos de los dos semestres y muestra los cupos de
+  Libertadores y Sudamericana. El campeón de Copa Colombia ocupa uno de los cuatro cupos de Sudamericana si juega en Primera; si ya tiene cupo por Liga,
+  se corre al siguiente club de la reclasificación.
+* **Torneo BetPlay**: dos torneos semestrales, cada uno con 15 fechas todos contra todos, cuadrangulares semifinales de seis fechas y final ida/vuelta.
+  El ascenso sigue los escenarios de campeones semestrales, reclasificación, Gran Final y repechaje del reglamento 2026. No hay descenso a una tercera división
+  porque no está simulada. Columna del Historial: `"Colombia · D2"`.
+* Calendario semanal orientativo. Un club figura como "Independiente Yumbo" (ex Atlético Huila), aunque fuentes posteriores de 2026 lo llaman
+  "Independiente Valle del Cauca". No hay Superliga.
+* `VERSION_ESTADO` subió a 34 por los nuevos acumuladores de reclasificación y promedio; los guardados anteriores no se pueden cargar.
 
 ## Copa Chile (`copas/chile.py`, `ui/ui_copa_chile.py`, `datos/json/copa_chile.json`)
 
@@ -265,8 +271,10 @@ Formato 2026 de la Dimayor:
 * **Semifinales y final**: ida y vuelta, sin alargue (penales si el global empata). Palmarés: `hist_copa_co` en `palmares_co.json`.
 * **Cupo internacional**: el campeón va a la Sudamericana (Fase 1) si juega en Primera; si ya clasificó por la liga, el cupo sigue por la tabla
   (`COPA_A_SUD` en `copas/conmebol.py`).
-* Simplificaciones: no hay Apertura, así que a la fase 1B van los 8 clubes de cada división con mayor media (en la realidad, los que llegan a las fases
-  finales del Apertura). Grupos, series y octavos son al azar (el real arma los grupos por zonas); desde octavos el cuadro es fijo y el 1° y el 2° de un mismo
-  grupo quedan en mitades distintas. En semifinales y final de la misma división, el de mayor media cierra de local (el real usa la tabla del Apertura). Los días
-  son miércoles: grupos desde el 6/5, series el 22/7 y el 5/8, octavos el 2/9, cuartos el 14/10, semifinales el 11 y el 18/11 y final el 25/11 y el 2/12.
+* Clasificación a la Copa: el sorteo queda pendiente hasta que terminen el Apertura de Primera y el Torneo BetPlay I. Los ocho primeros del Apertura y los
+  ocho clasificados a cuadrangulares del Torneo entran a la Fase 1B; los otros 12 de Primera y ocho del Torneo juegan la Fase 1A.
+* Simplificaciones: los grupos se sortean sin zonificación geográfica y las series/octavos se sortean al azar; desde octavos el cuadro es fijo y el 1° y el 2°
+  de un mismo grupo quedan en mitades distintas. La localía en cruces de la misma división se aproxima por media, ya que el simulador no conserva una tabla
+  independiente del Apertura para todos esos cruces. Los días son miércoles: fase de grupos desde agosto, series en septiembre, octavos en octubre, cuartos
+  en octubre, semifinales en noviembre y final entre noviembre y diciembre.
 * Palmarés cargado: 22 títulos (1951 a 2025), con las ediciones anteriores a 2008 que la Dimayor pone en duda; verificar contra la Dimayor.

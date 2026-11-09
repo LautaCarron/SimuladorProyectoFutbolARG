@@ -21,17 +21,22 @@ def marcador_html(p, crests=False):
 
 
 def tanda_html(p, abierto=False):
-    if not p.get("tanda"):
+    tanda = p.get("tanda")
+    if not tanda or len(tanda) < 2:
         return ""
+    # Compatibilidad con partidos guardados antes de que se persistiera el marcador de penales.
+    pen = p.get("pen")
+    if not pen or len(pen) < 2:
+        pen = (sum(tanda[0]), sum(tanda[1]))
     filas = ""
-    for nombre, serie, total in ((p["local"], p["tanda"][0], p["pen"][0]),
-                                 (p["visita"], p["tanda"][1], p["pen"][1])):
+    for nombre, serie, total in ((p["local"], tanda[0], pen[0]),
+                                 (p["visita"], tanda[1], pen[1])):
         dots = "".join('<span class="pk ok">✓</span>' if x else '<span class="pk no">✗</span>'
                        for x in serie)
         filas += (f'<div class="trow">{crest(nombre, 18)}<span class="tn">{esc(nombre)}:</span>'
                   f'<span class="tt">{total}</span><span>{dots}</span></div>')
     return (f'<details class="tanda"{" open" if abierto else ""}><summary>Penales · '
-            f'{esc(p["local"])} {p["pen"][0]} – {p["pen"][1]} {esc(p["visita"])}</summary>'
+            f'{esc(p["local"])} {pen[0]} – {pen[1]} {esc(p["visita"])}</summary>'
             f'{filas}</details>')
 
 
