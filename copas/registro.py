@@ -324,7 +324,8 @@ class LigaExterior(Competencia):
         nombres = list(S.setdefault("ext_clubes", {}).get(self.clubes_key) or self.cfg["clubes"])
         ri = S.setdefault("rating_int", dict(MEDIA_EXT))
         r = [ri.get(n, MEDIA_EXT[n]) for n in nombres]
-        previo = S.setdefault("ext_prev", {}).get(pais, {}) if self.divisional == 1 else {}
+        previo = (S.setdefault("ext_prom_hist", {}).get(pais, {}) if pais == "Colombia" else
+                  S.setdefault("ext_prev", {}).get(pais, {})) if self.divisional == 1 else {}
         L = self.formato.nueva(self.cfg, nombres, r, previo, _anio(S), rng)
         S["ext_clubes"][self.clubes_key] = nombres
         if self.divisional == 1 and self.cfg.get("tercera"):      # tercera división falsa: sólo es una lista de clubes
@@ -403,6 +404,12 @@ class LigaExterior(Competencia):
         más seguido). En una segunda simulada sólo guarda las medias y anota quién subió."""
         L, pais = S[self.clave], self.cfg["pais"]
         c = self.formato.cierre(L)
+        if pais == "Colombia" and self.divisional == 1:
+            historial = S.setdefault("ext_prom_hist", {}).setdefault(pais, {})
+            for club, (pts, pj) in c.get("puntos", {}).items():
+                if pj:
+                    historial.setdefault(club, []).append((int(pts), int(pj)))
+                    historial[club] = historial[club][-3:]
         ri = S.setdefault("rating_int", dict(MEDIA_EXT))
         for n, x in zip(L["nombres"], L["r"]):
             ri[n] = float(x)
@@ -581,6 +588,10 @@ class CopaBrasil(Competencia):
         tercera = copa_br.elegir_tercera_fase(por_division, campeones, media)
         copa_br.sortear(L, rng, list(S[self.LIGA_A]["nombres"]), por_division, tercera, media)
 
+    def _asegurar(self, S):
+        """Devuelve el estado de la copa (el sorteo se realiza al crear la temporada)."""
+        return S[self.clave]
+
     def activa(self, S):
         return S[self.clave]["sorteada"]
 
@@ -591,17 +602,17 @@ class CopaBrasil(Competencia):
         return S[self.clave]["fecha"]
 
     def pendiente(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if L["sorteada"] and L["fecha"] < len(L["rondas"]) and L["rondas"][L["fecha"]]["pares"]:
             return L["fecha"] + 1
         return None
 
     def terminada(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         return (not L["sorteada"]) or L["campeon"] is not None
 
     def jugar(self, S, P, rng):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if self.pendiente(S) is None:
             return
         jugar_ronda(L, P, rng)
@@ -659,6 +670,10 @@ class CopaChile(Competencia):
                 pass
         return L
 
+    def _asegurar(self, S):
+        """Devuelve el estado de la copa (el sorteo se realiza al crear la temporada)."""
+        return S[self.clave]
+
     def activa(self, S):
         return S[self.clave]["sorteada"]
 
@@ -669,17 +684,17 @@ class CopaChile(Competencia):
         return S[self.clave]["fecha"]
 
     def pendiente(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if L["sorteada"] and L["fecha"] < len(L["rondas"]) and L["rondas"][L["fecha"]]["pares"]:
             return L["fecha"] + 1
         return None
 
     def terminada(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         return (not L["sorteada"]) or L["campeon"] is not None
 
     def jugar(self, S, P, rng):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if self.pendiente(S) is None:
             return
         jugar_ronda(L, P, rng)
@@ -717,8 +732,8 @@ class CopaColombia(Competencia):
     """Copa Colombia (ver copas/colombia.py): 36 clubes (los 20 de la Liga BetPlay y los 16 del Torneo BetPlay), cuatro grupos de cinco,
     series a ida y vuelta, octavos y cuartos a partido único, y semifinales y final a ida y vuelta. Se sortea al armar la temporada,
     después de las dos ligas (por eso va después de ellas en REGISTRO). El estado de S["copa_co"] tiene la forma del de una liga del
-    exterior y se juega con `jugar_ronda`. Al cerrar la temporada anota el campeón en S["ext_copa"]["Colombia"]: copas/conmebol.py le da
-    un cupo a la Sudamericana si juega en Primera; si ya clasificó por la tabla, el cupo sigue por ella."""
+    exterior y se juega con `jugar_ronda`. El sorteo espera a que terminen las fases clasificatorias del primer semestre: los ocho mejores
+    de cada división entran a Fase 1B y el resto a grupos. Al cerrar, el campeón obtiene el cupo a Sudamericana si juega en Primera."""
     nombre = copa_co.NOMBRE
     clave = copa_co.CLAVE
     col_historial = copa_co.NOMBRE
@@ -727,18 +742,33 @@ class CopaColombia(Competencia):
     LIGA_1, LIGA_2 = "ext_co", "ext_co2"                                  # claves de S de la Liga BetPlay y del Torneo BetPlay
 
     def nueva(self, S, rng):
-        L = copa_co.nueva_copa(_anio(S))
-        if S.get(self.LIGA_1) is not None and S.get(self.LIGA_2) is not None:
+        # Los participantes de Fase 1B dependen de la clasificación real del Apertura;
+        # por eso el sorteo se difiere hasta que terminen ambos torneos del primer semestre.
+        return copa_co.nueva_copa(_anio(S))
+
+    def _asegurar(self, S):
+        L = S[self.clave]
+        if L["sorteada"]:
+            return L
+        L1, L2 = S.get(self.LIGA_1), S.get(self.LIGA_2)
+        if not (L1 and L2):
+            return L
+        if L1.get("hecho", {}).get("Apertura · final") != "listo":
+            return L
+        if L2.get("hecho", {}).get("Apertura · final") != "listo":
+            return L
+        try:
             ri = S.setdefault("rating_int", dict(MEDIA_EXT))
-            try:
-                copa_co.sortear(L, rng, list(S[self.LIGA_1]["nombres"]), list(S[self.LIGA_2]["nombres"]),
-                                lambda n: ri.get(n, MEDIA_EXT[n]))
-            except ValueError:                                            # sin 20 + 16 clubes no hay copa (la interfaz lo avisa)
-                pass
+            clas_p = [L1["nombres"][i] for i in L1.get("clasificados_apertura", [])]
+            clas_t = [L2["nombres"][i] for i in L2.get("clasificados_apertura", [])]
+            copa_co.sortear(L, S["rng"], list(L1["nombres"]), list(L2["nombres"]),
+                            lambda n: ri.get(n, MEDIA_EXT[n]), clas_p, clas_t)
+        except (ValueError, KeyError, IndexError):
+            return L
         return L
 
     def activa(self, S):
-        return S[self.clave]["sorteada"]
+        return self._asegurar(S)["sorteada"]
 
     def total(self, S):
         return len(S[self.clave]["rondas"])
@@ -747,21 +777,23 @@ class CopaColombia(Competencia):
         return S[self.clave]["fecha"]
 
     def pendiente(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if L["sorteada"] and L["fecha"] < len(L["rondas"]) and L["rondas"][L["fecha"]]["pares"]:
             return L["fecha"] + 1
         return None
 
     def terminada(self, S):
-        L = S[self.clave]
+        L = self._asegurar(S)
         return (not L["sorteada"]) or L["campeon"] is not None
 
     def jugar(self, S, P, rng):
-        L = S[self.clave]
+        L = self._asegurar(S)
         if self.pendiente(S) is None:
             return
         jugar_ronda(L, P, rng)
         copa_co.avanzar(L, rng)
+        if L.get("campeon") and S.get(self.LIGA_1):
+            S[self.LIGA_1]["campeon_copa_colombia"] = L["campeon"]
 
     def cruces(self, S, n):
         L = S[self.clave]

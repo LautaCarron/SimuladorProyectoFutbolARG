@@ -96,10 +96,14 @@ def jugar_ronda(L, P, rng):
             tanda = tanda_penales(rng, bool(gl_)) if pe else None
             partidos.append(nuevo_partido(L["nombre"], n, R["rotulo"], R["comp"], nom[x], nom[y], g1, g2, tanda=tanda,
                                           gana=nom[x] if gl_ else nom[y], neutral=R["neutral"]))
+        if R.get("suma_extra"):
+            sumar_partidos(L["E"][R["suma_extra"]], h, a, gl, gv)
     else:
         gl, gv = jugar(rng, r[h], r[a], **P)
         if R["suma"]:
             sumar_partidos(L["E"][R["suma"]], h, a, gl, gv)
+        if R.get("suma_extra"):
+            sumar_partidos(L["E"][R["suma_extra"]], h, a, gl, gv)
         for x, y, g1, g2 in zip(h, a, gl, gv):
             partidos.append(nuevo_partido(L["nombre"], n, R["rotulo"], comp_de(R, x), nom[x], nom[y], g1, g2,
                                           neutral=R["neutral"]))
@@ -303,7 +307,7 @@ FORMATOS = {TodosContraTodos.nombre: TodosContraTodos()}
 
 def formato_de(cfg):
     """El formato de la liga `cfg` (una entrada de ligas_ext.json)."""
-    from ligas import brasil_d, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
+    from ligas import brasil_d, colombia, colombia_segunda, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
     try:
         return FORMATOS[cfg["formato"]]
     except KeyError:

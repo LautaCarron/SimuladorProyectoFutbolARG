@@ -47,7 +47,7 @@ def _color_destino(txt):
     if "Playoff" in txt or "Fase final" in txt or "Segunda fase" in txt:
         # playoff de la segunda / fase final de la Primera Amateur / segunda fase de la Série D
         return COLORES_B["Reducido"]
-    if "Libertadores · Fase" in txt:
+    if "Libertadores · Fase 2" in txt or "Libertadores · Fase 1" in txt:
         return COLORES_DESTINO["Fase previa Libertadores"]
     if "Libertadores" in txt:
         return COLORES_DESTINO["Libertadores"]
@@ -55,6 +55,8 @@ def _color_destino(txt):
         return COLORES_DESTINO["Sudamericana"]
     if "A la final" in txt:
         return COLORES_B["Ascenso directo"]
+    if "Cuadrangulares" in txt or "Clasifica" in txt:
+        return COLORES_B["Reducido"]
     return ""
 
 
@@ -84,6 +86,13 @@ def _leyenda_comp(comp, L):
         if L.get("descensos"):
             ley.append(("Desciende", COLORES_B["Desciende"]))
         return ley
+    if comp.formato.nombre == "colombia":
+        return [("Campeón / líder", COLOR_ORO), ("Clasifica a cuadrangulares", COLORES_B["Reducido"]),
+                ("Clasifica a la final", COLORES_B["Ascenso directo"]),
+                ("Libertadores", COLORES_DESTINO["Libertadores"]),
+                ("Libertadores · Fase previa", COLORES_DESTINO["Fase previa Libertadores"]),
+                ("Sudamericana", COLORES_DESTINO["Sudamericana"]),
+                ("Desciende", COLORES_B["Desciende"])]
     return LEYENDA
 
 
@@ -91,7 +100,7 @@ def _render_item_tabla(t):
     if t["df"] is None:
         aviso(t["nota"])
     elif t["tipo"] == "descenso":
-        st.markdown(tabla_html(t["df"], _colorear, formatos={"Prom": "{:.3f}"}, fija="Equipo"),
+        st.markdown(tabla_html(t["df"], _colorear, formatos={"Prom": "{:.3f}", "Promedio": "{:.3f}"}, fija="Equipo"),
                     unsafe_allow_html=True)
     else:
         mostrar_tabla(t["df"], _colorear)
@@ -109,8 +118,9 @@ def _tablas(ctx, comp, L):
             previo[1].append(t)
         else:
             items.append((destino, [t]))
-    if comp.divisional == 1 and bool(comp.formato.etapas_definicion):
-        i = next((k for k, (n, _) in enumerate(items) if n == "Descenso"), len(items))
+    if (comp.divisional == 1 and bool(comp.formato.etapas_definicion)
+            and comp.formato.nombre != "colombia"):
+        i = next((k for k, (n, _) in enumerate(items) if n == "Descenso" or n.startswith("Tabla de descenso")), len(items))
         items.insert(i, ("Campeones", None))
     elif hasattr(comp.formato, "llaves"):              # fase final por llaves (Primera Amateur, Série D)
         items.append(("Llaves", "llaves"))
@@ -204,6 +214,29 @@ def _campeones(ctx, comp, L):
                        + f"Títulos de {reg['campeon']} en {comp.nombre} (temporadas simuladas): {n}.")
 
 
+def _finales(ctx, comp, L):
+    """Muestra las finales semestrales y las definiciones anuales/ascenso de Colombia."""
+    S = ctx.S
+    indices = []
+    for i, ronda in enumerate(L.get("rondas", [])):
+        etiqueta = f"{ronda.get('etapa', '')} {ronda.get('comp', '')}".casefold()
+        if "final" in etiqueta:
+            indices.append(i)
+    if not indices:
+        aviso("Las finales de Apertura y Clausura aparecerán cuando se clasifiquen los equipos.")
+        return
+    for i in indices:
+        R = L["rondas"][i]
+        titulo = R.get("rotulo") or R.get("comp") or R.get("etapa", "Final")
+        st.markdown(f"**{esc(titulo)}**")
+        st.caption(texto_dia(R["dia"]))
+        partidos = consultas.partidos_de_calendario(S, comp.nombre, i + 1)
+        if partidos:
+            render_fecha(S, ctx.club, partidos, f"final_{comp.clave}_{S['temp']}_{i+1}")
+        else:
+            aviso("Los participantes de esta final se conocerán al terminar la fase anterior.")
+
+
 def _render_liga(ctx, comp):
     S, P = ctx.S, ctx.P
     L, cfg = S[comp.clave], comp.cfg
@@ -228,7 +261,9 @@ def _render_liga(ctx, comp):
                                           width="stretch", disabled=terminada):
             comp.jugar_todo(S, P, S["rng"])
             st.rerun()
-        sub = st.tabs(["Posiciones", "Fixture y resultados"])
+        es_colombia = comp.formato.nombre in ("colombia", "colombia_segunda")
+        nombres_sub = ["Posiciones", "Fixture y resultados"] + (["Finales"] if es_colombia else [])
+        sub = st.tabs(nombres_sub)
         with sub[0]:
             _tablas(ctx, comp, L)
             if L["fecha"] == 0 and not ctx.modo_mgr:       # en modo manager no se tocan las medias
@@ -236,6 +271,9 @@ def _render_liga(ctx, comp):
                     L["r"] = editar_medias(L["nombres"], L["r"], f"editor_{comp.clave}_{S['temp']}")
         with sub[1]:
             _fixture(ctx, comp, L)
+        if es_colombia:
+            with sub[2]:
+                _finales(ctx, comp, L)
 
 
 def render(ctx):

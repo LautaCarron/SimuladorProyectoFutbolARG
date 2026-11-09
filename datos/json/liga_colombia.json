@@ -1,42 +1,221 @@
-{"clave": "co", "nombre": "Liga BetPlay", "pais": "Colombia", "formato": "todos_contra_todos", "descensos": 2, "ascensos": 2, "calendario": {"Liga": [1, 24, 5]}, "segunda_liga": {"nombre": "Torneo BetPlay", "formato": "todos_contra_todos", "descensos": 0, "calendario": {"Liga": [1, 23, 4]}},
+{
+  "clave": "co",
+  "nombre": "Liga BetPlay",
+  "pais": "Colombia",
+  "formato": "colombia",
+  "descensos": 2,
+  "ascensos": 2,
+  "calendario": {
+    "Apertura": [
+      1,
+      24,
+      5
+    ],
+    "Clausura": [
+      7,
+      11,
+      5
+    ]
+  },
+  "segunda_liga": {
+    "nombre": "Torneo BetPlay",
+    "formato": "colombia_segunda",
+    "descensos": 0,
+    "calendario": {
+      "Apertura": [
+        1,
+        23,
+        4
+      ],
+      "Clausura": [
+        7,
+        24,
+        4
+      ]
+    }
+  },
   "primera": [
-    {"nombre": "Alianza FC", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9761.png&h=96&w=96"},
-    {"nombre": "América de Cali", "media": 71, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8109.png&h=96&w=96"},
-    {"nombre": "Atlético Bucaramanga", "media": 68, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6137.png&h=96&w=96"},
-    {"nombre": "Atlético Nacional", "media": 74, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5264.png&h=96&w=96"},
-    {"nombre": "Boyacá Chicó FC", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5480.png&h=96&w=96"},
-    {"nombre": "Cúcuta Deportivo", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6101.png&h=96&w=96"},
-    {"nombre": "Deportes Tolima", "media": 70, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5489.png&h=96&w=96"},
-    {"nombre": "Deportivo Cali", "media": 65, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2672.png&h=96&w=96"},
-    {"nombre": "Deportivo Pasto", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5485.png&h=96&w=96"},
-    {"nombre": "Deportivo Pereira", "media": 63, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5486.png&h=96&w=96"},
-    {"nombre": "Fortaleza CEIF", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4928.png&h=96&w=96"},
-    {"nombre": "Independiente Medellín", "media": 70, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2690.png&h=96&w=96"},
-    {"nombre": "Independiente Santa Fe", "media": 70, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5488.png&h=96&w=96"},
-    {"nombre": "Internacional de Bogotá", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7445.png&h=96&w=96"},
-    {"nombre": "Jaguares de Córdoba", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10309.png&h=96&w=96"},
-    {"nombre": "Junior", "media": 72, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4815.png&h=96&w=96"},
-    {"nombre": "Llaneros FC", "media": 61, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7915.png&h=96&w=96"},
-    {"nombre": "Millonarios", "media": 72, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5484.png&h=96&w=96"},
-    {"nombre": "Once Caldas", "media": 68, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2919.png&h=96&w=96"},
-    {"nombre": "Águilas Doradas", "media": 62, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9762.png&h=96&w=96"}
+    {
+      "nombre": "Alianza FC",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9761.png&h=96&w=96"
+    },
+    {
+      "nombre": "América de Cali",
+      "media": 71,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/8109.png&h=96&w=96"
+    },
+    {
+      "nombre": "Atlético Bucaramanga",
+      "media": 68,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6137.png&h=96&w=96"
+    },
+    {
+      "nombre": "Atlético Nacional",
+      "media": 74,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5264.png&h=96&w=96"
+    },
+    {
+      "nombre": "Boyacá Chicó FC",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5480.png&h=96&w=96"
+    },
+    {
+      "nombre": "Cúcuta Deportivo",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6101.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportes Tolima",
+      "media": 70,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5489.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo Cali",
+      "media": 65,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2672.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo Pasto",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5485.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo Pereira",
+      "media": 63,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5486.png&h=96&w=96"
+    },
+    {
+      "nombre": "Fortaleza CEIF",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4928.png&h=96&w=96"
+    },
+    {
+      "nombre": "Independiente Medellín",
+      "media": 70,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2690.png&h=96&w=96"
+    },
+    {
+      "nombre": "Independiente Santa Fe",
+      "media": 70,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5488.png&h=96&w=96"
+    },
+    {
+      "nombre": "Internacional de Bogotá",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7445.png&h=96&w=96"
+    },
+    {
+      "nombre": "Jaguares de Córdoba",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10309.png&h=96&w=96"
+    },
+    {
+      "nombre": "Junior",
+      "media": 72,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4815.png&h=96&w=96"
+    },
+    {
+      "nombre": "Llaneros FC",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7915.png&h=96&w=96"
+    },
+    {
+      "nombre": "Millonarios",
+      "media": 72,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5484.png&h=96&w=96"
+    },
+    {
+      "nombre": "Once Caldas",
+      "media": 68,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2919.png&h=96&w=96"
+    },
+    {
+      "nombre": "Águilas Doradas",
+      "media": 62,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9762.png&h=96&w=96"
+    }
   ],
   "segunda": [
-    {"nombre": "Atlético (Cali)", "media": 55, "escudo": ""},
-    {"nombre": "Barranquilla", "media": 50, "escudo": ""},
-    {"nombre": "Boca Juniors de Cali", "media": 52, "escudo": ""},
-    {"nombre": "Bogotá", "media": 51, "escudo": ""},
-    {"nombre": "Deportes Quindío", "media": 55, "escudo": ""},
-    {"nombre": "Envigado", "media": 56, "escudo": ""},
-    {"nombre": "Independiente Yumbo", "media": 50, "escudo": ""},
-    {"nombre": "Inter Palmira", "media": 54, "escudo": ""},
-    {"nombre": "Itagüí Leones", "media": 53, "escudo": ""},
-    {"nombre": "Orsomarso", "media": 52, "escudo": ""},
-    {"nombre": "Patriotas", "media": 54, "escudo": ""},
-    {"nombre": "Real Cartagena", "media": 55, "escudo": ""},
-    {"nombre": "Real Cundinamarca", "media": 49, "escudo": ""},
-    {"nombre": "Real Santander", "media": 50, "escudo": ""},
-    {"nombre": "Tigres", "media": 50, "escudo": ""},
-    {"nombre": "Unión Magdalena", "media": 57, "escudo": ""}
+    {
+      "nombre": "Atlético Cali",
+      "media": 55,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/c/cc/Atletico_Fc.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "Barranquilla",
+      "media": 50,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17373.png&h=200&w=200"
+    },
+    {
+      "nombre": "Boca Juniors de Cali",
+      "media": 52,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17372.png&cquality=40&h=144&scale=crop&w=144"
+    },
+    {
+      "nombre": "Bogotá FC",
+      "media": 51,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17371.png&h=200&w=200"
+    },
+    {
+      "nombre": "Deportes Quindío",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5487.png&h=200&w=200"
+    },
+    {
+      "nombre": "Envigado",
+      "media": 57,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5481.png&h=200&w=200"
+    },
+    {
+      "nombre": "Independiente V.D.C.",
+      "media": 50,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v3/Competitors/7642"
+    },
+    {
+      "nombre": "Inter Palmira",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22184.png&cquality=40&h=144&scale=crop&w=144"
+    },
+    {
+      "nombre": "Itagüí Leones",
+      "media": 53,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9769.png&h=200&w=200"
+    },
+    {
+      "nombre": "Orsomarso",
+      "media": 52,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18156.png&h=200&w=200"
+    },
+    {
+      "nombre": "Patriotas",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9773.png&h=200&w=200"
+    },
+    {
+      "nombre": "Real Cartagena",
+      "media": 55,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5479.png&h=200&w=200"
+    },
+    {
+      "nombre": "Real Cundinamarca",
+      "media": 49,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21967.png&h=200&w=200"
+    },
+    {
+      "nombre": "Real Santander",
+      "media": 49,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9774.png&cquality=40&h=144&scale=crop&w=144"
+    },
+    {
+      "nombre": "Tigres FC",
+      "media": 50,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v1/Competitors/10361"
+    },
+    {
+      "nombre": "Unión Magdalena",
+      "media": 57,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17374.png&h=200&w=200"
+    }
   ]
 }

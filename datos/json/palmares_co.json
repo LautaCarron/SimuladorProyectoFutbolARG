@@ -12,5 +12,51 @@
       "Deportes Tolima": 1,
       "La Equidad": 1
     }
+  },
+  "hist_ext_co": {
+    "descripcion": "Liga BetPlay de Colombia: campeón anual definido entre los ganadores del Apertura y el Clausura. El ganador suma un título anual.",
+    "titulos": {
+      "Atlético Nacional": 18,
+      "Millonarios": 16,
+      "América de Cali": 15,
+      "Junior": 12,
+      "Deportivo Cali": 10,
+      "Independiente Santa Fe": 10,
+      "Independiente Medellín": 6,
+      "Once Caldas": 4,
+      "Deportes Tolima": 3,
+      "Atlético Bucaramanga": 1,
+      "Cúcuta Deportivo": 1,
+      "Deportivo Pasto": 1,
+      "Deportivo Pereira": 1,
+      "Unión Magdalena": 1,
+      "Deportes Quindío": 1
+    }
+  },
+  "hist_ext_co2": {
+    "descripcion": "Torneo BetPlay de Colombia: campeón anual definido entre los ganadores del Apertura y el Clausura. El ganador suma un título anual.",
+    "titulos": {
+      "Cúcuta Deportivo": 4,
+      "Atlético Huila": 3,
+      "Boyacá Chicó FC": 3,
+      "Real Cartagena": 3,
+      "Cortuluá": 2,
+      "Unión Magdalena": 2,
+      "Deportes Quindío": 2,
+      "Atlético Bucaramanga": 2,
+      "Deportivo Pasto": 2,
+      "Deportivo Pereira": 2,
+      "Jaguares de Córdoba": 2,
+      "Envigado": 2,
+      "Patriotas": 1,
+      "Águilas Doradas": 1,
+      "Alianza Petrolera": 1,
+      "América de Cali": 1,
+      "Uniautónoma": 1,
+      "La Equidad": 1,
+      "Deportes Tolima": 1,
+      "Deportivo Unicosta": 1,
+      "Centauro": 1
+    }
   }
 }
