@@ -13,6 +13,17 @@
       "La Equidad": 1
     }
   },
+  "hist_supercopa_co": {
+    "descripcion": "Supercopa de Colombia (Superliga Colombiana), 15 ediciones (2012-2026). Fuente: Wikipedia; verificar contra la Dimayor.",
+    "titulos": {
+      "Independiente Santa Fe": 5,
+      "Atlético Nacional": 4,
+      "Junior": 2,
+      "Millonarios": 2,
+      "Deportivo Cali": 1,
+      "Deportes Tolima": 1
+    }
+  },
   "hist_ext_co": {
     "descripcion": "Liga BetPlay de Colombia: campeón anual definido entre los ganadores del Apertura y el Clausura. El ganador suma un título anual.",
     "titulos": {

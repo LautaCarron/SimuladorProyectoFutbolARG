@@ -1,0 +1,15 @@
+{
+  "hist_ext_py": {
+    "descripcion": "Primera División de Paraguay (APF División de Honor), 1906-2025: 133 títulos, era amateur y profesional. No hubo campeonato en 1908, 1922 ni 1932-1934. Desde 2008 el Apertura y el Clausura son torneos independientes y cada uno suma un título. No incluye el Apertura 2026 (Olimpia). Fuente: Wikipedia y RSSSF; verificar contra la APF.",
+    "titulos": {
+      "Olimpia": 47,
+      "Cerro Porteño": 35,
+      "Libertad": 26,
+      "Guaraní": 11,
+      "Nacional (Asunción)": 9,
+      "Sol de América": 2,
+      "Sportivo Luqueño": 2,
+      "Presidente Hayes": 1
+    }
+  }
+}

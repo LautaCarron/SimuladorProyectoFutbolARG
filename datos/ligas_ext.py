@@ -21,7 +21,7 @@ Série D). Cada una cuelga de la de arriba, sube y baja la misma cantidad de clu
 
 from datos.cargador import cargar
 
-ARCHIVOS = ["liga_uruguay", "liga_brasil", "liga_chile", "liga_colombia"]
+ARCHIVOS = ["liga_uruguay", "liga_brasil", "liga_chile", "liga_colombia", "liga_paraguay"]
 
 LIGAS_EXT = []                       # configuración de cada liga; "clubes" = los que la juegan, "reserva" = segunda sin simular
 CLUBES_LIGAS = []

@@ -1,6 +1,6 @@
 # Ligas de otros países
 
-Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil**, **Chile** y **Colombia**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
+Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil**, **Chile**, **Colombia** y **Paraguay**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
 
 ## Plan (cómo está pensado)
 
@@ -291,6 +291,16 @@ Formato 2026 de la Dimayor:
 
 ## Supercopa de Colombia (`SupercopaColombia` en `copas/registro.py`, `ui/ui_supercopa_co.py`)
 
-Superliga BetPlay: serie a ida y vuelta entre el campeón de la Liga BetPlay y el campeón de la Copa Colombia; si es el mismo club, el rival es el subcampeón de la liga. La ida es en la cancha del rival y la vuelta en la del campeón de la liga; si el global empata, penales en la vuelta. Se juega a la semana y a las dos semanas de que terminan la liga y la copa y cierra la temporada actual (en la realidad abre la siguiente), como las otras supercopas. Estado en `S["supercopa_co"]` (si la partida guardada no lo trae, se crea solo: no sube `VERSION_ESTADO`). Palmarés: `hist_supercopa_co` (opcional, en `palmares_co.json`; todavía vacío, sólo cuentan las temporadas simuladas). Logo: clave `"Supercopa de Colombia"` en `logos.json` (opcional). No da cupos internacionales.
+Superliga BetPlay: serie a ida y vuelta entre el campeón de la Liga BetPlay y el campeón de la Copa Colombia; si es el mismo club, el rival es el subcampeón de la liga. La ida es en la cancha del rival y la vuelta en la del campeón de la liga; si el global empata, penales en la vuelta. Se juega a la semana y a las dos semanas de que terminan la liga y la copa y cierra la temporada actual (en la realidad abre la siguiente), como las otras supercopas. Estado en `S["supercopa_co"]` (si la partida guardada no lo trae, se crea solo: no sube `VERSION_ESTADO`). Palmarés: `hist_supercopa_co` en `palmares_co.json` (15 ediciones, 2012-2026: Santa Fe 5, Nacional 4, Junior 2, Millonarios 2, Cali 1, Tolima 1; verificar contra la Dimayor). Logo: clave `"Supercopa de Colombia"` en `logos.json` (ya cargado). No da cupos internacionales.
 
 * **Simplificación a revisar**: el real enfrenta a los campeones del año (en el formato de dos torneos, Apertura y Finalización) con el de la Copa; acá la liga tiene un solo campeón anual.
+
+## Paraguay: Primera División (2026)
+
+Datos en `datos/json/liga_paraguay.json` (clave `py`). **Sólo la Primera División**: la Intermedia no se juega, es la reserva de la que suben y a la que bajan los clubes (16 clubes, medias orientativas de 47 a 59). Todavía no hay Copa Paraguay ni Supercopa.
+
+* **Formato**: `todos_contra_todos` (22 fechas, ida y vuelta, desde el 6 de febrero). Campeón el que más puntos suma; bajan 2 y suben 2 de la Intermedia.
+* **Clubes**: los 12 de la temporada 2026 (2 de Mayo, Cerro Porteño, Guaraní, Libertad, Nacional (Asunción), Olimpia, Deportivo Recoleta, Rubio Ñú, Sportivo San Lorenzo, Sportivo Ameliano, Sportivo Luqueño y Sportivo Trinidense). Las medias de los que ya estaban se mantuvieron; los de la Intermedia son nuevos (salvo Caballero).
+* **Copas CONMEBOL**: se reparten por la tabla con los `CUPOS_*` de `copas/conmebol.py` (Libertadores 2 a grupos, 1 a la previa y 1 a la Fase 1; Sudamericana 4).
+* **Palmarés**: `hist_ext_py` en `palmares_py.json` (1906-2025, 133 títulos; Olimpia 47, Cerro Porteño 35, Libertad 26, Guaraní 11, Nacional 9, Sol de América 2, Sportivo Luqueño 2, Presidente Hayes 1; verificar contra la APF). No incluye el Apertura 2026.
+* **Simplificaciones a revisar**: en la realidad hay dos torneos por año (Apertura y Clausura, cada uno con su campeón) y el descenso sale del promedio de tres temporadas; acá hay una sola tabla por temporada y un campeón por año, y bajan los dos últimos de esa tabla. Los clubes de la Intermedia sin escudo muestran sus iniciales.
