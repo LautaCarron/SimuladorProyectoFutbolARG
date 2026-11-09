@@ -270,3 +270,13 @@ Formato 2026 de la Dimayor:
   grupo quedan en mitades distintas. En semifinales y final de la misma división, el de mayor media cierra de local (el real usa la tabla del Apertura). Los días
   son miércoles: grupos desde el 6/5, series el 22/7 y el 5/8, octavos el 2/9, cuartos el 14/10, semifinales el 11 y el 18/11 y final el 25/11 y el 2/12.
 * Palmarés cargado: 22 títulos (1951 a 2025), con las ediciones anteriores a 2008 que la Dimayor pone en duda; verificar contra la Dimayor.
+
+## Estaduales de Brasil (`copas/estaduales.py`, `Estaduales` en `copas/registro.py`, `ui/ui_estaduales.py`, `datos/json/estaduales.json`)
+
+27 campeonatos estaduales (Paulista, Carioca, Mineiro, Gaúcho, Paranaense, Catarinense, Baiano, Pernambucano, Cearense, Goiano, Paraense y los de los demás estados), siempre activos (sin interruptor). Motor derivado de los Regionales argentinos; mismo estado (`S["estaduales"]`).
+
+* **Quién juega**: los clubes de la Série A a la D, cada uno en el torneo de su estado (`clubes` del JSON: club -> estado; los 156 clubes están cargados). Cada torneo tiene un tamaño `tam` (SP 16, RJ/MG/RS/PR 12, SC/BA/PE/CE/GO/PA/MT/DF 10, el resto 8). Entran primero los de la división más alta y, dentro de ella, los de mayor media. Si el estado tiene de más, quedan afuera los de peor división y media (SP: Noroeste, Velo Clube y Água Santa); si tiene de menos, se completa con **clubes complementarios** (`extras` del JSON: media fija ±1,5 por temporada, sin escudo, no juegan ninguna liga nacional ni suben ni bajan).
+* **Formato**: una tabla todos contra todos a una rueda; el Paulistão tiene 4 grupos de 4 y cada club juega una vez contra los de los otros grupos (`cruzado`). Llave de 8 (cuartos, semifinales y final: SP, MG, RS, PR) o de 4 (semifinales y final: el resto), a partido único con penales; final en cancha neutral.
+* **Calendario**: desde el 10 de enero, una ronda cada 4 días (el Paulistão termina el 19/3, antes de la Série B y la C). Columna del Historial: `"Estaduales"` (un dict {torneo: campeón} por temporada) y palmarés por estado en un desplegable del Historial de Brasil.
+* **Simplificaciones a revisar**: el real tiene formatos propios (Taça Guanabara/Taça Rio, finales a ida y vuelta, fases por grupos distintas, series estaduales de ascenso); acá la fase de grupos es una sola y la llave es a partido único. Los clubes complementarios y las medias (41 a 48) son orientativos. Mapeo de estados a revisar: **Decisão** (puesto en Paraíba, sin confirmar). **No dan cupos** a la Copa do Brasil, Copa Verde ni Copa do Nordeste, ni hay palmarés histórico de cada estadual (sólo cuentan las temporadas simuladas).
+* `VERSION_ESTADO` subió a 33 (nueva copa en el estado): las partidas guardadas con la versión anterior ya no se cargan.

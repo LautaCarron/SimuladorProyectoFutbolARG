@@ -1,0 +1,1003 @@
+{
+ "torneos": [
+  {
+   "id": "SP",
+   "nombre": "Campeonato Paulista",
+   "corto": "Paulistão",
+   "color": "#dc2626",
+   "zona": "São Paulo",
+   "tam": 16,
+   "grupos": 4,
+   "cruzado": true,
+   "llave": 8
+  },
+  {
+   "id": "RJ",
+   "nombre": "Campeonato Carioca",
+   "corto": "Carioca",
+   "color": "#0ea5e9",
+   "zona": "Rio de Janeiro",
+   "tam": 12,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "MG",
+   "nombre": "Campeonato Mineiro",
+   "corto": "Mineiro",
+   "color": "#475569",
+   "zona": "Minas Gerais",
+   "tam": 12,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 8
+  },
+  {
+   "id": "RS",
+   "nombre": "Campeonato Gaúcho",
+   "corto": "Gaúcho",
+   "color": "#16a34a",
+   "zona": "Rio Grande do Sul",
+   "tam": 12,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 8
+  },
+  {
+   "id": "PR",
+   "nombre": "Campeonato Paranaense",
+   "corto": "Paranaense",
+   "color": "#0d9488",
+   "zona": "Paraná",
+   "tam": 12,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 8
+  },
+  {
+   "id": "SC",
+   "nombre": "Campeonato Catarinense",
+   "corto": "Catarinense",
+   "color": "#b91c1c",
+   "zona": "Santa Catarina",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "BA",
+   "nombre": "Campeonato Baiano",
+   "corto": "Baiano",
+   "color": "#2563eb",
+   "zona": "Bahia",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "PE",
+   "nombre": "Campeonato Pernambucano",
+   "corto": "Pernambucano",
+   "color": "#e11d48",
+   "zona": "Pernambuco",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "CE",
+   "nombre": "Campeonato Cearense",
+   "corto": "Cearense",
+   "color": "#7c3aed",
+   "zona": "Ceará",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "GO",
+   "nombre": "Campeonato Goiano",
+   "corto": "Goiano",
+   "color": "#65a30d",
+   "zona": "Goiás",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "PA",
+   "nombre": "Campeonato Paraense",
+   "corto": "Paraense",
+   "color": "#0891b2",
+   "zona": "Pará",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "MT",
+   "nombre": "Campeonato Mato-Grossense",
+   "corto": "Mato-Grossense",
+   "color": "#ca8a04",
+   "zona": "Mato Grosso",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "DF",
+   "nombre": "Campeonato Brasiliense",
+   "corto": "Brasiliense",
+   "color": "#9333ea",
+   "zona": "Distrito Federal",
+   "tam": 10,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "AM",
+   "nombre": "Campeonato Amazonense",
+   "corto": "Amazonense",
+   "color": "#15803d",
+   "zona": "Amazonas",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "AL",
+   "nombre": "Campeonato Alagoano",
+   "corto": "Alagoano",
+   "color": "#1d4ed8",
+   "zona": "Alagoas",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "SE",
+   "nombre": "Campeonato Sergipano",
+   "corto": "Sergipano",
+   "color": "#0369a1",
+   "zona": "Sergipe",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "PB",
+   "nombre": "Campeonato Paraibano",
+   "corto": "Paraibano",
+   "color": "#be123c",
+   "zona": "Paraíba",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "PI",
+   "nombre": "Campeonato Piauiense",
+   "corto": "Piauiense",
+   "color": "#a16207",
+   "zona": "Piauí",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "RN",
+   "nombre": "Campeonato Potiguar",
+   "corto": "Potiguar",
+   "color": "#c2410c",
+   "zona": "Rio Grande do Norte",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "MA",
+   "nombre": "Campeonato Maranhense",
+   "corto": "Maranhense",
+   "color": "#4d7c0f",
+   "zona": "Maranhão",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "ES",
+   "nombre": "Campeonato Capixaba",
+   "corto": "Capixaba",
+   "color": "#0f766e",
+   "zona": "Espírito Santo",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "MS",
+   "nombre": "Campeonato Sul-Mato-Grossense",
+   "corto": "Sul-Mato-Grossense",
+   "color": "#6d28d9",
+   "zona": "Mato Grosso do Sul",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "AC",
+   "nombre": "Campeonato Acreano",
+   "corto": "Acreano",
+   "color": "#166534",
+   "zona": "Acre",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "AP",
+   "nombre": "Campeonato Amapaense",
+   "corto": "Amapaense",
+   "color": "#1e40af",
+   "zona": "Amapá",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "RO",
+   "nombre": "Campeonato Rondoniense",
+   "corto": "Rondoniense",
+   "color": "#b45309",
+   "zona": "Rondônia",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "RR",
+   "nombre": "Campeonato Roraimense",
+   "corto": "Roraimense",
+   "color": "#9f1239",
+   "zona": "Roraima",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  },
+  {
+   "id": "TO",
+   "nombre": "Campeonato Tocantinense",
+   "corto": "Tocantinense",
+   "color": "#0e7490",
+   "zona": "Tocantins",
+   "tam": 8,
+   "grupos": 1,
+   "cruzado": false,
+   "llave": 4
+  }
+ ],
+ "clubes": {
+  "Corinthians": "SP",
+  "Mirassol": "SP",
+  "Palmeiras": "SP",
+  "Red Bull Bragantino": "SP",
+  "Santos": "SP",
+  "São Paulo": "SP",
+  "Botafogo-SP": "SP",
+  "Novorizontino": "SP",
+  "Ponte Preta": "SP",
+  "São Bernardo": "SP",
+  "Guarani-SP": "SP",
+  "Ferroviária": "SP",
+  "Ituano": "SP",
+  "Inter de Limeira": "SP",
+  "Portuguesa-SP": "SP",
+  "Água Santa": "SP",
+  "XV de Piracicaba": "SP",
+  "Noroeste-SP": "SP",
+  "Velo Clube": "SP",
+  "Botafogo": "RJ",
+  "Flamengo": "RJ",
+  "Fluminense": "RJ",
+  "Vasco da Gama": "RJ",
+  "Volta Redonda": "RJ",
+  "Madureira": "RJ",
+  "Portuguesa-RJ": "RJ",
+  "América-RJ": "RJ",
+  "Nova Iguaçu": "RJ",
+  "Sampaio Corrêa-RJ": "RJ",
+  "Maricá": "RJ",
+  "Atlético-MG": "MG",
+  "Cruzeiro": "MG",
+  "Athletic Club": "MG",
+  "América-MG": "MG",
+  "Uberlândia": "MG",
+  "Betim": "MG",
+  "Tombense": "MG",
+  "Democrata-GV": "MG",
+  "Pouso Alegre": "MG",
+  "Grêmio": "RS",
+  "Internacional": "RS",
+  "Juventude": "RS",
+  "Caxias": "RS",
+  "Ypiranga-RS": "RS",
+  "Guarany de Bagé": "RS",
+  "São Luiz-RS": "RS",
+  "São José-RS": "RS",
+  "Brasil de Pelotas": "RS",
+  "Athletico-PR": "PR",
+  "Coritiba": "PR",
+  "Operário-PR": "PR",
+  "Londrina": "PR",
+  "Maringá": "PR",
+  "Cianorte": "PR",
+  "FC Cascavel": "PR",
+  "São Joseense-PR": "PR",
+  "Azuriz": "PR",
+  "Chapecoense": "SC",
+  "Avaí": "SC",
+  "Criciúma": "SC",
+  "Figueirense": "SC",
+  "Brusque": "SC",
+  "Barra-SC": "SC",
+  "Santa Catarina": "SC",
+  "Joinville": "SC",
+  "Blumenau": "SC",
+  "Nautico Marcílio Dias": "SC",
+  "Bahia": "BA",
+  "Vitória": "BA",
+  "Jacuipense": "BA",
+  "Atlético-BA": "BA",
+  "Juazeirense": "BA",
+  "Porto-BA": "BA",
+  "Sport Club Recife": "PE",
+  "Náutico": "PE",
+  "Santa Cruz-PE": "PE",
+  "Maguary": "PE",
+  "Central-SC": "PE",
+  "Retrô": "PE",
+  "Fortaleza": "CE",
+  "Ceará": "CE",
+  "Floresta": "CE",
+  "Maracanã": "CE",
+  "Iguatu": "CE",
+  "Ferroviário": "CE",
+  "Tirol": "CE",
+  "Atlético-CE": "CE",
+  "Goiás": "GO",
+  "Vila Nova": "GO",
+  "Atlético Goianiense": "GO",
+  "Anápolis": "GO",
+  "Inhumas": "GO",
+  "Aparecidense": "GO",
+  "Goiatuba": "GO",
+  "CRAC": "GO",
+  "ABECAT": "GO",
+  "Remo": "PA",
+  "Paysandu": "PA",
+  "Tuna Luso": "PA",
+  "Águia de Marabá": "PA",
+  "Cuiabá": "MT",
+  "Luverdense": "MT",
+  "Primavera-MT": "MT",
+  "Mixto Esporte": "MT",
+  "Operário-MT": "MT",
+  "União-MT": "MT",
+  "Gama": "DF",
+  "Brasiliense": "DF",
+  "Ceilândia": "DF",
+  "Capital-CF": "DF",
+  "Amazonas": "AM",
+  "Nacional-AM": "AM",
+  "Manaus": "AM",
+  "Manauara": "AM",
+  "CRB": "AL",
+  "ASA FC": "AL",
+  "CSA": "AL",
+  "CSE": "AL",
+  "Confiança": "SE",
+  "Itabaiana": "SE",
+  "Lagarto": "SE",
+  "Sergipe": "SE",
+  "Botafogo-PB": "PB",
+  "Sousa": "PB",
+  "Serra Branca": "PB",
+  "Treze": "PB",
+  "Decisão": "PB",
+  "Parnahyba": "PI",
+  "AA Altos": "PI",
+  "Piauí": "PI",
+  "Fluminense-PI": "PI",
+  "ABC": "RN",
+  "América-RN": "RN",
+  "Laguna-RN": "RN",
+  "Maranhão": "MA",
+  "Imperatriz": "MA",
+  "Sampaio Corrêa": "MA",
+  "Moto Club": "MA",
+  "IAPE": "MA",
+  "Rio Branco-ES": "ES",
+  "Vitória-ES": "ES",
+  "Real Noroeste": "ES",
+  "Operário-MS": "MS",
+  "Ivinhema": "MS",
+  "Independência-AC": "AC",
+  "Galvez": "AC",
+  "Humaitá": "AC",
+  "Trem": "AP",
+  "Oratório": "AP",
+  "Porto Velho": "RO",
+  "Guaporé": "RO",
+  "GAS-RR": "RR",
+  "Monte Roraima": "RR",
+  "São Raimundo-RR": "RR",
+  "Araguaína": "TO",
+  "Tocantinópolis": "TO"
+ },
+ "extras": {
+  "RJ": [
+   {
+    "nombre": "Bangu",
+    "media": 48
+   },
+   {
+    "nombre": "Boavista",
+    "media": 47
+   }
+  ],
+  "MG": [
+   {
+    "nombre": "Caldense",
+    "media": 48
+   },
+   {
+    "nombre": "Villa Nova-MG",
+    "media": 47
+   },
+   {
+    "nombre": "Patrocinense",
+    "media": 46
+   },
+   {
+    "nombre": "Ipatinga",
+    "media": 45
+   }
+  ],
+  "RS": [
+   {
+    "nombre": "Aimoré",
+    "media": 48
+   },
+   {
+    "nombre": "Avenida",
+    "media": 47
+   },
+   {
+    "nombre": "Novo Hamburgo",
+    "media": 46
+   },
+   {
+    "nombre": "Esportivo",
+    "media": 45
+   }
+  ],
+  "PR": [
+   {
+    "nombre": "Paraná Clube",
+    "media": 48
+   },
+   {
+    "nombre": "Rio Branco-PR",
+    "media": 47
+   },
+   {
+    "nombre": "Andraus",
+    "media": 46
+   },
+   {
+    "nombre": "Foz do Iguaçu",
+    "media": 45
+   }
+  ],
+  "BA": [
+   {
+    "nombre": "Bahia de Feira",
+    "media": 48
+   },
+   {
+    "nombre": "Fluminense de Feira",
+    "media": 47
+   },
+   {
+    "nombre": "Vitória da Conquista",
+    "media": 46
+   },
+   {
+    "nombre": "Barcelona de Ilhéus",
+    "media": 45
+   },
+   {
+    "nombre": "Camaçari",
+    "media": 44
+   }
+  ],
+  "PE": [
+   {
+    "nombre": "Salgueiro",
+    "media": 48
+   },
+   {
+    "nombre": "Petrolina",
+    "media": 47
+   },
+   {
+    "nombre": "Afogados",
+    "media": 46
+   },
+   {
+    "nombre": "Vitória-PE",
+    "media": 45
+   },
+   {
+    "nombre": "Íbis",
+    "media": 44
+   }
+  ],
+  "CE": [
+   {
+    "nombre": "Caucaia",
+    "media": 48
+   },
+   {
+    "nombre": "Barbalha",
+    "media": 47
+   },
+   {
+    "nombre": "Horizonte",
+    "media": 46
+   }
+  ],
+  "GO": [
+   {
+    "nombre": "Goiânia",
+    "media": 48
+   },
+   {
+    "nombre": "Crixás",
+    "media": 47
+   },
+   {
+    "nombre": "Itumbiara",
+    "media": 46
+   },
+   {
+    "nombre": "Morrinhos",
+    "media": 45
+   }
+  ],
+  "PA": [
+   {
+    "nombre": "Castanhal",
+    "media": 48
+   },
+   {
+    "nombre": "Cametá",
+    "media": 47
+   },
+   {
+    "nombre": "Independente-PA",
+    "media": 46
+   },
+   {
+    "nombre": "Bragantino-PA",
+    "media": 45
+   },
+   {
+    "nombre": "São Francisco-PA",
+    "media": 44
+   },
+   {
+    "nombre": "Capitão Poço",
+    "media": 43
+   }
+  ],
+  "MT": [
+   {
+    "nombre": "Dom Bosco",
+    "media": 41
+   },
+   {
+    "nombre": "Sinop",
+    "media": 40
+   },
+   {
+    "nombre": "Araguaia",
+    "media": 39
+   },
+   {
+    "nombre": "Nova Mutum",
+    "media": 38
+   },
+   {
+    "nombre": "Cacerense",
+    "media": 37
+   }
+  ],
+  "DF": [
+   {
+    "nombre": "Sobradinho",
+    "media": 41
+   },
+   {
+    "nombre": "Real Brasília",
+    "media": 40
+   },
+   {
+    "nombre": "Paranoá",
+    "media": 39
+   },
+   {
+    "nombre": "Samambaia",
+    "media": 38
+   },
+   {
+    "nombre": "Santa Maria",
+    "media": 37
+   },
+   {
+    "nombre": "Brazlândia",
+    "media": 36
+   },
+   {
+    "nombre": "Taguatinga",
+    "media": 35
+   }
+  ],
+  "AM": [
+   {
+    "nombre": "Fast Clube",
+    "media": 41
+   },
+   {
+    "nombre": "São Raimundo-AM",
+    "media": 40
+   },
+   {
+    "nombre": "Penarol-AM",
+    "media": 39
+   },
+   {
+    "nombre": "Princesa do Solimões",
+    "media": 38
+   },
+   {
+    "nombre": "Rio Negro-AM",
+    "media": 37
+   }
+  ],
+  "AL": [
+   {
+    "nombre": "Murici",
+    "media": 41
+   },
+   {
+    "nombre": "Coruripe",
+    "media": 40
+   },
+   {
+    "nombre": "Cruzeiro-AL",
+    "media": 39
+   },
+   {
+    "nombre": "Penedense",
+    "media": 38
+   },
+   {
+    "nombre": "Zumbi",
+    "media": 37
+   }
+  ],
+  "SE": [
+   {
+    "nombre": "Dorense",
+    "media": 41
+   },
+   {
+    "nombre": "Falcon",
+    "media": 40
+   },
+   {
+    "nombre": "Freipaulistano",
+    "media": 39
+   },
+   {
+    "nombre": "Estanciano",
+    "media": 38
+   },
+   {
+    "nombre": "Socorrense",
+    "media": 37
+   }
+  ],
+  "PB": [
+   {
+    "nombre": "Campinense",
+    "media": 41
+   },
+   {
+    "nombre": "Nacional de Patos",
+    "media": 40
+   },
+   {
+    "nombre": "Atlético de Cajazeiras",
+    "media": 39
+   },
+   {
+    "nombre": "Auto Esporte",
+    "media": 38
+   },
+   {
+    "nombre": "Perilima",
+    "media": 37
+   }
+  ],
+  "PI": [
+   {
+    "nombre": "River-PI",
+    "media": 41
+   },
+   {
+    "nombre": "4 de Julho",
+    "media": 40
+   },
+   {
+    "nombre": "Picos",
+    "media": 39
+   },
+   {
+    "nombre": "Oeirense",
+    "media": 38
+   },
+   {
+    "nombre": "Corisabbá",
+    "media": 37
+   }
+  ],
+  "RN": [
+   {
+    "nombre": "Potiguar de Mossoró",
+    "media": 41
+   },
+   {
+    "nombre": "Santa Cruz-RN",
+    "media": 40
+   },
+   {
+    "nombre": "Globo",
+    "media": 39
+   },
+   {
+    "nombre": "Assu",
+    "media": 38
+   },
+   {
+    "nombre": "Força e Luz",
+    "media": 37
+   }
+  ],
+  "MA": [
+   {
+    "nombre": "Santa Quitéria",
+    "media": 41
+   },
+   {
+    "nombre": "Juventude-MA",
+    "media": 40
+   },
+   {
+    "nombre": "Cordino",
+    "media": 39
+   },
+   {
+    "nombre": "Pinheiro",
+    "media": 38
+   }
+  ],
+  "ES": [
+   {
+    "nombre": "Desportiva Ferroviária",
+    "media": 41
+   },
+   {
+    "nombre": "Capixaba",
+    "media": 40
+   },
+   {
+    "nombre": "Linhares",
+    "media": 39
+   },
+   {
+    "nombre": "Nova Venécia",
+    "media": 38
+   },
+   {
+    "nombre": "Serra",
+    "media": 37
+   }
+  ],
+  "MS": [
+   {
+    "nombre": "Águia Negra",
+    "media": 41
+   },
+   {
+    "nombre": "Costa Rica",
+    "media": 40
+   },
+   {
+    "nombre": "Comercial-MS",
+    "media": 39
+   },
+   {
+    "nombre": "Aquidauanense",
+    "media": 38
+   },
+   {
+    "nombre": "Naviraiense",
+    "media": 37
+   },
+   {
+    "nombre": "Sete de Setembro",
+    "media": 36
+   }
+  ],
+  "AC": [
+   {
+    "nombre": "Rio Branco-AC",
+    "media": 41
+   },
+   {
+    "nombre": "Atlético-AC",
+    "media": 40
+   },
+   {
+    "nombre": "Plácido de Castro",
+    "media": 39
+   },
+   {
+    "nombre": "São Francisco-AC",
+    "media": 38
+   },
+   {
+    "nombre": "Adesg",
+    "media": 37
+   },
+   {
+    "nombre": "Andirá",
+    "media": 36
+   }
+  ],
+  "AP": [
+   {
+    "nombre": "Santos-AP",
+    "media": 41
+   },
+   {
+    "nombre": "Macapá",
+    "media": 40
+   },
+   {
+    "nombre": "Independente-AP",
+    "media": 39
+   },
+   {
+    "nombre": "Ypiranga-AP",
+    "media": 38
+   },
+   {
+    "nombre": "São José-AP",
+    "media": 37
+   },
+   {
+    "nombre": "Cristal",
+    "media": 36
+   }
+  ],
+  "RO": [
+   {
+    "nombre": "Real Ariquemes",
+    "media": 41
+   },
+   {
+    "nombre": "Vilhena",
+    "media": 40
+   },
+   {
+    "nombre": "Ji-Paraná",
+    "media": 39
+   },
+   {
+    "nombre": "Pimentense",
+    "media": 38
+   },
+   {
+    "nombre": "Genus",
+    "media": 37
+   },
+   {
+    "nombre": "Espigão",
+    "media": 36
+   }
+  ],
+  "RR": [
+   {
+    "nombre": "Baré",
+    "media": 41
+   },
+   {
+    "nombre": "Atlético-RR",
+    "media": 40
+   },
+   {
+    "nombre": "Náutico-RR",
+    "media": 39
+   },
+   {
+    "nombre": "Real-RR",
+    "media": 38
+   },
+   {
+    "nombre": "Progresso",
+    "media": 37
+   }
+  ],
+  "TO": [
+   {
+    "nombre": "Palmas",
+    "media": 41
+   },
+   {
+    "nombre": "Gurupi",
+    "media": 40
+   },
+   {
+    "nombre": "Interporto",
+    "media": 39
+   },
+   {
+    "nombre": "Capital-TO",
+    "media": 38
+   },
+   {
+    "nombre": "Tocantins",
+    "media": 37
+   },
+   {
+    "nombre": "Pedro Afonso",
+    "media": 36
+   }
+  ]
+ }
+}

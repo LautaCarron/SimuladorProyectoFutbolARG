@@ -170,6 +170,19 @@ def render(ctx):
                     st.markdown('<div class="pal-grid">' + "".join(
                         tabla_ranking_html(tt["nombre"], tt["nombre"], _titulos(tt["nombre"]), {}) for tt in _TORN)
                         + '</div>', unsafe_allow_html=True)
+            if pais == "Brasil" and any(x.get("Estaduales") for x in S["campeones"]):
+                from copas.estaduales import TORNEOS as _TORN_BR
+                with st.expander(":material/emoji_events: Palmarés de los Estaduales (por estado)", expanded=False):
+                    def _titulos_br(nombre):
+                        cuenta = {}
+                        for x in S["campeones"]:
+                            club = x.get("Estaduales", {}).get(nombre)
+                            if club:
+                                cuenta[club] = cuenta.get(club, 0) + 1
+                        return cuenta
+                    st.markdown('<div class="pal-grid">' + "".join(
+                        tabla_ranking_html(tt["nombre"], tt["nombre"], _titulos_br(tt["nombre"]), {}) for tt in _TORN_BR)
+                        + '</div>', unsafe_allow_html=True)
             if es_base:
                 st.caption("Títulos oficiales hasta 2025 (AFA / CONMEBOL): Primera, era amateur y profesional; "
                            "B Nacional, Primera B Metropolitana y Primera C, desde 1986-87; Federal A, desde 2014. "

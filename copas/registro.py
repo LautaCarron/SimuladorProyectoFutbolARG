@@ -17,6 +17,7 @@ import numpy as np
 from copas.argentina import (COPA_RONDAS, nueva_supercopa, rivales_supercopa, simular_ronda_copa, simular_supercopa,
                    supercopa_lista)
 from copas import brasil as copa_br
+from copas import estaduales as est_br
 from copas import chile as copa_cl
 from copas import colombia as copa_co
 from copas import uruguay as copa_uy
@@ -220,6 +221,39 @@ class Regionales(PorRondas):
         camps = campeones_regionales(S)
         if camps:
             S["campeones"][-1]["Regionales"] = camps
+
+
+class Estaduales(PorRondas):
+    """Campeonatos estaduales de Brasil (Paulista, Carioca, Mineiro...), ver copas/estaduales.py. Se sortean al armar la
+    temporada con los clubes de las cuatro divisiones (por eso van después de las ligas en REGISTRO). Hay un campeón por
+    estado, así que el Historial y el palmarés los anota `cerrar` en S["campeones"][-1]["Estaduales"]."""
+    nombre = est_br.NOMBRE
+    clave = "estaduales"
+    crea_estado = True
+    DIA_INICIAL = (1, 10)                              # arrancan el 10 de enero; una ronda cada 4 días
+
+    def nueva(self, S, rng):
+        return est_br.sortear_estaduales(S, rng) if S.get("ext_br") is not None else est_br.estaduales_vacios()
+
+    def activa(self, S):
+        return bool(S.get("estaduales", {}).get("activo"))
+
+    def jugar(self, S, P, rng):
+        est_br.simular_ronda_estaduales(S, P, rng)
+
+    def cruces(self, S, n):
+        return est_br.cruces_ronda(S, n)
+
+    def rotulo(self, S, n):
+        return est_br.rotulo_ronda(S, n)
+
+    def dia(self, S, n):
+        return dt.date(_anio(S), *self.DIA_INICIAL) + dt.timedelta(days=4 * (n - 1))
+
+    def cerrar(self, S, rng):
+        camps = est_br.campeones(S)
+        if camps:
+            S["campeones"][-1][self.nombre] = camps
 
 
 class MundialDeClubes(PorRondas):
@@ -1002,7 +1036,7 @@ class SupercopaUruguaya(Competencia):
 # La Copa do Brasil (y su Supercopa) y la Copa AUF Uruguay van después de las ligas del exterior: la primera se sortea con los clubes de las
 # cuatro divisiones de Brasil y la segunda necesita la Segunda ya jugada.
 REGISTRO = [CopaArgentina(), SupercopaArgentina(), Regionales(), MundialDeClubes(),
-            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaColombia(),
+            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], Estaduales(), CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaColombia(),
             CopaUruguay(), SupercopaUruguaya()]
 LIGAS_EXTERIOR = [c for c in REGISTRO if isinstance(c, LigaExterior)]
 _POR_NOMBRE = {c.nombre: c for c in REGISTRO}

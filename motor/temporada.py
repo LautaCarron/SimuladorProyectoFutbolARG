@@ -35,7 +35,7 @@ from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
 REVERSION_EXT = 0.15      # clubes del exterior (Uruguay...): cuánto vuelve cada año su media hacia la inicial
-VERSION_ESTADO = 32       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 33       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado(club_propio=None):

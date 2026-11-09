@@ -39,6 +39,7 @@ class Pestanas:
     tab_mgr: object = None
     tab_scuy: object = None            # Supercopa Uruguaya (sólo si el país activo es Uruguay)
     tab_cuy: object = None             # Copa AUF Uruguay (sólo si el país activo es Uruguay)
+    tab_est: object = None             # Estaduales de Brasil (sólo si el país activo es Brasil)
     tab_cbr: object = None             # Copa do Brasil (sólo si el país activo es Brasil)
     tab_sbr: object = None             # Supercopa do Brasil (sólo si el país activo es Brasil)
     tab_ccl: object = None             # Copa Chile (sólo si el país activo es Chile)
@@ -72,7 +73,7 @@ def _globito_avisos(sin_leer, posicion):
 
 
 CLAVES_INTERNACIONALES = ("lib", "sud", "rec", "mun")
-CLAVE_COPA_EXT = {"Copa AUF Uruguay": "cuy", "Supercopa Uruguaya": "scuy", "Copa do Brasil": "cbr", "Supercopa do Brasil": "sbr", "Copa Chile": "ccl", "Supercopa de Chile": "scl", "Copa Colombia": "cco"}   # copas nacionales de otros países
+CLAVE_COPA_EXT = {"Copa AUF Uruguay": "cuy", "Supercopa Uruguaya": "scuy", "Estaduales": "est", "Copa do Brasil": "cbr", "Supercopa do Brasil": "sbr", "Copa Chile": "ccl", "Supercopa de Chile": "scl", "Copa Colombia": "cco"}   # copas nacionales de otros países
 
 
 def _sufijo(pais):
@@ -115,6 +116,7 @@ def _pestanas_de_copas(competencias, kclub, pais):
              ("rgs", _etiqueta("Regionales", "Regionales", "rgs", competencias)),
              ("cuy", _etiqueta("Copa AUF Uruguay", "Copa AUF Uruguay", "cuy", competencias)),
              ("scuy", _etiqueta("Supercopa Uruguaya", "Supercopa Uruguaya", "scuy", competencias)),
+             ("est", _etiqueta("Estaduales", "Estaduales", "est", competencias)),
              ("cbr", _etiqueta("Copa do Brasil", "Copa do Brasil", "cbr", competencias)),
              ("sbr", _etiqueta("Supercopa do Brasil", "Supercopa do Brasil", "sbr", competencias)),
              ("ccl", _etiqueta("Copa Chile", "Copa Chile", "ccl", competencias)),
@@ -164,5 +166,5 @@ def crear_pestanas(S, modo_mgr, competencias, kclub, sin_leer, pestana_inicial=N
         tab_pb=ligas.get("pb"), tab_pc=ligas.get("pc"), tab_pd=ligas.get("pd"), tab_ca=copas.get("ca"),
         tab_sup=copas.get("sup"), tab_rgs=copas.get("rgs"), tab_lib=copas.get("lib"), tab_sud=copas.get("sud"),
         tab_rec=copas.get("rec"), tab_mun=copas.get("mun"), tab_cuy=copas.get("cuy"), tab_scuy=copas.get("scuy"),
-        tab_cbr=copas.get("cbr"), tab_sbr=copas.get("sbr"), tab_ccl=copas.get("ccl"), tab_scl=copas.get("scl"), tab_cco=copas.get("cco"),
+        tab_est=copas.get("est"), tab_cbr=copas.get("cbr"), tab_sbr=copas.get("sbr"), tab_ccl=copas.get("ccl"), tab_scl=copas.get("scl"), tab_cco=copas.get("cco"),
         tab_mgr=tab_mgr, tab_fb=ligas.get("fb"), tab_mundo=tab_mundo, tabs_ligas_ext=ligas_ext)

@@ -22,7 +22,7 @@ PAIS_BASE = "Argentina"
 LIGAS_ARGENTINA = ("Primera División", "Primera Nacional", "Federal A", "Federal B", "Primera B", "Primera C",
                    "Promocional Amateur", "Regional Amateur")
 COPAS_ARGENTINA = ("Copa Argentina", "Supercopa Argentina", "Regionales")
-COPAS_EXTERIOR = {"Uruguay": ("Copa AUF Uruguay", "Supercopa Uruguaya"), "Brasil": ("Copa do Brasil", "Supercopa do Brasil"),
+COPAS_EXTERIOR = {"Uruguay": ("Copa AUF Uruguay", "Supercopa Uruguaya"), "Brasil": ("Estaduales", "Copa do Brasil", "Supercopa do Brasil"),
                  "Chile": ("Copa Chile", "Supercopa de Chile"), "Colombia": ("Copa Colombia",)}        # copas nacionales de los países con liga simulada
 COPAS_INTERNACIONALES = ("Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana", "Mundial de Clubes")
 

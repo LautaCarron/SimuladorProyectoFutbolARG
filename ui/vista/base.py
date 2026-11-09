@@ -7,6 +7,7 @@ import re
 import streamlit as st
 import unicodedata
 
+from copas.estaduales import TORNEOS as TORNEOS_ESTADUALES
 from copas.regionales import TORNEOS as TORNEOS_REGIONALES
 from datos import club_propio
 from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS, ESCUDOS_SIN_FONDO
@@ -56,6 +57,8 @@ COLORES_F = {
 COLOR_COMP = [
     ("Mundial de Clubes", "#be185d"),
     *[(t["nombre"], t["color"]) for t in TORNEOS_REGIONALES],     # cada torneo de los Regionales con su color
+    *[(t["nombre"], t["color"]) for t in TORNEOS_ESTADUALES],     # estaduales de Brasil
+    ("Estaduales", "#1f8a4c"),
     ("Regionales", "#0d9488"),
     ("Campeonato", "#16a34a"), ("Intermedia", "#d97706"), ("Descenso", "#dc2626"),
     ("Zona A", "#4f46e5"), ("Zona B", "#0891b2"), ("Octavos", "#2563eb"),
