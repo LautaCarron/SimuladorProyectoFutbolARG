@@ -617,6 +617,42 @@ details.tanda{font-size:.76rem;}
 .card .v.big{font-size:1.5rem;}
 }
 /* celulares muy angostos (iPhone SE, Android chicos) */
+/* ---------- Supercopa de Chile (Final Four) ---------- */
+.scl-hero{position:relative;display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:18px 20px 22px;margin:2px 0 12px;border:1px solid var(--line);border-radius:6px;background:linear-gradient(135deg,color-mix(in srgb,#c0392b 10%,var(--papel)),var(--papel) 58%);overflow:hidden;}
+.scl-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#0039A6 0 33.33%,#fff 33.33% 66.66%,#D52B1E 66.66%);box-shadow:inset 0 0 0 1px var(--line);}
+.scl-logo{flex:none;width:84px;height:84px;display:flex;align-items:center;justify-content:center;}
+.scl-ttl{flex:1;min-width:190px;}
+.scl-k{font-stretch:85%;font-size:.66rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta-3);}
+.scl-n{font-stretch:105%;font-weight:900;font-size:clamp(1.3rem,5vw,1.95rem);line-height:1.05;text-transform:uppercase;margin-top:4px;}
+.scl-s{font-size:.8rem;color:var(--tinta-2);margin-top:5px;}
+.scl-steps{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.scl-st{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 3px;border:1px solid var(--line);border-radius:999px;font-stretch:85%;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--tinta-3);background:var(--papel);}
+.scl-st.ok{color:var(--win);border-color:color-mix(in srgb,var(--win) 45%,transparent);}
+.scl-st.now{color:var(--tinta);border-color:var(--cel2);background:color-mix(in srgb,var(--cel2) 13%,var(--papel));}
+.scl-br{display:grid;grid-template-columns:minmax(230px,1fr) minmax(230px,1fr) minmax(200px,.8fr);gap:36px;align-items:stretch;margin:6px 0 18px;overflow-x:auto;padding:2px 2px 8px;}
+.scl-col{display:flex;flex-direction:column;min-width:0;position:relative;}
+.scl-col:not(:last-child)::after{content:"";position:absolute;top:calc(50% + 14px);right:-28px;width:20px;height:2px;background:var(--line-2);}
+.scl-h{text-align:center;font-stretch:80%;font-size:.68rem;text-transform:uppercase;letter-spacing:.16em;font-weight:800;color:var(--tinta-2);margin-bottom:10px;}
+.scl-b{display:flex;flex-direction:column;justify-content:space-around;gap:16px;flex:1;}
+.scl-m{border:1px solid var(--line);border-radius:6px;background:var(--papel);overflow:hidden;}
+.scl-m.fin{border-top:3px solid var(--gold);}
+.scl-t{display:flex;align-items:center;gap:9px;padding:9px 12px;font-weight:700;font-size:.88rem;}
+.scl-t + .scl-t{border-top:1px solid var(--line);}
+.scl-t.win{background:color-mix(in srgb,var(--win) 10%,transparent);}
+.scl-t.lose{opacity:.55;}
+.scl-t.tbd .scl-tn{color:var(--tinta-3);font-weight:600;font-style:italic;}
+.scl-ph{flex:none;width:28px;height:28px;border:1.5px dashed var(--line-2);border-radius:50%;}
+.scl-tn{flex:1;min-width:0;line-height:1.15;}
+.scl-tn small{display:block;font-weight:600;font-size:.66rem;color:var(--tinta-3);margin-top:2px;font-style:normal;}
+.scl-g{min-width:22px;text-align:right;font-weight:900;font-size:1.1rem;font-variant-numeric:tabular-nums;}
+.scl-pen{border-top:1px dashed var(--line);padding:4px 12px 3px;font-size:.68rem;font-weight:800;color:var(--pen);text-align:center;letter-spacing:.05em;text-transform:uppercase;}
+.scl-cup{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:18px 12px;border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:6px;background:var(--papel);container-type:inline-size;}
+.scl-cup.on{background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 15%,var(--papel)),var(--papel) 75%);}
+.scl-cup .t{font-stretch:85%;font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;font-weight:800;color:var(--gold);}
+.scl-cup .nm{font-stretch:108%;font-weight:900;font-size:clamp(.9rem,9cqi,1.35rem);line-height:1.12;text-transform:uppercase;text-wrap:balance;margin-top:4px;}
+.scl-cup .s{font-size:.74rem;color:var(--tinta-2);}
+.scl-cup .vac{opacity:.3;filter:grayscale(1);}
+@media (max-width:760px){.scl-br{grid-template-columns:1fr;gap:20px;}.scl-col::after{display:none;}.scl-logo{width:64px;height:64px;}}
 @media (max-width:400px){
 .mh-c:not(.temp):not(:last-child){padding-left:5px;padding-right:3px;}
 .mh-c:nth-child(2),.mh-c:nth-child(5){padding-left:0;}

@@ -1,0 +1,16 @@
+{
+  "hist_copa_co": {
+    "descripcion": "Copa Colombia, 22 títulos (1950-51 a 2025). Incluye las ediciones anteriores a 2008 (1951, 1953, 1981 y 1989), que la Dimayor pone en duda; la de 1963 (Millonarios) no se cuenta y la de 1956-57 se abandonó. Fuente: Wikipedia; verificar contra la Dimayor. 'La Equidad' no juega hoy en las ligas simuladas.",
+    "titulos": {
+      "Atlético Nacional": 8,
+      "Independiente Medellín": 3,
+      "Millonarios": 3,
+      "Independiente Santa Fe": 2,
+      "Junior": 2,
+      "Deportivo Cali": 1,
+      "Boca Juniors de Cali": 1,
+      "Deportes Tolima": 1,
+      "La Equidad": 1
+    }
+  }
+}

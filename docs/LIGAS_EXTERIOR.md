@@ -1,6 +1,6 @@
 # Ligas de otros países
 
-Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil** y **Chile**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
+Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil**, **Chile** y **Colombia**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
 
 ## Plan (cómo está pensado)
 
@@ -129,6 +129,52 @@ Primera B de Chile (`clave` `cl2`) los 16 de su temporada 2026 y la Segunda Divi
 * Se guarda en el `.afa` (subió `VERSION_ESTADO` a 27: las partidas guardadas con la versión anterior ya no se cargan).
 * Al sumar la Segunda División Profesional `VERSION_ESTADO` subió a 29 (nueva liga en el estado): las partidas guardadas con la versión anterior ya no se cargan.
 
+
+## Supercopa de Chile (`SupercopaChile` en `copas/registro.py`, `ui/ui_supercopa_cl.py`)
+
+Final Four a partido único y en cancha neutral, con penales directos (formato estrenado en 2026): el 1° y el 2° de la Liga de Primera y el campeón y el
+subcampeón de la Copa Chile. Semifinales: 1° de la liga contra el subcampeón de la copa y 2° de la liga contra el campeón de la copa; después, la final.
+Si un club clasifica por dos vías, su lugar lo toma el que sigue en la tabla de la liga (y no esté ya clasificado). Como las otras supercopas del simulador,
+se juega una semana después de que terminan la liga y la copa y cierra la temporada actual (en la realidad abre la siguiente). Las semifinales se juegan en un
+día y la final cuatro días después. Palmarés: `hist_supercopa_cl` en `palmares_cl.json` (14 ediciones, 2013-2026; verificar contra la ANFP). Logo: clave
+`"Supercopa de Chile"` en `logos.json` (opcional). No hay Copa de la Liga (torneo nuevo de 2026) ni cupos por la Supercopa.
+
+## Colombia: Liga BetPlay y Torneo BetPlay (`datos/json/liga_colombia.json`)
+
+Dos ligas con el motor `todos_contra_todos` (sólo datos, sin código nuevo). La **Liga BetPlay** (clave `co`) tiene los 20 clubes de 2026 y el
+**Torneo BetPlay** (clave `co2`, segunda división) los 16 de su temporada 2026. Los 20 de Primera ya estaban en `clubes_int.json` y se movieron
+al archivo del país con su media y su escudo; los de la Torneo BetPlay tienen medias orientativas (49 a 57) y no tienen escudo (se dibujan las iniciales).
+
+* **Liga BetPlay**: doble rueda, 38 fechas, sábados desde el 24/1. Campeón: el primero de la tabla. Bajan los 2 últimos y suben los 2 primeros del Torneo.
+  Columna del Historial: `"Colombia · D1"`.
+* **Torneo BetPlay**: doble rueda, 30 fechas, viernes desde el 23/1. No baja nadie (la tercera no se simula). Columna del Historial: `"Colombia · D2"`.
+* **Copas CONMEBOL**: sale de la tabla, como en Chile: Libertadores 2 a grupos y 2 a la Fase 2; Sudamericana 4 (`CUPOS_*` de `copas/conmebol.py`).
+* Simplificaciones: el formato real son dos torneos por año (Apertura y Finalización, cada uno con todos contra todos, cuartos, semifinales y final), con dos
+  campeones por temporada; los cupos internacionales salen de la tabla acumulada (reclasificación) y el descenso del promedio de tres temporadas. Acá es una
+  sola tabla a doble rueda, con un campeón por año y descenso por tabla. En la Torneo BetPlay el real también son dos torneos con cuadrangulares y suben 2.
+  Un club figura como "Independiente Yumbo" (el ex Atlético Huila) según la fuente de marzo de 2026; una nota de octubre lo llama "Independiente Valle del Cauca".
+* No hay Superliga. La Copa Colombia (Copa BetPlay) está más abajo.
+* `VERSION_ESTADO` subió a 31 (nuevas ligas en el estado; después subió a 32 con la Copa Colombia): las partidas guardadas con la versión anterior ya no se cargan.
+
+## Copa Chile (`copas/chile.py`, `ui/ui_copa_chile.py`, `datos/json/copa_chile.json`)
+
+Copa nacional de Chile (`clave` `copa_cl`), 32 clubes: los 16 de la Liga de Primera y los 16 de la Primera B (la Segunda División Profesional
+queda afuera, como en 2026). Se sortea al armar la temporada, después de las dos ligas, y se juega los miércoles.
+
+* **Fase de grupos**: 8 grupos de 4 (dos de Primera y dos de B), Zona Norte (A a D) y Zona Sur (E a H). Los clubes se ordenan de norte a sur
+  con la lista de `copa_chile.json` (si un club nuevo no está, va al final): la mitad más norteña de cada división forma la Zona Norte y dentro
+  de cada zona se sortea quién va con quién. Pasan los 2 primeros.
+* **Octavos, cuartos y semifinales** a ida y vuelta (penales si el global empata); **final** única en cancha neutral. Octavos: 1° contra 2° de
+  otro grupo (A1-B2, C1-D2, E1-F2, G1-H2 y B1-A2, D1-C2, F1-E2, H1-G2); desde ahí el cuadro es fijo.
+* **Cupo**: el campeón tiene el Chile 4 (Libertadores · Fase 2) si juega en Primera; si ya clasificó por la liga, sigue la tabla
+  (`CUPOS_COPA["Chile"]` en `copas/conmebol.py`). La liga reparte entonces 2 a grupos, 1 a la Fase 2 y 4 a la Sudamericana.
+* Simplificaciones: en el grupo los dos de la B juegan entre sí a ida y vuelta (fechas 1 y 2, febrero) y cada uno de Primera juega a ida y
+  vuelta contra cada uno de la B (fechas 3 a 6, desde junio); los dos de Primera no se enfrentan (10 partidos por grupo). Es una lectura del
+  calendario publicado, no del reglamento. En el reglamento real el campeón juega un partido contra el 3° de la liga por ese cupo y, si
+  pierde, va a la Sudamericana; acá el cupo es directo. La Supercopa de Chile está más abajo.
+* Palmarés: `hist_copa_cl` en `palmares_cl.json` (opcional). Logo: clave `"Copa Chile"` en `logos.json` (opcional).
+* `VERSION_ESTADO` subió a 30 (nueva copa en el estado): las partidas guardadas con la versión anterior ya no se cargan.
+
 ## Qué falta (próximos pasos)
 
 * **Brasil** (`datos/json/liga_brasil.json`): Série A y Série B de 20 clubes, todos contra todos a doble rueda; bajan y suben 4 (la C y la D, más abajo). La A arranca el 31/1 y la B el 28/3 (semanal, sin copiar fechas reales). Los clubes de la B que no tenían datos (Ceará, Botafogo-SP, Vila Nova, etc.) van con medias orientativas y sin escudo. Sin Copa do Brasil ni estaduales.
@@ -205,3 +251,22 @@ Sudamericana (6° al 11°). Si el campeón o el subcampeón ya clasificaron por 
 
 Estado: `S["copa_br"]`; al cerrar escribe `S["ext_copa"]["Brasil"]` y `S["ext_copa_sub"]["Brasil"]`. `VERSION_ESTADO` subió a 28
 (las partidas guardadas anteriores no cargan).
+
+## Copa Colombia (`copas/colombia.py`, `ui/ui_copa_colombia.py`)
+
+Copa nacional de Colombia (`clave` `copa_co`, clase `CopaColombia` en `copas/registro.py`), 36 clubes: los 20 de la Liga BetPlay y los 16 del Torneo BetPlay.
+Formato 2026 de la Dimayor:
+
+* **Fase 1A (grupos)**: 20 clubes (12 de la Liga y 8 del Torneo), cuatro grupos de cinco (tres de la Liga y dos del Torneo), una sola rueda de cuatro
+  partidos por club (cinco fechas, cada uno descansa una). Pasan los 2 primeros de cada grupo.
+* **Fase 1B (series)**: los otros 16 (8 de la Liga y 8 del Torneo), ocho series a ida y vuelta de un club de la Liga contra uno del Torneo; el del Torneo es
+  local en la vuelta. Pasan 8.
+* **Octavos y cuartos**: partido único (cambio de la Dimayor de agosto de 2026). Si se enfrentan las dos divisiones es local el del Torneo; si no, el de mayor media.
+* **Semifinales y final**: ida y vuelta, sin alargue (penales si el global empata). Palmarés: `hist_copa_co` en `palmares_co.json`.
+* **Cupo internacional**: el campeón va a la Sudamericana (Fase 1) si juega en Primera; si ya clasificó por la liga, el cupo sigue por la tabla
+  (`COPA_A_SUD` en `copas/conmebol.py`).
+* Simplificaciones: no hay Apertura, así que a la fase 1B van los 8 clubes de cada división con mayor media (en la realidad, los que llegan a las fases
+  finales del Apertura). Grupos, series y octavos son al azar (el real arma los grupos por zonas); desde octavos el cuadro es fijo y el 1° y el 2° de un mismo
+  grupo quedan en mitades distintas. En semifinales y final de la misma división, el de mayor media cierra de local (el real usa la tabla del Apertura). Los días
+  son miércoles: grupos desde el 6/5, series el 22/7 y el 5/8, octavos el 2/9, cuartos el 14/10, semifinales el 11 y el 18/11 y final el 25/11 y el 2/12.
+* Palmarés cargado: 22 títulos (1951 a 2025), con las ediciones anteriores a 2008 que la Dimayor pone en duda; verificar contra la Dimayor.

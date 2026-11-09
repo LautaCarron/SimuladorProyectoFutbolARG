@@ -125,3 +125,6 @@ from ui.vista.vista_calendario import (
     _cal_res,
     calendario_mes_html,
 )
+from ui.vista.palmares import (
+    tabla_ranking_html,
+)

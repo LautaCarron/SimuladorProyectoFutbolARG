@@ -54,5 +54,54 @@
       "Everton CD": 1,
       "Universidad de Chile": 1
     }
+  },
+  "hist_copa_cl": {
+    "descripcion": "Copa Chile, 45 finales (1958-2025; la última, Huachipato 2025). Cargado de fuentes periodísticas (ESPN, 24horas, AlAireLibre, FutDados): verificar contra la ANFP. 'La Serena' es Deportes La Serena; 'Luis Cruz' (Maule, 1962) ya no existe como club.",
+    "titulos": {
+      "Colo Colo": 14,
+      "Universidad de Chile": 6,
+      "Universidad Católica": 4,
+      "Palestino": 3,
+      "Santiago Wanderers": 3,
+      "Deportes Iquique": 3,
+      "Unión Española": 2,
+      "Universidad de Concepción": 2,
+      "Cobreloa": 1,
+      "Everton CD": 1,
+      "Magallanes": 1,
+      "La Serena": 1,
+      "Huachipato": 1,
+      "Luis Cruz": 1,
+      "Cobresal": 1,
+      "Unión San Felipe": 1
+    }
+  },
+  "hist_supercopa_cl": {
+    "descripcion": "Supercopa de Chile, 14 ediciones (2013-2026; hasta 2025 campeón de la liga vs. campeón de la Copa Chile, en 2026 estrenó el Final Four). Cargado de fuentes periodísticas (Redgol, Alairelibre, 24horas, Futdados): verificar contra la ANFP.",
+    "titulos": {
+      "Colo Colo": 4,
+      "Universidad Católica": 4,
+      "Universidad de Chile": 2,
+      "Unión Española": 1,
+      "O'Higgins": 1,
+      "Magallanes": 1,
+      "Coquimbo Unido": 1
+    }
+  },
+  "hist_ext_cl3": {
+    "descripcion": "Segunda División Profesional de Chile, tercera categoría (2012-2025). Fuente: Wikipedia; verificar contra la ANFP. 2012, 2013 y 2013-14 cuentan como tres títulos de Iberia; 'Recoleta' es Deportes Recoleta.",
+    "titulos": {
+      "Iberia": 3,
+      "Deportes Puerto Montt": 2,
+      "San Marcos de Arica": 2,
+      "Deportes Melipilla": 1,
+      "Deportes Santa Cruz": 1,
+      "Barnechea": 1,
+      "Deportes Limache": 1,
+      "Recoleta": 1,
+      "Deportes Valdivia": 1,
+      "Deportes Vallenar": 1,
+      "Fernández Vial": 1
+    }
   }
 }

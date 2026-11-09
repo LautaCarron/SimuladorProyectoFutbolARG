@@ -61,8 +61,13 @@ CUPOS_LIB_FASE1 = {"Brasil": 0, "Colombia": 0, "Paraguay": 1, "Perú": 1, "Chile
                    "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # los 6 de la Fase 1
 # Cupos de la Libertadores que da la copa del país (están dentro de los de arriba; la liga pone el resto): el campeón va a
 # los grupos y el subcampeón a la Fase 2 (Copa do Brasil). Si ya clasificaron por la liga, el cupo sigue por la tabla.
-CUPOS_COPA = {"Brasil": {"grupos": 1, "previa": 1}}
-NOTA_COPA = {"Brasil": "Además, la Copa do Brasil da dos cupos a la Libertadores: el campeón (fase de grupos) y el "
+CUPOS_COPA = {"Brasil": {"grupos": 1, "previa": 1}, "Chile": {"previa": 1, "previa_campeon": True}}
+COPA_A_SUD = {"Colombia"}                       # países cuya copa da un cupo a la Sudamericana (dentro de los CUPOS_SUD)
+NOTA_COPA = {"Chile": "Además, el campeón de la Copa Chile tiene el Chile 4 (Libertadores · Fase 2), siempre que juegue en Primera. "
+                      "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
+             "Colombia": "Además, el campeón de la Copa Colombia clasifica a la Sudamericana (Fase 1), siempre que juegue en Primera. "
+                         "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
+             "Brasil": "Además, la Copa do Brasil da dos cupos a la Libertadores: el campeón (fase de grupos) y el "
                        "subcampeón (Fase 2). Si ya clasificaron por la liga, el cupo pasa al que sigue en esta tabla."}
 
 
@@ -227,7 +232,12 @@ def nuevas_internacionales(S, rng):
     lib_p = list(arg_p)
     ext_p = _ajustar_cupos(CUPOS_LIB_PREVIA, 13 - len(lib_p))
     for pais in PAISES:
-        primero = S.get("ext_copa_sub", {}).get(pais) if CUPOS_COPA.get(pais, {}).get("previa") else None
+        cc = CUPOS_COPA.get(pais, {})
+        primero = None
+        if cc.get("previa"):                           # Brasil: el subcampeón de la copa; Chile: el campeón (si juega en Primera)
+            primero = S.get("ext_copa" if cc.get("previa_campeon") else "ext_copa_sub", {}).get(pais)
+            if cc.get("previa_campeon") and primero not in S.get("ext_clubes", {}).get(pais, []):
+                primero = None
         for n in _sortear_pais(rng, S, pais, ext_p[pais], ya, primero=primero):
             lib_p.append((n, f"{pais} · Fase 2"))
             ya.add(n)
@@ -246,7 +256,12 @@ def nuevas_internacionales(S, rng):
     for pais in PAISES:
         if pais == "Brasil":
             continue
-        for n in _sortear_pais(rng, S, pais, CUPOS_SUD[pais], ya):
+        primero = None                                 # el campeón de la copa del país (Copa Colombia), si juega en Primera
+        if pais in COPA_A_SUD:
+            primero = S.get("ext_copa", {}).get(pais)
+            if primero not in S.get("ext_clubes", {}).get(pais, []):
+                primero = None
+        for n in _sortear_pais(rng, S, pais, CUPOS_SUD[pais], ya, primero=primero):
             sud_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)
 
