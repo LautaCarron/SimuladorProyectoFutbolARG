@@ -25,7 +25,7 @@ from copas.conmebol import CUPOS_LIB_GRUPOS, MEDIA_EXT, cupos_liga
 from datos import ligas_ext
 from ligas.exterior import comp_de, formato_de, jugar_ronda, mover_clubes, mover_clubes_en_lugar, tabla
 from motor.fechas import desde as _desde, dia_liga, total_liga
-from motor.nucleo import LOCALIA, jugar_ko, nuevo_partido, tanda_penales
+from motor.nucleo import LOCALIA, jugar, jugar_ko, nuevo_partido, tanda_penales
 from copas.regionales import (campeones as campeones_regionales, cruces_ronda as cruces_regionales,
                               regionales_vacios, rotulo_ronda as rotulo_regionales, simular_ronda_regionales,
                               sortear_regionales)
@@ -1064,11 +1064,111 @@ class SupercopaUruguaya(Competencia):
         return S[self.clave]["campeon"]
 
 
+class SupercopaColombia(Competencia):
+    """Supercopa de Colombia (Superliga BetPlay): serie a ida y vuelta entre el campeón de la Liga BetPlay y el campeón de la Copa
+    Colombia (si es el mismo club, el rival es el subcampeón de la liga). La ida es en la cancha del rival y la vuelta en la del campeón
+    de la liga; si el global empata, penales en la vuelta. Se juega después de que terminan la liga y la copa (la ida a la semana, la
+    vuelta a las dos) y cierra la temporada actual, como las otras supercopas del simulador. No da cupos internacionales."""
+    nombre = "Supercopa de Colombia"
+    clave = "supercopa_co"
+    col_historial = "Supercopa de Colombia"
+    hist = "hist_supercopa_co"
+    crea_estado = True
+    LIGA = "ext_co"                                    # clave de S de la Liga BetPlay
+    COPA = copa_co.CLAVE                               # clave de S de la Copa Colombia
+
+    def nueva(self, S, rng):
+        return {"fecha": 0, "a": None, "b": None, "campeon": None, "log": []}
+
+    def estado(self, S):
+        return S.setdefault(self.clave, self.nueva(S, None))        # las partidas guardadas antes de la Supercopa no la traen
+
+    def rivales(self, S):
+        """(campeón de la liga, rival) o None si todavía no se definen la liga y la copa. El rival es el campeón de la Copa Colombia
+        o, si es el mismo club, el subcampeón de la liga."""
+        L, C = S.get(self.LIGA), S.get(self.COPA)
+        if not L or not C or not C.get("sorteada") or L.get("campeon") is None or C.get("campeon") is None:
+            return None
+        return L["campeon"], (L.get("subcampeon") if C["campeon"] == L["campeon"] else C["campeon"])
+
+    def rival_es_copero(self, S):
+        """True si el rival es el campeón de la Copa Colombia (False: el subcampeón de la liga, por doblete)."""
+        riv = self.rivales(S)
+        return bool(riv) and riv[1] == (S.get(self.COPA) or {}).get("campeon")
+
+    def activa(self, S):
+        return bool(S.get(self.LIGA)) and bool(S.get(self.COPA))
+
+    def total(self, S):
+        return 2
+
+    def hechas(self, S):
+        return self.estado(S)["fecha"]
+
+    def pendiente(self, S):
+        riv = self.rivales(S)
+        E = self.estado(S)
+        return E["fecha"] + 1 if E["fecha"] < 2 and riv and riv[1] else None
+
+    def terminada(self, S):
+        return self.estado(S)["fecha"] >= 2 or not self.activa(S)
+
+    def jugar(self, S, P, rng):
+        riv = self.rivales(S)
+        E = self.estado(S)
+        if E["fecha"] >= 2 or not riv or not riv[1]:
+            return
+        r = {**dict(zip(S[self.LIGA]["nombres"], S[self.LIGA]["r"])), **dict(zip(S[self.COPA]["nombres"], S[self.COPA]["r"]))}
+        a, b = riv                                                    # a = campeón de la liga (local en la vuelta)
+        if E["fecha"] == 0:
+            local, visita = b, a
+        else:
+            local, visita = a, b
+        gl, gv = jugar(rng, np.array([r[local]]), np.array([r[visita]]), P["sorpresa"])
+        gl, gv = int(gl[0]), int(gv[0])
+        if E["fecha"] == 0:
+            E.update(a=a, b=b)
+            E["log"].append(nuevo_partido(self.nombre, 1, "Final · ida", "Final", local, visita, gl, gv))
+        else:
+            ida = E["log"][0]
+            ga = (ida["gv"] if ida["visita"] == a else ida["gl"]) + (gl if local == a else gv)
+            gb = (ida["gl"] if ida["visita"] == a else ida["gv"]) + (gv if local == a else gl)
+            tanda = None
+            if ga != gb:
+                gana = a if ga > gb else b
+            else:                                                          # global empatado: penales
+                p_a = float(np.clip(0.5 + (r[a] - r[b]) / 400, 0.35, 0.65))
+                gana = a if rng.random() < p_a else b
+                tanda = tanda_penales(rng, gana == local)
+            E["log"].append(nuevo_partido(self.nombre, 2, "Final · vuelta", "Final", local, visita, gl, gv,
+                                          tanda=tanda, gana=gana))
+            E["campeon"], E["global"] = gana, (ga, gb)
+        E["fecha"] += 1
+
+    def cruces(self, S, n):
+        riv = self.rivales(S)
+        E = self.estado(S)
+        if not riv or not riv[1] or n <= E["fecha"] or n > 2:
+            return []
+        return [((riv[1], riv[0]) if n == 1 else (riv[0], riv[1])) + (f"Final · {'ida' if n == 1 else 'vuelta'}", "Final")]
+
+    def rotulo(self, S, n):
+        return "Final · ida" if n == 1 else "Final · vuelta"
+
+    def dia(self, S, n):
+        """Una semana (la ida) y dos (la vuelta) después de lo último que termina: la liga o la final de la Copa Colombia."""
+        fin = max(S[self.LIGA]["rondas"][-1]["dia"], S[self.COPA]["rondas"][-1]["dia"])
+        return fin + dt.timedelta(days=7 * n)
+
+    def campeon(self, S):
+        return self.estado(S)["campeon"]
+
+
 # El orden importa: es el orden en que "Simular todo" las juega y en que el calendario las lista.
 # La Copa do Brasil (y su Supercopa) y la Copa AUF Uruguay van después de las ligas del exterior: la primera se sortea con los clubes de las
 # cuatro divisiones de Brasil y la segunda necesita la Segunda ya jugada.
 REGISTRO = [CopaArgentina(), SupercopaArgentina(), Regionales(), MundialDeClubes(),
-            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], Estaduales(), CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaColombia(),
+            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], Estaduales(), CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaColombia(), SupercopaColombia(),
             CopaUruguay(), SupercopaUruguaya()]
 LIGAS_EXTERIOR = [c for c in REGISTRO if isinstance(c, LigaExterior)]
 _POR_NOMBRE = {c.nombre: c for c in REGISTRO}
