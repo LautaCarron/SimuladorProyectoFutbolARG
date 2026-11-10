@@ -28,7 +28,6 @@
       "Sol de América": 4,
       "Nacional (Asunción)": 3,
       "24 de Setiembre": 3,
-      "3 de Febrero": 3,
       "Atlántida": 2,
       "Cerro Corá": 2,
       "Deportivo Recoleta": 2,
@@ -59,7 +58,8 @@
       "10 de Agosto": 1,
       "Nacional B": 1,
       "Guaireña": 1,
-      "Caballero": 1
+      "Caballero": 1,
+      "3 de Febrero FBC": 3
     }
   },
   "hist_ext_py3": {
@@ -121,6 +121,25 @@
       "12 de Junio": 1,
       "Guaraní (Fram)": 1,
       "15 de Mayo (Itapé)": 1
+    }
+  },
+  "hist_copa_py": {
+    "descripcion": "Copa Paraguay (desde 2018; no se jugó en 2020). Fuente: Wikipedia; verificar contra la APF. 'Caballero' es General Caballero (JLM).",
+    "titulos": {
+      "Libertad": 3,
+      "Guaraní": 1,
+      "Olimpia": 1,
+      "Sportivo Ameliano": 1,
+      "Caballero": 1
+    }
+  },
+  "hist_supercopa_py": {
+    "descripcion": "Supercopa Paraguay, 5 ediciones (2021-2025: campeón de la Primera con mejor tabla acumulada vs. campeón de la Copa Paraguay): Olimpia 2021, Sportivo Ameliano 2022, Libertad 2023 (sin partido: ganó Apertura, Clausura y Copa) y 2024, Cerro Porteño 2025. Fuente: Wikipedia, ABC Color y ESPN; verificar contra la APF.",
+    "titulos": {
+      "Libertad": 2,
+      "Olimpia": 1,
+      "Sportivo Ameliano": 1,
+      "Cerro Porteño": 1
     }
   }
 }

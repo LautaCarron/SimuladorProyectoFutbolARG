@@ -225,11 +225,28 @@ def _campeones(ctx, comp, L):
 
 
 def _campeones_torneos(S, comp, reg, abierto, en_curso):
-    """Una temporada de una liga con torneos independientes (Paraguay): el campeón y el subcampeón de cada uno."""
+    """Una temporada de una liga con torneos independientes y final (Paraguay): el campeón del año con el partido de la final
+    y, debajo, el campeón y el subcampeón de cada torneo (Apertura y Clausura)."""
     gan, subs = reg.get("ganadores", {}), reg.get("subcampeones", {})
-    etiqueta = (f"Temporada {reg['temp']} · " + (f"Campeón {reg['campeon']} · " if reg.get("campeon") else "")
-                + " · ".join(f"{t}: {n}" for t, n in gan.items()) + (" · en curso" if en_curso else ""))
+    camp = reg.get("campeon")
+    final = next((p for p in reg.get("partidos", []) if p["comp"] == "Final"), None)
+    etiqueta = (f"Temporada {reg['temp']} · " + (f"Campeón {camp}" if camp else "Final por jugar")
+                + (" · en curso" if en_curso else ""))
     with st.expander(f":material/emoji_events: {etiqueta}", expanded=abierto):
+        if camp and final:                           # los campeones de los dos torneos se enfrentaron: se ve el partido
+            st.markdown(cuadro_llaves_html([("Final · campeón del Apertura vs campeón del Clausura", [final])], camp,
+                                           "Campeón de la temporada", f"Subcampeón: {reg['subcampeon']}",
+                                           alto_por_cruce=96), unsafe_allow_html=True)
+        elif camp:                                   # un mismo club ganó los dos torneos: campeón directo
+            sub = f"Subcampeón: {esc(reg['subcampeon'])}" if reg.get("subcampeon") else ""
+            st.markdown(f'<div class="champ"><div class="t">Campeón de la temporada</div><div style="margin-top:10px">'
+                        f'{crest(camp, 64)}</div><div class="nm">{esc(camp)}</div></div>'
+                        f'<div style="opacity:.75;text-align:center;margin-top:4px">{sub}</div>', unsafe_allow_html=True)
+        else:
+            st.caption("La final entre los campeones se juega cuando terminan el Apertura y el Clausura.")
+        if reg.get("via"):
+            st.caption(reg["via"])
+        st.markdown("**Campeones de cada torneo**")
         for col, t in zip(st.columns(len(comp.torneos)), comp.torneos):
             with col:
                 club = gan.get(t)
@@ -239,13 +256,9 @@ def _campeones_torneos(S, comp, reg, abierto, en_curso):
                     continue
                 sub = f'<div style="opacity:.75;text-align:center;margin-top:4px">Subcampeón: {esc(subs[t])}</div>' if subs.get(t) else ""
                 st.markdown(f'<div class="champ"><div class="t">Campeón del {esc(t)}</div><div style="margin-top:10px">'
-                            f'{crest(club, 64)}</div><div class="nm">{esc(club)}</div></div>{sub}', unsafe_allow_html=True)
-        if reg.get("via"):
-            st.caption(reg["via"])
+                            f'{crest(club, 48)}</div><div class="nm">{esc(club)}</div></div>{sub}', unsafe_allow_html=True)
         titulos = S.get(comp.hist, {})
-        camp = reg.get("campeon")
-        st.caption(("El campeón del año (el de la final, o el que ganó los dos torneos) suma un título al palmarés cuando termina la temporada. "
-                    if en_curso else "")
+        st.caption(("El campeón de la final suma un título al palmarés cuando termina la temporada. " if en_curso else "")
                    + (f"Títulos de {camp} en {comp.nombre} (temporadas simuladas): {titulos.get(camp, 0)}" if camp else ""))
 
 

@@ -19,6 +19,7 @@ from copas.argentina import (COPA_RONDAS, nueva_supercopa, rivales_supercopa, si
 from copas import brasil as copa_br
 from copas import estaduales as est_br
 from copas import chile as copa_cl
+from copas import paraguay as copa_py
 from copas import colombia as copa_co
 from copas import uruguay as copa_uy
 from copas.conmebol import CUPOS_LIB_GRUPOS, MEDIA_EXT, cupos_liga
@@ -784,6 +785,87 @@ class CopaChile(Competencia):
         S.setdefault("ext_def", {}).setdefault(self.clave, []).append(copa_cl.definicion(L, S["temp"]))
 
 
+class CopaParaguay(Competencia):
+    """Copa Paraguay (ver copas/paraguay.py): 58 clubes (los 12 de la Primera, los 16 de la Intermedia y los de las dos Primera B),
+    eliminación directa a partido único con entrada por etapas. Se sortea al armar la temporada, después de las ligas (por eso va
+    después de ellas en REGISTRO). El estado de S["copa_py"] tiene la forma del de una liga del exterior y se juega con
+    `jugar_ronda`. Al cerrar la temporada anota el campeón en S["ext_copa"]["Paraguay"]: copas/conmebol.py le da la Fase 1 de
+    la Libertadores si juega en Primera; si ya clasificó por la tabla, el cupo sigue por ella."""
+    nombre = copa_py.NOMBRE
+    clave = copa_py.CLAVE
+    col_historial = copa_py.NOMBRE
+    hist = "hist_copa_py"
+    crea_estado = True
+    LIGAS = {"Primera": "ext_py", "Intermedia": "ext_py2", "B Metropolitana": "ext_py3", "B Nacional": "ext_py3b"}   # claves de S
+
+    def nueva(self, S, rng):
+        L = copa_py.nueva_copa(_anio(S))
+        if all(S.get(k) is not None for k in self.LIGAS.values()):
+            ri = S.setdefault("rating_int", dict(MEDIA_EXT))
+            try:
+                copa_py.sortear(L, rng, {o: list(S[k]["nombres"]) for o, k in self.LIGAS.items()},
+                                lambda n: ri.get(n, MEDIA_EXT[n]))
+            except ValueError:                                            # sin los clubes de cada categoría no hay copa
+                pass
+        return L
+
+    def _asegurar(self, S):
+        return S[self.clave]
+
+    def activa(self, S):
+        return S[self.clave]["sorteada"]
+
+    def total(self, S):
+        return len(S[self.clave]["rondas"])
+
+    def hechas(self, S):
+        return S[self.clave]["fecha"]
+
+    def pendiente(self, S):
+        L = self._asegurar(S)
+        if L["sorteada"] and L["fecha"] < len(L["rondas"]) and L["rondas"][L["fecha"]]["pares"]:
+            return L["fecha"] + 1
+        return None
+
+    def terminada(self, S):
+        L = self._asegurar(S)
+        return (not L["sorteada"]) or L["campeon"] is not None
+
+    def jugar(self, S, P, rng):
+        L = self._asegurar(S)
+        if self.pendiente(S) is None:
+            return
+        jugar_ronda(L, P, rng)
+        copa_py.avanzar(L, rng)
+
+    def cruces(self, S, n):
+        L = S[self.clave]
+        if not L["sorteada"] or n <= L["fecha"] or n > len(L["rondas"]) or not L["rondas"][n - 1]["pares"]:
+            return []
+        R, nom = L["rondas"][n - 1], L["nombres"]
+        return [(nom[a], nom[b], R["rotulo"], comp_de(R, a)) for a, b in R["pares"]]
+
+    def rotulo(self, S, n):
+        return S[self.clave]["rondas"][min(n, self.total(S)) - 1]["rotulo"]
+
+    def dia(self, S, n):
+        return S[self.clave]["rondas"][min(n, self.total(S)) - 1]["dia"]
+
+    def campeon(self, S):
+        return S[self.clave]["campeon"]
+
+    def cerrar(self, S, rng):
+        """Anota el campeón (Fase 1 de la Libertadores) y cómo se definió la copa (sección Campeones)."""
+        L = S[self.clave]
+        if not (L["sorteada"] and L["campeon"]):
+            S.setdefault("ext_copa", {})[copa_py.PAIS] = None
+            S.setdefault("ext_copa_sub", {})[copa_py.PAIS] = None
+            return
+        S.setdefault("ext_copa", {})[copa_py.PAIS] = L["campeon"]
+        S.setdefault("ext_copa_sub", {})[copa_py.PAIS] = L["subcampeon"]
+        S.setdefault("ext_def", {}).setdefault(self.clave, []).append(copa_py.definicion(L, S["temp"]))
+
+
 class CopaColombia(Competencia):
     """Copa Colombia (ver copas/colombia.py): 36 clubes (los 20 de la Liga BetPlay y los 16 del Torneo BetPlay), cuatro grupos de cinco,
     series a ida y vuelta, octavos y cuartos a partido único, y semifinales y final a ida y vuelta. Se sortea al armar la temporada,
@@ -1059,6 +1141,16 @@ class SupercopaBrasil(Competencia):
         return self.estado(S)["campeon"]
 
 
+class SupercopaParaguay(SupercopaBrasil):
+    """Supercopa Paraguay: partido único en cancha neutral entre el campeón de la Primera (el título anual: final Apertura vs.\n    Clausura) y el campeón de la Copa Paraguay (si es el mismo club, el rival es el subcampeón de la liga). Se juega una semana\n    después de que terminan las dos y cierra la temporada actual, como las otras supercopas del simulador. No da cupos."""
+    nombre = "Supercopa Paraguay"
+    clave = "supercopa_py"
+    col_historial = "Supercopa Paraguay"
+    hist = "hist_supercopa_py"
+    LIGA = "ext_py"                                    # clave de S de la Primera
+    COPA = copa_py.CLAVE                               # clave de S de la Copa Paraguay
+
+
 class SupercopaUruguaya(Competencia):
     """Supercopa Uruguaya: partido único en cancha neutral entre el campeón de la Liga AUF y el ganador del Intermedio
     (si es el mismo club, el rival es el subcampeón de la liga). Se juega el sábado siguiente al final de la liga."""
@@ -1224,7 +1316,7 @@ class SupercopaColombia(Competencia):
 # La Copa do Brasil (y su Supercopa) y la Copa AUF Uruguay van después de las ligas del exterior: la primera se sortea con los clubes de las
 # cuatro divisiones de Brasil y la segunda necesita la Segunda ya jugada.
 REGISTRO = [CopaArgentina(), SupercopaArgentina(), Regionales(), MundialDeClubes(),
-            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], Estaduales(), CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaColombia(), SupercopaColombia(),
+            *[LigaExterior(cfg) for cfg in ligas_ext.LIGAS_EXT], Estaduales(), CopaBrasil(), SupercopaBrasil(), CopaChile(), SupercopaChile(), CopaParaguay(), SupercopaParaguay(), CopaColombia(), SupercopaColombia(),
             CopaUruguay(), SupercopaUruguaya()]
 LIGAS_EXTERIOR = [c for c in REGISTRO if isinstance(c, LigaExterior)]
 _POR_NOMBRE = {c.nombre: c for c in REGISTRO}
