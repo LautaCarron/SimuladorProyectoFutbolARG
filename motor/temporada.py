@@ -35,7 +35,7 @@ from motor.tamanos import ajustar as ajustar_tamanos, plan_equilibrado
 
 
 REVERSION_EXT = 0.15      # clubes del exterior (Uruguay...): cuánto vuelve cada año su media hacia la inicial
-VERSION_ESTADO = 35       # cambia si se modifica la estructura del estado guardado
+VERSION_ESTADO = 38       # cambia si se modifica la estructura del estado guardado
 
 
 def crear_estado(club_propio=None):
@@ -210,6 +210,8 @@ def _registrar_historial(S, cierre):
         **{comp.col_historial: comp.campeon(S) or "" for comp in REGISTRO if comp.col_historial},
         "Regional": {reg: S["reg"]["nombres"][c] for reg, c in S["reg"]["campeones"].items() if c is not None},
     })
+    for comp in REGISTRO:               # columnas extra del Historial (Paraguay: el campeón del Apertura y el del Clausura)
+        S["campeones"][-1].update(comp.columnas_historial(S))
 
     # Sumar +1 al palmarés histórico de cada liga (campeón de la temporada que termina)
     ultimo = S["campeones"][-1]
@@ -235,10 +237,10 @@ def _registrar_historial(S, cierre):
     if camp_rec: S.setdefault("hist_rec", {})[camp_rec] = S["hist_rec"].get(camp_rec, 0) + 1
 
     for comp in REGISTRO:               # palmarés de cada competencia del registro y su cierre de temporada
-        camp = comp.campeon(S)
-        if comp.hist and camp:
-            S.setdefault(comp.hist, {})
-            S[comp.hist][camp] = S[comp.hist].get(camp, 0) + 1
+        if comp.hist:                   # un título por campeón (Paraguay suma dos por año: Apertura y Clausura)
+            for camp in comp.titulos(S):
+                S.setdefault(comp.hist, {})
+                S[comp.hist][camp] = S[comp.hist].get(camp, 0) + 1
         comp.cerrar(S, rng)
 
 

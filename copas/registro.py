@@ -48,6 +48,17 @@ class Competencia:
     def estado(self, S):
         return S[self.clave]
 
+    def titulos(self, S):
+        """Clubes que suman un título al palmarés al cerrar la temporada (uno solo, el campeón; Paraguay suma dos: el
+        del Apertura y el del Clausura)."""
+        c = self.campeon(S)
+        return [c] if c else []
+
+    def columnas_historial(self, S):
+        """Columnas extra del Historial de la temporada: {título de la columna: club}. Vacío salvo ligas con torneos
+        independientes (Paraguay: una columna por Apertura y Clausura)."""
+        return {}
+
     def nueva(self, S, rng):
         """Estado de la temporada nueva (se asigna a S[clave])."""
         raise NotImplementedError
@@ -315,17 +326,26 @@ class LigaExterior(Competencia):
         self.divisional = int(cfg.get("divisional", 1))
         self.clubes_key = ligas_ext.clave_clubes(cfg)
         # la columna del Historial: la primera usa el nombre del país; las de abajo suman su divisional
-        self.col_historial = cfg["pais"] if self.divisional == 1 else f"{cfg['pais']} · D{self.divisional}"
+        self.col_historial = (cfg["pais"] if self.divisional == 1 else
+                              f"{cfg['pais']} · D{self.divisional}" + ("b" if cfg.get("paralela") else ""))
         self.hist = "hist_" + self.clave
         self.formato = formato_de(cfg)
+        self.torneos = list(cfg.get("torneos") or [])       # torneos independientes del año (Paraguay: Apertura y Clausura)
+        # cuántas temporadas cuenta el promedio de descenso (0: la liga no usa promedio). Colombia siempre usó 3.
+        self.anios_promedio = int(cfg.get("promedio_temporadas") or (3 if cfg["pais"] == "Colombia" and self.divisional == 1 else 0))
 
     def nueva(self, S, rng):
         pais = self.cfg["pais"]
         nombres = list(S.setdefault("ext_clubes", {}).get(self.clubes_key) or self.cfg["clubes"])
         ri = S.setdefault("rating_int", dict(MEDIA_EXT))
         r = [ri.get(n, MEDIA_EXT[n]) for n in nombres]
-        previo = (S.setdefault("ext_prom_hist", {}).get(pais, {}) if pais == "Colombia" else
-                  S.setdefault("ext_prev", {}).get(pais, {})) if self.divisional == 1 else {}
+        if self.anios_promedio:          # historial de puntos para el promedio (Colombia, Paraguay): se siembra con lo real
+            hist = S.setdefault("ext_prom_hist", {})
+            if self.clubes_key not in hist:
+                hist[self.clubes_key] = {n: [list(x) for x in v] for n, v in (self.cfg.get("puntos_previos") or {}).items()}
+            previo = hist[self.clubes_key]
+        else:
+            previo = S.setdefault("ext_prev", {}).get(pais, {}) if self.divisional == 1 else {}
         L = self.formato.nueva(self.cfg, nombres, r, previo, _anio(S), rng)
         S["ext_clubes"][self.clubes_key] = nombres
         if self.divisional == 1 and self.cfg.get("tercera"):      # tercera división falsa: sólo es una lista de clubes
@@ -382,7 +402,17 @@ class LigaExterior(Competencia):
         return {"temp": S["temp"], "campeon": L["campeon"], "subcampeon": L.get("subcampeon"), "via": L.get("via", ""),
                 "suben": list(L.get("suben", [])),
                 "ganadores": {t: nom[i] for t, i in L.get("ganadores", {}).items() if i is not None},
+                "subcampeones": {t: nom[i] for t, i in L.get("subs", {}).items() if i is not None},
                 "partidos": partidos}
+
+    def titulos(self, S):
+        L = S[self.clave]
+        return list(L.get("titulos") or ([L["campeon"]] if L.get("campeon") else []))
+
+    def columnas_historial(self, S):
+        L = S[self.clave]
+        return {f"{self.col_historial} · {t}": L["nombres"][L["ganadores"][t]]
+                for t in self.torneos if L.get("ganadores", {}).get(t) is not None}
 
     @staticmethod
     def _sortear_tercera(S, rng, tercera, k):
@@ -398,18 +428,25 @@ class LigaExterior(Competencia):
         clave = self.cfg.get("inferior")
         return next((c for c in LIGAS_EXTERIOR if c.cfg["clave"] == clave), None) if clave else None
 
+    def _inferior_b(self):
+        """La tercera división "hermana" simulada (Paraguay: la B Nacional, en paralelo a la B Metropolitana), si la hay."""
+        clave = self.cfg.get("inferior_b")
+        return next((c for c in LIGAS_EXTERIOR if c.cfg["clave"] == clave), None) if clave else None
+
     def cerrar(self, S, rng):
         """Guarda las medias, los puntos del año y los movimientos. En una primera división: bajan los que dice el
         formato y suben los de la segunda (su tabla, si se simula; si no, al azar entre la reserva, los de mejor media
         más seguido). En una segunda simulada sólo guarda las medias y anota quién subió."""
         L, pais = S[self.clave], self.cfg["pais"]
         c = self.formato.cierre(L)
-        if pais == "Colombia" and self.divisional == 1:
-            historial = S.setdefault("ext_prom_hist", {}).setdefault(pais, {})
+        if self.anios_promedio:          # puntos del año al historial del promedio; los que cambian de categoría arrancan de cero
+            historial = S.setdefault("ext_prom_hist", {}).setdefault(self.clubes_key, {})
             for club, (pts, pj) in c.get("puntos", {}).items():
                 if pj:
-                    historial.setdefault(club, []).append((int(pts), int(pj)))
-                    historial[club] = historial[club][-3:]
+                    historial.setdefault(club, []).append([int(pts), int(pj), _anio(S)])
+                    historial[club] = historial[club][-self.anios_promedio:]
+            for club in list(c.get("descienden", [])) + list(c.get("suben", [])):
+                historial.pop(club, None)
         ri = S.setdefault("rating_int", dict(MEDIA_EXT))
         for n, x in zip(L["nombres"], L["r"]):
             ri[n] = float(x)
@@ -427,7 +464,26 @@ class LigaExterior(Competencia):
             suben += [n for n in c2["orden"] if n not in set(suben)][:max(len(bajan) - len(suben), 0)]
             bajan2, sube3 = list(c2.get("descienden", [])), []     # los últimos de la segunda bajan a la tercera
             tercera_liga = inferior._inferior()                    # Primera Amateur (simulada), si la hay
-            if bajan2 and tercera_liga is not None and S.get(tercera_liga.clave):
+            tercera_b = inferior._inferior_b()                     # tercera hermana (simulada), si la hay
+            if bajan2 and tercera_liga is not None and tercera_b is not None and S.get(tercera_liga.clave) and S.get(tercera_b.clave):
+                # dos terceras en paralelo (Paraguay): suben los mejores de cada una y los que bajan se reparten por zona
+                L3, Lb = S[tercera_liga.clave], S[tercera_b.clave]
+                c3, cb = tercera_liga.formato.cierre(L3), tercera_b.formato.cierre(Lb)
+                ka, kb = int(tercera_liga.cfg.get("ascensos", 0)), int(tercera_b.cfg.get("ascensos", 0))
+
+                def mejores(c, k):
+                    sube = list(c["suben"])[:k]
+                    return sube + [n for n in c["orden"] if n not in set(sube)][:max(k - len(sube), 0)]
+                sube_a, sube_b = mejores(c3, ka), mejores(cb, kb)
+                interior = set(self.cfg.get("interior", []))        # los del interior bajan a la B Nacional (hasta `kb`); el resto a la Metropolitana
+                a_b = [n for n in bajan2 if n in interior][:kb]
+                a_b += [n for n in bajan2 if n not in set(a_b)][:max(kb - len(a_b), 0)]
+                a_a = [n for n in bajan2 if n not in set(a_b)]
+                sube3 = sube_a + sube_b
+                S["ext_clubes"][tercera_liga.clubes_key] = mover_clubes(L3["nombres"], sube_a, a_a)
+                S["ext_clubes"][tercera_b.clubes_key] = mover_clubes(Lb["nombres"], sube_b, a_b)
+                S.setdefault("ext_mov3", {})[pais] = {"temp": S["temp"], "suben": list(sube3), "bajan": list(bajan2)}
+            elif bajan2 and tercera_liga is not None and S.get(tercera_liga.clave):
                 L3 = S[tercera_liga.clave]
                 c3 = tercera_liga.formato.cierre(L3)
                 sube3 = list(c3["suben"])[:len(bajan2)]

@@ -67,6 +67,8 @@ NOTA_COPA = {"Chile": "Además, el campeón de la Copa Chile tiene el Chile 4 (L
                       "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
              "Colombia": "Además, el campeón de la Copa Colombia clasifica a la Sudamericana (Fase 1), siempre que juegue en Primera. "
                          "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
+             "Paraguay": "Los campeones del Apertura y del Clausura van a los grupos de la Libertadores. No se simula la Copa Paraguay "
+                         "(en la realidad su campeón tiene el cupo de la Fase 1): ese cupo sigue por esta tabla.",
              "Brasil": "Además, la Copa do Brasil da dos cupos a la Libertadores: el campeón (fase de grupos) y el "
                        "subcampeón (Fase 2). Si ya clasificaron por la liga, el cupo pasa al que sigue en esta tabla."}
 

@@ -29,17 +29,19 @@ OSCUROS_LIGAS = []
 for _nombre in ARCHIVOS:
     _d = cargar(_nombre)
     _cfg = {k: v for k, v in _d.items() if k not in ("primera", "segunda", "tercera", "cuarta", "segunda_liga", "tercera_liga",
-                                                         "cuarta_liga", "oscuros")}
+                                                         "cuarta_liga", "tercera_b", "tercera_b_liga", "oscuros")}
     _cfg["clubes"] = [c["nombre"] for c in _d["primera"]]
     _cfg["reserva"] = [c["nombre"] for c in _d["segunda"]]
     _cfg["tercera"] = [c["nombre"] for c in _d.get("tercera", [])]      # tercera división: lista (se simula si hay tercera_liga)
     _cfg["cuarta"] = [c["nombre"] for c in _d.get("cuarta", [])]        # cuarta división: lista (se simula si hay cuarta_liga)
+    _cfg["tercera_b"] = [c["nombre"] for c in _d.get("tercera_b", [])]  # tercera "hermana" (Paraguay: B Nacional junto a la B Metropolitana)
     _cfg["divisional"] = 1
     LIGAS_EXT.append(_cfg)
     if _d.get("segunda_liga"):
         _seg = {"clave": _cfg["clave"] + "2", "pais": _d["pais"], "ascensos": int(_cfg.get("ascensos", 0)),
                 **_d["segunda_liga"], "clubes": list(_cfg["reserva"]), "reserva": [], "divisional": 2,
-                "superior": _cfg["clave"], "tercera": list(_cfg["tercera"]), "cuarta": list(_cfg["cuarta"])}
+                "superior": _cfg["clave"], "tercera": list(_cfg["tercera"]), "cuarta": list(_cfg["cuarta"]),
+                "tercera_b": list(_cfg["tercera_b"])}
         _cfg["inferior"] = _seg["clave"]
         LIGAS_EXT.append(_seg)
         if _d.get("tercera_liga") and _cfg["tercera"]:
@@ -52,8 +54,13 @@ for _nombre in ARCHIVOS:
                         "reserva": [], "divisional": 4, "superior": _ter["clave"]}
                 _ter["inferior"] = _cua["clave"]
                 LIGAS_EXT.append(_cua)
+        if _d.get("tercera_b_liga") and _cfg["tercera_b"]:      # otra tercera en paralelo, también debajo de la segunda
+            _terb = {"clave": _cfg["clave"] + "3b", "pais": _d["pais"], **_d["tercera_b_liga"], "clubes": list(_cfg["tercera_b"]),
+                     "reserva": [], "divisional": 3, "superior": _seg["clave"], "cuarta": [], "paralela": True}
+            _seg["inferior_b"] = _terb["clave"]
+            LIGAS_EXT.append(_terb)
     CLUBES_LIGAS += [(c["nombre"], _d["pais"], c["media"], c["escudo"])
-                     for c in _d["primera"] + _d["segunda"] + _d.get("tercera", []) + _d.get("cuarta", [])]
+                     for c in _d["primera"] + _d["segunda"] + _d.get("tercera", []) + _d.get("tercera_b", []) + _d.get("cuarta", [])]
     OSCUROS_LIGAS += _d.get("oscuros", [])
 
 CONFIG = {c["clave"]: c for c in LIGAS_EXT}
@@ -64,12 +71,14 @@ MEDIA_CLUB = {n: float(m) for n, _, m, _ in CLUBES_LIGAS}
 def clubes_de_la_liga(cfg):
     """Todos los clubes de la liga de `cfg`, de su reserva (si la segunda no se juega, los de segunda) y de su tercera
     y cuarta división (si las tiene)."""
-    return list(cfg["clubes"]) + list(cfg["reserva"]) + list(cfg.get("tercera", [])) + list(cfg.get("cuarta", []))
+    return list(cfg["clubes"]) + list(cfg["reserva"]) + list(cfg.get("tercera", [])) + list(cfg.get("tercera_b", [])) + list(cfg.get("cuarta", []))
 
 
 def clave_clubes(cfg):
     """Clave con la que S["ext_clubes"] guarda quién juega esta liga: el país para la primera ("Uruguay") y
     "<país>|<divisional>" para las de abajo ("Uruguay|2")."""
+    if cfg.get("paralela"):                       # tercera hermana (Paraguay|3b): no pisa a la tercera principal
+        return f"{cfg['pais']}|{cfg['divisional']}b"
     return cfg["pais"] if cfg.get("divisional", 1) == 1 else f"{cfg['pais']}|{cfg['divisional']}"
 
 
@@ -93,22 +102,26 @@ def errores():
             if arriba is None:
                 out.append(f"{k}: su liga de arriba ('{cfg.get('superior')}') no existe")
             elif cfg["divisional"] in (3, 4):             # tercera / cuarta simulada: sus clubes son los de `tercera` / `cuarta`
-                nombre_lista = "tercera" if cfg["divisional"] == 3 else "cuarta"
+                nombre_lista = ("tercera_b" if cfg.get("paralela") else "tercera") if cfg["divisional"] == 3 else "cuarta"
                 primera = arriba
                 while primera.get("divisional", 1) > 1:
                     primera = CONFIG_POR_CLAVE.get(primera.get("superior"), {})
                 if set(cfg["clubes"]) != set(primera.get(nombre_lista, [])):
                     out.append(f"{k}: sus clubes no son los de la {nombre_lista} división de '{primera.get('clave')}'")
-                if cfg.get("ascensos", 0) != arriba.get("descensos", 0):
-                    out.append(f"{k}: suben {cfg.get('ascensos', 0)} pero bajan {arriba.get('descensos', 0)} de '{arriba['clave']}'")
+                hermana = CONFIG_POR_CLAVE.get(arriba.get("inferior_b")) if not cfg.get("paralela") else None
+                esperado = arriba.get("descensos", 0) - (hermana.get("ascensos", 0) if hermana else 0)
+                if not cfg.get("paralela") and cfg.get("ascensos", 0) != esperado:      # con tercera hermana suben entre las dos lo que baja
+                    out.append(f"{k}: suben {cfg.get('ascensos', 0)} pero bajan {arriba.get('descensos', 0)} de '{arriba['clave']}'"
+                               + (f" y sube{'n' if hermana.get('ascensos', 0) != 1 else ''} {hermana.get('ascensos', 0)} de '{hermana['clave']}'" if hermana else ""))
             elif set(cfg["clubes"]) != set(arriba["reserva"]):
                 out.append(f"{k}: sus clubes no son los de la segunda de '{arriba['clave']}'")
             if cfg.get("ascensos", 0) > len(cfg["clubes"]):
                 out.append(f"{k}: suben más clubes de los que hay en la liga")
             if cfg.get("descensos", 0) > len(cfg["clubes"]):
                 out.append(f"{k}: bajan más clubes de los que hay en la liga")
-            if cfg["divisional"] == 2 and cfg.get("descensos", 0) > len(cfg.get("tercera", [])):
-                out.append(f"{k}: bajan {cfg['descensos']} pero la tercera división tiene {len(cfg.get('tercera', []))} clubes")
+            if cfg["divisional"] == 2 and cfg.get("descensos", 0) > len(cfg.get("tercera", [])) + len(cfg.get("tercera_b", [])):
+                out.append(f"{k}: bajan {cfg['descensos']} pero la tercera división tiene "
+                           f"{len(cfg.get('tercera', [])) + len(cfg.get('tercera_b', []))} clubes")
             if cfg["divisional"] == 3 and cfg.get("inferior") and cfg.get("descensos", 0) > len(cfg.get("cuarta", [])):
                 out.append(f"{k}: bajan {cfg['descensos']} pero la cuarta división tiene {len(cfg.get('cuarta', []))} clubes")
             continue

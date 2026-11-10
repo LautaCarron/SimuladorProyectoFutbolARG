@@ -95,11 +95,13 @@ def render(ctx):
                         ligas_c.append("Federal B")                  # la columna aparece recién cuando existe el Federal B
                     ligas_c += ["Primera B", "Primera C", "Promocional Amateur", "Copa Argentina", "Supercopa"]
                 else:
-                    ligas_c = [c.col_historial for c in ligas_pais] + paises.copas_nacionales_de(pais)
+                    ligas_c = [col for c in ligas_pais for col in [c.col_historial] + [f"{c.col_historial} · {t}" for t in c.torneos]
+                              ] + paises.copas_nacionales_de(pais)
                 ligas_c += ["Libertadores", "Sudamericana", "Recopa", "Mundial"]      # internacionales: van en todos los países
                 with st.expander(":material/emoji_events: Campeones por temporada", expanded=False):
                     df_c = pd.DataFrame([{k: x.get(k) or None for k in ["Temporada"] + ligas_c} for x in S["campeones"]])
                     nombres_col = {c.col_historial: c.nombre for c in ligas_pais}      # "Uruguay" -> "Liga AUF Uruguaya"
+                    nombres_col.update({f"{c.col_historial} · {t}": f"{c.nombre} · {t}" for c in ligas_pais for t in c.torneos})
                     st.markdown(tabla_html(df_c.rename(columns=nombres_col),
                                            clubes=tuple(nombres_col.get(c, c) for c in ligas_c)), unsafe_allow_html=True)
                 if es_base:
@@ -213,7 +215,8 @@ def render(ctx):
                                     unsafe_allow_html=True)
                 mov3 = S.get("ext_mov3", {}).get(comp.cfg["pais"])
                 tercera = ligas_ext.CONFIG.get(abajo.get("inferior")) if abajo else None
-                nom3 = tercera["nombre"] if tercera else "la tercera división"
+                nom3 = " y ".join(x["nombre"] for x in (tercera, ligas_ext.CONFIG.get(abajo.get("inferior_b")) if abajo else None) if x) \
+                    or "la tercera división"
                 if mov3:                                       # segunda división <-> tercera (Primera Amateur)
                     with st.expander(f":material/swap_vert: Segunda División y {nom3} tras la temporada {mov3['temp']}",
                                      expanded=False):

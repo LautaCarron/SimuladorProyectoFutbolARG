@@ -66,6 +66,13 @@ def _colorear(fila):
 
 
 def _leyenda_comp(comp, L):
+    if comp.formato.nombre == "paraguay":
+        return [("Campeón / líder", COLOR_ORO), ("Libertadores", COLORES_DESTINO["Libertadores"]),
+                ("Libertadores · Fase 2 / Fase 1", COLORES_DESTINO["Fase previa Libertadores"]),
+                ("Sudamericana", COLORES_DESTINO["Sudamericana"]), ("Desciende", COLORES_B["Desciende"])]
+    if comp.formato.nombre == "paraguay_segunda":
+        return [("Campeón / líder", COLOR_ORO), ("Asciende a Primera", COLORES_B["Ascenso directo"]),
+                ("Desciende a la tercera división", COLORES_B["Desciende"])]
     if comp.formato.nombre == "brasil_d":
         return [("Campeón / líder", COLOR_ORO), ("Asciende a la Série C", COLORES_B["Ascenso directo"]),
                 ("Pasa a la segunda fase", COLORES_B["Reducido"])]
@@ -118,7 +125,7 @@ def _tablas(ctx, comp, L):
             previo[1].append(t)
         else:
             items.append((destino, [t]))
-    if (comp.divisional == 1 and bool(comp.formato.etapas_definicion)
+    if (comp.divisional == 1 and (bool(comp.formato.etapas_definicion) or comp.torneos)
             and comp.formato.nombre != "colombia"):
         i = next((k for k, (n, _) in enumerate(items) if n == "Descenso" or n.startswith("Tabla de descenso")), len(items))
         items.insert(i, ("Campeones", None))
@@ -186,7 +193,7 @@ def _campeones(ctx, comp, L):
     El campeón suma al palmarés (pestaña Historial) cuando se cierra la temporada."""
     S = ctx.S
     registros = list(reversed(S.get("ext_def", {}).get(comp.clave, [])))
-    if L["campeon"] is not None:                     # la temporada en curso, si ya se definió
+    if L["campeon"] is not None or (comp.torneos and L.get("ganadores")):    # la temporada en curso, si ya se definió
         registros.insert(0, {**comp.definiciones(S, L), "en_curso": True})
     if not registros:
         aviso("Todavía no hay campeones: el título se define al terminar la temporada.")
@@ -194,6 +201,9 @@ def _campeones(ctx, comp, L):
     titulos = S.get(comp.hist, {})
     for k, reg in enumerate(registros):
         en_curso = reg.get("en_curso", False)
+        if comp.torneos:                             # Paraguay: dos torneos independientes, dos campeones
+            _campeones_torneos(S, comp, reg, k == 0, en_curso)
+            continue
         etiqueta = (f"Temporada {reg['temp']} · {reg['campeon']}" + (" · en curso" if en_curso else ""))
         with st.expander(f":material/emoji_events: {etiqueta}", expanded=k == 0):
             sub = f" · Subcampeón: {esc(reg['subcampeon'])}" if reg.get("subcampeon") else ""
@@ -212,6 +222,31 @@ def _campeones(ctx, comp, L):
             n = titulos.get(reg["campeon"], 0)
             st.caption(("Suma un título al palmarés cuando termina la temporada. " if en_curso else "")
                        + f"Títulos de {reg['campeon']} en {comp.nombre} (temporadas simuladas): {n}.")
+
+
+def _campeones_torneos(S, comp, reg, abierto, en_curso):
+    """Una temporada de una liga con torneos independientes (Paraguay): el campeón y el subcampeón de cada uno."""
+    gan, subs = reg.get("ganadores", {}), reg.get("subcampeones", {})
+    etiqueta = (f"Temporada {reg['temp']} · " + (f"Campeón {reg['campeon']} · " if reg.get("campeon") else "")
+                + " · ".join(f"{t}: {n}" for t, n in gan.items()) + (" · en curso" if en_curso else ""))
+    with st.expander(f":material/emoji_events: {etiqueta}", expanded=abierto):
+        for col, t in zip(st.columns(len(comp.torneos)), comp.torneos):
+            with col:
+                club = gan.get(t)
+                if club is None:
+                    st.markdown(f"**{esc(t)}**")
+                    st.caption("Todavía no se definió.")
+                    continue
+                sub = f'<div style="opacity:.75;text-align:center;margin-top:4px">Subcampeón: {esc(subs[t])}</div>' if subs.get(t) else ""
+                st.markdown(f'<div class="champ"><div class="t">Campeón del {esc(t)}</div><div style="margin-top:10px">'
+                            f'{crest(club, 64)}</div><div class="nm">{esc(club)}</div></div>{sub}', unsafe_allow_html=True)
+        if reg.get("via"):
+            st.caption(reg["via"])
+        titulos = S.get(comp.hist, {})
+        camp = reg.get("campeon")
+        st.caption(("El campeón del año (el de la final, o el que ganó los dos torneos) suma un título al palmarés cuando termina la temporada. "
+                    if en_curso else "")
+                   + (f"Títulos de {camp} en {comp.nombre} (temporadas simuladas): {titulos.get(camp, 0)}" if camp else ""))
 
 
 def _finales(ctx, comp, L):

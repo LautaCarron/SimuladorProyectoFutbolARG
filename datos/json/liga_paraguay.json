@@ -2,13 +2,18 @@
   "clave": "py",
   "nombre": "Primera División de Paraguay",
   "pais": "Paraguay",
-  "formato": "todos_contra_todos",
+  "formato": "paraguay",
   "descensos": 2,
   "ascensos": 2,
   "calendario": {
-    "Liga": [
-      2,
-      6,
+    "Apertura": [
+      1,
+      23,
+      4
+    ],
+    "Clausura": [
+      7,
+      24,
       4
     ]
   },
@@ -83,77 +88,535 @@
     {
       "nombre": "Sol de América",
       "media": 56,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7465.png&h=200&w=200"
     },
     {
       "nombre": "Tacuary",
       "media": 54,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4820.png&h=200&w=200"
     },
     {
       "nombre": "Deportivo Capiatá",
       "media": 53,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10853.png&h=200&w=200"
     },
     {
       "nombre": "Guaireña",
       "media": 53,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20292.png&h=200&w=200"
     },
     {
       "nombre": "Independiente (CG)",
       "media": 52,
-      "escudo": ""
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/e/e5/IndeCampoGrande.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
     },
     {
       "nombre": "Resistencia",
       "media": 52,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21317.png&h=200&w=200"
     },
     {
       "nombre": "Tembetary",
       "media": 51,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22518.png&h=200&w=200"
     },
     {
       "nombre": "Encarnación",
       "media": 50,
-      "escudo": ""
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/74318"
     },
     {
       "nombre": "12 de Junio",
       "media": 50,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/110977.png?lm=1789466735"
     },
     {
       "nombre": "Fernando de la Mora",
       "media": 50,
-      "escudo": ""
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/14636"
     },
     {
       "nombre": "3 de Noviembre",
       "media": 49,
-      "escudo": ""
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v3/Competitors/75983"
     },
     {
       "nombre": "Deportivo Santaní",
       "media": 49,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10855.png&h=200&w=200"
     },
     {
       "nombre": "Sportivo Carapeguá",
       "media": 48,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/35297.png?lm=1789461214"
     },
     {
       "nombre": "Paraguarí",
       "media": 48,
-      "escudo": ""
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/7/73/Paraguar%C3%AD_AC.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
     },
     {
       "nombre": "Benjamín Aceval",
       "media": 47,
-      "escudo": ""
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/68721"
     }
+  ],
+  "torneos": [
+    "Apertura",
+    "Clausura"
+  ],
+  "promedio_temporadas": 3,
+  "puntos_previos": {
+    "Libertad": [
+      [
+        74,
+        44,
+        2024
+      ],
+      [
+        70,
+        44,
+        2025
+      ]
+    ],
+    "Cerro Porteño": [
+      [
+        74,
+        44,
+        2024
+      ],
+      [
+        85,
+        44,
+        2025
+      ]
+    ],
+    "Guaraní": [
+      [
+        66,
+        44,
+        2024
+      ],
+      [
+        83,
+        44,
+        2025
+      ]
+    ],
+    "Olimpia": [
+      [
+        80,
+        44,
+        2024
+      ],
+      [
+        59,
+        44,
+        2025
+      ]
+    ],
+    "Nacional (Asunción)": [
+      [
+        55,
+        44,
+        2024
+      ],
+      [
+        60,
+        44,
+        2025
+      ]
+    ],
+    "Sportivo Trinidense": [
+      [
+        46,
+        44,
+        2024
+      ],
+      [
+        67,
+        44,
+        2025
+      ]
+    ],
+    "Deportivo Recoleta": [
+      [
+        59,
+        44,
+        2025
+      ]
+    ],
+    "2 de Mayo": [
+      [
+        65,
+        44,
+        2024
+      ],
+      [
+        51,
+        44,
+        2025
+      ]
+    ],
+    "Sportivo Ameliano": [
+      [
+        56,
+        44,
+        2024
+      ],
+      [
+        48,
+        44,
+        2025
+      ]
+    ],
+    "Sportivo Luqueño": [
+      [
+        61,
+        44,
+        2024
+      ],
+      [
+        47,
+        44,
+        2025
+      ]
+    ]
+  },
+  "segunda_liga": {
+    "nombre": "División Intermedia",
+    "formato": "paraguay_segunda",
+    "descensos": 3,
+    "calendario": {
+      "Liga": [
+        4,
+        4,
+        5
+      ]
+    },
+    "promedio_temporadas": 3,
+    "puntos_previos": {
+      "12 de Junio": [
+        [
+          38,
+          30,
+          2024
+        ],
+        [
+          48,
+          30,
+          2025
+        ]
+      ],
+      "Sportivo Carapeguá": [
+        [
+          58,
+          30,
+          2024
+        ],
+        [
+          34,
+          30,
+          2025
+        ]
+      ],
+      "Deportivo Santaní": [
+        [
+          42,
+          30,
+          2024
+        ],
+        [
+          35,
+          30,
+          2025
+        ]
+      ],
+      "Deportivo Capiatá": [
+        [
+          52,
+          30,
+          2025
+        ]
+      ],
+      "Resistencia": [
+        [
+          45,
+          30,
+          2024
+        ],
+        [
+          40,
+          30,
+          2025
+        ]
+      ],
+      "Sol de América": [
+        [
+          38,
+          30,
+          2025
+        ]
+      ],
+      "Independiente (CG)": [
+        [
+          38,
+          30,
+          2024
+        ],
+        [
+          34,
+          30,
+          2025
+        ]
+      ],
+      "Guaireña": [
+        [
+          38,
+          30,
+          2024
+        ],
+        [
+          39,
+          30,
+          2025
+        ]
+      ],
+      "Encarnación": [
+        [
+          44,
+          30,
+          2024
+        ],
+        [
+          35,
+          30,
+          2025
+        ]
+      ],
+      "Fernando de la Mora": [
+        [
+          35,
+          30,
+          2024
+        ],
+        [
+          28,
+          30,
+          2025
+        ]
+      ],
+      "Tacuary": [
+        [
+          38,
+          30,
+          2025
+        ]
+      ]
+    }
+  },
+  "tercera": [
+    {
+      "nombre": "Atlético Colegiales",
+      "media": 45,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/6/63/Club_atletico_colegiales.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "River Plate (Asunción)",
+      "media": 45,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18136.png&h=200&w=200"
+    },
+    {
+      "nombre": "Presidente Hayes",
+      "media": 44,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/66/Escudo_Presidente_Hayes.svg/250px-Escudo_Presidente_Hayes.svg.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Sport Colombia",
+      "media": 40,
+      "escudo": "https://static.flashscore.com/res/image/data/QalBMCFG-YBIou31F.png"
+    },
+    {
+      "nombre": "Martín Ledesma",
+      "media": 40,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Mart%C3%ADnLedesma.png/500px-Mart%C3%ADnLedesma.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Silvio Pettirossi",
+      "media": 40,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v3/Competitors/82243"
+    },
+    {
+      "nombre": "Sportivo Iteño",
+      "media": 40,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Sportivo_Ite%C3%B1o.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "Sportivo Limpeño",
+      "media": 40,
+      "escudo": "https://static.flashscore.com/res/image/data/bozeRDYA-z3DabmCQ.png"
+    },
+    {
+      "nombre": "Olimpia (Itá)",
+      "media": 40,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/ClubOlimpiaDeIta.jpg/500px-ClubOlimpiaDeIta.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "12 de Octubre",
+      "media": 40,
+      "escudo": "https://static.flashscore.com/res/image/data/QXYsbUCr-UJLaZhBP.png"
+    },
+    {
+      "nombre": "Atlántida",
+      "media": 40,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/d/dd/Atl%C3%A1ntida_Sport_Club_Escudo.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "3 de Febrero (Asunción)",
+      "media": 38,
+      "escudo": "https://static.flashscore.com/res/image/data/WxxmpKYg-WnYHA9YO.png"
+    },
+    {
+      "nombre": "24 de Setiembre",
+      "media": 37,
+      "escudo": "https://static.flashscore.com/res/image/data/CGryUmWg-4UNg26os.png"
+    },
+    {
+      "nombre": "29 de Setiembre",
+      "media": 37,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/56080.png?lm=1789462735"
+    },
+    {
+      "nombre": "Cristóbal Colón (JAS)",
+      "media": 35,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/68799"
+    },
+    {
+      "nombre": "12 de Octubre SD",
+      "media": 35,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v3/Competitors/80010"
+    },
+    {
+      "nombre": "1º de Marzo",
+      "media": 33,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Club_Primero_de_Marzo.png/500px-Club_Primero_de_Marzo.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    }
+  ],
+  "tercera_liga": {
+    "nombre": "Primera División B",
+    "formato": "todos_contra_todos",
+    "ascensos": 2,
+    "descensos": 0,
+    "calendario": {
+      "Liga": [
+        3,
+        28,
+        5
+      ]
+    }
+  },
+  "tercera_b": [
+    {
+      "nombre": "15 de Mayo (Itapé)",
+      "media": 40,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/92779"
+    },
+    {
+      "nombre": "Guaraní (Fram)",
+      "media": 40,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/86321"
+    },
+    {
+      "nombre": "3 de Febrero FBC",
+      "media": 39,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/7/71/3FebreroFBC.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "Pastoreo",
+      "media": 40,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/8/89/PastoreoFC2020.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "Choré Central",
+      "media": 40,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/6/69/CHORE_CENTRAL.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "R.I. 3 Corrales",
+      "media": 40,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/110978.png?lm=1789466735"
+    },
+    {
+      "nombre": "13 de Junio",
+      "media": 40,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTZThaXFAa2ZmxRH-6DSK1CPnSvWk3WRgG4QroRXRerJw&s=10"
+    },
+    {
+      "nombre": "Patriotas FC (Par)",
+      "media": 37,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/PatriotasFCParaguay.png/330px-PatriotasFCParaguay.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Guaraní (MG)",
+      "media": 35,
+      "escudo": "https://static.flashscore.com/res/image/data/fmoqlgwS-KtSyLTr6.png"
+    },
+    {
+      "nombre": "Ciudad Nueva",
+      "media": 30,
+      "escudo": "https://static.flashscore.com/res/image/data/j9EdgzdM-dINMEfSG.png"
+    },
+    {
+      "nombre": "1º de Setiembre",
+      "media": 40,
+      "escudo": ""
+    },
+    {
+      "nombre": "Deportivo Británico",
+      "media": 27,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS81QwPuzpK_0z05rRuWc3Vpb5ullq6ffCbEkQlxGkM5g&s=10"
+    },
+    {
+      "nombre": "Deportivo Unión",
+      "media": 20,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTmwsUAmt0AamVvRdZ0eWcZC4RYnOrZM5lHVq_b2fAMzQ&s=10"
+    }
+  ],
+  "tercera_b_liga": {
+    "nombre": "Primera División B Nacional",
+    "formato": "todos_contra_todos",
+    "ascensos": 1,
+    "descensos": 0,
+    "calendario": {
+      "Liga": [
+        6,
+        6,
+        5
+      ]
+    }
+  },
+  "interior": [
+    "12 de Junio",
+    "Benjamín Aceval",
+    "Deportivo Santaní",
+    "Encarnación",
+    "Guaireña",
+    "Paraguarí",
+    "Sportivo Carapeguá",
+    "Caballero",
+    "2 de Mayo",
+    "15 de Mayo (Itapé)",
+    "Guaraní (Fram)",
+    "3 de Febrero FBC",
+    "Pastoreo",
+    "Choré Central",
+    "R.I. 3 Corrales",
+    "13 de Junio",
+    "Patriotas FC (Par)",
+    "Guaraní (MG)",
+    "Ciudad Nueva",
+    "1º de Setiembre",
+    "Deportivo Británico",
+    "Deportivo Unión"
   ]
 }

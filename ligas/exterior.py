@@ -54,6 +54,13 @@ def dias_semanales(anio, inicio, cantidad):
     """`cantidad` días, uno por semana, desde la primera fecha de `inicio` = [mes, día, día de la semana]."""
     primero = desde(anio, inicio[0], inicio[1], inicio[2])
     return [primero + k * UNA_SEMANA for k in range(cantidad)]
+def dias_cada(anio, inicio, cantidad, paso):
+    """`cantidad` días, uno cada `paso` días, desde la primera fecha de `inicio` = [mes, día, día de la semana].
+    Sirve para los torneos cortos que meten fechas entre semana (Apertura y Clausura de Paraguay: 22 fechas en 4 meses)."""
+    primero = desde(anio, inicio[0], inicio[1], inicio[2])
+    return [primero + dt.timedelta(days=k * paso) for k in range(cantidad)]
+
+
 def ronda(etapa, rotulo, comp, dia, pares=None, suma=None, ko=False, neutral=False, ida_vuelta=None):
     """Una ronda de la liga.
 
@@ -307,7 +314,7 @@ FORMATOS = {TodosContraTodos.nombre: TodosContraTodos()}
 
 def formato_de(cfg):
     """El formato de la liga `cfg` (una entrada de ligas_ext.json)."""
-    from ligas import brasil_d, colombia, colombia_segunda, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
+    from ligas import brasil_d, colombia, colombia_segunda, paraguay, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
     try:
         return FORMATOS[cfg["formato"]]
     except KeyError:

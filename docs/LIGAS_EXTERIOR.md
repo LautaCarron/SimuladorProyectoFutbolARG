@@ -295,12 +295,24 @@ Superliga BetPlay: serie a ida y vuelta entre el campeón de la Liga BetPlay y e
 
 * **Simplificación a revisar**: el real enfrenta a los campeones del año (en el formato de dos torneos, Apertura y Finalización) con el de la Copa; acá la liga tiene un solo campeón anual.
 
-## Paraguay: Primera División (2026)
+## Paraguay: Copa de Primera y División Intermedia (`ligas/paraguay.py`, `datos/json/liga_paraguay.json`)
 
-Datos en `datos/json/liga_paraguay.json` (clave `py`). **Sólo la Primera División**: la Intermedia no se juega, es la reserva de la que suben y a la que bajan los clubes (16 clubes, medias orientativas de 47 a 59). Todavía no hay Copa Paraguay ni Supercopa.
+Dos ligas simuladas (`py` y `py2`) con formatos propios, los dos con **descenso por promedio de tres temporadas**.
 
-* **Formato**: `todos_contra_todos` (22 fechas, ida y vuelta, desde el 6 de febrero). Campeón el que más puntos suma; bajan 2 y suben 2 de la Intermedia.
-* **Clubes**: los 12 de la temporada 2026 (2 de Mayo, Cerro Porteño, Guaraní, Libertad, Nacional (Asunción), Olimpia, Deportivo Recoleta, Rubio Ñú, Sportivo San Lorenzo, Sportivo Ameliano, Sportivo Luqueño y Sportivo Trinidense). Las medias de los que ya estaban se mantuvieron; los de la Intermedia son nuevos (salvo Caballero).
-* **Copas CONMEBOL**: se reparten por la tabla con los `CUPOS_*` de `copas/conmebol.py` (Libertadores 2 a grupos, 1 a la previa y 1 a la Fase 1; Sudamericana 4).
-* **Palmarés**: `hist_ext_py` en `palmares_py.json` (1906-2025, 133 títulos; Olimpia 47, Cerro Porteño 35, Libertad 26, Guaraní 11, Nacional 9, Sol de América 2, Sportivo Luqueño 2, Presidente Hayes 1; verificar contra la APF). No incluye el Apertura 2026.
-* **Simplificaciones a revisar**: en la realidad hay dos torneos por año (Apertura y Clausura, cada uno con su campeón) y el descenso sale del promedio de tres temporadas; acá hay una sola tabla por temporada y un campeón por año, y bajan los dos últimos de esa tabla. Los clubes de la Intermedia sin escudo muestran sus iniciales.
+**Copa de Primera** (formato `paraguay`, 12 clubes):
+
+* **Apertura y Clausura**: cada uno es de 22 fechas a doble rueda (con sorteo propio). Apertura desde el 23/1 y Clausura desde el 24/7, una fecha cada 6 días. **El título del año es uno solo**: los campeones de los dos torneos juegan una final a partido único en cancha neutral (si un club gana los dos, es campeón directo y no hay final). El palmarés (`hist_ext_py`) suma un título al campeón del año. El Historial tiene la columna del campeón y una por torneo (Apertura y Clausura).
+* **Reclasificación · cupos** (Apertura + Clausura): los dos campeones van a los grupos de la Libertadores (si un club gana los dos, el segundo cupo sigue por la tabla); la Fase 2, la Fase 1 y los 4 de la Sudamericana siguen por esa tabla (`CUPOS_*` de `copas/conmebol.py`). Los que bajan quedan últimos y no clasifican.
+* **Tabla de descenso · promedio**: puntos por partido de las últimas tres temporadas en Primera; bajan los 2 peores. Los recién ascendidos sólo cuentan lo jugado en Primera. Los puntos reales de 2024 y 2025 (`puntos_previos`: [puntos, partidos, año]) siembran la primera temporada; después el historial se guarda en `S["ext_prom_hist"]` y los que cambian de categoría arrancan de cero.
+* Suben los 2 primeros de la Intermedia.
+
+**División Intermedia** (formato `paraguay_segunda`, 16 clubes de 2026): todos contra todos a doble rueda (30 fechas, sábados desde el 4/4). Suben el campeón y el subcampeón; bajan los **3 peores promedios** (tres temporadas, con los puntos reales de 2024 y 2025) a la tercera división. Palmarés histórico en `hist_ext_py2` (1910-2025; "Caballero" = General Caballero (JLM), los 6 títulos anteriores son de General Caballero (ZC)).
+
+* **Primera División B (Metropolitana)** (`py3`, `divisional` 3, `todos_contra_todos`): 17 clubes de 2026 (`tercera` y `tercera_liga` del JSON), 34 fechas (sábados desde el 28/3). Suben el campeón y el subcampeón a la Intermedia; no baja nadie (la Primera C no se simula).
+* **Primera División B Nacional** (`py3b`, tercera "hermana" del interior, `tercera_b` y `tercera_b_liga`): 13 clubes (la fuente dice 14, falta uno por cargar), 26 fechas (sábados desde el 6/6). Sube el campeón. Es una liga paralela a la Metropolitana: `datos/ligas_ext.py` le pone `paralela: true` y la clave de clubes `Paraguay|3b`.
+* **Pirámide**: de los 3 que bajan de la Intermedia, el peor del interior (lista `interior` del JSON) va a la B Nacional y los otros 2 a la Metropolitana, así cada tercera conserva su tamaño (2 suben y 2 bajan en la Metropolitana, 1 y 1 en la Nacional). Columnas del Historial: `"Paraguay · D3"` (Metropolitana) y `"Paraguay · D3b"` (Nacional).
+* **Palmarés**: `hist_ext_py2` (Intermedia, 1910-2025), `hist_ext_py3` (Metropolitana, 1939-2025) y `hist_ext_py3b` (Nacional, 2011-2025; los primeros años incluyen selecciones de liga). Medias orientativas (40 a 47) y sin escudo.
+  * **Simplificaciones**: en la realidad el campeón de la Metropolitana sube directo y el subcampeón juega un repechaje contra el campeón de la B Nacional (en algunos años el campeón de la Nacional sube directo); además sube un club del Interligas. Acá suben directo los 2 mejores de la Metropolitana y el campeón de la Nacional. Los descendidos van a una u otra según su zona; sin datos de ubicación de cada club, usé la lista `interior`.
+* Palmarés Primera: `hist_ext_py` en `palmares_py.json` (1906-2025, no incluye el Apertura 2026).
+* **Simplificaciones a revisar**: el desempate dentro de cada torneo es por diferencia de gol y goles a favor (el reglamento usa los partidos entre sí y, si hace falta, un desempate); la Copa Paraguay y la Supercopa no se simulan (en la realidad el campeón de la copa tiene el cupo de la Fase 1: acá sigue la tabla); en la realidad los que bajan de la Intermedia van a la Primera B o a la B Nacional según su ubicación; las medias de la Intermedia y la tercera son orientativas.
+* `VERSION_ESTADO` subió a 38 (las partidas guardadas con la versión anterior ya no se cargan).
