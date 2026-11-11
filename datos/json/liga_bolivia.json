@@ -1,0 +1,38 @@
+{
+  "clave": "bo",
+  "nombre": "División Profesional",
+  "pais": "Bolivia",
+  "formato": "todos_contra_todos",
+  "descensos": 1,
+  "ascensos": 1,
+  "calendario": {"Liga": [4, 4, 5]},
+  "oscuros": ["Universitario de Vinto"],
+  "primera": [
+    {"nombre": "ABB", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/130875.png&h=96&w=96"},
+    {"nombre": "Always Ready", "media": 62, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19425.png&h=96&w=96"},
+    {"nombre": "Aurora", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6046.png&h=96&w=96"},
+    {"nombre": "Blooming", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6047.png&h=96&w=96"},
+    {"nombre": "Bolívar", "media": 68, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2681.png&h=96&w=96"},
+    {"nombre": "GV San José", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22174.png&h=96&w=96"},
+    {"nombre": "Guabirá", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9497.png&h=96&w=96"},
+    {"nombre": "Independiente Petrolero", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20889.png&h=96&w=96"},
+    {"nombre": "Nacional Potosí", "media": 59, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10311.png&h=96&w=96"},
+    {"nombre": "Oriente Petrolero", "media": 60, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2682.png&h=96&w=96"},
+    {"nombre": "Real Oruro", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22523.png&h=96&w=96"},
+    {"nombre": "Real Potosí", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6051.png&h=96&w=96"},
+    {"nombre": "Real Tomayapo", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20890.png&h=96&w=96"},
+    {"nombre": "San Antonio Bulo Bulo", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22137.png&h=96&w=96"},
+    {"nombre": "The Strongest", "media": 65, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2687.png&h=96&w=96"},
+    {"nombre": "Universitario de Vinto", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21379.png&h=96&w=96"}
+  ],
+  "segunda": [
+    {"nombre": "Jorge Wilstermann", "media": 52, "escudo": ""},
+    {"nombre": "Atlético Palmaflor", "media": 48, "escudo": ""},
+    {"nombre": "Royal Pari", "media": 46, "escudo": ""},
+    {"nombre": "Mamoré", "media": 44, "escudo": ""},
+    {"nombre": "Ciclón", "media": 44, "escudo": ""},
+    {"nombre": "Universitario de Sucre", "media": 44, "escudo": ""},
+    {"nombre": "Fancesa", "media": 43, "escudo": ""},
+    {"nombre": "Libertad Gran Mamoré", "media": 43, "escudo": ""}
+  ]
+}

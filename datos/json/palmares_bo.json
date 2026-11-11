@@ -1,0 +1,24 @@
+{
+  "hist_ext_bo": {
+    "descripcion": "División Profesional de Bolivia (campeonato nacional desde 1950), 93 títulos: Liga Paceña profesional 1950-53, Torneo Integrado 1954-57, Certamen Mixto 1957/58, Torneo Nacional/Copa Simón Bolívar desde 1958 y Liga/División Profesional desde 1977. Desde 2003 el Apertura y el Clausura cuentan como títulos separados; incluye el Clausura 2004 de The Strongest (reconocido en 2009). Hasta 2025 (campeón Always Ready); no incluye la temporada 2026. Fuente: RSSSF y Wikipedia; verificar contra la FBF. 'San José (Oruro)' no es el GV San José del simulador; Litoral, Chaco Petrolero, Municipal, Universitario de La Paz, Sport Boys Warnes y San José (Oruro) no juegan hoy en la primera simulada.",
+    "titulos": {
+      "Bolívar": 31,
+      "The Strongest": 16,
+      "Jorge Wilstermann": 15,
+      "Blooming": 5,
+      "Oriente Petrolero": 5,
+      "Always Ready": 4,
+      "San José (Oruro)": 4,
+      "Aurora": 2,
+      "Deportivo Municipal (La Paz)": 2,
+      "Universitario de Sucre": 2,
+      "Chaco Petrolero": 1,
+      "Guabirá": 1,
+      "Independiente Petrolero": 1,
+      "Litoral (La Paz)": 1,
+      "Real Potosí": 1,
+      "Sport Boys Warnes": 1,
+      "Universitario de La Paz": 1
+    }
+  }
+}

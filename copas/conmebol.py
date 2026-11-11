@@ -67,6 +67,8 @@ NOTA_COPA = {"Chile": "Además, el campeón de la Copa Chile tiene el Chile 4 (L
                       "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
              "Colombia": "Además, el campeón de la Copa Colombia clasifica a la Sudamericana (Fase 1), siempre que juegue en Primera. "
                          "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
+             "Ecuador": "El campeón de la Copa Ecuador clasifica a la Libertadores · Fase 1, siempre que juegue en Primera. "
+                        "Si ya clasificó por la liga, el cupo pasa al siguiente club de la tabla.",
              "Paraguay": "Los campeones del Apertura y del Clausura van a los grupos de la Libertadores. Además, el campeón de la Copa "
                          "Paraguay tiene la Fase 1, siempre que juegue en Primera. Si ya clasificó por la liga, el cupo pasa al que sigue "
                          "en esta tabla.",
@@ -248,8 +250,8 @@ def nuevas_internacionales(S, rng):
     for pais in PAISES:
         # el Uruguay 4 (Fase 1) es del campeón de la Copa AUF Uruguay (copas/uruguay.py); si ya clasificó, sigue la Anual
         primero = None if CUPOS_COPA.get(pais) else S.get("ext_copa", {}).get(pais)      # (Brasil: su copa va a grupos)
-        if pais == "Paraguay" and primero not in S.get("ext_clubes", {}).get(pais, []):   # el campeón de la Copa Paraguay, si juega en Primera
-            primero = None
+        if pais in ("Paraguay", "Ecuador") and primero not in S.get("ext_clubes", {}).get(pais, []):
+            primero = None  # el campeón de la copa debe jugar en Primera para ocupar el cupo
         for n in _sortear_pais(rng, S, pais, CUPOS_LIB_FASE1[pais], ya, primero=primero):
             lib_f1.append((n, f"{pais} · Fase 1"))
             ya.add(n)

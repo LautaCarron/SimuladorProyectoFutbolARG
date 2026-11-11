@@ -1,0 +1,430 @@
+{
+ "clave": "pe",
+ "nombre": "Liga 1",
+ "pais": "Perú",
+ "formato": "todos_contra_todos",
+ "descensos": 2,
+ "ascensos": 2,
+ "calendario": {
+  "Liga": [
+   2,
+   7,
+   5
+  ]
+ },
+ "segunda_liga": {
+  "nombre": "Liga 2",
+  "formato": "todos_contra_todos",
+  "descensos": 2,
+  "calendario": {
+   "Liga": [
+    3,
+    14,
+    5
+   ]
+  }
+ },
+ "tercera_liga": {
+  "nombre": "Liga 3",
+  "formato": "todos_contra_todos",
+  "ascensos": 2,
+  "descensos": 2,
+  "calendario": {
+   "Liga": [
+    4,
+    4,
+    5
+   ]
+  }
+ },
+ "cuarta_liga": {
+  "nombre": "Copa Perú",
+  "formato": "todos_contra_todos",
+  "ascensos": 2,
+  "descensos": 0,
+  "calendario": {
+   "Liga": [
+    5,
+    9,
+    5
+   ]
+  }
+ },
+ "oscuros": [
+  "Sport Boys",
+  "UTC"
+ ],
+ "primera": [
+  {
+   "nombre": "ADT",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21314.png&h=96&w=96"
+  },
+  {
+   "nombre": "Alianza Atlético",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5267.png&h=96&w=96"
+  },
+  {
+   "nombre": "Alianza Lima",
+   "media": 70,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2680.png&h=96&w=96"
+  },
+  {
+   "nombre": "Atlético Grau",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20293.png&h=96&w=96"
+  },
+  {
+   "nombre": "Cienciano del Cusco",
+   "media": 62,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/3372.png&h=96&w=96"
+  },
+  {
+   "nombre": "Comerciantes Unidos",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18153.png&h=96&w=96"
+  },
+  {
+   "nombre": "Cusco FC",
+   "media": 61,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/11995.png&h=96&w=96"
+  },
+  {
+   "nombre": "Deportivo Garcilaso",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21819.png&h=96&w=96"
+  },
+  {
+   "nombre": "Deportivo Moquegua",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/131654.png&h=96&w=96"
+  },
+  {
+   "nombre": "FC Cajamarca",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/131655.png&h=96&w=96"
+  },
+  {
+   "nombre": "Juan Pablo II",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22534.png&h=96&w=96"
+  },
+  {
+   "nombre": "Los Chankas",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22168.png&h=96&w=96"
+  },
+  {
+   "nombre": "Melgar",
+   "media": 64,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7312.png&h=96&w=96"
+  },
+  {
+   "nombre": "Sport Boys",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5570.png&h=96&w=96"
+  },
+  {
+   "nombre": "Sport Huancayo",
+   "media": 60,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10318.png&h=96&w=96"
+  },
+  {
+   "nombre": "Sporting Cristal",
+   "media": 70,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2673.png&h=96&w=96"
+  },
+  {
+   "nombre": "UTC",
+   "media": 57,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10122.png&h=96&w=96"
+  },
+  {
+   "nombre": "Universitario",
+   "media": 70,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2685.png&h=96&w=96"
+  }
+ ],
+ "segunda": [
+  {
+   "nombre": "Alianza Universidad Huánuco",
+   "media": 55,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19432.png&h=200&w=200"
+  },
+  {
+   "nombre": "Deportivo Binacional",
+   "media": 55,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18985.png&h=200&w=200"
+  },
+  {
+   "nombre": "Carlos A. Mannucci",
+   "media": 53,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/19433.png&h=200&w=200"
+  },
+  {
+   "nombre": "Ayacucho FC",
+   "media": 49,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10116.png&h=200&w=200"
+  },
+  {
+   "nombre": "Unión Comercio",
+   "media": 45,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/11324.png&h=200&w=200"
+  },
+  {
+   "nombre": "Pirata FC",
+   "media": 48,
+   "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSLA3cOLyFFrDnLM4YJFBmcLLNoYXCm8pDXIxPopmzHIQ&s=10"
+  },
+  {
+   "nombre": "Deportivo Municipal",
+   "media": 49,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/7548.png&h=200&w=200"
+  },
+  {
+   "nombre": "Academia Cantolao",
+   "media": 47,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18442.png&h=200&w=200"
+  },
+  {
+   "nombre": "Deportivo Llacuabamba",
+   "media": 47,
+   "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20653.png&h=200&w=200"
+  },
+  {
+   "nombre": "Santos de Nasca",
+   "media": 47,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/73342.png?lm=1789464004"
+  },
+  {
+   "nombre": "Atlético Torino",
+   "media": 44,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/26475.png?lm=1789460586"
+  },
+  {
+   "nombre": "Juan Aurich",
+   "media": 49,
+   "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Juan_Aurich_de_Chiclayo.svg/330px-Juan_Aurich_de_Chiclayo.svg.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+  },
+  {
+   "nombre": "Sport Chavelines",
+   "media": 45,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/78644.png?lm=1789464390"
+  },
+  {
+   "nombre": "Universidad San Martín",
+   "media": 46,
+   "escudo": "https://cdn.futbolperuano.com/images/futbol/equipos/180x180/peru/universidad-san-martin.jpg"
+  },
+  {
+   "nombre": "Deportivo Coopsol",
+   "media": 45,
+   "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Deportivo_Coopsol.png/330px-Deportivo_Coopsol.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+  },
+  {
+   "nombre": "Colegio Nacional Iquitos",
+   "media": 45,
+   "escudo": "https://upload-wikimedia-org.translate.goog/wikipedia/en/b/b1/Colegio_Nacional_Iquitos.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled&_x_tr_sl=en&_x_tr_tl=es&_x_tr_hl=es&_x_tr_pto=sge"
+  }
+ ],
+ "tercera": [
+  {
+   "nombre": "AD Tahuisco",
+   "media": 39,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/86095.png?lm=1789464929"
+  },
+  {
+   "nombre": "Amazon Callao FC",
+   "media": 37,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/124047.png?lm=1789467712"
+  },
+  {
+   "nombre": "ANBA Perú",
+   "media": 37,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/132616.png?lm=1789468358"
+  },
+  {
+   "nombre": "ASA FC (Perú)",
+   "media": 35,
+   "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/90722"
+  },
+  {
+   "nombre": "Centro Social de Pariacoto",
+   "media": 36,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/120821.png?lm=1789474670"
+  },
+  {
+   "nombre": "Ucayali FC",
+   "media": 36,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/128795.png?lm=1789468074"
+  },
+  {
+   "nombre": "Cultural Volante",
+   "media": 40,
+   "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Cultural_Volante.png/330px-Cultural_Volante.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+  },
+  {
+   "nombre": "Defensor José María Arguedas",
+   "media": 31,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/132616.png?lm=1789468358https://img.a.transfermarkt.technology/wappen/head/123838.png?lm=1789467697"
+  },
+  {
+   "nombre": "Deportivo Lute",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/109092.png?lm=1789466595"
+  },
+  {
+   "nombre": "Deportivo Municipal Pangoa",
+   "media": 39,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/66429.png?lm=1789463500"
+  },
+  {
+   "nombre": "Deportivo Ucrania",
+   "media": 40,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/124050.png?lm=1789474912"
+  },
+  {
+   "nombre": "Ecosem Pasco",
+   "media": 38,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/102186.png?lm=1789466083"
+  },
+  {
+   "nombre": "FC Carlos Stein",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/78642.png?lm=1787933718"
+  },
+  {
+   "nombre": "FCR San Antonio",
+   "media": 40,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/123421.png?lm=1789467665"
+  },
+  {
+   "nombre": "Juventud Cautivo",
+   "media": 40,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/93212.png?lm=1789465440"
+  },
+  {
+   "nombre": "Juventud Huracán",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/133372.png?lm=1789475617"
+  },
+  {
+   "nombre": "Nacional FBC",
+   "media": 35,
+   "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v3/Competitors/77437"
+  },
+  {
+   "nombre": "Nuevo San Cristóbal",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/124051.png?lm=1789467712"
+  },
+  {
+   "nombre": "Patriotas FC Tacna",
+   "media": 37,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/124046.png?lm=1789467712"
+  },
+  {
+   "nombre": "UDA Huancavelica",
+   "media": 40,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/86743.png?lm=1789464975"
+  },
+  {
+   "nombre": "Unión Huaral",
+   "media": 42,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/17475.png?lm=1789467201"
+  },
+  {
+   "nombre": "Unión Santo Domingo",
+   "media": 38,
+   "escudo": "http://img.a.transfermarkt.technology/wappen/head/123667.png?lm=1789467682"
+  },
+  {
+   "nombre": "Pacífico FC",
+   "media": 38,
+   "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v1/Competitors/9290"
+  }
+ ],
+ "cuarta": [
+  {
+   "nombre": "Juventud La Palma",
+   "media": 28,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/82982.png?lm=1789464703"
+  },
+  {
+   "nombre": "Deportivo Hualgayoc",
+   "media": 30,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/57819.png?lm=1789462865"
+  },
+  {
+   "nombre": "Sport Rosario FC",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/57405.png?lm=1789462835"
+  },
+  {
+   "nombre": "Sport Áncash",
+   "media": 34,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/17125.png?lm=1789459993"
+  },
+  {
+   "nombre": "ADA Jaén",
+   "media": 38,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/114373.png?lm=1789466992"
+  },
+  {
+   "nombre": "Alfonso Ugarte de Puno",
+   "media": 30,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/36900.png?lm=1789461330"
+  },
+  {
+   "nombre": "Credicoop San Román",
+   "media": 35,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/86179.png?lm=1789464936"
+  },
+  {
+   "nombre": "Defensor La Bocana",
+   "media": 33,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/51896.png?lm=1789462430"
+  },
+  {
+   "nombre": "Unión Tarapoto",
+   "media": 28,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/50191.png?lm=1789462304"
+  },
+  {
+   "nombre": "Deportivo Bancos",
+   "media": 30,
+   "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/DEPORTIVO_BANCOS_PUCALLPA.png/330px-DEPORTIVO_BANCOS_PUCALLPA.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+  },
+  {
+   "nombre": "Unión Fuerza Minera",
+   "media": 24,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/47219.png?lm=1789462079"
+  },
+  {
+   "nombre": "Santa Rosa FBC",
+   "media": 24,
+   "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSIlkGtFD24hjtDPnfK1t9kQ3eVYC9gganvj5CVn9wRkA&s=10"
+  },
+  {
+   "nombre": "Sport Victoria",
+   "media": 31,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/47855.png?lm=1789462127"
+  },
+  {
+   "nombre": "Racing Club (Perú)",
+   "media": 29,
+   "escudo": "https://racingperu.com/img/racing/logo-oficial.png"
+  },
+  {
+   "nombre": "Juventud Nueva Esperanza",
+   "media": 23,
+   "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ1ANIQXScPokGN6WJyrsVXLOfUeGip-DhAw8dO-ZczeQ&s=10"
+  },
+  {
+   "nombre": "Sport Águila",
+   "media": 24,
+   "escudo": "https://img.a.transfermarkt.technology/wappen/head/27980.png?lm=1789460693"
+  }
+ ]
+}

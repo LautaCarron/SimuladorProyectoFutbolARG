@@ -1,0 +1,521 @@
+{
+  "clave": "ec",
+  "nombre": "LigaPro Serie A",
+  "pais": "Ecuador",
+  "formato": "ecuador",
+  "descensos": 2,
+  "ascensos": 2,
+  "calendario": {
+    "Liga": [
+      2,
+      20,
+      4
+    ],
+    "Fase final": [
+      9,
+      20,
+      6
+    ]
+  },
+  "grupo_titulo": 6,
+  "grupo_sudamericana": 4,
+  "oscuros": [
+    "Leones"
+  ],
+  "primera": [
+    {
+      "nombre": "Aucas",
+      "media": 64,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6017.png&h=96&w=96"
+    },
+    {
+      "nombre": "Barcelona SC",
+      "media": 71,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2686.png&h=96&w=96"
+    },
+    {
+      "nombre": "Delfín",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/1011.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo Cuenca",
+      "media": 61,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4812.png&h=96&w=96"
+    },
+    {
+      "nombre": "Emelec",
+      "media": 68,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/2668.png&h=96&w=96"
+    },
+    {
+      "nombre": "Guayaquil City FC",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/11124.png&h=96&w=96"
+    },
+    {
+      "nombre": "Independiente del Valle",
+      "media": 75,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17086.png&h=96&w=96"
+    },
+    {
+      "nombre": "Leones",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/131702.png&h=96&w=96"
+    },
+    {
+      "nombre": "Libertad (Ecuador)",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21843.png&h=96&w=96"
+    },
+    {
+      "nombre": "Liga de Quito",
+      "media": 74,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4816.png&h=96&w=96"
+    },
+    {
+      "nombre": "Macará",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18439.png&h=96&w=96"
+    },
+    {
+      "nombre": "Manta F.C.",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10307.png&h=96&w=96"
+    },
+    {
+      "nombre": "Mushuc Runa",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17176.png&h=96&w=96"
+    },
+    {
+      "nombre": "Orense",
+      "media": 62,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20695.png&h=96&w=96"
+    },
+    {
+      "nombre": "Técnico Universitario",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9292.png&h=96&w=96"
+    },
+    {
+      "nombre": "Universidad Católica (Quito)",
+      "media": 64,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/9283.png&h=96&w=96"
+    }
+  ],
+  "segunda": [
+    {
+      "nombre": "El Nacional",
+      "media": 55,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/882.png&h=200&w=200"
+    },
+    {
+      "nombre": "Vinotinto FC",
+      "media": 50,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22535.png&h=200&w=200"
+    },
+    {
+      "nombre": "Independiente Juniors",
+      "media": 52,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/62074.png?lm=1789463177"
+    },
+    {
+      "nombre": "Cumbayá",
+      "media": 50,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/41301.png?lm=1789461646"
+    },
+    {
+      "nombre": "San Antonio",
+      "media": 51,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/47242.png?lm=1789462080"
+    },
+    {
+      "nombre": "Gualaceo",
+      "media": 52,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/25698.png?lm=1789460532"
+    },
+    {
+      "nombre": "Cuenca Juniors",
+      "media": 48,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/119920.png?lm=1789467406"
+    },
+    {
+      "nombre": "Liga de Portoviejo",
+      "media": 49,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/19310.png?lm=1789460093"
+    },
+    {
+      "nombre": "9 de Octubre",
+      "media": 54,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/19101.png?lm=1789460078"
+    },
+    {
+      "nombre": "Deportivo Santo Domingo",
+      "media": 48,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/70468.png?lm=1789463792"
+    },
+    {
+      "nombre": "22 de Julio (Ecu)",
+      "media": 47,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/120935.png?lm=1789467478"
+    },
+    {
+      "nombre": "Atlético FC (Ecu)",
+      "media": 49,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/120275.png?lm=1789467430"
+    }
+  ],
+  "segunda_liga": {
+    "nombre": "LigaPro Serie B",
+    "formato": "ecuador_segunda",
+    "descensos": 2,
+    "calendario": {
+      "Liga": [
+        3,
+        20,
+        4
+      ],
+      "Fase final": [
+        8,
+        27,
+        3
+      ]
+    },
+    "filiales": [
+      "Independiente Juniors",
+      "San Antonio"
+    ]
+  },
+  "tercera": [
+    {
+      "nombre": "Astillero FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/109563.png?lm=1789466628"
+    },
+    {
+      "nombre": "Joga Bonito Z",
+      "media": 39,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSqshqzPm0n5naQVGjErGUvmqxrkTxc9O_I-hHbiNEBg&s=10"
+    },
+    {
+      "nombre": "Corinthian's",
+      "media": 39,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/90798"
+    },
+    {
+      "nombre": "C.D. Grecia",
+      "media": 39,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/CD_Grecia.jpg/330px-CD_Grecia.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Peninsulares FC",
+      "media": 39,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSFwJpOx3B7TYQYCBlwUylmciticgVxSb52DYfdC6hJTA&s=10"
+    },
+    {
+      "nombre": "C.S. Patria",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/22109.png?lm=1789460278"
+    },
+    {
+      "nombre": "Deportivo Quito",
+      "media": 50,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/S.D.QUITO.png/330px-S.D.QUITO.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Dunamis 04 FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/54485.png?lm=1789462617"
+    },
+    {
+      "nombre": "Santa Fe SC",
+      "media": 42,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/96064.png?lm=1789465639"
+    },
+    {
+      "nombre": "UDJ Quinindé",
+      "media": 39,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/90805"
+    },
+    {
+      "nombre": "Pelileo SC",
+      "media": 39,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ad/Pelileo_Sporting_Club_2023.png/330px-Pelileo_Sporting_Club_2023.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Señor Montúfar",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/108708.png?lm=1789466565"
+    },
+    {
+      "nombre": "11 de Mayo FC",
+      "media": 43,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/78679.png?lm=1789464396"
+    },
+    {
+      "nombre": "Milagro FC",
+      "media": 41,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/124086.png?lm=1789467713"
+    },
+    {
+      "nombre": "Cobras Peninsular FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/124087.png?lm=1789467713"
+    },
+    {
+      "nombre": "Dep. Olmedo",
+      "media": 42,
+      "escudo": "https://upload.wikimedia.org/wikipedia/en/3/3f/OlmedoLogo.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "Politécnico",
+      "media": 43,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/68374.png?lm=1789470845"
+    },
+    {
+      "nombre": "Vargas Torres",
+      "media": 46,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/25589.png?lm=1789460525"
+    },
+    {
+      "nombre": "San Pedro del Pongo",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/110727.png?lm=1789466719"
+    },
+    {
+      "nombre": "Independiente Azogues",
+      "media": 42,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/98899.png?lm=1789465847"
+    },
+    {
+      "nombre": "La Castellana FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/113239.png?lm=1789466905"
+    },
+    {
+      "nombre": "Ciudad de Yantzaza",
+      "media": 36,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/54486.png?lm=1789462617"
+    },
+    {
+      "nombre": "Huaquillas FC",
+      "media": 42,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/C.H.png/330px-C.H.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Búhos ULVR FC",
+      "media": 42,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/45503.png?lm=1789461954"
+    },
+    {
+      "nombre": "Luz Valdivia FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/123055.png?lm=1789467636"
+    },
+    {
+      "nombre": "Liga Deportiva de Cuenca",
+      "media": 44,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/25700.png?lm=1789460532"
+    },
+    {
+      "nombre": "Santa Ana FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/44456.png?lm=1789461877"
+    },
+    {
+      "nombre": "La Troncal FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/76007.png?lm=1789464197"
+    },
+    {
+      "nombre": "Aviced FC",
+      "media": 41,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/91464.png?lm=1789472513"
+    },
+    {
+      "nombre": "Guaranda FC",
+      "media": 41,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/110719.png?lm=1789466714"
+    },
+    {
+      "nombre": "Insutec FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/63101.png?lm=1789463252"
+    },
+    {
+      "nombre": "San Luis del Valle",
+      "media": 33,
+      "escudo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTiWuJCy7ZdsNvTKZVPCtXGM8eb_L0BCtKc7ESh_ONqA&s=10"
+    },
+    {
+      "nombre": "Club Alianza (Ecu)",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/70431.png?lm=1789463792"
+    },
+    {
+      "nombre": "Imbabura SC",
+      "media": 47,
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/78/Imbabura.png/330px-Imbabura.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
+    },
+    {
+      "nombre": "Sagrado Corazón FC",
+      "media": 37,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/104575.png?lm=1789466259"
+    },
+    {
+      "nombre": "Real Puerto Quito",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/108168.png?lm=1789466526"
+    },
+    {
+      "nombre": "C.D. La Unión",
+      "media": 39,
+      "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_24,h_24,c_limit,q_auto:eco,dpr_3,d_Competitors:default1.png/v2/Competitors/67573"
+    },
+    {
+      "nombre": "Daquilema FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/109946.png?lm=1789466658"
+    },
+    {
+      "nombre": "Baños Ciudad de Fuego",
+      "media": 41,
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/e/e2/Ba%C3%B1os_ciudad_de_fuego.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
+    },
+    {
+      "nombre": "C.D. Espoli",
+      "media": 45,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/13547.png?lm=1789459854"
+    },
+    {
+      "nombre": "Colorados SC",
+      "media": 45,
+      "escudo": "https://delphisoftecuador.com/sv_501/media/files/iconoestablecimiento/882accf96677f7e9692d3c287b1b1ec9.png"
+    },
+    {
+      "nombre": "Mineros SC",
+      "media": 46,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/68058.png?lm=1789463622"
+    },
+    {
+      "nombre": "Anaconda FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/41182.png?lm=1789461639"
+    },
+    {
+      "nombre": "Vicentino Dragons SC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/120263.png?lm=1789467430"
+    },
+    {
+      "nombre": "Río Aguarico FC",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/113269.png?lm=1789466906"
+    },
+    {
+      "nombre": "Dep. Ciudad Canela",
+      "media": 39,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/144628.png?lm=1789469245"
+    },
+    {
+      "nombre": "UTC (Cotopaxi)",
+      "media": 40,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/27956.png?lm=1789460692"
+    },
+    {
+      "nombre": "Nazareno SC",
+      "media": 40,
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/140910.png?lm=1789468968"
+    }
+  ],
+  "tercera_liga": {
+    "nombre": "Segunda Categoría",
+    "formato": "ecuador_tercera",
+    "ascensos": 2,
+    "descensos": 0,
+    "calendario": {
+      "Zonal": [
+        8,
+        8,
+        5
+      ],
+      "Semifinal": [
+        10,
+        17,
+        5
+      ],
+      "Final": [
+        11,
+        28,
+        5
+      ]
+    },
+    "grupos": [
+      [
+        "Astillero FC",
+        "Joga Bonito Z",
+        "Corinthian's",
+        "C.D. Grecia",
+        "Peninsulares FC",
+        "C.S. Patria"
+      ],
+      [
+        "Deportivo Quito",
+        "Dunamis 04 FC",
+        "Santa Fe SC",
+        "UDJ Quinindé",
+        "Pelileo SC",
+        "Señor Montúfar"
+      ],
+      [
+        "11 de Mayo FC",
+        "Milagro FC",
+        "Cobras Peninsular FC",
+        "Olmedo",
+        "Politécnico",
+        "Vargas Torres"
+      ],
+      [
+        "San Pedro del Pongo",
+        "Independiente Azogues",
+        "La Castellana FC",
+        "Ciudad de Yantzaza",
+        "Huaquillas FC",
+        "Búhos ULVR FC"
+      ],
+      [
+        "Luz Valdivia FC",
+        "Liga Deportiva de Cuenca",
+        "Santa Ana FC",
+        "La Troncal FC",
+        "Aviced FC",
+        "Guaranda FC"
+      ],
+      [
+        "Insutec FC",
+        "San Luis del Valle",
+        "Club Alianza (Ecu)",
+        "Imbabura SC",
+        "Sagrado Corazón FC",
+        "Real Puerto Quito"
+      ],
+      [
+        "C.D. La Unión",
+        "Daquilema FC",
+        "Baños Ciudad de Fuego",
+        "C.D. Espoli",
+        "Colorados SC",
+        "Mineros SC"
+      ],
+      [
+        "Anaconda FC",
+        "Vicentino Dragons SC",
+        "Río Aguarico FC",
+        "Dep. Ciudad Canela",
+        "UTC (Cotopaxi)",
+        "Nazareno SC"
+      ]
+    ]
+  }
+}

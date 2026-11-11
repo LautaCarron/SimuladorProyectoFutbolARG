@@ -24,7 +24,7 @@ LIGAS_ARGENTINA = ("Primera División", "Primera Nacional", "Federal A", "Federa
 COPAS_ARGENTINA = ("Copa Argentina", "Supercopa Argentina", "Regionales")
 COPAS_EXTERIOR = {"Uruguay": ("Copa AUF Uruguay", "Supercopa Uruguaya"), "Brasil": ("Estaduales", "Copa do Brasil", "Supercopa do Brasil"),
                  "Chile": ("Copa Chile", "Supercopa de Chile"), "Colombia": ("Copa Colombia", "Supercopa de Colombia"),
-                 "Paraguay": ("Copa Paraguay", "Supercopa Paraguay")}        # copas nacionales de los países con liga simulada
+                 "Paraguay": ("Copa Paraguay", "Supercopa Paraguay"), "Ecuador": ("Copa Ecuador", "Supercopa Ecuador")}        # copas nacionales de los países con liga simulada
 COPAS_INTERNACIONALES = ("Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana", "Mundial de Clubes")
 
 PAISES = [PAIS_BASE, *dict.fromkeys(c["pais"] for c in LIGAS_EXT)]

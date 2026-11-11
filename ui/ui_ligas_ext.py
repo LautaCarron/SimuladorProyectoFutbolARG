@@ -70,6 +70,17 @@ def _leyenda_comp(comp, L):
         return [("Campeón / líder", COLOR_ORO), ("Libertadores", COLORES_DESTINO["Libertadores"]),
                 ("Libertadores · Fase 2 / Fase 1", COLORES_DESTINO["Fase previa Libertadores"]),
                 ("Sudamericana", COLORES_DESTINO["Sudamericana"]), ("Desciende", COLORES_B["Desciende"])]
+    if comp.formato.nombre == "ecuador":
+        return [("Campeón / líder", COLOR_ORO), ("Clasifica a la fase final", COLORES_B["Reducido"]),
+                ("Libertadores", COLORES_DESTINO["Libertadores"]),
+                ("Libertadores · Fase 2 / Fase 1", COLORES_DESTINO["Fase previa Libertadores"]),
+                ("Sudamericana", COLORES_DESTINO["Sudamericana"]), ("Desciende", COLORES_B["Desciende"])]
+    if comp.formato.nombre == "ecuador_segunda":
+        return [("Campeón / líder", COLOR_ORO), ("Asciende a la Serie A", COLORES_B["Ascenso directo"]),
+                ("Clasifica al hexagonal por el ascenso", COLORES_B["Reducido"]), ("Desciende a la Segunda Categoría", COLORES_B["Desciende"])]
+    if comp.formato.nombre == "ecuador_tercera":
+        return [("Campeón / líder", COLOR_ORO), ("Asciende a la Serie B", COLORES_B["Ascenso directo"]),
+                ("Clasifica a la fase siguiente", COLORES_B["Reducido"])]
     if comp.formato.nombre == "paraguay_segunda":
         return [("Campeón / líder", COLOR_ORO), ("Asciende a Primera", COLORES_B["Ascenso directo"]),
                 ("Desciende a la tercera división", COLORES_B["Desciende"])]

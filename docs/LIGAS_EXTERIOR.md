@@ -1,6 +1,6 @@
 # Ligas de otros países
 
-Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están **Uruguay**, **Brasil**, **Chile**, **Colombia** y **Paraguay**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
+Módulo para simular la primera división de otros países junto con el fútbol argentino. Hoy están (Perú con Liga 1 y Liga 2) **Uruguay**, **Brasil**, **Chile**, **Colombia**, **Paraguay**, **Ecuador**, **Bolivia**, **Perú** y **Venezuela**; las demás se suman con datos (ver "Cómo sumar un país"). En la pestaña **Mundo** se elige el país activo (ver `datos/paises.py`); la liga se ve en **Ligas** cuando ese país está activo.
 
 ## Plan (cómo está pensado)
 
@@ -328,3 +328,57 @@ Copa nacional de Paraguay (`clave` `copa_py`, clase `CopaParaguay` en `copas/reg
 * Palmarés: `hist_copa_py` en `palmares_py.json` (2018-2025, no se jugó en 2020). Falta el logo (clave `"Copa Paraguay"` en `logos.json`, opcional).
 * **Simplificaciones**: la real tiene 74 clubes (también la Primera C, 12, y los 17 campeones departamentales de la UFI) y la primera fase se juega entre los 46 de las B, la C y la UFI con 20 cruces y dos triangulares; acá la B Nacional hace de UFI y no están la C ni los demás campeones departamentales. En la realidad, si el campeón ya clasificó por la liga, el cupo pasa al subcampeón (o al tercero), y también juega la Supercopa Paraguay (no simulada); acá el cupo sigue por la tabla. Los sorteos de la tercera fase y la distribución de cruces son libres (no se separan por zona).
 * `VERSION_ESTADO` subió a 39.
+
+## Ecuador: LigaPro Serie A (`ligas/ecuador.py`, `datos/json/liga_ecuador.json`)
+
+Formato `ecuador`, 16 clubes, formato 2026:
+
+* **Primera etapa**: todos contra todos a doble rueda (30 fechas, viernes desde el 20/2).
+* **Fase final** (desde el 20/9, una fecha cada 9 días): los puntos y los goles de la primera etapa **se arrastran** y cada grupo juega a ida y vuelta.
+  * **Hexagonal por el título** (1° a 6°, 10 fechas): el 1° es el campeón.
+  * **Cuadrangular** (7° a 10°, 6 fechas): por el último cupo a la Sudamericana.
+  * **Hexagonal del descenso** (11° a 16°, 10 fechas): bajan los 2 últimos a la Serie B.
+* **Cupos CONMEBOL**: la posición final es hexagonal, cuadrangular y descenso, en ese orden (`orden` del cierre). Con los cupos de `copas/conmebol.py`: 1° y 2° a grupos de la Libertadores, 3° a la Fase 2, 4° a la Fase 1, 5° y 6° a la Sudamericana y 1° y 2° del cuadrangular a la Sudamericana. El líder de la primera etapa ya no clasifica directo (cambio de 2026).
+* **Serie B**: ver la sección siguiente.
+* **Palmarés**: `hist_ext_ec` en `palmares_ec.json`, 69 títulos por club (Barcelona SC 16, Emelec 14, El Nacional 13, Liga de Quito 13, Deportivo Quito 5, Independiente del Valle 3, y 1 de Deportivo Cuenca, Olmedo, Delfín, Aucas y Everest). Lo pasó el usuario; no se contrastó con la FEF.
+* **Simplificaciones a revisar**: la Copa Ecuador no se simula (en la realidad su campeón tiene el cupo de la Fase 1 y los cupos de la Sudamericana se corren); los 3 grupos juegan la misma fecha el mismo día (en la realidad el cuadrangular termina antes); sin los desempates especiales del reglamento (sólo puntos, diferencia de gol y goles a favor); en la Serie B real los filiales (Independiente Juniors, San Antonio) no pueden ascender; los 16 clubes de Primera y las medias son los que ya tenía el simulador.
+
+**LigaPro Serie B** (formato `ecuador_segunda`, `segunda_liga` del mismo JSON, `clave` `ec2`): 12 clubes de 2026.
+
+* **Etapa regular**: doble rueda (22 fechas, viernes desde el 20/3). **Dos hexagonales** (desde el 27/8, jueves, una fecha por semana, 10 fechas, ida y vuelta) con los puntos y goles arrastrados: por el ascenso (1° a 6°) y de permanencia (7° a 12°).
+* **Ascenso**: el 1° del hexagonal por el ascenso es el campeón y suben los 2 primeros. Los filiales (`filiales` del JSON: Independiente Juniors y San Antonio) no pueden ascender: si terminan en un puesto de ascenso sube el siguiente mejor. Los 2 que bajan de la Serie A los reemplazan, así la pirámide queda cerrada (16, 12 y 48).
+* **Descenso**: bajan los 2 últimos del hexagonal de permanencia a la Segunda Categoría (`descensos` 2) y los reemplazan los 2 que suben de ella.
+* **Palmarés**: `hist_ext_ec2` está vacío: las fuentes consultadas no coinciden en cuántos títulos hay (37 contra 40 sumados). Cuenta desde la primera temporada simulada.
+* **Simplificaciones**: medias orientativas y sin escudo para los clubes de la Serie B; los dos hexagonales juegan la misma fecha.
+
+**Segunda Categoría** (formato `ecuador_tercera`, `tercera` y `tercera_liga` del mismo JSON, `clave` `ec3`, `divisional` 3): 48 clubes del Ascenso Nacional 2026.
+
+* **Primera fase** (desde el 8/8, sábados): 8 grupos de 6 a ida y vuelta (10 fechas). Los grupos de la primera temporada son los del sorteo real de 2026 (`grupos` del JSON, tomados de La Prensa); después se sortean al azar.
+* **Cuadrangulares semifinales**: los 16 clasificados (2 por grupo) en 4 cuadrangulares a ida y vuelta (6 fechas, desde el 17/10). Pasa el 1° de cada uno.
+* **Cuadrangular final** (desde el 28/11, una fecha cada 4 días, termina el 18/12): los 4 ganadores a ida y vuelta (6 fechas). El 1° es el campeón y suben los 2 primeros a la Serie B. Cada fase empieza de cero.
+* **Pirámide**: suben 2 y bajan 2 de la Serie B, así quedan 16, 12 y 48. Bajo la Segunda Categoría no hay nada (`descensos` 0); los torneos provinciales que la alimentan no se simulan.
+* **Palmarés**: `hist_ext_ec3` en `palmares_ec.json`, 53 títulos (1967-2025, Wikipedia; verificar contra la FEF).
+* **Simplificaciones a revisar**: el sorteo de los cuadrangulares es fijo (1° de A con 2° de B, 1° de C y 2° de D; etcétera) y el real depende de la geografía; los 48 clubes y los grupos salen de una nota periodística (La Prensa; el casillero que estaba vacío del Grupo C se completó con Olmedo (Riobamba), elegido a mano porque Santo Domingo NM23, el que figura en las notas, se confunde con el Deportivo Santo Domingo de la Serie B) y El Comercio ubica a Inter de Quito donde La Prensa pone a Señor Montúfar (Grupo B); "UTC" se llama `UTC (Cotopaxi)` para no chocar con el UTC de Perú; medias orientativas y sin escudo.
+* `VERSION_ESTADO` subió a 40 (con el cambio de Paraguay, que subió a 39).
+
+## Bolivia: División Profesional (`datos/json/liga_bolivia.json`)
+
+Formato `todos_contra_todos` (sin código nuevo), `clave` `bo`, 16 clubes, formato 2026 (los clubes votaron mantener un solo torneo):
+
+* **Torneo único**: doble rueda (30 fechas, sábados desde el 4/4). Campeón el que más puntos suma.
+* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda, que es una lista de reserva sin simular (`segunda`, 8 clubes).
+* **Cupos CONMEBOL** (`copas/conmebol.py`, ya estaban cargados): 2 a grupos de la Libertadores, 1 a la Fase 2, 1 a la Fase 1 y 4 a la Sudamericana, por la tabla.
+* Los 16 clubes y sus medias son los que ya tenía el simulador (se movieron de `clubes_int.json` al archivo de la liga).
+* **Simplificaciones a revisar**: la realidad tiene un repechaje de permanencia (el 15° juega una promoción) y el descenso/ascenso depende de la Copa Simón Bolívar, que no se simula; los 8 clubes de la reserva y sus medias son orientativos y sin escudo; sin Copa Bolivia ni Supercopa; palmarés histórico en `palmares_bo.json` (clave `hist_ext_bo`, 93 títulos hasta 2025 según RSSSF/Wikipedia; verificar contra la FBF) y logo de la liga en `logos.json` (clave `"División Profesional"`); la plantilla de 16 clubes no se contrastó con la lista oficial de 2026.
+* `VERSION_ESTADO` subió a 41 (las partidas guardadas con la versión anterior ya no se cargan).
+
+## Venezuela: Liga FUTVE (`datos/json/liga_venezuela.json`)
+
+Formato `todos_contra_todos` (sin código nuevo), `clave` `ve`, 14 clubes (la plantilla de 2026: los 13 mejores de 2025 más Trujillanos, campeón de la Liga FUTVE 2):
+
+* **Torneo único**: doble rueda (26 fechas, sábados desde el 31/1). Campeón el que más puntos suma.
+* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda, que es una lista de reserva sin simular (`segunda`, 14 clubes de la Liga FUTVE 2 2026; no están los filiales de Academia Puerto Cabello, Zamora y Monagas, que no pueden ascender).
+* **Cupos CONMEBOL** (`copas/conmebol.py`, ya estaban cargados): 2 a grupos de la Libertadores, 1 a la Fase 2, 1 a la Fase 1 y 4 a la Sudamericana, por la tabla.
+* Los 14 clubes, sus medias y sus escudos son los que ya tenía el simulador (se movieron de `clubes_int.json` al archivo de la liga, igual que Bolivia).
+* **Simplificaciones a revisar**: la realidad son dos torneos cortos (Apertura y Clausura, de 13 fechas cada uno; los 8 mejores de cada uno juegan dos grupos de 4 y una final) y el campeón sale de la final entre los dos ganadores; la tabla acumulada de las 26 fechas define el resto de los cupos y el descenso. Acá es un solo torneo de 26 fechas, así que el campeón puede no coincidir con el real. Los 14 clubes de la reserva y sus medias son orientativos y sin escudo; sin Copa Venezuela ni Supercopa; palmarés histórico en `palmares_ve.json` (clave `hist_ext_ve`, 105 títulos hasta 2025 según Wikipedia y RSSSF; verificar contra la FVF); todavía no hay logo de la liga en `logos.json` (clave `"Liga FUTVE"`).
+* `VERSION_ESTADO` subió a 42 (las partidas guardadas con la versión anterior ya no se cargan).

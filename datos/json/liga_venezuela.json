@@ -1,0 +1,163 @@
+{
+  "clave": "ve",
+  "nombre": "Liga FUTVE",
+  "pais": "Venezuela",
+  "formato": "todos_contra_todos",
+  "descensos": 1,
+  "ascensos": 1,
+  "calendario": {
+    "Liga": [
+      1,
+      31,
+      5
+    ]
+  },
+  "oscuros": [
+    "Caracas FC",
+    "Portuguesa"
+  ],
+  "primera": [
+    {
+      "nombre": "Academia Puerto Cabello",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18995.png&h=96&w=96"
+    },
+    {
+      "nombre": "Anzoátegui FC",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/13783.png&h=96&w=96"
+    },
+    {
+      "nombre": "Carabobo",
+      "media": 58,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6037.png&h=96&w=96"
+    },
+    {
+      "nombre": "Caracas FC",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4811.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo La Guaira",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17090.png&h=96&w=96"
+    },
+    {
+      "nombre": "Deportivo Táchira",
+      "media": 60,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/4818.png&h=96&w=96"
+    },
+    {
+      "nombre": "Estudiantes de Mérida",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6038.png&h=96&w=96"
+    },
+    {
+      "nombre": "Metropolitanos",
+      "media": 57,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/13481.png&h=96&w=96"
+    },
+    {
+      "nombre": "Monagas SC",
+      "media": 58,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6041.png&h=96&w=96"
+    },
+    {
+      "nombre": "Portuguesa",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6762.png&h=96&w=96"
+    },
+    {
+      "nombre": "Rayo Zuliano",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21850.png&h=96&w=96"
+    },
+    {
+      "nombre": "Trujillanos",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/5268.png&h=96&w=96"
+    },
+    {
+      "nombre": "UCV FC",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/10094.png&h=96&w=96"
+    },
+    {
+      "nombre": "Zamora FC",
+      "media": 54,
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6763.png&h=96&w=96"
+    }
+  ],
+  "segunda": [
+    {
+      "nombre": "Mineros de Guayana",
+      "media": 50,
+      "escudo": ""
+    },
+    {
+      "nombre": "Yaracuyanos FC",
+      "media": 50,
+      "escudo": ""
+    },
+    {
+      "nombre": "Deportivo Lara",
+      "media": 49,
+      "escudo": ""
+    },
+    {
+      "nombre": "Aragua FC",
+      "media": 47,
+      "escudo": ""
+    },
+    {
+      "nombre": "Ureña SC",
+      "media": 46,
+      "escudo": ""
+    },
+    {
+      "nombre": "Atlético El Vigía",
+      "media": 45,
+      "escudo": ""
+    },
+    {
+      "nombre": "Marítimo de La Guaira",
+      "media": 45,
+      "escudo": ""
+    },
+    {
+      "nombre": "Barquisimeto SC",
+      "media": 44,
+      "escudo": ""
+    },
+    {
+      "nombre": "Atlético Barinas",
+      "media": 43,
+      "escudo": ""
+    },
+    {
+      "nombre": "Atlético Ávila",
+      "media": 43,
+      "escudo": ""
+    },
+    {
+      "nombre": "Bolívar SC",
+      "media": 43,
+      "escudo": ""
+    },
+    {
+      "nombre": "Real Frontera",
+      "media": 42,
+      "escudo": ""
+    },
+    {
+      "nombre": "Dynamo Puerto",
+      "media": 42,
+      "escudo": ""
+    },
+    {
+      "nombre": "Deportivo Miranda",
+      "media": 42,
+      "escudo": ""
+    }
+  ]
+}

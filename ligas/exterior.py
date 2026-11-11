@@ -314,7 +314,7 @@ FORMATOS = {TodosContraTodos.nombre: TodosContraTodos()}
 
 def formato_de(cfg):
     """El formato de la liga `cfg` (una entrada de ligas_ext.json)."""
-    from ligas import brasil_d, colombia, colombia_segunda, paraguay, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
+    from ligas import brasil_d, colombia, colombia_segunda, ecuador, paraguay, uruguay, uruguay_amateur, uruguay_segunda  # noqa: F401  (se registran solos: evita importaciones circulares)
     try:
         return FORMATOS[cfg["formato"]]
     except KeyError:

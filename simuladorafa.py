@@ -53,12 +53,14 @@ from ui import (  # noqa: E402
     ui_copa_paraguay,
     ui_copa_colombia,
     ui_copa_uruguay,
+    ui_copa_ecuador,
     ui_estaduales,
     ui_supercopa_br,
     ui_supercopa_cl,
     ui_supercopa_py,
     ui_supercopa_co,
     ui_supercopa_uy,
+    ui_supercopa_ec,
     ui_federal,
     ui_federal_b,
     ui_guardado,
@@ -82,7 +84,7 @@ from ui.vista.mi_club import competencias_club, estilo_mi_club  # noqa: E402
 
 # Pestañas de la interfaz, en el orden en que se dibujan
 PESTANAS_UI = (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional,
-               ui_copa_argentina, ui_supercopa, ui_regionales, ui_estaduales, ui_copa_brasil, ui_copa_chile, ui_copa_paraguay, ui_copa_colombia, ui_supercopa_br, ui_supercopa_cl, ui_supercopa_py, ui_supercopa_co, ui_copa_uruguay, ui_supercopa_uy, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
+               ui_copa_argentina, ui_supercopa, ui_regionales, ui_estaduales, ui_copa_brasil, ui_copa_chile, ui_copa_paraguay, ui_copa_colombia, ui_supercopa_br, ui_supercopa_cl, ui_supercopa_py, ui_supercopa_co, ui_copa_uruguay, ui_supercopa_uy, ui_copa_ecuador, ui_supercopa_ec, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
                ui_clubes, ui_avisos, ui_historial, ui_guardado)
 
 
