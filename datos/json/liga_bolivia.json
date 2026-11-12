@@ -26,13 +26,31 @@
     {"nombre": "Universitario de Vinto", "media": 55, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21379.png&h=96&w=96"}
   ],
   "segunda": [
-    {"nombre": "Jorge Wilstermann", "media": 52, "escudo": ""},
-    {"nombre": "Atlético Palmaflor", "media": 48, "escudo": ""},
-    {"nombre": "Royal Pari", "media": 46, "escudo": ""},
-    {"nombre": "Mamoré", "media": 44, "escudo": ""},
-    {"nombre": "Ciclón", "media": 44, "escudo": ""},
-    {"nombre": "Universitario de Sucre", "media": 44, "escudo": ""},
-    {"nombre": "Fancesa", "media": 43, "escudo": ""},
-    {"nombre": "Libertad Gran Mamoré", "media": 43, "escudo": ""}
-  ]
+    {"nombre": "Jorge Wilstermann", "media": 52, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c7/Escudo_Wilstermann.png/500px-Escudo_Wilstermann.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Atlético Palmaflor", "media": 48, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20654.png&h=200&w=200"},
+    {"nombre": "Royal Pari", "media": 46, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/18984.png&h=200&w=200"},
+    {"nombre": "Real Santa Cruz", "media": 46, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/20655.png&h=200&w=200"},
+    {"nombre": "San José (Oruro)", "media": 45, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/22174.png&h=200&w=200"},
+    {"nombre": "Universitario de Sucre", "media": 44, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6149.png&h=200&w=200"},
+    {"nombre": "Libertad Gran Mamoré", "media": 44, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/21778.png&h=200&w=200"},
+    {"nombre": "Ciclón", "media": 44, "escudo": "https://upload.wikimedia.org/wikipedia/commons/f/f5/Escudo_de_C._A._Cicl%C3%B3n_de_Tarija.png?utm_source=es.wikipedia.org&utm_campaign=index&utm_content=thumbnail_unscaled"},
+    {"nombre": "Fancesa", "media": 43, "escudo": "https://static.flashscore.com/res/image/data/xYE7uFFG-WnGXOAhG.png"},
+    {"nombre": "Empresa Minera Huanuni", "media": 40, "escudo": "https://img.a.transfermarkt.technology/wappen/head/92757.png?lm=1789465404"},
+    {"nombre": "Nueva Santa Cruz", "media": 41, "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v4/Competitors/69040"},
+    {"nombre": "San Juan FC", "media": 41, "escudo": "https://imagecache.365scores.com/image/upload/f_png,w_64,h_64,c_limit,q_auto:eco,dpr_2,d_Competitors:default1.png/v2/Competitors/88240"},
+    {"nombre": "Virginia USC", "media": 42, "escudo": "https://img.a.transfermarkt.technology/wappen/head/142745.png?lm=1789469105"},
+    {"nombre": "Deportivo Municipal (La Paz)", "media":35, "escudo": "https://img.a.transfermarkt.technology/wappen/head/78078.png?lm=1789464350"},
+    {"nombre": "Litoral (La Paz)", "media": 38, "escudo": "https://www.futbox.com/img/v1/750/597/2f3/ddd/4fbb7195772a4ce28cb3.png"},
+    {"nombre": "Universitario de La Paz", "media": 35, "escudo": "https://img.a.transfermarkt.technology/wappen/head/78085.png?lm=1789464350"},
+    {"nombre": "Enrique Happ", "media": 38, "escudo": "https://img.a.transfermarkt.technology/wappen/head/85385.png?lm=1789464876"},
+    {"nombre": "Destroyers", "media": 38, "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/6048.png&h=200&w=200"},
+    {"nombre": "Vaca Díez", "media":36, "escudo": "https://img.a.transfermarkt.technology/wappen/head/92821.png?lm=1789465410"},
+    {"nombre": "Stormers", "media": 35, "escudo": "https://img.a.transfermarkt.technology/wappen/head/93001.png?lm=1789465425"},
+    {"nombre": "Universidad Cruceña", "media": 35, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/TODOS_JUNTOS_X_LA_U.jpg/330px-TODOS_JUNTOS_X_LA_U.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
+    {"nombre": "Real Mamoré", "media": 43, "escudo": ""},
+    {"nombre": "La Paz FC", "media": 42, "escudo": ""},
+    {"nombre": "Sport Boys Warnes", "media": 41, "escudo": ""},
+    {"nombre": "Deportivo Kala", "media": 40, "escudo": ""}
+  ],
+  "segunda_liga": {"nombre": "Copa Simón Bolívar", "formato": "todos_contra_todos", "vueltas": 1, "descensos": 0, "calendario": {"Liga": [8, 22, 5]}}
 }

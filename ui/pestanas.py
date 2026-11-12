@@ -48,6 +48,9 @@ class Pestanas:
     tab_sco: object = None             # Supercopa de Colombia (sólo si el país activo es Colombia)
     tab_cec: object = None             # Copa Ecuador (sólo si el país activo es Ecuador)
     tab_sec: object = None             # Supercopa Ecuador (sólo si el país activo es Ecuador)
+    tab_cbo: object = None             # Copa Bolivia (sólo si el país activo es Bolivia)
+    tab_cve: object = None             # Copa Venezuela (sólo si el país activo es Venezuela)
+    tab_scve: object = None            # Supercopa de Venezuela (sólo si el país activo es Venezuela)
     tab_cco: object = None             # Copa Colombia (sólo si el país activo es Colombia)
     tab_scl: object = None             # Supercopa de Chile (sólo si el país activo es Chile)
     tab_fb: object = None
@@ -78,7 +81,7 @@ def _globito_avisos(sin_leer, posicion):
 
 
 CLAVES_INTERNACIONALES = ("lib", "sud", "rec", "mun")
-CLAVE_COPA_EXT = {"Copa AUF Uruguay": "cuy", "Supercopa Uruguaya": "scuy", "Estaduales": "est", "Copa do Brasil": "cbr", "Supercopa do Brasil": "sbr", "Copa Chile": "ccl", "Supercopa de Chile": "scl", "Copa Colombia": "cco", "Supercopa de Colombia": "sco", "Copa Paraguay": "cpy", "Supercopa Paraguay": "scpy", "Copa Ecuador": "cec", "Supercopa Ecuador": "sec"}   # copas nacionales de otros países
+CLAVE_COPA_EXT = {"Copa AUF Uruguay": "cuy", "Supercopa Uruguaya": "scuy", "Estaduales": "est", "Copa do Brasil": "cbr", "Supercopa do Brasil": "sbr", "Copa Chile": "ccl", "Supercopa de Chile": "scl", "Copa Colombia": "cco", "Supercopa de Colombia": "sco", "Copa Paraguay": "cpy", "Supercopa Paraguay": "scpy", "Copa Ecuador": "cec", "Supercopa Ecuador": "sec", "Copa Bolivia": "cbo", "Copa Venezuela": "cve", "Supercopa de Venezuela": "scve"}   # copas nacionales de otros países
 
 
 def _sufijo(pais):
@@ -132,6 +135,9 @@ def _pestanas_de_copas(competencias, kclub, pais):
              ("scpy", _etiqueta("Supercopa Paraguay", "Supercopa Paraguay", "scpy", competencias)),
               ("cec", _etiqueta("Copa Ecuador", "Copa Ecuador", "cec", competencias)),
               ("sec", _etiqueta("Supercopa Ecuador", "Supercopa Ecuador", "sec", competencias)),
+             ("cbo", _etiqueta("Copa Bolivia", "Copa Bolivia", "cbo", competencias)),
+             ("cve", _etiqueta("Copa Venezuela", "Copa Venezuela", "cve", competencias)),
+             ("scve", _etiqueta("Supercopa de Venezuela", "Supercopa de Venezuela", "scve", competencias)),
              ("lib", _etiqueta("Copa Libertadores", "Libertadores", "lib", competencias)),
              ("sud", _etiqueta("Copa Sudamericana", "Sudamericana", "sud", competencias)),
              ("rec", _etiqueta("Recopa Sudamericana", "Recopa", "rec", competencias)),
@@ -176,5 +182,5 @@ def crear_pestanas(S, modo_mgr, competencias, kclub, sin_leer, pestana_inicial=N
         tab_pb=ligas.get("pb"), tab_pc=ligas.get("pc"), tab_pd=ligas.get("pd"), tab_ca=copas.get("ca"),
         tab_sup=copas.get("sup"), tab_rgs=copas.get("rgs"), tab_lib=copas.get("lib"), tab_sud=copas.get("sud"),
         tab_rec=copas.get("rec"), tab_mun=copas.get("mun"), tab_cuy=copas.get("cuy"), tab_scuy=copas.get("scuy"),
-        tab_est=copas.get("est"), tab_cbr=copas.get("cbr"), tab_sbr=copas.get("sbr"), tab_ccl=copas.get("ccl"), tab_scl=copas.get("scl"), tab_cco=copas.get("cco"), tab_sco=copas.get("sco"), tab_cpy=copas.get("cpy"), tab_scpy=copas.get("scpy"), tab_cec=copas.get("cec"), tab_sec=copas.get("sec"),
+        tab_est=copas.get("est"), tab_cbr=copas.get("cbr"), tab_sbr=copas.get("sbr"), tab_ccl=copas.get("ccl"), tab_scl=copas.get("scl"), tab_cco=copas.get("cco"), tab_sco=copas.get("sco"), tab_cpy=copas.get("cpy"), tab_scpy=copas.get("scpy"), tab_cec=copas.get("cec"), tab_sec=copas.get("sec"), tab_cbo=copas.get("cbo"), tab_cve=copas.get("cve"), tab_scve=copas.get("scve"),
         tab_mgr=tab_mgr, tab_fb=ligas.get("fb"), tab_mundo=tab_mundo, tabs_ligas_ext=ligas_ext)

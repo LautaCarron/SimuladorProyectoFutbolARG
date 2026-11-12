@@ -20,5 +20,43 @@
       "Sport Boys Warnes": 1,
       "Universitario de La Paz": 1
     }
+  },
+  "hist_copa_bo": {
+    "descripcion": "Copa Bolivia de la División Profesional (hoy 16 clubes de Primera, por series). Ediciones jugadas: 2023 (se llamó Copa de la División Profesional, ganó Bolívar) y 2025 (ganó Nacional Potosí). La Copa Bolivia 2022 se suspendió sin campeón y en 2024 no hubo copa. No incluye la edición 2026 (en juego). Fuente: Wikipedia y Correo del Sur; verificar contra la FBF.",
+    "titulos": {
+      "Bolívar": 1,
+      "Nacional Potosí": 1
+    }
+  },
+  "hist_ext_bo2": {
+    "descripcion": "Copa Simón Bolívar (segunda división de Bolivia), 1989-2025: 32 títulos. Desde 1989 es el torneo de ascenso: el campeón sube a la División Profesional (el subcampeón juega un repechaje); no se jugó entre 2011 y 2016 (en su lugar hubo la Liga Nacional B) y la edición 2016-17 y la 2017 cuentan por separado. Las ediciones de 1960-1976, cuando la Copa Simón Bolívar era el campeonato nacional, ya están contadas en el palmarés de la División Profesional. Enrique Happ ganó 3 y nunca subió (es una academia). 'San José (Oruro)' es el de 2001 y no el GV San José (2023). 'Mamoré' es Municipal Real Mamoré (2006). No incluye la temporada 2026. Fuente: Wikipedia (Copa Simón Bolívar); verificar contra la FBF.",
+    "titulos": {
+      "Enrique Happ": 3,
+      "Aurora": 2,
+      "Guabirá": 2,
+      "Nacional Potosí": 2,
+      "Real Potosí": 2,
+      "ABB": 1,
+      "Always Ready": 1,
+      "Atlético Pompeya": 1,
+      "Blooming": 1,
+      "Deportivo Municipal (La Paz)": 1,
+      "Destroyers": 1,
+      "GV San José": 1,
+      "Iberoamericana": 1,
+      "La Paz": 1,
+      "Real Mamoré": 1,
+      "Atlético Palmaflor": 1,
+      "Real Santa Cruz": 1,
+      "Real Tomayapo": 1,
+      "Royal Pari": 1,
+      "San José (Oruro)": 1,
+      "Stormers": 1,
+      "Universidad Cruceña": 1,
+      "Universitario de Sucre": 1,
+      "Universitario de Vinto": 1,
+      "Unión Central": 1,
+      "Vaca Díez": 1
+    }
   }
 }

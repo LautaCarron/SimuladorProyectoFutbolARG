@@ -203,14 +203,15 @@ def _divisional_de(L):
 
 class TodosContraTodos(Formato):
     """Liga larga a doble rueda (como el Brasileirão): gana el que más puntos suma, bajan los últimos.
-    Lo que pide ligas_ext.json: `descensos` y `calendario.Liga` = [mes, día, día de la semana] de la primera fecha."""
+    Lo que pide ligas_ext.json: `descensos` y `calendario.Liga` = [mes, día, día de la semana] de la primera fecha;
+    `vueltas` (opcional, 2 por defecto): 1 la juega a una sola rueda."""
     nombre = "todos_contra_todos"
     descripcion = "Todos contra todos, ida y vuelta. Campeón el que más puntos suma; descienden los últimos."
 
     def nueva(self, cfg, nombres, r, previo, anio, rng):
         n = len(nombres)
         ida = rueda(rng, range(n))
-        fechas = ida + espejo(ida)
+        fechas = ida if int(cfg.get("vueltas", 2)) == 1 else ida + espejo(ida)      # `vueltas` 1: a una sola rueda (Copa Simón Bolívar)
         dias = dias_semanales(anio, cfg["calendario"]["Liga"], len(fechas))
         rondas = [ronda("Liga", f"Fecha {k + 1}", "Liga", dias[k], pares=f, suma="Liga") for k, f in enumerate(fechas)]
         div = int(cfg.get("divisional", 1))

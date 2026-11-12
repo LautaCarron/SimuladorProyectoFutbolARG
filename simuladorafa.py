@@ -25,7 +25,7 @@ if not ES_WEB:    # pantalla de inicio ("Elegí un modo"); en la web estática l
     mostrar_inicio()
 
 from datos import club_propio  # noqa: E402
-from datos.equipos import ERROR_DATOS, ESCUDOS_CSS  # noqa: E402
+from datos.equipos import ERROR_DATOS  # noqa: E402
 
 if ERROR_DATOS:   # datos/equipos.py no depende de Streamlit: el aviso lo muestra la interfaz
     st.error(ERROR_DATOS)
@@ -54,6 +54,8 @@ from ui import (  # noqa: E402
     ui_copa_colombia,
     ui_copa_uruguay,
     ui_copa_ecuador,
+    ui_copa_bolivia,
+    ui_copa_venezuela,
     ui_estaduales,
     ui_supercopa_br,
     ui_supercopa_cl,
@@ -61,6 +63,7 @@ from ui import (  # noqa: E402
     ui_supercopa_co,
     ui_supercopa_uy,
     ui_supercopa_ec,
+    ui_supercopa_ve,
     ui_federal,
     ui_federal_b,
     ui_guardado,
@@ -84,7 +87,7 @@ from ui.vista.mi_club import competencias_club, estilo_mi_club  # noqa: E402
 
 # Pestañas de la interfaz, en el orden en que se dibujan
 PESTANAS_UI = (ui_manager, ui_primera, ui_nacional, ui_federal, ui_federal_b, ui_ligas_simples, ui_regional,
-               ui_copa_argentina, ui_supercopa, ui_regionales, ui_estaduales, ui_copa_brasil, ui_copa_chile, ui_copa_paraguay, ui_copa_colombia, ui_supercopa_br, ui_supercopa_cl, ui_supercopa_py, ui_supercopa_co, ui_copa_uruguay, ui_supercopa_uy, ui_copa_ecuador, ui_supercopa_ec, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
+               ui_copa_argentina, ui_supercopa, ui_regionales, ui_estaduales, ui_copa_brasil, ui_copa_chile, ui_copa_paraguay, ui_copa_colombia, ui_supercopa_br, ui_supercopa_cl, ui_supercopa_py, ui_supercopa_co, ui_copa_uruguay, ui_supercopa_uy, ui_copa_ecuador, ui_copa_bolivia, ui_copa_venezuela, ui_supercopa_ve, ui_supercopa_ec, ui_conmebol, ui_mundial, ui_ligas_ext, ui_mundo, ui_calendario,
                ui_clubes, ui_avisos, ui_historial, ui_guardado)
 
 
@@ -120,7 +123,6 @@ def main():
     P = parametros_partido()
     st.markdown(CSS, unsafe_allow_html=True)
     st.markdown(LOGOS_CSS, unsafe_allow_html=True)       # logos de ligas y copas (una sola vez)
-    st.markdown(ESCUDOS_CSS, unsafe_allow_html=True)     # escudos a los que se les sacó el fondo (una sola vez)
     if st.session_state.get("afa_pantalla") == "crear_club":      # "Crear mi club" (desde la pantalla de inicio)
         ui_crear_club.render()
         st.stop()

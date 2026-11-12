@@ -92,72 +92,84 @@
     {
       "nombre": "Mineros de Guayana",
       "media": 50,
-      "escudo": ""
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Escudo_Mineros_De_Guayana_2025.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
     },
     {
       "nombre": "Yaracuyanos FC",
       "media": 50,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/24982.png?lm=1789460485"
     },
     {
       "nombre": "Deportivo Lara",
       "media": 49,
-      "escudo": ""
+      "escudo": "https://a.espncdn.com/combiner/i?img=/i/teamlogos/soccer/500/17092.png&h=200&w=200"
     },
     {
       "nombre": "Aragua FC",
       "media": 47,
-      "escudo": ""
+      "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3f/Aragua_fc_logo_png.png/330px-Aragua_fc_logo_png.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"
     },
     {
       "nombre": "Ureña SC",
       "media": 46,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/30500.png?lm=1789460869"
     },
     {
       "nombre": "Atlético El Vigía",
       "media": 45,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/22904.png?lm=1789460338"
     },
     {
       "nombre": "Marítimo de La Guaira",
       "media": 45,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/105806.png?lm=1789466351"
     },
     {
       "nombre": "Barquisimeto SC",
       "media": 44,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/91775.png?lm=1789465335"
     },
     {
       "nombre": "Atlético Barinas",
       "media": 43,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/139766.png?lm=1789468883"
     },
     {
       "nombre": "Atlético Ávila",
       "media": 43,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/139764.png?lm=1789468883"
     },
     {
       "nombre": "Bolívar SC",
       "media": 43,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/93377.png?lm=1789465448"
     },
     {
       "nombre": "Real Frontera",
       "media": 42,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/52439.png?lm=1789462469"
     },
     {
       "nombre": "Dynamo Puerto",
       "media": 42,
-      "escudo": ""
+      "escudo": "https://img.a.transfermarkt.technology/wappen/head/73062.png?lm=1789463981"
     },
     {
       "nombre": "Deportivo Miranda",
       "media": 42,
-      "escudo": ""
+      "escudo": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Logo_del_Deportivo_Miranda.png?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail_unscaled"
     }
-  ]
+  ],
+  "segunda_liga": {
+    "nombre": "Liga FUTVE 2",
+    "formato": "todos_contra_todos",
+    "descensos": 0,
+    "calendario": {
+      "Liga": [
+        2,
+        7,
+        5
+      ]
+    }
+  }
 }

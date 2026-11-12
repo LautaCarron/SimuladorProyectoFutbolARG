@@ -6,13 +6,15 @@ y Avisos muestran sólo lo de ese país, más las copas internacionales donde pu
 
 Para sumar un país: crear su liga (docs/LIGAS_EXTERIOR.md). Acá aparece solo: no hay nada que tocar.
 
-  PAISES                       ["Argentina", "Uruguay", ...] (Argentina siempre primero)
+  PAISES                       ["Argentina", "Bolivia", "Brasil", ...] (en orden alfabético)
   ligas_de(pais)               nombres de sus ligas ("Primera División", "Liga AUF Uruguaya"...)
   copas_nacionales_de(pais)    sus copas propias ("Copa Argentina"..., "Copa AUF Uruguay")
   COPAS_INTERNACIONALES        las que pueden jugar clubes de cualquier país (CONMEBOL y Mundial de Clubes)
   competencias_de(pais)        ligas + copas propias (lo que muestra el Calendario)
   pais_de_competencia(nombre)  a qué país pertenece una competencia (None si es internacional)
 """
+
+import unicodedata
 
 from datos.clubes_int import BANDERA
 from datos.ligas_ext import LIGAS_EXT
@@ -24,10 +26,16 @@ LIGAS_ARGENTINA = ("Primera División", "Primera Nacional", "Federal A", "Federa
 COPAS_ARGENTINA = ("Copa Argentina", "Supercopa Argentina", "Regionales")
 COPAS_EXTERIOR = {"Uruguay": ("Copa AUF Uruguay", "Supercopa Uruguaya"), "Brasil": ("Estaduales", "Copa do Brasil", "Supercopa do Brasil"),
                  "Chile": ("Copa Chile", "Supercopa de Chile"), "Colombia": ("Copa Colombia", "Supercopa de Colombia"),
-                 "Paraguay": ("Copa Paraguay", "Supercopa Paraguay"), "Ecuador": ("Copa Ecuador", "Supercopa Ecuador")}        # copas nacionales de los países con liga simulada
+                 "Paraguay": ("Copa Paraguay", "Supercopa Paraguay"), "Ecuador": ("Copa Ecuador", "Supercopa Ecuador"),
+                 "Bolivia": ("Copa Bolivia",), "Venezuela": ("Copa Venezuela", "Supercopa de Venezuela")}        # copas nacionales de los países con liga simulada
 COPAS_INTERNACIONALES = ("Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana", "Mundial de Clubes")
 
-PAISES = [PAIS_BASE, *dict.fromkeys(c["pais"] for c in LIGAS_EXT)]
+def _clave_alfabetica(pais):
+    """Para ordenar sin que las tildes cambien el lugar (Perú va entre Paraguay y Uruguay)."""
+    return unicodedata.normalize("NFKD", pais).encode("ascii", "ignore").decode().lower()
+
+
+PAISES = sorted({PAIS_BASE, *(c["pais"] for c in LIGAS_EXT)}, key=_clave_alfabetica)      # orden alfabético
 
 _LIGAS_EXT_DE = {}
 for _c in LIGAS_EXT:

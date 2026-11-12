@@ -61,9 +61,12 @@ CUPOS_LIB_FASE1 = {"Brasil": 0, "Colombia": 0, "Paraguay": 1, "Perú": 1, "Chile
                    "Ecuador": 1, "Bolivia": 1, "Venezuela": 1}      # los 6 de la Fase 1
 # Cupos de la Libertadores que da la copa del país (están dentro de los de arriba; la liga pone el resto): el campeón va a
 # los grupos y el subcampeón a la Fase 2 (Copa do Brasil). Si ya clasificaron por la liga, el cupo sigue por la tabla.
-CUPOS_COPA = {"Brasil": {"grupos": 1, "previa": 1}, "Chile": {"previa": 1, "previa_campeon": True}}
+CUPOS_COPA = {"Brasil": {"grupos": 1, "previa": 1}, "Chile": {"previa": 1, "previa_campeon": True},
+             "Bolivia": {"previa": 1, "previa_campeon": True}}
 COPA_A_SUD = {"Colombia"}                       # países cuya copa da un cupo a la Sudamericana (dentro de los CUPOS_SUD)
-NOTA_COPA = {"Chile": "Además, el campeón de la Copa Chile tiene el Chile 4 (Libertadores · Fase 2), siempre que juegue en Primera. "
+NOTA_COPA = {"Bolivia": "Además, el campeón de la Copa Bolivia tiene el Bolivia 3 (Libertadores · Fase 2), siempre que juegue en Primera. "
+                       "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
+             "Chile": "Además, el campeón de la Copa Chile tiene el Chile 4 (Libertadores · Fase 2), siempre que juegue en Primera. "
                       "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",
              "Colombia": "Además, el campeón de la Copa Colombia clasifica a la Sudamericana (Fase 1), siempre que juegue en Primera. "
                          "Si ya clasificó por la liga, el cupo pasa al que sigue en esta tabla.",

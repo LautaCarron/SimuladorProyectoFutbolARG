@@ -10,7 +10,7 @@ import unicodedata
 from copas.estaduales import TORNEOS as TORNEOS_ESTADUALES
 from copas.regionales import TORNEOS as TORNEOS_REGIONALES
 from datos import club_propio
-from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS, ESCUDOS_SIN_FONDO
+from datos.equipos import ESCUDOS, ESCUDOS_OSCUROS
 from datos.imagenes import slug
 
 
@@ -109,7 +109,7 @@ def iniciales(nombre):
 def crest(nombre, size=26):
     """Escudo real del club (o un distintivo con sus iniciales si no hay imagen)."""
     url = ESCUDOS.get(nombre)
-    if nombre in ESCUDOS_SIN_FONDO or club_propio.escudo(nombre):           # PNG transparente, definido una sola vez en el CSS (ESCUDOS_CSS)
+    if club_propio.escudo(nombre):           # escudo subido por el usuario, definido una sola vez en el CSS (club_propio.css)
         return (f'<span class="lg crest-img cr-{slug(nombre)}" style="width:{size}px;height:{size}px" '
                 f'role="img" aria-label="{esc(nombre)}" title="{esc(nombre)}"></span>')
     if url:

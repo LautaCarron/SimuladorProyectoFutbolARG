@@ -55,14 +55,6 @@ ESCUDOS.update({x[0]: x[4] for x in MUNDIAL_CLUBES if len(x) >= 5})
 ESCUDOS_OSCUROS = set(_ESC["oscuros"])
 ESCUDOS_OSCUROS |= set(OSCUROS_INT)
 
-# Escudos que vienen con fondo blanco: se les saca el fondo (ver imagenes.py). Si otro escudo se ve con fondo, sumá
-# acá su nombre; si querés usar un PNG transparente propio, copialo en datos/escudos_sin_fondo/ con el nombre del
-# club en minúsculas y con guiones (por ejemplo sarmiento-leones.png).
-from datos.imagenes import escudos_sin_fondo, slug
-ESCUDOS_SIN_FONDO = escudos_sin_fondo(ESCUDOS, _ESC["sin_fondo"])
-ESCUDOS_CSS = "<style>" + "".join(
-    f".cr-{slug(n)}{{background-image:url({u});}}" for n, u in ESCUDOS_SIN_FONDO.items()) + "</style>"
-
 # Origen geográfico real de cada club: "Interior" o "Metropolitana" (CABA / Gran
 # Buenos Aires). Sirve para mandar a cada equipo a su categoría real (Federal A o
 # Primera B) el día que descienda del todo. Los del Federal A ya son todos del

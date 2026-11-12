@@ -308,10 +308,10 @@ Dos ligas simuladas (`py` y `py2`) con formatos propios, los dos con **descenso 
 
 **División Intermedia** (formato `paraguay_segunda`, 16 clubes de 2026): todos contra todos a doble rueda (30 fechas, sábados desde el 4/4). Suben el campeón y el subcampeón; bajan los **3 peores promedios** (tres temporadas, con los puntos reales de 2024 y 2025) a la tercera división. Palmarés histórico en `hist_ext_py2` (1910-2025; "Caballero" = General Caballero (JLM), los 6 títulos anteriores son de General Caballero (ZC)).
 
-* **Primera División B (Metropolitana)** (`py3`, `divisional` 3, `todos_contra_todos`): 17 clubes de 2026 (`tercera` y `tercera_liga` del JSON), 34 fechas (sábados desde el 28/3). Suben el campeón y el subcampeón a la Intermedia; no baja nadie (la Primera C no se simula).
+* **Primera División B (Metropolitana)** (`py3`, `divisional` 3, `todos_contra_todos`): 18 clubes (los 17 de 2026 más General Caballero (ZC), agregado a mano; `tercera` y `tercera_liga` del JSON), 34 fechas (sábados desde el 28/3). Suben el campeón y el subcampeón a la Intermedia; no baja nadie (la Primera C no se simula).
 * **Primera División B Nacional** (`py3b`, tercera "hermana" del interior, `tercera_b` y `tercera_b_liga`): 13 clubes (la fuente dice 14, falta uno por cargar), 26 fechas (sábados desde el 6/6). Sube el campeón. Es una liga paralela a la Metropolitana: `datos/ligas_ext.py` le pone `paralela: true` y la clave de clubes `Paraguay|3b`.
 * **Pirámide**: de los 3 que bajan de la Intermedia, el peor del interior (lista `interior` del JSON) va a la B Nacional y los otros 2 a la Metropolitana, así cada tercera conserva su tamaño (2 suben y 2 bajan en la Metropolitana, 1 y 1 en la Nacional). Columnas del Historial: `"Paraguay · D3"` (Metropolitana) y `"Paraguay · D3b"` (Nacional).
-* **Palmarés**: `hist_ext_py2` (Intermedia, 1910-2025), `hist_ext_py3` (Metropolitana, 1939-2025) y `hist_ext_py3b` (Nacional, 2011-2025; los primeros años incluyen selecciones de liga). Medias orientativas (40 a 47) y sin escudo.
+* **Palmarés**: `hist_ext_py2` (Intermedia, 1910-2025), `hist_ext_py3` (Metropolitana, 1939-2025) y `hist_ext_py3b` (Nacional, 2011-2025; los primeros años incluyen selecciones de liga). Medias orientativas (40 a 47); sólo General Caballero (ZC) tiene escudo.
   * **Simplificaciones**: en la realidad el campeón de la Metropolitana sube directo y el subcampeón juega un repechaje contra el campeón de la B Nacional (en algunos años el campeón de la Nacional sube directo); además sube un club del Interligas. Acá suben directo los 2 mejores de la Metropolitana y el campeón de la Nacional. Los descendidos van a una u otra según su zona; sin datos de ubicación de cada club, usé la lista `interior`.
 * Palmarés Primera: `hist_ext_py` en `palmares_py.json` (1906-2025, no incluye el Apertura 2026).
 * **Simplificaciones a revisar**: el desempate dentro de cada torneo es por diferencia de gol y goles a favor (el reglamento usa los partidos entre sí y, si hace falta, un desempate); la Supercopa Paraguay no se simula; en la realidad los que bajan de la Intermedia van a la Primera B o a la B Nacional según su ubicación; las medias de la Intermedia y la tercera son orientativas.
@@ -319,7 +319,7 @@ Dos ligas simuladas (`py` y `py2`) con formatos propios, los dos con **descenso 
 
 ## Copa Paraguay (`copas/paraguay.py`, `ui/ui_copa_paraguay.py`)
 
-Copa nacional de Paraguay (`clave` `copa_py`, clase `CopaParaguay` en `copas/registro.py`), 59 clubes (hoy): los 12 de la Primera, los 16 de la Intermedia y los 31 de las dos Primera B (17 Metropolitana + 14 Nacional; puede variar entre 25 y 48: en la primera fase juegan los cruces necesarios para que pasen 24). Eliminación directa a partido único (penales si empatan), 7 rondas en miércoles: primera fase (3/6), segunda (15/7), tercera (12/8), octavos (16/9), cuartos (14/10), semifinales (4/11) y final (25/11, cancha neutral).
+Copa nacional de Paraguay (`clave` `copa_py`, clase `CopaParaguay` en `copas/registro.py`), 60 clubes (hoy): los 12 de la Primera, los 16 de la Intermedia y los 32 de las dos Primera B (18 Metropolitana + 14 Nacional; puede variar entre 25 y 48: en la primera fase juegan los cruces necesarios para que pasen 24). Eliminación directa a partido único (penales si empatan), 7 rondas en miércoles: primera fase (3/6), segunda (15/7), tercera (12/8), octavos (16/9), cuartos (14/10), semifinales (4/11) y final (25/11, cancha neutral).
 
 **Supercopa Paraguay** (`clave` `supercopa_py`, clase `SupercopaParaguay`): partido único en cancha neutral entre el campeón de la Primera (final Apertura vs. Clausura) y el campeón de la Copa Paraguay; si es el mismo club, el rival es el subcampeón de la liga. Se juega una semana después de que terminan las dos y no da cupos internacionales. Palmarés `hist_supercopa_py` (5 ediciones, 2021-2025).
 
@@ -366,10 +366,10 @@ Formato `ecuador`, 16 clubes, formato 2026:
 Formato `todos_contra_todos` (sin código nuevo), `clave` `bo`, 16 clubes, formato 2026 (los clubes votaron mantener un solo torneo):
 
 * **Torneo único**: doble rueda (30 fechas, sábados desde el 4/4). Campeón el que más puntos suma.
-* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda, que es una lista de reserva sin simular (`segunda`, 8 clubes).
+* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda (la Copa Simón Bolívar, ver abajo).
 * **Cupos CONMEBOL** (`copas/conmebol.py`, ya estaban cargados): 2 a grupos de la Libertadores, 1 a la Fase 2, 1 a la Fase 1 y 4 a la Sudamericana, por la tabla.
 * Los 16 clubes y sus medias son los que ya tenía el simulador (se movieron de `clubes_int.json` al archivo de la liga).
-* **Simplificaciones a revisar**: la realidad tiene un repechaje de permanencia (el 15° juega una promoción) y el descenso/ascenso depende de la Copa Simón Bolívar, que no se simula; los 8 clubes de la reserva y sus medias son orientativos y sin escudo; sin Copa Bolivia ni Supercopa; palmarés histórico en `palmares_bo.json` (clave `hist_ext_bo`, 93 títulos hasta 2025 según RSSSF/Wikipedia; verificar contra la FBF) y logo de la liga en `logos.json` (clave `"División Profesional"`); la plantilla de 16 clubes no se contrastó con la lista oficial de 2026.
+* **Simplificaciones a revisar**: la realidad tiene un repechaje de permanencia (el 15° juega una promoción) y el descenso/ascenso depende de la Copa Simón Bolívar, que no se simula; los clubes de la segunda y sus medias son orientativos y sin escudo; sin Supercopa (la Copa Bolivia sí se simula, ver abajo); palmarés histórico en `palmares_bo.json` (clave `hist_ext_bo`, 93 títulos hasta 2025 según RSSSF/Wikipedia; verificar contra la FBF) y logo de la liga en `logos.json` (clave `"División Profesional"`); la plantilla de 16 clubes no se contrastó con la lista oficial de 2026.
 * `VERSION_ESTADO` subió a 41 (las partidas guardadas con la versión anterior ya no se cargan).
 
 ## Venezuela: Liga FUTVE (`datos/json/liga_venezuela.json`)
@@ -377,8 +377,54 @@ Formato `todos_contra_todos` (sin código nuevo), `clave` `bo`, 16 clubes, forma
 Formato `todos_contra_todos` (sin código nuevo), `clave` `ve`, 14 clubes (la plantilla de 2026: los 13 mejores de 2025 más Trujillanos, campeón de la Liga FUTVE 2):
 
 * **Torneo único**: doble rueda (26 fechas, sábados desde el 31/1). Campeón el que más puntos suma.
-* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda, que es una lista de reserva sin simular (`segunda`, 14 clubes de la Liga FUTVE 2 2026; no están los filiales de Academia Puerto Cabello, Zamora y Monagas, que no pueden ascender).
+* **Descenso**: baja el último (`descensos` 1) y sube 1 de la segunda (la Liga FUTVE 2, ver abajo; `segunda`, 14 clubes de la Liga FUTVE 2 2026; no están los filiales de Academia Puerto Cabello, Zamora y Monagas, que no pueden ascender).
 * **Cupos CONMEBOL** (`copas/conmebol.py`, ya estaban cargados): 2 a grupos de la Libertadores, 1 a la Fase 2, 1 a la Fase 1 y 4 a la Sudamericana, por la tabla.
 * Los 14 clubes, sus medias y sus escudos son los que ya tenía el simulador (se movieron de `clubes_int.json` al archivo de la liga, igual que Bolivia).
-* **Simplificaciones a revisar**: la realidad son dos torneos cortos (Apertura y Clausura, de 13 fechas cada uno; los 8 mejores de cada uno juegan dos grupos de 4 y una final) y el campeón sale de la final entre los dos ganadores; la tabla acumulada de las 26 fechas define el resto de los cupos y el descenso. Acá es un solo torneo de 26 fechas, así que el campeón puede no coincidir con el real. Los 14 clubes de la reserva y sus medias son orientativos y sin escudo; sin Copa Venezuela ni Supercopa; palmarés histórico en `palmares_ve.json` (clave `hist_ext_ve`, 105 títulos hasta 2025 según Wikipedia y RSSSF; verificar contra la FVF); todavía no hay logo de la liga en `logos.json` (clave `"Liga FUTVE"`).
+* **Simplificaciones a revisar**: la realidad son dos torneos cortos (Apertura y Clausura, de 13 fechas cada uno; los 8 mejores de cada uno juegan dos grupos de 4 y una final) y el campeón sale de la final entre los dos ganadores; la tabla acumulada de las 26 fechas define el resto de los cupos y el descenso. Acá es un solo torneo de 26 fechas, así que el campeón puede no coincidir con el real. Los 14 clubes de la reserva y sus medias son orientativos y sin escudo; la Copa y la Supercopa de Venezuela se simulan (ver abajo); palmarés histórico en `palmares_ve.json` (clave `hist_ext_ve`, 105 títulos hasta 2025 según Wikipedia y RSSSF; verificar contra la FVF); logo de la liga en `logos.json` (clave `"Liga FUTVE"`).
 * `VERSION_ESTADO` subió a 42 (las partidas guardadas con la versión anterior ya no se cargan).
+
+## Copa Bolivia (`copas/bolivia.py`, `ui/ui_copa_bolivia.py`)
+
+Copa de la División Profesional (`clave` `copa_bo`, clase `CopaBolivia` en `copas/registro.py`), 16 clubes: los de la Primera de Bolivia. Se juega entre semana (miércoles, del 19/8 al 2/12) en paralelo a la liga.
+
+* **Grupos**: cuatro series de cuatro armadas por bombos de media, una rueda (3 fechas) más una fecha de clásicos interserie (A con B y C con D, al azar); todo suma a la tabla de la serie. Pasan los dos primeros.
+* **Cuartos, semifinales y final**: ida y vuelta, sin alargue (penales si el global empata). Cuadro fijo: 1° de A–2° de B, 1° de C–2° de D, 1° de D–2° de C y 1° de B–2° de A; cierra de local el de mayor media.
+* **Cupo**: el campeón es el Bolivia 3 (Libertadores · Fase 2) si juega en Primera (`CUPOS_COPA` y `NOTA_COPA` en `copas/conmebol.py`, igual que Chile); si ya clasificó por la liga, el cupo pasa al que sigue en la tabla.
+* **Palmarés**: `hist_copa_bo` en `palmares_bo.json` (Bolívar 2023 y Nacional Potosí 2025; la edición 2022 se suspendió y en 2024 no hubo copa). La de 2023 se llamó Copa de la División Profesional.
+* **Simplificaciones a revisar**: el reglamento prevé un playoff de terceros que no se simula (con ocho clasificados el cuadro de cuartos ya está completo); el subcampeón real tiene un cupo de Sudamericana que acá sale de la tabla de la liga; los clásicos interserie reales se arman por rivalidad, y el sorteo real de las series es libre. Fuentes: Correo del Sur, Red Uno, Erbol y Los Tiempos (julio de 2026) y Wikipedia.
+* `VERSION_ESTADO` subió a 43 (después del 42 de Perú y Venezuela): las partidas guardadas con la versión anterior ya no se cargan.
+
+## Bolivia: Copa Simón Bolívar como segunda división (`segunda_liga` de `liga_bolivia.json`)
+
+Liga simulada `bo2` (`divisional` 2, formato `todos_contra_todos` con `vueltas` 1: **una sola rueda**, 13 fechas los sábados desde el 22/8), con los 14 clubes más conocidos de la categoría: Jorge Wilstermann, Atlético Palmaflor, Royal Pari, Real Santa Cruz, San José (Oruro), Universitario de Sucre, Mamoré, Ciclón, Fancesa, Libertad Gran Mamoré, Empresa Minera Huanuni, Nueva Santa Cruz, San Juan FC y Virginia USC. Sube el campeón (el que baja de la primera ocupa su lugar); no baja nadie porque no hay tercera.
+
+* **Parámetro nuevo**: `vueltas` en la configuración de una liga `todos_contra_todos` (1 = una rueda; por defecto 2 = ida y vuelta). Lo lee `TodosContraTodos.nueva` en `ligas/exterior.py`.
+* **Simplificaciones a revisar**: la real tiene unos 64 clubes: etapas regionales por asociación, fase nacional de 24 equipos en seis grupos de cuatro y eliminación directa; el campeón sube directo y el subcampeón juega el ascenso indirecto contra el penúltimo de la primera (no se simula). La lista está elegida por fama, no por la participación en 2026: sólo Universitario de Sucre, San Juan FC, Virginia USC, Nueva Santa Cruz y Huanuni juegan la fase nacional 2026. Medias orientativas y sin escudo; sin palmarés de la segunda.
+* `VERSION_ESTADO` subió a 44 (las partidas guardadas con la versión anterior ya no se cargan).
+
+## Venezuela: Liga FUTVE 2 como segunda división (`segunda_liga` de `liga_venezuela.json`)
+
+Liga simulada `ve2` (`divisional` 2, formato `todos_contra_todos`, doble rueda, 26 fechas los sábados desde el 7/2) con los 14 clubes de `segunda`. Sube el campeón y baja el último de la primera; no baja nadie de la segunda porque no hay tercera, así que las dos categorías mantienen su tamaño.
+
+* **Simplificaciones a revisar**: la real son dos torneos cortos (Apertura y Clausura, el Clausura 2026 empezó el 25/7) y el ascenso se define en una final entre los dos campeones (en 2025: Trujillanos contra Titanes, 16/11); acá el campeón sale de la tabla de las 26 fechas. Los 14 clubes y sus medias son los que ya tenía la reserva (orientativos y sin escudo); no se actualizan con la lista real de la Liga FUTVE 2 2026; sin palmarés de la segunda.
+* `VERSION_ESTADO` subió a 45 (las partidas guardadas con la versión anterior ya no se cargan).
+
+## Venezuela: Copa Venezuela (`copas/venezuela.py`, `ui/ui_copa_venezuela.py`)
+
+Copa nacional (`clave` `copa_ve`, clase `CopaVenezuela` en `copas/registro.py`), 28 clubes: los 14 de la Liga FUTVE y los 14 de la Liga FUTVE 2. Se sortea al armar la temporada, después de las dos ligas. Se juega entre semana (miércoles, del 3/6 al 25/11) en paralelo a las ligas.
+
+* **Entran directo a octavos** los 8 clubes de Primera de mayor media (el real: los 8 de las fases finales del Apertura). Los otros 6 de Primera y los 14 de la segunda juegan la **fase de grupos**: cinco grupos de cuatro, ida y vuelta (seis fechas, una cada dos semanas). Pasan los cinco primeros y los tres mejores segundos (puntos, diferencia de gol, goles a favor).
+* **Octavos** a partido único (de local el que entró directo; si empatan, penales), sorteo libre entre los 8 clasificados y los 8 directos. **Cuartos, semifinales y final** a ida y vuelta, sin alargue (penales si el global empata). Cuadro fijo; los directos van ordenados por media para que los mejores queden en mitades distintas.
+* **Sin cupo internacional**: desde 2020 el campeón no va a la Sudamericana (juega la Supercopa de Venezuela contra el campeón de la liga, ver abajo). Por eso la copa **no** anota nada en `S["ext_copa"]`: `copas/conmebol.py` lo usaría para dar un cupo.
+* **Palmarés**: `hist_copa_ve` en `palmares_ve.json` (49 ediciones de 1959 a 2025, según Wikipedia y RSSSF; unifica Deportivo Italia con Deportivo Miranda, Valencia con Carabobo, Atlético Zamora con Zamora FC y Deportivo Anzoátegui con Anzoátegui FC; verificar contra la FVF). No incluye la edición 2026.
+* **Logo**: `"Copa Venezuela"` en `datos/json/logos.json` está con la URL vacía (el simulador la tolera): pegar ahí el link.
+* **Simplificaciones a revisar**: los grupos reales se arman por zona geográfica y acá son al azar (un club de Primera por grupo y el sexto en el A); el real no tiene a los 8 directos por media sino por el Apertura; no se simulan los filiales ni la regla de jóvenes sub-23. Fuentes: Wikipedia "2025 Copa Venezuela", economis.com.ar y NTN24 (formato 2026).
+* `VERSION_ESTADO` subió a 46: las partidas guardadas con la versión anterior ya no se cargan.
+
+## Venezuela: Supercopa de Venezuela (`SupercopaVenezuela` en `copas/registro.py`, `ui/ui_supercopa_ve.py`)
+
+Partido único en cancha neutral (clave `supercopa_ve`) entre el campeón de la Liga FUTVE y el campeón de la Copa Venezuela; si es el mismo club, el rival es el subcampeón de la liga (igual que las supercopas de Brasil, Paraguay y Ecuador, de las que hereda). Se juega una semana después de que terminan la liga y la copa; en la vida real abre la temporada siguiente, acá cierra la actual. Empate: penales (la real tiene además 30 minutos de alargue, que acá no se simulan). No da cupos.
+
+* **Palmarés**: `hist_supercopa_ve` en `palmares_ve.json`: sólo Deportivo La Guaira 2025 (1-1 y 4-1 en penales contra Deportivo Táchira). No se cuenta la edición 2026 (figura cancelada) ni la Copa de Campeones de 1965 (Valencia). Fuente: Wikipedia.
+* **Logo**: clave `"Supercopa de Venezuela"` en `logos.json`.
+* `VERSION_ESTADO` subió a 47: las partidas guardadas con la versión anterior ya no se cargan.

@@ -3,17 +3,9 @@ descargar nada). Fuentes: ESPN (Liga Profesional, Copa Argentina y copas CONMEBO
 (Primera Nacional, Federal A, Primera B, Primera C). El del Regional Amateur es un
 distintivo propio del simulador."""
 
-import os
-
 from datos.cargador import cargar
-from datos.imagenes import AQUI, sin_fondo
 
 LOGOS = cargar("logos")      # datos/json/logos.json
-
-
-# El logo del Regional Amateur viene con fondo blanco: se le saca una vez y queda en datos/logo_regional.png (ver
-# imagenes.py; si ya tenés un PNG transparente, copialo con ese nombre y se usa tal cual).
-LOGOS["Regional Amateur"] = sin_fondo(LOGOS["Regional Amateur"], os.path.join(AQUI, "logo_regional.png"))
 
 
 def _clase(nombre):

@@ -39,5 +39,74 @@
       "Unión Deportiva Canarias": 1,
       "Venzóleo": 1
     }
+  },
+  "hist_ext_ve2": {
+    "descripcion": "Segunda División de Venezuela (hoy Liga FUTVE 2), 1979-2025: 46 títulos (no se jugó en 1983 ni en 1999-00). Se cuentan los campeones de cada edición (1986 y 1986-87 son ediciones distintas). Se unen bajo un solo nombre (Marítimo de La Guaira, como en el palmarés de la Liga FUTVE) Marítimo y Unión Deportivo Marítimo (1985 y 2003-04), y el título de Valencia de 1989-90 va a Carabobo, como en el palmarés de la Liga FUTVE. Salineros (1990-91) figura como campeón aunque la tabla de totales de Wikipedia lo anota a Peninsulares. No incluye la temporada 2026. Fuente: Wikipedia (Liga FUTVE 2); verificar contra la FVF.",
+    "titulos": {
+      "Llaneros": 4,
+      "Atlético El Vigía": 3,
+      "Deportivo Galicia": 3,
+      "Atlético Venezuela": 2,
+      "Falcón": 2,
+      "Marítimo de La Guaira": 2,
+      "Portuguesa": 2,
+      "Trujillanos": 2,
+      "Universidad de Los Andes": 2,
+      "Ureña SC": 2,
+      "Yaracuyanos FC": 2,
+      "Angostura": 1,
+      "Aragua FC": 1,
+      "Atlético Trujillo": 1,
+      "Carabobo": 1,
+      "Caracas FC": 1,
+      "Deportivo Lara": 1,
+      "Estudiantes de Caracas": 1,
+      "Hermanos Colmenarez": 1,
+      "Metropolitanos": 1,
+      "Mineros de Guayana": 1,
+      "Monagas SC": 1,
+      "Nacional Táchira": 1,
+      "Nueva Cádiz": 1,
+      "Pepeganga Margarita": 1,
+      "Salineros": 1,
+      "San Cristóbal": 1,
+      "Titanes": 1,
+      "Tucanes": 1,
+      "Zulia": 1,
+      "Zulianos": 1
+    }
+  },
+  "hist_copa_ve": {
+    "descripcion": "Copa Venezuela, 1959-2025 (49 ediciones): se cuentan las copas nacionales que lista Wikipedia desde 1959 (varias se llamaron Copa Caracas, Copa de las Naciones o Copa Bicentenario) y no las anteriores a 1959. No se jugó en 1974, 1984, 1986, 1996-2006 ni 2020-23. Hasta 2019 el campeón iba a la Sudamericana; hoy juega la Supercopa de Venezuela (no simulada). Se unen bajo un solo nombre Deportivo Italia (Deportivo Miranda), Valencia (Carabobo), Atlético Zamora y Zamora (Zamora FC), y Deportivo Anzoátegui y Anzoátegui FC (Anzoátegui FC); Wikipedia los cuenta por separado. Fuente: RSSSF y Wikipedia (Copa Venezuela); verificar contra la FVF. No incluye la edición 2026 (sin definir).",
+    "titulos": {
+      "Caracas FC": 5,
+      "Deportivo Galicia": 5,
+      "Anzoátegui FC": 3,
+      "Deportivo La Guaira": 3,
+      "Deportivo Miranda": 3,
+      "Mineros de Guayana": 3,
+      "Portuguesa": 3,
+      "Carabobo": 2,
+      "Deportivo Portugués": 2,
+      "Deportivo Táchira": 2,
+      "Estudiantes de Mérida": 2,
+      "Marítimo de La Guaira": 2,
+      "Trujillanos": 2,
+      "Unión Deportiva Canarias": 2,
+      "Zamora FC": 2,
+      "Zulia FC": 2,
+      "Aragua FC": 1,
+      "Banco Agrícola y Pecuario": 1,
+      "Internacional": 1,
+      "Tiquire Flores": 1,
+      "UCV FC": 1,
+      "Universidad de Los Andes": 1
+    }
+  },
+  "hist_supercopa_ve": {
+    "descripcion": "Supercopa de Venezuela (campeón de la Liga FUTVE contra el campeón de la Copa Venezuela, partido único): 1 edición completa, 2025 (Deportivo La Guaira 1-1 y 4-1 en penales contra Deportivo Táchira). No se cuenta la edición 2026 (Wikipedia anota a Universidad Central, pero el partido figura cancelado) ni la Copa de Campeones de 1965 (Valencia), un torneo distinto. Fuente: Wikipedia (Supercopa de Venezuela); verificar contra la FVF.",
+    "titulos": {
+      "Deportivo La Guaira": 1
+    }
   }
 }
