@@ -30,7 +30,7 @@ Formato:
 Campeones vigentes en las tablas: al jugarse la final, el campeón de la Libertadores o de la Sudamericana se anota en
 la liga de su país (`camp_int`, ver `_registrar_titulo`) y su tabla lo pinta como clasificado a la Libertadores aunque no
 le alcance por puntos; no le saca el cupo a nadie (el de la tabla pasa al que sigue), igual que al armar la temporada que
-viene. La marca se borra sola al empezar la temporada siguiente.
+viene. Pasa lo mismo en Argentina: si el campeón ya estaba entre los 5 primeros, sube a los grupos el 6° (o el que siga). La marca se borra sola al empezar la temporada siguiente.
 """
 
 import numpy as np
@@ -175,20 +175,31 @@ def fin_de_temporada(S):
 def _agregar_campeones(c, campeones):
     """Suma los campeones vigentes a los grupos de la Libertadores. `c` = clasificados argentinos ({grupos, previa, sud,
     orden}) y `campeones` = [(club, cómo clasificó)]. Devuelve (grupos de la Libertadores con los campeones, previa, sud):
-    un campeón que estaba en la previa o en la Sudamericana sube a los grupos y su lugar pasa al que sigue en la tabla.
+    un campeón que estaba en la previa o en la Sudamericana sube a los grupos y su lugar pasa al que sigue en la tabla; uno
+    que ya estaba entre los 5 primeros no gasta su cupo: sube a los grupos el que sigue en la tabla.
     Lo usan `nuevas_internacionales` y las tablas de Primera (ligas/primera.py), así lo que se pinta es lo que se juega."""
     arg_g, arg_p, arg_s = list(c["grupos"]), list(c["previa"]), list(c["sud"])
     lib_g = list(arg_g)
     ya = {n for n, _ in arg_g + arg_p + arg_s}
+    orden = c.get("orden", [])
     for cl, via in campeones:
-        if cl and cl not in {n for n, _ in lib_g}:
+        if not cl:
+            continue
+        if cl not in {n for n, _ in lib_g}:
             if cl in ya:                               # si ya estaba en otra lista, sube a grupos
                 arg_p = [(n, v) for n, v in arg_p if n != cl]
                 arg_s = [(n, v) for n, v in arg_s if n != cl]
             lib_g.append((cl, via))
             ya.add(cl)
+        else:                                          # ya clasificaba a grupos por puntos: el campeón no gasta su cupo, que
+            for n in orden[5:]:                        # pasa al que sigue en la tabla (como en los otros países)
+                if n not in {x for x, _ in lib_g}:
+                    arg_p = [(x, v) for x, v in arg_p if x != n]       # si el que sigue estaba en la previa / Sudamericana, sube
+                    arg_s = [(x, v) for x, v in arg_s if x != n]
+                    lib_g.append((n, f"Primera {c.get('temp_tabla', '')}: {orden.index(n) + 1}° (cupo del campeón)"))
+                    ya.add(n)
+                    break
     # si un campeón vigente subió a los grupos, su lugar en la previa / Sudamericana pasa al que sigue
-    orden = c.get("orden", [])
     for lista, cant in ((arg_p, len(c["previa"])), (arg_s, len(c["sud"]))):
         for n in orden[5:]:
             if len(lista) >= cant:

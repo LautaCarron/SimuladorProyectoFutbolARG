@@ -435,4 +435,4 @@ El campeón de la Libertadores o de la Sudamericana de la temporada juega los gr
 
 * **Tabla**: el club se pinta con el color de la Libertadores y la etiqueta *Libertadores · campeón de la Libertadores* (o *… de la Sudamericana*), esté donde esté por puntos. No ocupa un cupo de la tabla: el que le tocaría pasa al que sigue (`asignar_cupos(..., fijos)` en las ligas del exterior y `_destinos_campeones` en `ligas/primera.py` para Argentina). Es el mismo reparto de `nuevas_internacionales`, así que lo que se pinta es lo que se juega.
 * **Sin fantasmas**: las ligas del exterior se rehacen al empezar la temporada y `camp_int` de Argentina se borra en `nuevas_internacionales`, así que la marca no pasa a la tabla siguiente.
-* **Argentina**: si el campeón ya clasificaba entre los 5 primeros, no se agrega un cupo (en los otros países sí: el campeón suma uno y el de la tabla pasa al que sigue).
+* **Argentina** se comporta igual que los otros países: si el campeón ya estaba entre los 5 primeros, no gasta su cupo y sube a los grupos el que sigue en la tabla (si ese estaba en la previa o en la Sudamericana, su lugar pasa al siguiente).
