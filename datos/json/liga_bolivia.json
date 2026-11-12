@@ -47,10 +47,10 @@
     {"nombre": "Vaca Díez", "media":36, "escudo": "https://img.a.transfermarkt.technology/wappen/head/92821.png?lm=1789465410"},
     {"nombre": "Stormers", "media": 35, "escudo": "https://img.a.transfermarkt.technology/wappen/head/93001.png?lm=1789465425"},
     {"nombre": "Universidad Cruceña", "media": 35, "escudo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/TODOS_JUNTOS_X_LA_U.jpg/330px-TODOS_JUNTOS_X_LA_U.jpg?utm_source=es.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"},
-    {"nombre": "Real Mamoré", "media": 43, "escudo": ""},
-    {"nombre": "La Paz FC", "media": 42, "escudo": ""},
-    {"nombre": "Sport Boys Warnes", "media": 41, "escudo": ""},
-    {"nombre": "Deportivo Kala", "media": 40, "escudo": ""}
+    {"nombre": "Real Mamoré", "media": 30, "escudo": "https://img.a.transfermarkt.technology/wappen/head/143663.png?lm=1789469176"},
+    {"nombre": "La Paz FC", "media": 30, "escudo": "https://img.a.transfermarkt.technology/wappen/head/100953.png?lm=1789465998"},
+    {"nombre": "Sport Boys Warnes", "media": 30, "escudo": "https://img.a.transfermarkt.technology/wappen/head/41098.png?lm=1789461632"},
+    {"nombre": "Deportivo Kala", "media": 30, "escudo": "https://img.a.transfermarkt.technology/wappen/head/93216.png?lm=1789465440"}
   ],
   "segunda_liga": {"nombre": "Copa Simón Bolívar", "formato": "todos_contra_todos", "vueltas": 1, "descensos": 0, "calendario": {"Liga": [8, 22, 5]}}
 }
