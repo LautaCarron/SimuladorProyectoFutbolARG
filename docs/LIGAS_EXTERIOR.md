@@ -428,3 +428,11 @@ Partido único en cancha neutral (clave `supercopa_ve`) entre el campeón de la 
 * **Palmarés**: `hist_supercopa_ve` en `palmares_ve.json`: sólo Deportivo La Guaira 2025 (1-1 y 4-1 en penales contra Deportivo Táchira). No se cuenta la edición 2026 (figura cancelada) ni la Copa de Campeones de 1965 (Valencia). Fuente: Wikipedia.
 * **Logo**: clave `"Supercopa de Venezuela"` en `logos.json`.
 * `VERSION_ESTADO` subió a 47: las partidas guardadas con la versión anterior ya no se cargan.
+
+## Campeones de la Libertadores y la Sudamericana en las tablas (`camp_int`)
+
+El campeón de la Libertadores o de la Sudamericana de la temporada juega los grupos de la Libertadores siguiente. Al jugarse la final, `copas/conmebol.py` (`_registrar_titulo`) lo anota en `camp_int` = `{club: etiqueta}` de la liga de primera de su país (en `S["camp_int"]` para Argentina). Si no juega hoy en la primera de su país, no se anota.
+
+* **Tabla**: el club se pinta con el color de la Libertadores y la etiqueta *Libertadores · campeón de la Libertadores* (o *… de la Sudamericana*), esté donde esté por puntos. No ocupa un cupo de la tabla: el que le tocaría pasa al que sigue (`asignar_cupos(..., fijos)` en las ligas del exterior y `_destinos_campeones` en `ligas/primera.py` para Argentina). Es el mismo reparto de `nuevas_internacionales`, así que lo que se pinta es lo que se juega.
+* **Sin fantasmas**: las ligas del exterior se rehacen al empezar la temporada y `camp_int` de Argentina se borra en `nuevas_internacionales`, así que la marca no pasa a la tabla siguiente.
+* **Argentina**: si el campeón ya clasificaba entre los 5 primeros, no se agrega un cupo (en los otros países sí: el campeón suma uno y el de la tabla pasa al que sigue).

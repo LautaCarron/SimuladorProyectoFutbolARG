@@ -19,6 +19,8 @@ COLOR_ORO = "rgba(227, 162, 26, 0.30)"
 
 COLORES_DESTINO = {
     "Libertadores": "rgba(116, 172, 223, 0.36)",
+    "Libertadores · campeón de la Libertadores": "rgba(116, 172, 223, 0.36)",       # campeones vigentes (copas/conmebol.py: TIT_LIB, TIT_SUD)
+    "Libertadores · campeón de la Sudamericana": "rgba(116, 172, 223, 0.36)",
     "Fase previa Libertadores": "rgba(116, 172, 223, 0.18)",
     "Sudamericana": "rgba(224, 138, 40, 0.20)",
     "Promoción": "rgba(109, 63, 192, 0.16)",

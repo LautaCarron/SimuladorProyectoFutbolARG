@@ -187,8 +187,8 @@ class Colombia(Formato):
         rec = tabla(L, L["E"]["Reclasificacion"])
         orden = list(rec["Equipo"])
         copa = L.get("campeon_copa_colombia")
-        asignados = {}
-        for i, club in enumerate(orden):
+        asignados = {n: e for n, e in (L.get("camp_int") or {}).items() if n in orden}      # campeón de la Libertadores / Sudamericana: no ocupa cupo de la tabla
+        for i, club in enumerate(c for c in orden if c not in asignados):
             if i < 2: asignados[club] = "Libertadores · Fase de grupos"
             elif i < 4: asignados[club] = "Libertadores · Fase 2"
         sud = []

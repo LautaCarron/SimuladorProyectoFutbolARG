@@ -318,15 +318,61 @@ def df_base(S, ids):
     return df_stats(S["nombres"], S["r"], stats_visibles(S), ids)
 
 
-def tabla_general(S):
-    """Tabla de los 30 equipos (fase 1 del formato actual, o la tabla anual de los otros formatos)."""
+def _general_ordenada(S):
     df = df_base(S, np.arange(len(S["nombres"])))
     if S.get("orden_final_general") is not None:
         df = df.set_index("id").loc[S["orden_final_general"]].reset_index()
+    return df
+
+
+def _zona_ordenada(S, z):
+    df = df_base(S, S["zonas"][z])
+    if z == 0 and S.get("orden_final_campeonato") is not None:       # desempate de la zona campeonato
+        df = df.set_index("id").loc[S["orden_final_campeonato"]].reset_index()
+    elif z == 2 and S.get("orden_final_descenso") is not None:
+        df = df.set_index("id").loc[S["orden_final_descenso"]].reset_index()
+    return df
+
+
+def _destinos_campeones(S):
+    """{club: destino} de los que cambian porque el campeón de la Libertadores o de la Sudamericana de esta temporada
+    (S["camp_int"], se anota al jugarse la final y se borra al armar la temporada siguiente) juega la Libertadores
+    siguiente: él se pinta como clasificado aunque no le alcance por puntos y su lugar en la previa / Sudamericana pasa al
+    que sigue. Es el mismo reparto que arma las copas (copas/conmebol.py, `_agregar_campeones`)."""
+    camp = S.get("camp_int")
+    if not camp:
+        return {}
+    from copas.conmebol import _agregar_campeones, _reparto_argentino
+    orden = ([n for z in range(3) for n in _zona_ordenada(S, z)["Equipo"]] if formato(S) == "actual"
+             else list(_general_ordenada(S)["Equipo"]))
+    SC = S.get("copa", {})
+    copa = SC["nombres"][SC["campeon"]] if SC.get("campeon") is not None else None
+    c = _reparto_argentino(orden, copa, S["temp"], corrido=formato(S) != "actual")
+    g, p, s, _ = _agregar_campeones(c, list(camp.items()))
+    base = {**{n: "Libertadores" for n, _ in c["grupos"]}, **{n: "Fase previa Libertadores" for n, _ in c["previa"]},
+            **{n: "Sudamericana" for n, _ in c["sud"]}}
+    nuevo = {**{n: (camp[n] if n in camp and base.get(n) != "Libertadores" else "Libertadores") for n, _ in g},
+             **{n: "Fase previa Libertadores" for n, _ in p},
+             **{n: "Sudamericana" for n, _ in s}}
+    return {n: d for n, d in nuevo.items() if base.get(n) != d}
+
+
+def _con_campeones(S, df):
+    """Aplica `_destinos_campeones` a la columna Destino de `df` (el que desciende sigue con su descenso)."""
+    cambios = _destinos_campeones(S)
+    if cambios:
+        df["Destino"] = [d if d == "Desciende" else cambios.get(e, d) for e, d in zip(df["Equipo"], df["Destino"])]
+    return df
+
+
+def tabla_general(S):
+    """Tabla de los 30 equipos (fase 1 del formato actual, o la tabla anual de los otros formatos)."""
+    df = _general_ordenada(S)
     df.insert(0, "Pos", df.index + 1)
     if formato(S) != "actual":                                       # tabla anual: con destino por posición
         k = descensos(S)
         df["Destino"] = [destino(p, k, len(df), corrido=True, proms=promos(S)) for p in df["Pos"]]
+        _con_campeones(S, df)
         for motivo in S.get("motivos_desempate", []):
             partes = motivo.split()
             if int(partes[1]) == 9:
@@ -336,18 +382,13 @@ def tabla_general(S):
 
 
 def tabla_zona(S, z):
-    df = df_base(S, S["zonas"][z])
-
-    # Inyectar el desempate en la zona correspondiente
-    if z == 0 and S.get("orden_final_campeonato") is not None:
-        df = df.set_index("id").loc[S["orden_final_campeonato"]].reset_index()
-    elif z == 2 and S.get("orden_final_descenso") is not None:
-        df = df.set_index("id").loc[S["orden_final_descenso"]].reset_index()
+    df = _zona_ordenada(S, z)       # con el desempate de la zona ya inyectado
 
     tam = tam_zonas_p(len(S["nombres"]))
     df.insert(0, "Pos", sum(tam[:z]) + df.index + 1)
     k = descensos(S)
     df["Destino"] = [destino(p, k, len(S["nombres"]), proms=promos(S)) for p in df["Pos"]]
+    _con_campeones(S, df)
 
     # Pintar fronteras empatadas
     if S.get("motivos_desempate"):

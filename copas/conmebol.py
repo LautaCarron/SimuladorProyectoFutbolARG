@@ -26,6 +26,11 @@ Formato:
     (28 clasificados + 4 de la Libertadores); 1° a octavos, 2° a los playoffs contra los 3° de la Libertadores;
     después igual que la Libertadores.
   * Recopa: campeón de la Libertadores vs. campeón de la Sudamericana, ida y vuelta.
+
+Campeones vigentes en las tablas: al jugarse la final, el campeón de la Libertadores o de la Sudamericana se anota en
+la liga de su país (`camp_int`, ver `_registrar_titulo`) y su tabla lo pinta como clasificado a la Libertadores aunque no
+le alcance por puntos; no le saca el cupo a nadie (el de la tabla pasa al que sigue), igual que al armar la temporada que
+viene. La marca se borra sola al empezar la temporada siguiente.
 """
 
 import numpy as np
@@ -36,6 +41,11 @@ from ligas.primera import formato, tabla_final
 from motor.nucleo import jugar, jugar_ko, mods_nombres, nuevo_partido, tanda_penales
 
 LIB, SUD, REC = "Copa Libertadores", "Copa Sudamericana", "Recopa Sudamericana"
+# Cómo figura en la tabla de su liga el campeón de la Libertadores / Sudamericana de la temporada (juega la Libertadores
+# siguiente aunque no le alcance por puntos; su cupo no se lo saca a nadie: el de la tabla pasa al que sigue). Las dos
+# etiquetas empiezan con "Libertadores" para que se pinten con el color de la Libertadores. Ver `_registrar_titulo`.
+TIT_LIB = "Libertadores · campeón de la Libertadores"
+TIT_SUD = "Libertadores · campeón de la Sudamericana"
 CLAVE_INT = {LIB: "lib", SUD: "sud", REC: "rec"}      # nombre de la copa -> clave en S["int"]
 
 LIB_RONDAS = (["Fase 1 · ida", "Fase 1 · vuelta", "Fase 2 · ida", "Fase 2 · vuelta", "Fase 3 · ida", "Fase 3 · vuelta"]
@@ -162,6 +172,52 @@ def fin_de_temporada(S):
     S["int_clasif"] = c
 
 
+def _agregar_campeones(c, campeones):
+    """Suma los campeones vigentes a los grupos de la Libertadores. `c` = clasificados argentinos ({grupos, previa, sud,
+    orden}) y `campeones` = [(club, cómo clasificó)]. Devuelve (grupos de la Libertadores con los campeones, previa, sud):
+    un campeón que estaba en la previa o en la Sudamericana sube a los grupos y su lugar pasa al que sigue en la tabla.
+    Lo usan `nuevas_internacionales` y las tablas de Primera (ligas/primera.py), así lo que se pinta es lo que se juega."""
+    arg_g, arg_p, arg_s = list(c["grupos"]), list(c["previa"]), list(c["sud"])
+    lib_g = list(arg_g)
+    ya = {n for n, _ in arg_g + arg_p + arg_s}
+    for cl, via in campeones:
+        if cl and cl not in {n for n, _ in lib_g}:
+            if cl in ya:                               # si ya estaba en otra lista, sube a grupos
+                arg_p = [(n, v) for n, v in arg_p if n != cl]
+                arg_s = [(n, v) for n, v in arg_s if n != cl]
+            lib_g.append((cl, via))
+            ya.add(cl)
+    # si un campeón vigente subió a los grupos, su lugar en la previa / Sudamericana pasa al que sigue
+    orden = c.get("orden", [])
+    for lista, cant in ((arg_p, len(c["previa"])), (arg_s, len(c["sud"]))):
+        for n in orden[5:]:
+            if len(lista) >= cant:
+                break
+            if n not in ya:
+                lista.append((n, f"Primera {c.get('temp_tabla', '')}: {orden.index(n) + 1}° (reemplazo)"))
+                ya.add(n)
+    return lib_g, arg_p, arg_s, ya
+
+
+def _registrar_titulo(S, clave, club):
+    """Anota en la liga de primera de su país que `club` ganó la Libertadores ("lib") o la Sudamericana ("sud") de esta
+    temporada: `camp_int` = {club: etiqueta}. Las tablas lo muestran como clasificado a la Libertadores. Argentina lo
+    guarda en S (su Primera vive ahí) y los otros países, en el estado de su liga: la liga se rehace al empezar la
+    temporada, así que la marca no pasa a la siguiente (la de Argentina se borra en `nuevas_internacionales`). Si el club
+    no juega hoy en la primera de su país, no se anota."""
+    etiqueta = TIT_LIB if clave == "lib" else TIT_SUD
+    pais = pais_de(club)
+    if pais == "Argentina":
+        if club in S.get("nombres", []):
+            S.setdefault("camp_int", {})[club] = etiqueta
+        return
+    from datos import ligas_ext
+    cfg = next((x for x in ligas_ext.LIGAS_EXT if x["pais"] == pais and x.get("divisional") == 1), None)
+    L = S.get("ext_" + cfg["clave"]) if cfg else None          # las ligas de otros países viven en S["ext_<clave>"]
+    if L and club in L.get("nombres", []):
+        L.setdefault("camp_int", {})[club] = etiqueta
+
+
 def medias_ext(S):
     out = {n: m for n, (_, m) in categoria_actual(S).items()}
     out.update(S.setdefault("rating_int", dict(MEDIA_EXT)))
@@ -210,26 +266,9 @@ def nuevas_internacionales(S, rng):
     c = S.get("int_clasif") or clasif_inicial(S)
     medias = medias_ext(S)
     arg_g, arg_p, arg_s = c["grupos"], c["previa"], c["sud"]
-    ya = {n for n, _ in arg_g + arg_p + arg_s}
-    lib_g = list(arg_g)
-    for cl, via in ((c.get("campeon_lib"), "Campeón de la Libertadores"),
-                    (c.get("campeon_sud"), "Campeón de la Sudamericana")):
-        if cl and cl not in {n for n, _ in lib_g}:
-            lib_g = [(n, v) for n, v in lib_g]
-            if cl in ya:                               # si ya estaba en otra lista, sube a grupos
-                arg_p = [(n, v) for n, v in arg_p if n != cl]
-                arg_s = [(n, v) for n, v in arg_s if n != cl]
-            lib_g.append((cl, via))
-            ya.add(cl)
-    # si un campeón vigente subió a los grupos, su lugar en la previa / Sudamericana pasa al que sigue
-    orden = c.get("orden", [])
-    for lista, cant in ((arg_p, len(c["previa"])), (arg_s, len(c["sud"]))):
-        for n in orden[5:]:
-            if len(lista) >= cant:
-                break
-            if n not in ya:
-                lista.append((n, f"Primera {c.get('temp_tabla', '')}: {orden.index(n) + 1}° (reemplazo)"))
-                ya.add(n)
+    S["camp_int"] = {}                                 # los campeones de esta temporada se anotan cuando se juegan las finales
+    lib_g, arg_p, arg_s, ya = _agregar_campeones(c, ((c.get("campeon_lib"), "Campeón de la Libertadores"),
+                                                     (c.get("campeon_sud"), "Campeón de la Sudamericana")))
     ext_g = _ajustar_cupos(CUPOS_LIB_GRUPOS, 28 - len(lib_g))
     for pais in PAISES:
         # el campeón de la copa del país (Copa do Brasil) va primero; si ya clasificó, sigue la tabla de la liga
@@ -473,6 +512,7 @@ def simular_ronda_int(S, clave, P, rng):
         x["ida"], x["gana"] = p, p["gana"]
         C["campeon"] = p["gana"]
         C["subcampeon"] = x["b"] if p["gana"] == x["a"] else x["a"]
+        _registrar_titulo(S, clave, C["campeon"])          # la tabla de su liga lo muestra clasificado a la Libertadores
     else:
         fase, pierna = etapa.split(" · ")
         series = C["llaves"][fase]

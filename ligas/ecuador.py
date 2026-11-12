@@ -128,7 +128,7 @@ class Ecuador(Formato):
                 out.append({"titulo": g, "df": None, "tipo": "liga", "nota": "Se arma cuando termina la primera etapa (30 fechas)."})
             return out
         orden = self._orden_final(L)
-        mapa = asignar_cupos(orden, cupos) if cupos else {}
+        mapa = asignar_cupos(orden, cupos, L.get("camp_int")) if cupos else {}
         h = self._tabla_grupo(L, 0)
         h["Destino"] = [(("Campeón" if hecho else "Líder") if p == 1 else "") +
                         (" · " if p == 1 and mapa.get(e) else "") + mapa.get(e, "") for p, e in zip(h["Pos"], h["Equipo"])]

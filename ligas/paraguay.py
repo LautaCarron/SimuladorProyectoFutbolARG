@@ -161,7 +161,7 @@ class Paraguay(Formato):
                                 f"título del año (si es el mismo club, es campeón directo)."})
         orden, prom, _ = self._orden_final(L)
         cupos = L.get("cupos") or _cupos_de_pais(L.get("pais", ""))
-        mapa = asignar_cupos(orden, cupos) if cupos else {}
+        mapa = asignar_cupos(orden, cupos, L.get("camp_int")) if cupos else {}
         agg = tabla(L, L["E"]["Anual"])
 
         def destino(club):

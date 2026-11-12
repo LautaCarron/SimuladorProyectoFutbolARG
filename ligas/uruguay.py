@@ -293,7 +293,7 @@ class Uruguay(Formato):
                 out.insert(1 + (nombre == "B"), {"titulo": f"Intermedio · Grupo {nombre}", "df": df, "tipo": "liga",
                                                 "nota": ""})
         anual = _tabla_anual(L)
-        cupos = asignar_cupos(self._orden_cupos(L, anual), L.get("cupos", []))
+        cupos = asignar_cupos(self._orden_cupos(L, anual), L.get("cupos", []), L.get("camp_int"))
         anual["Destino"] = [" · ".join(x for x in (
             "Campeón" if L["campeon"] == n else "A la final" if G["Anual"] == i and L["campeon"] is None else "",
             cupos.get(n, "")) if x) for n, i in zip(anual["Equipo"], anual["id"])]

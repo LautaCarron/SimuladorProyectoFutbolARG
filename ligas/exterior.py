@@ -131,18 +131,24 @@ def tabla(L, E, ids=None):
     return df
 
 
-def asignar_cupos(orden, cupos):
+def asignar_cupos(orden, cupos, fijos=None):
     """Reparte cupos internacionales por orden de clasificación.
 
     orden  nombres de los clubes, del primero al último (campeón, subcampeón y después la tabla acumulada).
     cupos  [(etiqueta, cantidad)] en orden de importancia: el primero se queda con los primeros clubes, y así.
+    fijos  {club: etiqueta} de los que ya tienen su lugar por otra vía (el campeón de la Libertadores o de la Sudamericana
+           de la temporada, `L["camp_int"]`): se pintan con su etiqueta y no ocupan cupo de la tabla, el cupo pasa al
+           que sigue.
     Devuelve {club: etiqueta}. Es el mismo reparto que usan las copas CONMEBOL al armar la temporada que viene
     (copas/conmebol.py, `_sortear_pais`), así que lo que muestra la tabla es lo que después se juega."""
+    fijos = {n: e for n, e in (fijos or {}).items() if n in orden}
+    resto = [n for n in orden if n not in fijos]
     out, i = {}, 0
     for etiqueta, k in cupos:
-        for n in orden[i:i + k]:
+        for n in resto[i:i + k]:
             out[n] = etiqueta
         i += k
+    out.update(fijos)
     return out
 
 
@@ -276,7 +282,7 @@ class TodosContraTodos(Formato):
             cupos = _cupos_de_pais(L.get("pais", "")) or L.get("cupos")
             if cupos:
                 L["cupos"] = cupos
-            cupos_map = asignar_cupos(list(df["Equipo"]), cupos) if cupos else {}
+            cupos_map = asignar_cupos(list(df["Equipo"]), cupos, L.get("camp_int")) if cupos else {}
 
             def _destino_primera(p, eq):
                 if d and p > n - d:
