@@ -113,7 +113,10 @@ def _armar_torneo(t, ids, r, rng):
             puestos = [int(i) for i in rng.permutation(grupo)]
             fixtures.append([[(puestos[a], puestos[b]) for a, b in fecha] for fecha in generar_fixture(len(puestos))])
     rondas = max(len(f) for f in fixtures)
-    llave = t["llave"]
+    # Si hay menos clubes que los de la llave (pasa cuando un estado queda con pocos clubes entre las cuatro series y los
+    # complementarios), la llave baja al cuadro más grande que se pueda armar: con 6 clubes una llave de 8 no tiene de dónde sacar
+    # los 8 clasificados y se rompía al terminar los grupos.
+    llave = min(t["llave"], max((x for x in ETAPAS_LLAVE if x <= n), default=2))
     return {"id": t["id"], "nombre": t["nombre"], "corto": t["corto"], "color": t["color"], "zona": t["zona"],
             "cruzado": bool(t["cruzado"]), "ids": [int(i) for i in ids], "grupos": grupos, "fixtures": fixtures,
             "rondas_grupo": rondas, "llave": llave, "fin": rondas + len(ETAPAS_LLAVE[llave]), "semilla": {},
@@ -232,6 +235,8 @@ def rotulo_ronda(S, n):
 def _armar_ronda_llave(R, t, ganadores):
     """Pone el cuadro de la próxima ronda con los `ganadores` en el orden de la llave (el de menor siembra, de local)."""
     k = len(t["ko"]) + 1
+    if k > len(ETAPAS_LLAVE[t["llave"]]):                        # ya están todas las rondas armadas: no hay otra que armar
+        return
     if not t["ko"]:                                              # primera ronda: cruces por siembra
         pares = [(ganadores[a - 1], ganadores[b - 1]) for a, b in CRUCES_LLAVE[t["llave"]]]
     else:
